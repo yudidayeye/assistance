@@ -1,0 +1,69 @@
+/// 经期记录模型
+class PeriodRecord {
+  final String id;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final int? cycleLength;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+
+  PeriodRecord({
+    required this.id,
+    required this.startDate,
+    this.endDate,
+    this.cycleLength,
+    required this.createdAt,
+    this.updatedAt,
+  });
+
+  PeriodRecord copyWith({
+    String? id,
+    DateTime? startDate,
+    DateTime? endDate,
+    int? cycleLength,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return PeriodRecord(
+      id: id ?? this.id,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      cycleLength: cycleLength ?? this.cycleLength,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  /// 经期持续天数
+  int? get durationDays {
+    if (endDate == null) return null;
+    return endDate!.difference(startDate).inDays + 1;
+  }
+
+  /// 是否正在进行中
+  bool get isOngoing => endDate == null;
+
+  /// 从数据库 Map 创建
+  factory PeriodRecord.fromMap(Map<String, dynamic> map) {
+    return PeriodRecord(
+      id: map['id'] as String,
+      startDate: DateTime.parse(map['start_date'] as String),
+      endDate: map['end_date'] != null ? DateTime.parse(map['end_date'] as String) : null,
+      cycleLength: map['cycle_length'] as int?,
+      createdAt: DateTime.parse(map['created_at'] as String),
+      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : null,
+    );
+  }
+
+  /// 转为数据库 Map
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'start_date': startDate.toIso8601String().split('T')[0],
+      'end_date': endDate?.toIso8601String().split('T')[0],
+      'cycle_length': cycleLength,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
+    };
+  }
+}
