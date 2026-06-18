@@ -47,6 +47,15 @@ app.*.map.json
 # Code graph
 .codegraph/
 
+# Claude Code
+.claude/
+
+# IntelliJ project file
+*.iml
+
+# Flutter metadata
+.metadata
+
 # Gradle
 **/android/.gradle/
 **/android/captures/
