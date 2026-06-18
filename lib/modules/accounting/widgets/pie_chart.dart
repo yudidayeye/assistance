@@ -60,14 +60,14 @@ class ExpensePieChart extends StatelessWidget {
   Color _getCategoryColor(AppThemeExtension appTheme, int index) {
     final colors = [
       appTheme.rose,
-      appTheme.gold,
+      appTheme.primary,
       appTheme.sage,
       appTheme.earthMedium,
       appTheme.roseLight,
-      appTheme.goldDark,
+      appTheme.primaryDark,
       appTheme.sageLight,
       appTheme.earthLight,
-      appTheme.goldLight,
+      appTheme.primaryLight,
       appTheme.rose.withAlpha(180),
     ];
     return colors[index % colors.length];

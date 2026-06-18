@@ -102,7 +102,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: Theme.of(context).appTheme.gold,
+                  primary: Theme.of(context).appTheme.primary,
                 ),
           ),
           child: child!,
@@ -181,7 +181,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: isError ? appTheme.rose : appTheme.goldLight,
+        backgroundColor: isError ? appTheme.rose : appTheme.primaryLight,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

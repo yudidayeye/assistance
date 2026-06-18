@@ -48,7 +48,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
       body: _loading
           ? Center(
               child: CircularProgressIndicator(
-                color: appTheme.gold,
+                color: appTheme.primary,
               ),
             )
           : CustomScrollView(
@@ -140,13 +140,13 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: appTheme.gold.withAlpha(20),
+              color: appTheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
               size: 18,
-              color: appTheme.gold,
+              color: appTheme.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -217,12 +217,12 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: appTheme.gold.withAlpha(15),
+              color: appTheme.primary.withAlpha(15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               cat.icon,
-              color: appTheme.gold,
+              color: appTheme.primary,
               size: 22,
             ),
           ),
@@ -426,18 +426,18 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                               height: 44,
                               decoration: BoxDecoration(
                                 color: selectedIcon == icon
-                                    ? appTheme.gold.withAlpha(30)
+                                    ? appTheme.primary.withAlpha(30)
                                     : appTheme.creamDark,
                                 borderRadius: BorderRadius.circular(12),
                                 border: selectedIcon == icon
-                                    ? Border.all(color: appTheme.gold)
+                                    ? Border.all(color: appTheme.primary)
                                     : null,
                               ),
                               child: Icon(
                                 icon,
                                 size: 22,
                                 color: selectedIcon == icon
-                                    ? appTheme.gold
+                                    ? appTheme.primary
                                     : appTheme.earthMedium,
                               ),
                             ),
@@ -500,7 +500,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [appTheme.gold, appTheme.goldDark],
+                            colors: [appTheme.primary, appTheme.primaryDark],
                           ),
                           borderRadius: BorderRadius.circular(14),
                         ),

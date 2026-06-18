@@ -6,6 +6,7 @@ import '../module_system/tool_module.dart';
 import 'settings_service.dart';
 import '../storage/database_service.dart';
 import '../theme/theme_extension.dart';
+import '../theme/theme_provider.dart';
 
 /// 全局设置页面 — 奢华自然主义风格
 class SettingsPage extends StatefulWidget {
@@ -41,6 +42,14 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           SliverToBoxAdapter(
             child: _buildModuleSection(appTheme, modules),
+          ),
+
+          // 主题设置
+          SliverToBoxAdapter(
+            child: _buildSectionHeader(appTheme, '主题设置', Icons.palette_rounded),
+          ),
+          SliverToBoxAdapter(
+            child: _buildThemeSection(appTheme),
           ),
 
           // 数据管理
@@ -122,13 +131,13 @@ class _SettingsPageState extends State<SettingsPage> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: appTheme.gold.withAlpha(20),
+              color: appTheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
               size: 18,
-              color: appTheme.gold,
+              color: appTheme.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -245,6 +254,78 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildThemeSection(AppThemeExtension appTheme) {
+    final currentTheme = ThemeProvider.instance.currentTheme;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: appTheme.earthMedium.withAlpha(20),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: AppThemeType.values.map((type) {
+          final isSelected = currentTheme == type;
+          return GestureDetector(
+            onTap: () async {
+              await ThemeProvider.instance.setTheme(type);
+              setState(() {});
+            },
+            child: Column(
+              children: [
+                // 色块预览
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: type.color,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? appTheme.earth : Colors.transparent,
+                      width: 3,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: type.color.withAlpha(60),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: isSelected
+                      ? const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        )
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                // 主题名称
+                Text(
+                  type.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? appTheme.earth : appTheme.earthMedium,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildDataSection(AppThemeExtension appTheme) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
@@ -347,7 +428,7 @@ class _SettingsPageState extends State<SettingsPage> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: appTheme.gold.withAlpha(15),
+              color: appTheme.primary.withAlpha(15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -356,7 +437,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   : title == '隐私声明'
                       ? Icons.lock_outline_rounded
                       : Icons.shield_outlined,
-              color: appTheme.gold,
+              color: appTheme.primary,
               size: 22,
             ),
           ),
@@ -523,7 +604,7 @@ class _SettingsPageState extends State<SettingsPage> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: appTheme.goldLight,
+        backgroundColor: appTheme.primaryLight,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

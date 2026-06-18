@@ -136,7 +136,7 @@ class _MonthSelectorState extends State<MonthSelector> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: appTheme.gold,
+                  primary: appTheme.primary,
                 ),
           ),
           child: child!,

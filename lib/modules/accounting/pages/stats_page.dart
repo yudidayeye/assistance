@@ -80,7 +80,7 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
       body: _loading
           ? Center(
               child: CircularProgressIndicator(
-                color: appTheme.gold,
+                color: appTheme.primary,
               ),
             )
           : CustomScrollView(
@@ -317,7 +317,7 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
                   appTheme,
                   label: '结余',
                   value: _overview['balance'] ?? 0,
-                  color: appTheme.gold,
+                  color: appTheme.primary,
                 ),
               ),
             ],
@@ -505,12 +505,12 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: appTheme.gold.withAlpha(20),
+              color: appTheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
               Icons.bar_chart_rounded,
-              color: appTheme.gold.withAlpha(100),
+              color: appTheme.primary.withAlpha(100),
               size: 36,
             ),
           ),

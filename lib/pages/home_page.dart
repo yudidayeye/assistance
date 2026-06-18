@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            appTheme.gold.withAlpha(25),
+            appTheme.primary.withAlpha(25),
             appTheme.cream,
           ],
         ),
@@ -158,13 +158,13 @@ class _HomePageState extends State<HomePage>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      appTheme.gold,
-                      appTheme.goldDark,
+                      appTheme.primary,
+                      appTheme.primaryDark,
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: appTheme.gold.withAlpha(60),
+                      color: appTheme.primary.withAlpha(60),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

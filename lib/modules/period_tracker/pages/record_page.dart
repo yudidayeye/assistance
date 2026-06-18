@@ -108,10 +108,10 @@ class _PeriodRecordPageState extends State<PeriodRecordPage> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: appTheme.gold.withAlpha(15),
+                      color: appTheme.primary.withAlpha(15),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: appTheme.gold.withAlpha(30),
+                        color: appTheme.primary.withAlpha(30),
                       ),
                     ),
                     child: Row(
@@ -120,12 +120,12 @@ class _PeriodRecordPageState extends State<PeriodRecordPage> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: appTheme.gold.withAlpha(30),
+                            color: appTheme.primary.withAlpha(30),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             Icons.lightbulb_outline_rounded,
-                            color: appTheme.gold,
+                            color: appTheme.primary,
                             size: 20,
                           ),
                         ),
@@ -410,7 +410,7 @@ class _PeriodRecordPageState extends State<PeriodRecordPage> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        backgroundColor: appTheme.goldLight,
+        backgroundColor: appTheme.primaryLight,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

@@ -107,7 +107,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
               ? SliverFillRemaining(
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: appTheme.gold,
+                      color: appTheme.primary,
                     ),
                   ),
                 )
@@ -342,12 +342,12 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: appTheme.gold.withAlpha(20),
+              color: appTheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
               Icons.receipt_long_outlined,
-              color: appTheme.gold.withAlpha(100),
+              color: appTheme.primary.withAlpha(100),
               size: 36,
             ),
           ),
@@ -446,13 +446,13 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            appTheme.gold,
-            appTheme.goldDark,
+            appTheme.primary,
+            appTheme.primaryDark,
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: appTheme.gold.withAlpha(80),
+            color: appTheme.primary.withAlpha(80),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),

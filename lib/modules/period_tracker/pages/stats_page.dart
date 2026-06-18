@@ -358,7 +358,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
 
   Widget _buildRecordItem(AppThemeExtension appTheme, PeriodRecord record) {
     final isActive = record.endDate == null;
-    final statusColor = isActive ? appTheme.gold : appTheme.rose;
+    final statusColor = isActive ? appTheme.primary : appTheme.rose;
 
     return GestureDetector(
       onLongPress: () => _confirmDelete(record.id),
@@ -408,7 +408,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
                     style: TextStyle(
                       fontSize: 13,
                       color: isActive
-                          ? appTheme.gold
+                          ? appTheme.primary
                           : appTheme.earthMedium,
                     ),
                   ),

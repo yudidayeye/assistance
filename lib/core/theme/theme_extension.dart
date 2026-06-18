@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// 应用主题扩展 — 丰富的色彩和渐变系统
+/// 应用主题扩展 — 通用色彩系统
 class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
-  final Color gold;
-  final Color goldLight;
-  final Color goldDark;
+  final Color primary;
+  final Color primaryLight;
+  final Color primaryDark;
   final Color earth;
   final Color earthLight;
   final Color earthMedium;
@@ -14,13 +14,13 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   final Color sageLight;
   final Color rose;
   final Color roseLight;
-  final Gradient gradientGold;
+  final Gradient gradientPrimary;
   final Gradient gradientEarth;
 
   const AppThemeExtension({
-    required this.gold,
-    required this.goldLight,
-    required this.goldDark,
+    required this.primary,
+    required this.primaryLight,
+    required this.primaryDark,
     required this.earth,
     required this.earthLight,
     required this.earthMedium,
@@ -30,15 +30,15 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     required this.sageLight,
     required this.rose,
     required this.roseLight,
-    required this.gradientGold,
+    required this.gradientPrimary,
     required this.gradientEarth,
   });
 
   @override
   AppThemeExtension copyWith({
-    Color? gold,
-    Color? goldLight,
-    Color? goldDark,
+    Color? primary,
+    Color? primaryLight,
+    Color? primaryDark,
     Color? earth,
     Color? earthLight,
     Color? earthMedium,
@@ -48,13 +48,13 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     Color? sageLight,
     Color? rose,
     Color? roseLight,
-    Gradient? gradientGold,
+    Gradient? gradientPrimary,
     Gradient? gradientEarth,
   }) {
     return AppThemeExtension(
-      gold: gold ?? this.gold,
-      goldLight: goldLight ?? this.goldLight,
-      goldDark: goldDark ?? this.goldDark,
+      primary: primary ?? this.primary,
+      primaryLight: primaryLight ?? this.primaryLight,
+      primaryDark: primaryDark ?? this.primaryDark,
       earth: earth ?? this.earth,
       earthLight: earthLight ?? this.earthLight,
       earthMedium: earthMedium ?? this.earthMedium,
@@ -64,7 +64,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       sageLight: sageLight ?? this.sageLight,
       rose: rose ?? this.rose,
       roseLight: roseLight ?? this.roseLight,
-      gradientGold: gradientGold ?? this.gradientGold,
+      gradientPrimary: gradientPrimary ?? this.gradientPrimary,
       gradientEarth: gradientEarth ?? this.gradientEarth,
     );
   }
@@ -72,9 +72,9 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   @override
   AppThemeExtension lerp(AppThemeExtension other, double t) {
     return AppThemeExtension(
-      gold: Color.lerp(gold, other.gold, t)!,
-      goldLight: Color.lerp(goldLight, other.goldLight, t)!,
-      goldDark: Color.lerp(goldDark, other.goldDark, t)!,
+      primary: Color.lerp(primary, other.primary, t)!,
+      primaryLight: Color.lerp(primaryLight, other.primaryLight, t)!,
+      primaryDark: Color.lerp(primaryDark, other.primaryDark, t)!,
       earth: Color.lerp(earth, other.earth, t)!,
       earthLight: Color.lerp(earthLight, other.earthLight, t)!,
       earthMedium: Color.lerp(earthMedium, other.earthMedium, t)!,
@@ -84,13 +84,13 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       sageLight: Color.lerp(sageLight, other.sageLight, t)!,
       rose: Color.lerp(rose, other.rose, t)!,
       roseLight: Color.lerp(roseLight, other.roseLight, t)!,
-      gradientGold: gradientGold,
+      gradientPrimary: gradientPrimary,
       gradientEarth: gradientEarth,
     );
   }
 }
 
-/// 模块主题色扩展（保留兼容性）
+/// 模块主题色扩展
 class ModuleThemeExtension extends ThemeExtension<ModuleThemeExtension> {
   final Color moduleColor;
 
@@ -111,9 +111,9 @@ class ModuleThemeExtension extends ThemeExtension<ModuleThemeExtension> {
 extension AppThemeGetter on ThemeData {
   AppThemeExtension get appTheme {
     return extension<AppThemeExtension>() ?? const AppThemeExtension(
-      gold: Color(0xFFD4AF37),
-      goldLight: Color(0xFFF5E6CC),
-      goldDark: Color(0xFFB8941F),
+      primary: Color(0xFFD4AF37),
+      primaryLight: Color(0xFFF5E6CC),
+      primaryDark: Color(0xFFB8941F),
       earth: Color(0xFF2C1810),
       earthLight: Color(0xFF4A3228),
       earthMedium: Color(0xFF8B6F5C),
@@ -123,7 +123,7 @@ extension AppThemeGetter on ThemeData {
       sageLight: Color(0xFFB8C4AB),
       rose: Color(0xFFC97D7D),
       roseLight: Color(0xFFE8B4B4),
-      gradientGold: LinearGradient(
+      gradientPrimary: LinearGradient(
         colors: [Color(0xFFD4AF37), Color(0xFFB8941F)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -137,7 +137,7 @@ extension AppThemeGetter on ThemeData {
   }
 }
 
-/// 从 Theme 中获取模块主题色（保留兼容性）
+/// 从 Theme 中获取模块主题色
 extension ModuleThemeGetter on ThemeData {
   ModuleThemeExtension get moduleTheme {
     return extension<ModuleThemeExtension>() ?? const ModuleThemeExtension(moduleColor: Colors.blue);
