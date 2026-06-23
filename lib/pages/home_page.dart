@@ -33,42 +33,81 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: const Color(0xFFf5f6fa),
       body: Column(
         children: [
-          // 头部区域
+          // 头部区域：标题左对齐，设置按钮右侧
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
+            child: Row(
               children: [
-                Text(
-                  '欢迎使用',
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.dmSans().fontFamily,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF8892a4),
+                // 左侧标题
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '欢迎使用',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF8892a4),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '工具箱',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.robotoSlab().fontFamily,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1a1d2e),
+                          height: 1.33,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '工具箱',
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.robotoSlab().fontFamily,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1a1d2e),
-                    height: 1.33,
-                    letterSpacing: -0.5,
+
+                // 右侧设置按钮
+                GestureDetector(
+                  onTap: () => context.push('/settings'),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFF8892a4).withAlpha(30),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.settings_outlined,
+                      color: Color(0xFF8892a4),
+                      size: 22,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
-          // 特色功能卡片列表
+          // 两列特色功能卡片
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: _buildFeaturedCards(enabledModules),
+            child: GridView.count(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.82,
+              children: enabledModules
+                  .map((module) => FeaturedCard(
+                        module: module,
+                        categoryLabel: _getCategoryLabel(module),
+                        gradient: _getGradient(module),
+                        vertical: true,
+                      ))
+                  .toList(),
             ),
           ),
 
@@ -79,37 +118,13 @@ class _HomePageState extends State<HomePage> {
               if (index == _selectedTabIndex) return;
               setState(() => _selectedTabIndex = index);
               if (index == 1) {
-                context.push('/settings');
+                context.push('/profile');
               }
             },
           ),
         ],
       ),
     );
-  }
-
-  List<Widget> _buildFeaturedCards(List<ToolModule> modules) {
-    if (modules.isEmpty) return [];
-
-    final widgets = <Widget>[];
-
-    for (final module in modules) {
-      widgets.add(
-        FeaturedCard(
-          module: module,
-          categoryLabel: _getCategoryLabel(module),
-          gradient: _getGradient(module),
-        ),
-      );
-      widgets.add(const SizedBox(height: 16));
-    }
-
-    // Remove last SizedBox
-    if (widgets.isNotEmpty) {
-      widgets.removeLast();
-    }
-
-    return widgets;
   }
 
   String _getCategoryLabel(ToolModule module) {

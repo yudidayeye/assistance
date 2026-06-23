@@ -8,6 +8,7 @@ import '../../modules/accounting/pages/stats_page.dart';
 import '../../modules/accounting/pages/category_settings.dart';
 import '../../modules/period_tracker/pages/record_page.dart';
 import '../../modules/period_tracker/pages/stats_page.dart';
+import '../../pages/profile_page.dart';
 
 /// 全局路由管理
 class AppRouter {
@@ -81,6 +82,10 @@ class AppRouter {
         GoRoute(
           path: '/settings',
           builder: (context, state) => const SettingsPage(),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfilePage(),
         ),
         ..._buildModuleRoutes(),
       ],

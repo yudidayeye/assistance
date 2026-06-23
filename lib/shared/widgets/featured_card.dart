@@ -10,6 +10,7 @@ class FeaturedCard extends StatelessWidget {
   final String categoryLabel;
   final LinearGradient gradient;
   final VoidCallback? onTap;
+  final bool vertical;
 
   const FeaturedCard({
     super.key,
@@ -17,6 +18,7 @@ class FeaturedCard extends StatelessWidget {
     required this.categoryLabel,
     required this.gradient,
     this.onTap,
+    this.vertical = false,
   });
 
   @override
@@ -26,7 +28,7 @@ class FeaturedCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap ?? () => context.push('/${module.moduleId}'),
       child: Container(
-        height: 124,
+        height: vertical ? 160 : 124,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: gradient,
@@ -55,58 +57,131 @@ class FeaturedCard extends StatelessWidget {
               alpha: 25,
             ),
 
-            // 主要内容行
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Row(
-                children: [
-                  // 左侧：64x64 图标容器
-                  _buildIconContainer(),
-                  const SizedBox(width: 16),
-
-                  // 中间：分类标签 + 标题 + 副标题
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildCategoryPill(),
-                        const SizedBox(height: 8),
-                        Text(
-                          module.displayName,
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.robotoSlab().fontFamily,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          module.description,
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.dmSans().fontFamily,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withAlpha(191),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+            if (vertical)
+              // 两列模式：垂直布局
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // 图标
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(51),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: module.icon.build(size: 22, color: Colors.white),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 10),
 
-                  // 右侧：箭头图标
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 20,
-                    color: Colors.white.withAlpha(191),
-                  ),
-                ],
+                    // 分类标签
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(64),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        categoryLabel,
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    // 标题
+                    Text(
+                      module.displayName,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.robotoSlab().fontFamily,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: -0.2,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+
+                    // 副标题
+                    Text(
+                      module.description,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.dmSans().fontFamily,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withAlpha(191),
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              )
+            else
+              // 单列模式：水平布局
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Row(
+                  children: [
+                    // 左侧：64x64 图标容器
+                    _buildIconContainer(),
+                    const SizedBox(width: 16),
+
+                    // 中间：分类标签 + 标题 + 副标题
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildCategoryPill(),
+                          const SizedBox(height: 8),
+                          Text(
+                            module.displayName,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.robotoSlab().fontFamily,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            module.description,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.dmSans().fontFamily,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withAlpha(191),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // 右侧：箭头图标
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: Colors.white.withAlpha(191),
+                    ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
