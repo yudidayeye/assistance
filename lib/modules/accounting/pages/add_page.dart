@@ -30,7 +30,6 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   DateTime _selectedDate = DateTime.now();
   List<Category> _categories = [];
   late AnimationController _typeController;
-  late Animation<double> _typeScaleAnim;
 
   @override
   void initState() {
@@ -39,13 +38,6 @@ class _AddTransactionPageState extends State<AddTransactionPage>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _typeScaleAnim = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _typeController,
-      curve: Curves.easeInOut,
-    ));
 
     _loadCategories();
     if (widget.editId != null) {
@@ -164,7 +156,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         _note = '';
         _selectedDate = DateTime.now();
       });
-    } else {
+    } else if (mounted) {
       context.pop();
     }
   }

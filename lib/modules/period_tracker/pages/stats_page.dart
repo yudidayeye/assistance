@@ -18,7 +18,6 @@ class PeriodStatsPage extends StatefulWidget {
 class _PeriodStatsPageState extends State<PeriodStatsPage>
     with SingleTickerProviderStateMixin {
   List<PeriodRecord> _records = [];
-  PredictionResult? _prediction;
   bool _loading = true;
   late AnimationController _statsController;
   late Animation<double> _statsFadeAnim;
@@ -48,12 +47,11 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
     _statsController.reset();
 
     final records = await PeriodService.instance.getAllRecords();
-    final prediction = PredictionService.instance.predict(records);
+    PredictionService.instance.predict(records);
 
     if (mounted) {
       setState(() {
         _records = records;
-        _prediction = prediction;
         _loading = false;
       });
       _statsController.forward();
@@ -98,12 +96,13 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
     String regularity = '数据不足';
     if (cycleLengths.length >= 3) {
       final stdDev = _calculateStdDev(cycleLengths);
-      if (stdDev < 3)
+      if (stdDev < 3) {
         regularity = '规律';
-      else if (stdDev < 7)
+      } else if (stdDev < 7) {
         regularity = '一般';
-      else
+      } else {
         regularity = '不规律';
+      }
     }
 
     return Scaffold(
@@ -575,7 +574,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
                     child: GestureDetector(
                       onTap: () async {
                         await PeriodService.instance.deleteRecord(id);
-                        Navigator.pop(ctx);
+                        if (ctx.mounted) Navigator.pop(ctx);
                         _loadData();
                       },
                       child: Container(

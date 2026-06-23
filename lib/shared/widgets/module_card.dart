@@ -6,6 +6,8 @@ import '../../core/module_system/module_summary.dart';
 import '../../core/theme/theme_extension.dart';
 
 /// 首页模块卡片 — 奢华自然主义风格
+/// ⚠️ DEPRECATED: 首页已 redesign 为 FeaturedCard，此组件暂保留以备后用。
+/// 确认不再需要后可安全删除。
 class ModuleCard extends StatefulWidget {
   final ToolModule module;
   final int index;

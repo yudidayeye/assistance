@@ -399,7 +399,7 @@ class _PeriodRecordPageState extends State<PeriodRecordPage> {
 
     await PeriodService.instance.insertRecord(record);
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -420,6 +420,6 @@ class _PeriodRecordPageState extends State<PeriodRecordPage> {
       ),
     );
 
-    context.pop(true);
+    if (mounted) context.pop(true);
   }
 }

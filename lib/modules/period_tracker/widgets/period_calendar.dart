@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../services/prediction_service.dart';
 import '../models/period_record.dart';
 import '../../../shared/utils/date_utils.dart';

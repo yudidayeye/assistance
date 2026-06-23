@@ -493,7 +493,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                             sortOrder: currentCats.length,
                           ),
                         );
-                        Navigator.pop(ctx);
+                        if (ctx.mounted) Navigator.pop(ctx);
                         _loadCategories();
                       },
                       child: Container(

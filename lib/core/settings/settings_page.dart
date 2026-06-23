@@ -243,7 +243,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 await _settings.setModuleEnabled(module.moduleId, val);
                 setState(() {});
               },
-              activeColor: module.themeColor,
+              activeThumbColor: module.themeColor,
               activeTrackColor: module.themeColor.withAlpha(60),
               inactiveThumbColor: appTheme.earthMedium,
               inactiveTrackColor: appTheme.creamDark,

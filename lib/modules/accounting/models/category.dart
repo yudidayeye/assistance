@@ -43,6 +43,7 @@ class Category {
     final codePoint = map['icon_code_point'] as int;
     final fontFamily = map['icon_font_family'] as String? ?? 'MaterialIcons';
 
+    // ignore: non_const_argument_for_const_parameter
     final iconData = IconData(codePoint, fontFamily: fontFamily);
 
     return Category(

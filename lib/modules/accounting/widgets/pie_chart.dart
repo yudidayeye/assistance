@@ -33,7 +33,6 @@ class ExpensePieChart extends StatelessWidget {
           sections: stats.asMap().entries.map((entry) {
             final index = entry.key;
             final stat = entry.value;
-            final cat = stat.category;
             final color = _getCategoryColor(appTheme, index);
 
             return PieChartSectionData(

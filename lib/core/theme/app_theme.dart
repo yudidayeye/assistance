@@ -8,7 +8,6 @@ class AppTheme {
   AppTheme._();
 
   // ── 通用属性 ──────────────────────────────────────
-  static const double _r = 16.0;
   static const Color _white = Colors.white;
   static const Color _error = Color(0xFFCF6679);
 
