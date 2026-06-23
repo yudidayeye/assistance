@@ -1,14 +1,13 @@
 import 'package:go_router/go_router.dart';
 import '../module_system/tool_module.dart';
 import '../module_system/module_registry.dart';
-import '../../pages/home_page.dart';
+import '../../pages/main_shell_page.dart';
 import '../settings/settings_page.dart';
 import '../../modules/accounting/pages/add_page.dart';
 import '../../modules/accounting/pages/stats_page.dart';
 import '../../modules/accounting/pages/category_settings.dart';
 import '../../modules/period_tracker/pages/record_page.dart';
 import '../../modules/period_tracker/pages/stats_page.dart';
-import '../../pages/profile_page.dart';
 
 /// 全局路由管理
 class AppRouter {
@@ -77,15 +76,11 @@ class AppRouter {
       routes: [
         GoRoute(
           path: '/',
-          builder: (context, state) => const HomePage(),
+          builder: (context, state) => const MainShellPage(),
         ),
         GoRoute(
           path: '/settings',
           builder: (context, state) => const SettingsPage(),
-        ),
-        GoRoute(
-          path: '/profile',
-          builder: (context, state) => const ProfilePage(),
         ),
         ..._buildModuleRoutes(),
       ],

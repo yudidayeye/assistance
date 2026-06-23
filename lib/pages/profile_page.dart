@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import '../core/theme/theme_extension.dart';
 
-/// 我的页面 — 简单展示用户信息
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+/// 我的页面内容 — 无底部导航和返回按钮，作为 MainShellPage 的子页
+class ProfilePageContent extends StatelessWidget {
+  const ProfilePageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +16,22 @@ class ProfilePage extends StatelessWidget {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // 头部
+          // 头部 — 仅标题，无返回按钮
           SliverToBoxAdapter(
-            child: _buildHeader(context, appTheme),
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                  24, MediaQuery.of(context).padding.top + 16, 24, 24),
+              child: Text(
+                '我的',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: appTheme.earth,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
           ),
 
           // 用户信息卡片
@@ -48,48 +60,6 @@ class ProfilePage extends StatelessWidget {
 
           const SliverToBoxAdapter(
             child: SizedBox(height: 100),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          24, MediaQuery.of(context).padding.top + 16, 24, 24),
-      child: Row(
-        children: [
-          // 返回按钮
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.creamDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: appTheme.earthMedium.withAlpha(30),
-                ),
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: appTheme.earthMedium,
-                size: 18,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            '我的',
-            style: TextStyle(
-              fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: -0.5,
-            ),
           ),
         ],
       ),
