@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "type": "stdio",
+      "cwd": ".",
+      "command": "codegraph",
+      "args": ["serve", "--mcp"]
+    }
+  }
+}
