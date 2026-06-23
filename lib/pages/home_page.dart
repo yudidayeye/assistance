@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/module_system/module_registry.dart';
-import '../core/module_system/tool_module.dart';
 import '../core/settings/settings_service.dart';
 import '../shared/widgets/featured_card.dart';
 import '../shared/widgets/toolbox_bottom_nav.dart';
@@ -103,8 +102,6 @@ class _HomePageState extends State<HomePage> {
               children: enabledModules
                   .map((module) => FeaturedCard(
                         module: module,
-                        categoryLabel: _getCategoryLabel(module),
-                        vertical: true,
                       ))
                   .toList(),
             ),
@@ -124,16 +121,5 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
-  }
-
-  String _getCategoryLabel(ToolModule module) {
-    switch (module.moduleId) {
-      case 'accounting':
-        return '财务';
-      case 'period_tracker':
-        return '健康';
-      default:
-        return '工具';
-    }
   }
 }
