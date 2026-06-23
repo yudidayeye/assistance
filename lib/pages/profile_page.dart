@@ -102,27 +102,27 @@ class ProfilePage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: appTheme.earth.withAlpha(8),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          // 头像
+          // 头像 — 浅色渐变 + 人物图标
           Container(
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [appTheme.primary, appTheme.primaryDark],
-              ),
+              color: appTheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.person_rounded,
-              color: Colors.white,
+              color: appTheme.primary,
               size: 32,
             ),
           ),
@@ -154,7 +154,7 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
 
-          // 编辑按钮
+          // 箭头
           Icon(
             Icons.chevron_right_rounded,
             color: appTheme.earthMedium.withAlpha(100),

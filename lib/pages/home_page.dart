@@ -104,7 +104,6 @@ class _HomePageState extends State<HomePage> {
                   .map((module) => FeaturedCard(
                         module: module,
                         categoryLabel: _getCategoryLabel(module),
-                        gradient: _getGradient(module),
                         vertical: true,
                       ))
                   .toList(),
@@ -135,29 +134,6 @@ class _HomePageState extends State<HomePage> {
         return '健康';
       default:
         return '工具';
-    }
-  }
-
-  LinearGradient _getGradient(ToolModule module) {
-    switch (module.moduleId) {
-      case 'accounting':
-        return const LinearGradient(
-          colors: [Color(0xFF10b981), Color(0xFF059669)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
-      case 'period_tracker':
-        return const LinearGradient(
-          colors: [Color(0xFFf472b6), Color(0xFFec4899)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
-      default:
-        return LinearGradient(
-          colors: [module.themeColor, module.themeColor.withAlpha(0xB4)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
     }
   }
 }
