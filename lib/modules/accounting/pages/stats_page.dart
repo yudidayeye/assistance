@@ -22,6 +22,7 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
   bool _loading = true;
   late AnimationController _chartController;
   late Animation<double> _chartFadeAnim;
+  int _loadVersion = 0;
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
   }
 
   Future<void> _loadData() async {
+    final version = ++_loadVersion;
     setState(() => _loading = true);
     _chartController.reset();
 
@@ -52,14 +54,13 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
     final overview =
         await StatsService.instance.getMonthOverview(_selectedMonth);
 
-    if (mounted) {
-      setState(() {
-        _stats = stats;
-        _overview = overview;
-        _loading = false;
-      });
-      _chartController.forward();
-    }
+    if (!mounted || version != _loadVersion) return;
+    setState(() {
+      _stats = stats;
+      _overview = overview;
+      _loading = false;
+    });
+    _chartController.forward();
   }
 
   void _changeMonth(int offset) {

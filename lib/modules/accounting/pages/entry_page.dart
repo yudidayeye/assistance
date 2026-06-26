@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/transaction.dart';
+import '../models/category.dart';
 import '../services/transaction_service.dart';
+import '../services/category_service.dart';
 import '../widgets/transaction_item.dart';
 import '../../../shared/widgets/month_selector.dart';
 import '../../../shared/utils/format_utils.dart';
@@ -21,11 +23,13 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
     with SingleTickerProviderStateMixin {
   DateTime _selectedMonth = DateTime.now();
   List<Transaction> _transactions = [];
+  Map<String, Category> _categoryCache = {};
   double _monthExpense = 0;
   double _monthIncome = 0;
   bool _loading = true;
   late AnimationController _summaryController;
   late Animation<double> _summaryFadeAnim;
+  int _loadVersion = 0; // 5.4: 异步竞态防护
 
   @override
   void initState() {
@@ -48,22 +52,29 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
   }
 
   Future<void> _loadData() async {
+    final version = ++_loadVersion;
     setState(() => _loading = true);
     _summaryController.reset();
 
+    final cats = await CategoryService.instance.getAllCategories();
     final txns = await TransactionService.instance.getTransactionsByMonth(_selectedMonth);
     final expense = await TransactionService.instance.getMonthExpenseTotal(_selectedMonth);
     final income = await TransactionService.instance.getMonthIncomeTotal(_selectedMonth);
 
-    if (mounted) {
-      setState(() {
-        _transactions = txns;
-        _monthExpense = expense;
-        _monthIncome = income;
-        _loading = false;
-      });
-      _summaryController.forward();
+    final cache = <String, Category>{};
+    for (final c in cats) {
+      cache[c.id] = c;
     }
+
+    if (!mounted || version != _loadVersion) return;
+    setState(() {
+      _categoryCache = cache;
+      _transactions = txns;
+      _monthExpense = expense;
+      _monthIncome = income;
+      _loading = false;
+    });
+    _summaryController.forward();
   }
 
   void _onMonthChanged(DateTime month) {
@@ -424,6 +435,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: TransactionItem(
                       transaction: t,
+                      category: _categoryCache[t.categoryId],
                       onChanged: _loadData,
                     ),
                   )),

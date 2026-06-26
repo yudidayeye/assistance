@@ -69,9 +69,20 @@ class CategoryService {
     await _db.insert(_table, category.toMap());
   }
 
-  /// 删除自定义分类
-  Future<void> deleteCategory(String id) async {
+  /// 删除自定义分类（有引用时阻止删除）
+  Future<DeleteCategoryResult> deleteCategory(String id) async {
+    // 检查是否被交易引用
+    final refs = await _db.query(
+      'mod_accounting_transactions',
+      where: 'category_id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (refs.isNotEmpty) {
+      return DeleteCategoryResult.referenced;
+    }
     await _db.delete(_table, where: 'id = ? AND is_custom = 1', whereArgs: [id]);
+    return DeleteCategoryResult.success;
   }
 
   /// 获取所有分类
@@ -80,3 +91,6 @@ class CategoryService {
     return rows.map((r) => Category.fromMap(r)).toList();
   }
 }
+
+/// 删除分类结果
+enum DeleteCategoryResult { success, referenced }

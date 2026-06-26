@@ -1,7 +1,5 @@
+import '../../../core/storage/database_service.dart';
 import '../models/category.dart';
-import '../models/transaction.dart';
-import 'transaction_service.dart';
-import 'category_service.dart';
 
 /// 分类统计数据
 class CategoryStats {
@@ -12,46 +10,77 @@ class CategoryStats {
   CategoryStats({required this.category, required this.total, required this.percent});
 }
 
-/// 月度统计服务
+/// 月度统计服务 — 使用 SQL 聚合，避免 Dart 侧 fold 和逐条分类查询
 class StatsService {
   static final StatsService instance = StatsService._();
   StatsService._();
 
-  final TransactionService _txnService = TransactionService.instance;
-  final CategoryService _catService = CategoryService.instance;
+  final DatabaseService _db = DatabaseService.instance;
 
-  /// 获取某月支出分类统计
+  /// 获取某月支出分类统计（SQL GROUP BY + join 分类表）
   Future<List<CategoryStats>> getExpenseStatsByCategory(DateTime month) async {
-    final transactions = await _txnService.getTransactionsByMonth(month);
-    final expenseTxns = transactions.where((t) => t.type == TransactionType.expense);
+    final year = month.year;
+    final mon = month.month;
+    final datePrefix = '$year-${mon.toString().padLeft(2, '0')}';
 
-    final totalExpense = expenseTxns.fold(0.0, (sum, t) => sum + t.amount);
-    final Map<String, double> categoryTotals = {};
+    // 子查询：支出分类合计 + 分类原始信息
+    final rows = await _db.rawQuery('''
+      SELECT
+        c.id, c.name, c.type, c.icon_code_point, c.icon_font_family,
+        c.is_custom, c.sort_order,
+        COALESCE(t.total, 0) AS total
+      FROM mod_accounting_categories c
+      LEFT JOIN (
+        SELECT category_id, SUM(amount) AS total
+        FROM mod_accounting_transactions
+        WHERE type = 'expense' AND date LIKE ?
+        GROUP BY category_id
+      ) t ON c.id = t.category_id
+      WHERE c.type = 'expense'
+      ORDER BY total DESC
+    ''', ['$datePrefix%']);
 
-    for (final t in expenseTxns) {
-      categoryTotals[t.categoryId] = (categoryTotals[t.categoryId] ?? 0) + t.amount;
+    final totalExpense = rows.fold(0.0, (s, r) => s + (r['total'] as num).toDouble());
+    final stats = <CategoryStats>[];
+
+    for (final row in rows) {
+      final cat = Category.fromMap(row);
+      final total = (row['total'] as num).toDouble();
+      if (total <= 0) continue;
+      stats.add(CategoryStats(
+        category: cat,
+        total: total,
+        percent: totalExpense > 0 ? total / totalExpense : 0,
+      ));
     }
 
-    final List<CategoryStats> stats = [];
-    for (final entry in categoryTotals.entries) {
-      final cat = await _catService.getCategory(entry.key);
-      if (cat != null) {
-        stats.add(CategoryStats(
-          category: cat,
-          total: entry.value,
-          percent: totalExpense > 0 ? entry.value / totalExpense : 0,
-        ));
-      }
-    }
-
-    stats.sort((a, b) => b.total.compareTo(a.total));
     return stats;
   }
 
-  /// 获取某月收支概览
+  /// 获取某月收支概览（SQL SUM 聚合）
   Future<Map<String, double>> getMonthOverview(DateTime month) async {
-    final expense = await _txnService.getMonthExpenseTotal(month);
-    final income = await _txnService.getMonthIncomeTotal(month);
+    final year = month.year;
+    final mon = month.month.toString().padLeft(2, '0');
+    final datePrefix = '$year-$mon';
+
+    final rows = await _db.rawQuery('''
+      SELECT type, SUM(amount) AS total
+      FROM mod_accounting_transactions
+      WHERE date LIKE ?
+      GROUP BY type
+    ''', ['$datePrefix%']);
+
+    double income = 0;
+    double expense = 0;
+    for (final row in rows) {
+      final total = (row['total'] as num).toDouble();
+      if (row['type'] == 'income') {
+        income = total;
+      } else {
+        expense = total;
+      }
+    }
+
     return {
       'income': income,
       'expense': expense,

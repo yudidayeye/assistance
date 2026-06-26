@@ -244,7 +244,11 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
           if (cat.isCustom)
             GestureDetector(
               onTap: () async {
-                await CategoryService.instance.deleteCategory(cat.id);
+                final result = await CategoryService.instance.deleteCategory(cat.id);
+                if (result == DeleteCategoryResult.referenced && mounted) {
+                  _showSnackBar('该分类下还有交易记录，无法删除', isError: true);
+                  return;
+                }
                 _loadCategories();
               },
               child: Container(
@@ -314,6 +318,27 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    final appTheme = Theme.of(context).appTheme;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: isError ? Colors.white : appTheme.earth,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        backgroundColor: isError ? appTheme.rose : appTheme.primaryLight,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(milliseconds: 1500),
       ),
     );
   }
