@@ -48,11 +48,7 @@ class SettingsService {
   /// 设置模块启用状态
   Future<void> setModuleEnabled(String moduleId, bool enabled) async {
     _moduleEnabledCache[moduleId] = enabled;
-    // 使用 INSERT … ON CONFLICT 实现 upsert
-    await _db.database.then((db) => db.rawInsert(
-          'INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)',
-          ['module_enabled_$moduleId', enabled ? '1' : '0'],
-        ));
+    await _db.upsertSetting('module_enabled_$moduleId', enabled ? '1' : '0');
   }
 
   /// 获取免责声明确认状态

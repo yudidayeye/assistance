@@ -341,7 +341,7 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           // 清除数据
           GestureDetector(
-            onTap: _confirmClearAllData,
+            onTap: _confirmClearBusinessData,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -471,7 +471,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _confirmClearAllData() {
+  void _confirmClearBusinessData() {
     final appTheme = Theme.of(context).appTheme;
 
     showDialog(
@@ -487,7 +487,6 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 图标
               Container(
                 width: 64,
                 height: 64,
@@ -502,10 +501,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // 标题
               Text(
-                '确认清除所有数据？',
+                '确认清除所有业务数据？',
                 style: TextStyle(
                   fontFamily: GoogleFonts.playfairDisplay().fontFamily,
                   fontSize: 20,
@@ -515,10 +512,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-
-              // 内容
               Text(
-                '此操作将删除所有记账和生理期记录数据，且不可恢复。',
+                '此操作将删除所有记账和生理期记录，但保留设置和主题偏好。',
                 style: TextStyle(
                   fontSize: 14,
                   color: appTheme.earthMedium,
@@ -527,8 +522,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-
-              // 按钮
               Row(
                 children: [
                   Expanded(
@@ -560,10 +553,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () async {
-                        await _db.clearAllData();
+                        await _db.clearAllBusinessData();
                         if (!context.mounted) return;
                         Navigator.pop(ctx);
-                        _showSnackBar('所有数据已清除');
+                        _showSnackBar('业务数据已清除');
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 14),
