@@ -4,14 +4,13 @@ import '../models/period_record.dart';
 import '../../../shared/utils/date_utils.dart';
 import '../../../core/theme/theme_extension.dart';
 
-/// 日历中的日期类型
+/// 日历中的日期类型（按业务优先级排列）
 enum CalendarDayType {
   normal,
-  today,
-  periodActual,
   periodPredicted,
   fertileWindow,
   ovulationDay,
+  periodActual,
 }
 
 /// 经期日历 Widget — 奢华自然主义风格
@@ -86,7 +85,8 @@ class PeriodCalendar extends StatelessWidget {
               final date =
                   DateTime(displayedMonth.year, displayedMonth.month, day);
               final type = _getDayType(date);
-              return _buildDayCell(appTheme, date, type);
+              final isToday = AppDateUtils.isSameDay(date, DateTime.now());
+              return _buildDayCell(appTheme, date, type, isToday: isToday);
             },
           ),
 
@@ -99,18 +99,10 @@ class PeriodCalendar extends StatelessWidget {
   }
 
   CalendarDayType _getDayType(DateTime date) {
-    final today = DateTime.now();
-
-    // 今日
-    if (AppDateUtils.isSameDay(date, today)) {
-      return CalendarDayType.today;
-    }
-
-    // 实际经期
+    // 实际经期 — 最高业务优先级
     for (final record in records) {
       final start = record.startDate;
-      final end = record.endDate ?? today; // 进行中则用今日作为结束
-
+      final end = record.endDate ?? DateTime.now();
       if (AppDateUtils.isDateInRangeInclusive(date, start, end)) {
         return CalendarDayType.periodActual;
       }
@@ -141,16 +133,19 @@ class PeriodCalendar extends StatelessWidget {
   }
 
   Widget _buildDayCell(
-      AppThemeExtension appTheme, DateTime date, CalendarDayType type) {
+      AppThemeExtension appTheme, DateTime date, CalendarDayType type,
+      {bool isToday = false}) {
     Color? bgColor;
     Color textColor = appTheme.earth;
     double borderWidth = 0;
     Color borderColor = Colors.transparent;
+    FontWeight fontWeight = FontWeight.w500;
 
     switch (type) {
       case CalendarDayType.periodActual:
         bgColor = appTheme.rose;
         textColor = Colors.white;
+        fontWeight = FontWeight.w600;
         break;
       case CalendarDayType.periodPredicted:
         bgColor = appTheme.rose.withAlpha(40);
@@ -163,14 +158,20 @@ class PeriodCalendar extends StatelessWidget {
       case CalendarDayType.ovulationDay:
         bgColor = appTheme.primary;
         textColor = Colors.white;
-        break;
-      case CalendarDayType.today:
-        borderWidth = 2;
-        borderColor = appTheme.sage;
+        fontWeight = FontWeight.w600;
         break;
       case CalendarDayType.normal:
         bgColor = null;
         break;
+    }
+
+    // 今日 overlay — 不覆盖业务底色，只加外环标记
+    if (isToday) {
+      borderWidth = borderWidth > 0 ? borderWidth : 2;
+      borderColor = borderColor == Colors.transparent
+          ? appTheme.sage
+          : borderColor;
+      fontWeight = FontWeight.w700;
     }
 
     return Container(
@@ -187,8 +188,7 @@ class PeriodCalendar extends StatelessWidget {
         style: TextStyle(
           fontSize: 13,
           color: textColor,
-          fontWeight:
-              type == CalendarDayType.today ? FontWeight.w700 : FontWeight.w500,
+          fontWeight: fontWeight,
         ),
       ),
     );
