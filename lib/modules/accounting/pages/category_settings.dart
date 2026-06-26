@@ -319,208 +319,224 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
   }
 
   void _showAddDialog(TransactionType type) {
-    final appTheme = Theme.of(context).appTheme;
-    String name = '';
-    IconData selectedIcon = Icons.label;
-
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: appTheme.cream,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 标题
-              Text(
-                '添加${type == TransactionType.expense ? '支出' : '收入'}分类',
+      builder: (ctx) => _AddCategoryDialog(type: type),
+    ).then((_) => _loadCategories());
+  }
+}
+
+/// 添加分类弹窗 — 独立 StatefulWidget，弹窗内部维护图标选中状态
+class _AddCategoryDialog extends StatefulWidget {
+  final TransactionType type;
+
+  const _AddCategoryDialog({required this.type});
+
+  @override
+  State<_AddCategoryDialog> createState() => _AddCategoryDialogState();
+}
+
+class _AddCategoryDialogState extends State<_AddCategoryDialog> {
+  final _nameController = TextEditingController();
+  IconData _selectedIcon = Icons.label;
+  static const _availableIcons = [
+    Icons.restaurant,
+    Icons.directions_car,
+    Icons.shopping_bag,
+    Icons.home,
+    Icons.sports_esports,
+    Icons.medical_services,
+    Icons.school,
+    Icons.phone_android,
+    Icons.checkroom,
+    Icons.label,
+    Icons.payments,
+    Icons.card_giftcard,
+    Icons.trending_up,
+    Icons.laptop,
+    Icons.more_horiz,
+  ];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _add() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+
+    final currentCats = await CategoryService.instance.getCategories(widget.type);
+    await CategoryService.instance.addCustomCategory(
+      Category(
+        id: 'custom_${const Uuid().v4().substring(0, 8)}',
+        name: name,
+        type: widget.type,
+        icon: _selectedIcon,
+        isCustom: true,
+        sortOrder: currentCats.length,
+      ),
+    );
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: appTheme.cream,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '添加${widget.type == TransactionType.expense ? '支出' : '收入'}分类',
+              style: TextStyle(
+                fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: appTheme.earth,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: appTheme.earthMedium.withAlpha(30),
+                ),
+              ),
+              child: TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  hintText: '分类名称',
+                  hintStyle: TextStyle(
+                    color: appTheme.earthMedium.withAlpha(120),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                ),
                 style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
                   color: appTheme.earth,
+                  fontSize: 15,
                 ),
               ),
-              const SizedBox(height: 20),
-
-              // 输入框
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: appTheme.earthMedium.withAlpha(30),
-                  ),
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: '分类名称',
-                    hintStyle: TextStyle(
-                      color: appTheme.earthMedium.withAlpha(120),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                  ),
-                  style: TextStyle(
-                    color: appTheme.earth,
-                    fontSize: 15,
-                  ),
-                  onChanged: (v) => name = v,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              '选择图标',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: appTheme.earth,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: appTheme.earthMedium.withAlpha(20),
                 ),
               ),
-              const SizedBox(height: 20),
-
-              // 图标选择
-              Text(
-                '选择图标',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earth,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // 图标网格
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: appTheme.earthMedium.withAlpha(20),
-                  ),
-                ),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    Icons.restaurant,
-                    Icons.directions_car,
-                    Icons.shopping_bag,
-                    Icons.home,
-                    Icons.sports_esports,
-                    Icons.medical_services,
-                    Icons.school,
-                    Icons.phone_android,
-                    Icons.checkroom,
-                    Icons.label,
-                    Icons.payments,
-                    Icons.card_giftcard,
-                    Icons.trending_up,
-                    Icons.laptop,
-                    Icons.more_horiz,
-                  ]
-                      .map((icon) => GestureDetector(
-                            onTap: () {
-                              setState(() => selectedIcon = icon);
-                            },
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: selectedIcon == icon
-                                    ? appTheme.primary.withAlpha(30)
-                                    : appTheme.creamDark,
-                                borderRadius: BorderRadius.circular(12),
-                                border: selectedIcon == icon
-                                    ? Border.all(color: appTheme.primary)
-                                    : null,
-                              ),
-                              child: Icon(
-                                icon,
-                                size: 22,
-                                color: selectedIcon == icon
-                                    ? appTheme.primary
-                                    : appTheme.earthMedium,
-                              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _availableIcons
+                    .map((icon) => GestureDetector(
+                          onTap: () => setState(() => _selectedIcon = icon),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: _selectedIcon == icon
+                                  ? appTheme.primary.withAlpha(30)
+                                  : appTheme.creamDark,
+                              borderRadius: BorderRadius.circular(12),
+                              border: _selectedIcon == icon
+                                  ? Border.all(color: appTheme.primary)
+                                  : null,
                             ),
-                          ))
-                      .toList(),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 按钮
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: appTheme.creamDark,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: appTheme.earthMedium.withAlpha(30),
+                            child: Icon(
+                              icon,
+                              size: 22,
+                              color: _selectedIcon == icon
+                                  ? appTheme.primary
+                                  : appTheme.earthMedium,
+                            ),
                           ),
+                        ))
+                    .toList(),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: appTheme.creamDark,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: appTheme.earthMedium.withAlpha(30),
                         ),
-                        child: Center(
-                          child: Text(
-                            '取消',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: appTheme.earthMedium,
-                            ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '取消',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: appTheme.earthMedium,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        if (name.trim().isEmpty) return;
-                        final currentCats =
-                            await CategoryService.instance.getCategories(type);
-                        await CategoryService.instance.addCustomCategory(
-                          Category(
-                            id:
-                                'custom_${const Uuid().v4().substring(0, 8)}',
-                            name: name.trim(),
-                            type: type,
-                            icon: selectedIcon,
-                            isCustom: true,
-                            sortOrder: currentCats.length,
-                          ),
-                        );
-                        if (ctx.mounted) Navigator.pop(ctx);
-                        _loadCategories();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [appTheme.primary, appTheme.primaryDark],
-                          ),
-                          borderRadius: BorderRadius.circular(14),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _add,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [appTheme.primary, appTheme.primaryDark],
                         ),
-                        child: const Center(
-                          child: Text(
-                            '添加',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          '添加',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
