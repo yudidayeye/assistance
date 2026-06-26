@@ -1,4 +1,5 @@
 import '../models/period_record.dart';
+import '../../../shared/utils/date_utils.dart';
 
 /// 日期范围
 class DateRange {
@@ -57,23 +58,32 @@ class PredictionService {
   }
 
   /// 生成完整预测结果
-  PredictionResult? predict(List<PeriodRecord> records) {
+  /// [today] 可注入固定日期用于测试
+  PredictionResult? predict(List<PeriodRecord> records, {DateTime? today}) {
     if (records.isEmpty) return null;
 
+    final now = today ?? DateTime.now();
     final sorted = records.toList()
       ..sort((a, b) => a.startDate.compareTo(b.startDate));
     final lastRecord = sorted.last;
     final avgCycle = predictNextCycle(sorted);
 
-    final nextStartDate = lastRecord.startDate.add(Duration(days: avgCycle));
+    // 循环推进 nextStartDate 直到落在今天或未来
+    var nextStartDate = lastRecord.startDate.add(Duration(days: avgCycle));
+    while (nextStartDate.isBefore(AppDateUtils.dateOnly(now))) {
+      nextStartDate = nextStartDate.add(Duration(days: avgCycle));
+    }
+
     final ovulationDay = nextStartDate.subtract(const Duration(days: 14));
     final fertileWindow = DateRange(
       start: ovulationDay.subtract(const Duration(days: 5)),
       end: ovulationDay.add(const Duration(days: 1)),
     );
 
-    // 当前周期天数
-    final currentDay = DateTime.now().difference(lastRecord.startDate).inDays + 1;
+    // 当前周期天数（从最后一次经期开始到今天）
+    final currentDay = AppDateUtils.dateOnly(now)
+        .difference(AppDateUtils.dateOnly(lastRecord.startDate))
+        .inDays + 1;
 
     return PredictionResult(
       nextStartDate: nextStartDate,
