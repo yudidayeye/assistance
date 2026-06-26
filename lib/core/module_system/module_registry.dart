@@ -11,10 +11,20 @@ class ModuleRegistry {
   final Map<String, ToolModule> _modules = {};
   bool _initialized = false;
 
-  /// 注册模块
-  void register(ToolModule module) {
+  /// 异步注册单个模块，确保 onRegister() 被 await
+  Future<void> register(ToolModule module) async {
+    if (_modules.containsKey(module.moduleId)) {
+      throw StateError('Module "${module.moduleId}" is already registered');
+    }
     _modules[module.moduleId] = module;
-    module.onRegister(ModuleContext(moduleId: module.moduleId));
+    await module.onRegister(ModuleContext(moduleId: module.moduleId));
+  }
+
+  /// 批量注册模块并等待所有 onRegister 完成
+  Future<void> registerAll(List<ToolModule> modules) async {
+    for (final module in modules) {
+      await register(module);
+    }
   }
 
   /// 初始化所有模块

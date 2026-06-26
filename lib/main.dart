@@ -12,20 +12,26 @@ import 'modules/period_tracker/period_module.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 初始化数据库工厂（Web 需要特殊处理）
+  // 1. 初始化数据库工厂
   await DatabaseService.initializeFactory();
 
-  // 初始化核心服务
+  // 2. 打开数据库
   await DatabaseService.instance.database;
+
+  // 3. 注册并 await 所有模块（确保 onRegister 完成后再继续）
+  await ModuleRegistry.instance.registerAll([
+    AccountingModule(),
+    PeriodTrackerModule(),
+  ]);
+
+  // 4. 初始化设置默认值（基于已注册模块动态 seed）
+  await SettingsService.instance.seedDefaultsForModules();
+
+  // 5. 加载设置和主题
   await SettingsService.instance.loadSettings();
-  await SettingsService.instance.initializeDefaults();
   await ThemeProvider.instance.loadTheme();
 
-  // 注册模块
-  ModuleRegistry.instance.register(AccountingModule());
-  ModuleRegistry.instance.register(PeriodTrackerModule());
-
-  // 初始化路由
+  // 6. 初始化路由
   final router = AppRouter.instance.initRouter();
 
   runApp(ToolboxApp(router: router));
