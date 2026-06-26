@@ -318,6 +318,7 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
                   label: '结余',
                   value: _overview['balance'] ?? 0,
                   color: appTheme.primary,
+                  isBalance: true,
                 ),
               ),
             ],
@@ -332,6 +333,7 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
     required String label,
     required double value,
     required Color color,
+    bool isBalance = false,
   }) {
     return Column(
       children: [
@@ -344,7 +346,9 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
         ),
         const SizedBox(height: 8),
         Text(
-          FormatUtils.formatAmount(value),
+          isBalance
+              ? FormatUtils.formatBalance(value)
+              : FormatUtils.formatAmount(value),
           style: TextStyle(
             fontFamily: GoogleFonts.playfairDisplay().fontFamily,
             fontSize: 18,

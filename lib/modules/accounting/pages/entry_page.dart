@@ -295,6 +295,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
                   color: _monthIncome - _monthExpense >= 0
                       ? appTheme.sage
                       : appTheme.rose,
+                  isBalance: true,
                 ),
               ),
             ],
@@ -309,6 +310,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
     required String label,
     required double amount,
     required Color color,
+    bool isBalance = false,
   }) {
     return Column(
       children: [
@@ -321,7 +323,9 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
         ),
         const SizedBox(height: 4),
         Text(
-          FormatUtils.formatAmount(amount),
+          isBalance
+              ? FormatUtils.formatBalance(amount)
+              : FormatUtils.formatAmount(amount),
           style: TextStyle(
             fontFamily: GoogleFonts.playfairDisplay().fontFamily,
             fontSize: 18,

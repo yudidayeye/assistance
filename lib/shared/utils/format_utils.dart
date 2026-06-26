@@ -1,11 +1,20 @@
 /// 格式化工具类
 class FormatUtils {
-  /// 格式化金额
+  /// 格式化交易金额（始终显示为正值，用于收入/支出条目）
   static String formatAmount(double amount) {
-    if (amount == amount.truncateToDouble()) {
-      return '¥${amount.truncate().abs()}';
+    final v = amount.abs();
+    if (v == v.truncateToDouble()) {
+      return '¥${v.truncate()}';
     }
-    return '¥${amount.abs().toStringAsFixed(2)}';
+    return '¥${v.toStringAsFixed(2)}';
+  }
+
+  /// 格式化结余/净额（保留正负号，用于余额显示）
+  static String formatBalance(double amount) {
+    if (amount == amount.truncateToDouble()) {
+      return '¥${amount.truncate()}';
+    }
+    return '¥${amount.toStringAsFixed(2)}';
   }
 
   /// 格式化金额（带符号）

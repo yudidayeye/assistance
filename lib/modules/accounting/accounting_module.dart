@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/module_system/tool_module.dart';
 import '../../core/module_system/module_context.dart';
 import '../../core/module_system/module_summary.dart';
+import '../../shared/utils/format_utils.dart';
 import 'services/transaction_service.dart';
 import 'services/category_service.dart';
 import 'pages/entry_page.dart';
@@ -45,6 +46,6 @@ class AccountingModule implements ToolModule {
   @override
   Future<ModuleSummary> getSummary() async {
     final todayExpense = await TransactionService.instance.getTodayExpenseTotal();
-    return ModuleSummary(line1: '今日支出 ¥${todayExpense == todayExpense.truncateToDouble() ? todayExpense.truncate() : todayExpense.toStringAsFixed(2)}');
+    return ModuleSummary(line1: '今日支出 ${FormatUtils.formatAmount(todayExpense)}');
   }
 }
