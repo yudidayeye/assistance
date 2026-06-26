@@ -111,12 +111,7 @@ class PeriodCalendar extends StatelessWidget {
       final start = record.startDate;
       final end = record.endDate ?? today; // 进行中则用今日作为结束
 
-      if (date.year >= start.year &&
-          date.month >= start.month &&
-          date.day >= start.day &&
-          date.year <= end.year &&
-          date.month <= end.month &&
-          date.day <= end.day) {
+      if (AppDateUtils.isDateInRangeInclusive(date, start, end)) {
         return CalendarDayType.periodActual;
       }
     }
@@ -125,8 +120,7 @@ class PeriodCalendar extends StatelessWidget {
     if (prediction != null) {
       final nextStart = prediction!.nextStartDate;
       final predictedEnd = nextStart.add(const Duration(days: 4));
-      if (date.compareTo(nextStart) >= 0 &&
-          date.compareTo(predictedEnd) <= 0) {
+      if (AppDateUtils.isDateInRangeInclusive(date, nextStart, predictedEnd)) {
         return CalendarDayType.periodPredicted;
       }
     }
@@ -135,8 +129,7 @@ class PeriodCalendar extends StatelessWidget {
     if (prediction != null) {
       final fertileStart = prediction!.fertileWindow.start;
       final fertileEnd = prediction!.fertileWindow.end;
-      if (date.compareTo(fertileStart) >= 0 &&
-          date.compareTo(fertileEnd) <= 0) {
+      if (AppDateUtils.isDateInRangeInclusive(date, fertileStart, fertileEnd)) {
         if (AppDateUtils.isSameDay(date, prediction!.ovulationDay)) {
           return CalendarDayType.ovulationDay;
         }

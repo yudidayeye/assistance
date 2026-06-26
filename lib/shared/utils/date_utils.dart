@@ -1,5 +1,18 @@
 /// 日期工具类
 class AppDateUtils {
+  /// 将 DateTime 标准化为仅日期部分（去除时分秒毫秒）
+  static DateTime dateOnly(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  /// 判断 date 是否在 [start, end] 闭区间内（使用 date-only 比较）
+  static bool isDateInRangeInclusive(DateTime date, DateTime start, DateTime end) {
+    final d = dateOnly(date);
+    final s = dateOnly(start);
+    final e = dateOnly(end);
+    return !d.isBefore(s) && !d.isAfter(e);
+  }
+
   /// 格式化月份显示
   static String formatMonth(DateTime date) {
     return '${date.year}年${date.month}月';
