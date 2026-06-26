@@ -1,3 +1,4 @@
+import 'package:uuid/uuid.dart';
 import '../../../core/storage/database_service.dart';
 import '../models/period_record.dart';
 
@@ -23,6 +24,19 @@ class PeriodService {
 
   /// 插入记录
   Future<void> insertRecord(PeriodRecord record) async {
+    await _db.insert(_table, record.toMap());
+    await _updateCycleLengths();
+  }
+
+  /// 插入一条经期范围记录（start→end）
+  Future<void> insertPeriodRange(DateTime start, DateTime end) async {
+    final now = DateTime.now();
+    final record = PeriodRecord(
+      id: const Uuid().v4(),
+      startDate: start,
+      endDate: end,
+      createdAt: now,
+    );
     await _db.insert(_table, record.toMap());
     await _updateCycleLengths();
   }

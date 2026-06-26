@@ -5,6 +5,7 @@ import '../models/period_record.dart';
 import '../services/period_service.dart';
 import '../services/prediction_service.dart';
 import '../widgets/period_calendar.dart';
+import '../widgets/date_detail_panel.dart';
 import '../../../shared/utils/date_utils.dart';
 import '../../../core/theme/theme_extension.dart';
 
@@ -101,7 +102,7 @@ class _CalendarPageState extends State<CalendarPage>
                 // 日历 card（内含月份切换）
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                     child: PeriodCalendar(
                       displayedMonth: _displayedMonth,
                       records: _records,
@@ -116,6 +117,17 @@ class _CalendarPageState extends State<CalendarPage>
                     ),
                   ),
                 ),
+
+                // 日期详情面板
+                if (_selectedDate != null)
+                  SliverToBoxAdapter(
+                    child: DateDetailPanel(
+                      selectedDate: _selectedDate!,
+                      records: _records,
+                      prediction: _prediction,
+                      onChanged: _loadData,
+                    ),
+                  ),
 
                 // 预测信息
                 if (_prediction != null)
