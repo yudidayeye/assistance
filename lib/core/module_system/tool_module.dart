@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'module_context.dart';
 import 'module_summary.dart';
 
@@ -43,6 +44,9 @@ abstract class ToolModule implements ModuleSummaryProvider {
 
   /// 模块设置页面（可选）
   Widget? buildSettingsPage(BuildContext context);
+
+  /// 模块子路由（模块自行声明，默认返回空列表）
+  List<RouteBase> buildSubRoutes() => [];
 
   /// 模块注册时的初始化逻辑（如建表、迁移）
   Future<void> onRegister(ModuleContext context);

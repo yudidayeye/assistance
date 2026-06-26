@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/module_system/tool_module.dart';
 import '../../core/module_system/module_context.dart';
 import '../../core/module_system/module_summary.dart';
 import 'services/period_service.dart';
 import 'services/prediction_service.dart';
 import 'pages/calendar_page.dart';
+import 'pages/record_page.dart';
+import 'pages/stats_page.dart';
 import '../../../shared/utils/date_utils.dart';
 
 /// 生理期记录模块注册
@@ -29,6 +32,18 @@ class PeriodTrackerModule implements ToolModule {
 
   @override
   Widget? buildSettingsPage(BuildContext context) => null;
+
+  @override
+  List<RouteBase> buildSubRoutes() => [
+        GoRoute(
+          path: 'record',
+          builder: (context, state) => const PeriodRecordPage(),
+        ),
+        GoRoute(
+          path: 'stats',
+          builder: (context, state) => const PeriodStatsPage(),
+        ),
+      ];
 
   @override
   Future<void> onRegister(ModuleContext context) async {}

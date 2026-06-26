@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/module_system/tool_module.dart';
 import '../../core/module_system/module_context.dart';
 import '../../core/module_system/module_summary.dart';
@@ -6,6 +7,8 @@ import '../../shared/utils/format_utils.dart';
 import 'services/transaction_service.dart';
 import 'services/category_service.dart';
 import 'pages/entry_page.dart';
+import 'pages/add_page.dart';
+import 'pages/stats_page.dart';
 import 'pages/category_settings.dart';
 
 /// 记账模块注册
@@ -30,6 +33,29 @@ class AccountingModule implements ToolModule {
 
   @override
   Widget? buildSettingsPage(BuildContext context) => const CategorySettingsPage();
+
+  @override
+  List<RouteBase> buildSubRoutes() => [
+        GoRoute(
+          path: 'add',
+          builder: (context, state) => const AddTransactionPage(),
+        ),
+        GoRoute(
+          path: 'stats',
+          builder: (context, state) => const AccountingStatsPage(),
+        ),
+        GoRoute(
+          path: 'categories',
+          builder: (context, state) => const CategorySettingsPage(),
+        ),
+        GoRoute(
+          path: 'edit/:id',
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return AddTransactionPage(editId: id);
+          },
+        ),
+      ];
 
   @override
   Future<void> onRegister(ModuleContext context) async {
