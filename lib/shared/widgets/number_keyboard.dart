@@ -2,6 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/theme_extension.dart';
 
+/// 金额输入纯函数 reducer：当前字符串 + 按键 -> 新字符串
+/// 规则：最多两位小数、前导零替换、'00' 处理、退格、小数点
+String reduceAmountText(String current, String key) {
+  if (key == 'del') {
+    if (current.isEmpty) return current;
+    return current.substring(0, current.length - 1);
+  }
+
+  if (key == '.') {
+    if (current.contains('.')) return current;
+    if (current.isEmpty) return '0.';
+    return '$current.';
+  }
+
+  if (key == '00') {
+    if (current.isEmpty || current == '0') return current;
+    // 有小数点时不允许添加 '00'，避免产生三位以上小数
+    if (current.contains('.')) return current;
+    return '${current}00';
+  }
+
+  // 数字键 0-9
+  if (current == '0') return key;
+  if (current.contains('.')) {
+    final decimalPart = current.split('.')[1];
+    if (decimalPart.length >= 2) return current;
+  }
+  return '$current$key';
+}
+
 /// 自定义数字键盘 — 奢华自然主义风格
 class NumberKeyboard extends StatelessWidget {
   final String currentValue;
@@ -18,33 +48,6 @@ class NumberKeyboard extends StatelessWidget {
     this.doneText = '完成',
     this.doneColor = const Color(0xFFD4AF37),
   });
-
-  void _onKey(String key) {
-    String newVal = currentValue;
-
-    if (key == '.') {
-      if (newVal.contains('.')) return;
-      if (newVal.isEmpty) newVal = '0';
-      newVal += '.';
-    } else if (key == 'del') {
-      if (newVal.isNotEmpty) {
-        newVal = newVal.substring(0, newVal.length - 1);
-      }
-    } else if (key == '00') {
-      if (newVal.isEmpty || newVal == '0') return;
-      if (newVal.contains('.') && newVal.split('.')[1].length >= 2) return;
-      newVal += '00';
-    } else {
-      if (newVal == '0' && key != '.') newVal = '';
-      if (newVal.contains('.')) {
-        final decimalPart = newVal.split('.')[1];
-        if (decimalPart.length >= 2) return;
-      }
-      newVal += key;
-    }
-
-    onValueChanged(newVal);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +102,7 @@ class NumberKeyboard extends StatelessWidget {
 
   Widget _buildKey(String key, AppThemeExtension appTheme) {
     return GestureDetector(
-      onTap: () => _onKey(key),
+      onTap: () => onValueChanged(reduceAmountText(currentValue, key)),
       child: Container(
         height: 52,
         margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -128,7 +131,7 @@ class NumberKeyboard extends StatelessWidget {
   Widget _buildSpecialKey(
       String key, IconData icon, AppThemeExtension appTheme) {
     return GestureDetector(
-      onTap: () => _onKey(key),
+      onTap: () => onValueChanged(reduceAmountText(currentValue, key)),
       child: Container(
         height: 52,
         margin: const EdgeInsets.symmetric(horizontal: 4),
