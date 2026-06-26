@@ -26,10 +26,10 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   TransactionType _type = TransactionType.expense;
   String? _selectedCategoryId;
   String _amountText = '';
-  String _note = '';
   DateTime _selectedDate = DateTime.now();
   List<Category> _categories = [];
   late AnimationController _typeController;
+  late TextEditingController _noteController;
 
   @override
   void initState() {
@@ -38,6 +38,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
+    _noteController = TextEditingController();
 
     _loadCategories();
     if (widget.editId != null) {
@@ -48,6 +49,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   @override
   void dispose() {
     _typeController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -65,7 +67,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         _amountText = txn.amount == txn.amount.truncateToDouble()
             ? txn.amount.truncate().toString()
             : txn.amount.toStringAsFixed(2);
-        _note = txn.note ?? '';
+        _noteController.text = txn.note ?? '';
         _selectedDate = txn.date;
       });
       await _loadCategories();
@@ -126,7 +128,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
             type: _type,
             categoryId: _selectedCategoryId!,
             amount: amount,
-            note: _note.isEmpty ? null : _note,
+            note: _noteController.text.isEmpty ? null : _noteController.text,
             date: _selectedDate,
             updatedAt: now,
           ),
@@ -139,7 +141,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
           type: _type,
           categoryId: _selectedCategoryId!,
           amount: amount,
-          note: _note.isEmpty ? null : _note,
+          note: _noteController.text.isEmpty ? null : _noteController.text,
           date: _selectedDate,
           createdAt: now,
         ),
@@ -241,6 +243,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                       ),
                     ),
                     child: TextField(
+                      controller: _noteController,
                       decoration: InputDecoration(
                         hintText: '添加备注...',
                         hintStyle: TextStyle(
@@ -258,8 +261,6 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                         color: appTheme.earth,
                         fontSize: 15,
                       ),
-                      onChanged: (v) => _note = v,
-                      controller: TextEditingController(text: _note),
                     ),
                   ),
                   const SizedBox(height: 20),
