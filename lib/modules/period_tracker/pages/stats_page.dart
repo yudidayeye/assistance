@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -484,7 +485,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
     final variance =
         values.map((v) => (v - mean) * (v - mean)).reduce((a, b) => a + b) /
             values.length;
-    return variance; // Return variance as a simplified measure
+    return sqrt(variance);
   }
 
   void _confirmDelete(String id) {
