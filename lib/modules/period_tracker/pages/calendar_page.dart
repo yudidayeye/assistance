@@ -85,65 +85,64 @@ class _CalendarPageState extends State<CalendarPage>
                 color: appTheme.rose,
               ),
             )
-          : CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
+          : Column(
+              children: [
                 // 头部区域
-                SliverToBoxAdapter(
-                  child: FadeTransition(
-                    opacity: _headerFadeAnim,
-                    child: SlideTransition(
-                      position: _headerSlideAnim,
-                      child: _buildHeader(context, appTheme),
-                    ),
+                FadeTransition(
+                  opacity: _headerFadeAnim,
+                  child: SlideTransition(
+                    position: _headerSlideAnim,
+                    child: _buildHeader(context, appTheme),
                   ),
                 ),
 
-                // 日历 card（内含月份切换）
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: PeriodCalendar(
-                      displayedMonth: _displayedMonth,
-                      records: _records,
-                      prediction: _prediction,
-                      onMonthChanged: (month) {
-                        setState(() => _displayedMonth = month);
-                      },
-                      selectedDate: _selectedDate,
-                      onDateSelected: (date) {
-                        setState(() => _selectedDate = date);
-                      },
+                // 可滚动内容区
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        // 日历 card（内含月份切换）
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                          child: PeriodCalendar(
+                            displayedMonth: _displayedMonth,
+                            records: _records,
+                            prediction: _prediction,
+                            onMonthChanged: (month) {
+                              setState(() => _displayedMonth = month);
+                            },
+                            selectedDate: _selectedDate,
+                            onDateSelected: (date) {
+                              setState(() => _selectedDate = date);
+                            },
+                          ),
+                        ),
+
+                        // 日期详情面板
+                        if (_selectedDate != null)
+                          DateDetailPanel(
+                            selectedDate: _selectedDate!,
+                            records: _records,
+                            prediction: _prediction,
+                            onChanged: _loadData,
+                          ),
+
+                        // 预测信息
+                        if (_prediction != null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                            child: _buildPredictionCard(appTheme),
+                          )
+                        else if (!_loading)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                            child: _buildEmptyPrediction(appTheme),
+                          ),
+                      ],
                     ),
                   ),
                 ),
-
-                // 日期详情面板
-                if (_selectedDate != null)
-                  SliverToBoxAdapter(
-                    child: DateDetailPanel(
-                      selectedDate: _selectedDate!,
-                      records: _records,
-                      prediction: _prediction,
-                      onChanged: _loadData,
-                    ),
-                  ),
-
-                // 预测信息
-                if (_prediction != null)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                      child: _buildPredictionCard(appTheme),
-                    ),
-                  )
-                else if (!_loading)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                      child: _buildEmptyPrediction(appTheme),
-                    ),
-                  ),
               ],
             ),
     );

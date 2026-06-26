@@ -53,6 +53,14 @@ class _SettingsPageState extends State<SettingsPage> {
             child: _buildThemeSection(appTheme),
           ),
 
+          // 功能
+          SliverToBoxAdapter(
+            child: _buildSectionHeader(appTheme, '功能', Icons.apps_rounded),
+          ),
+          SliverToBoxAdapter(
+            child: _buildFunctionSection(appTheme),
+          ),
+
           // 数据管理
           SliverToBoxAdapter(
             child:
@@ -393,6 +401,87 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFunctionSection(AppThemeExtension appTheme) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: appTheme.earthMedium.withAlpha(20),
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildFunctionItem(
+            appTheme,
+            icon: Icons.notifications_outlined,
+            label: '通知管理',
+            onTap: () {},
+          ),
+          Divider(
+            height: 1,
+            indent: 56,
+            color: appTheme.earthMedium.withAlpha(15),
+          ),
+          _buildFunctionItem(
+            appTheme,
+            icon: Icons.help_outline_rounded,
+            label: '帮助与反馈',
+            onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFunctionItem(
+    AppThemeExtension appTheme, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: appTheme.primary.withAlpha(15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: appTheme.primary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earth,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: appTheme.earthMedium.withAlpha(100),
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
