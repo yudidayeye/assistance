@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../core/module_system/module_registry.dart';
 import '../core/settings/settings_service.dart';
+import '../core/theme/theme_extension.dart';
 import '../shared/widgets/featured_card.dart';
 import '../shared/widgets/toolbox_bottom_nav.dart';
 import 'profile_page.dart';
@@ -37,15 +38,13 @@ class _MainShellPageState extends State<MainShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFf5f6fa),
+      backgroundColor: appTheme.cream,
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          // 工具箱页
-          _buildToolboxPage(),
-
-          // 我的页
+          _buildToolboxPage(appTheme),
           const ProfilePageContent(),
         ],
       ),
@@ -59,17 +58,15 @@ class _MainShellPageState extends State<MainShellPage> {
     );
   }
 
-  Widget _buildToolboxPage() {
+  Widget _buildToolboxPage(AppThemeExtension appTheme) {
     final enabledModules = ModuleRegistry.instance.getEnabledModules();
 
     return Column(
       children: [
-        // 头部区域
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
           child: Row(
             children: [
-              // 左侧标题
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,7 +77,7 @@ class _MainShellPageState extends State<MainShellPage> {
                         fontFamily: GoogleFonts.dmSans().fontFamily,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF8892a4),
+                        color: appTheme.earthMedium,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -90,7 +87,7 @@ class _MainShellPageState extends State<MainShellPage> {
                         fontFamily: GoogleFonts.robotoSlab().fontFamily,
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1a1d2e),
+                        color: appTheme.earth,
                         height: 1.33,
                         letterSpacing: -0.5,
                       ),
@@ -98,8 +95,6 @@ class _MainShellPageState extends State<MainShellPage> {
                   ],
                 ),
               ),
-
-              // 右侧设置按钮
               GestureDetector(
                 onTap: () => context.push('/settings'),
                 child: Container(
@@ -109,12 +104,12 @@ class _MainShellPageState extends State<MainShellPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: const Color(0xFF8892a4).withAlpha(30),
+                      color: appTheme.earthMedium.withAlpha(30),
                     ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.settings_outlined,
-                    color: Color(0xFF8892a4),
+                    color: appTheme.earthMedium,
                     size: 22,
                   ),
                 ),
@@ -122,8 +117,6 @@ class _MainShellPageState extends State<MainShellPage> {
             ],
           ),
         ),
-
-        // 两列特色功能卡片
         Expanded(
           child: GridView.count(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),

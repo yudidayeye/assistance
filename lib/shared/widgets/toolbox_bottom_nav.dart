@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/theme/theme_extension.dart';
 
 /// 工具箱底部导航栏
 class ToolboxBottomNav extends StatelessWidget {
@@ -12,11 +13,9 @@ class ToolboxBottomNav extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _selectedColor = Color(0xFF10b981);
-  static const _unselectedColor = Color(0xFF8892a4);
-
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
     return Container(
       margin: const EdgeInsets.only(top: 14),
       decoration: BoxDecoration(
@@ -35,6 +34,8 @@ class ToolboxBottomNav extends StatelessWidget {
               label: '工具箱',
               isSelected: selectedIndex == 0,
               onTap: () => onTap(0),
+              selectedColor: appTheme.sage,
+              unselectedColor: appTheme.earthMedium,
             ),
           ),
           Expanded(
@@ -43,6 +44,8 @@ class ToolboxBottomNav extends StatelessWidget {
               label: '我的',
               isSelected: selectedIndex == 1,
               onTap: () => onTap(1),
+              selectedColor: appTheme.sage,
+              unselectedColor: appTheme.earthMedium,
             ),
           ),
         ],
@@ -56,19 +59,21 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final Color selectedColor;
+  final Color unselectedColor;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.isSelected,
     required this.onTap,
+    required this.selectedColor,
+    required this.unselectedColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected
-        ? ToolboxBottomNav._selectedColor
-        : ToolboxBottomNav._unselectedColor;
+    final color = isSelected ? selectedColor : unselectedColor;
 
     return GestureDetector(
       onTap: onTap,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/module_system/tool_module.dart';
+import '../../core/theme/theme_extension.dart';
 import 'package:go_router/go_router.dart';
 
 /// 特色功能卡片 — 极简风格
@@ -18,12 +19,13 @@ class FeaturedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = module.themeColor;
+    final appTheme = Theme.of(context).appTheme;
 
     return GestureDetector(
       onTap: onTap ?? () => context.push('/${module.moduleId}'),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: appTheme.creamDark,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -36,7 +38,6 @@ class FeaturedCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 图标 — 浅色背景 + 主题色
             Container(
               width: 48,
               height: 48,
@@ -49,15 +50,13 @@ class FeaturedCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-
-            // 标题
             Text(
               module.displayName,
               style: TextStyle(
                 fontFamily: GoogleFonts.robotoSlab().fontFamily,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF2C1810),
+                color: appTheme.earth,
                 letterSpacing: -0.2,
               ),
               textAlign: TextAlign.center,
