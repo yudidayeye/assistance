@@ -283,7 +283,7 @@ class PeriodCalendar extends StatelessWidget {
         children: [
           _buildLegend(appTheme, appTheme.rose, '经期'),
           _buildLegend(appTheme, appTheme.rose.withAlpha(80), '预测经期'),
-          _buildLegend(appTheme, appTheme.primary, '易孕期'),
+          _buildLegend(appTheme, appTheme.primary, '排卵期'),
           _buildLegend(appTheme, appTheme.sage, '今日'),
         ],
       ),

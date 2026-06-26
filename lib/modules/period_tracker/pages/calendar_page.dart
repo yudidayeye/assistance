@@ -146,7 +146,6 @@ class _CalendarPageState extends State<CalendarPage>
                   ),
               ],
             ),
-      floatingActionButton: _buildFAB(context, appTheme),
     );
   }
 
@@ -386,41 +385,6 @@ class _CalendarPageState extends State<CalendarPage>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFAB(BuildContext context, AppThemeExtension appTheme) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            appTheme.rose,
-            appTheme.rose.withAlpha(200),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: appTheme.rose.withAlpha(80),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: FloatingActionButton(
-        onPressed: () {
-          context.push('/period_tracker/record').then((_) => _loadData());
-        },
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: const Icon(
-          Icons.add_rounded,
-          color: Colors.white,
-          size: 28,
-        ),
       ),
     );
   }

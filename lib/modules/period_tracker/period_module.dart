@@ -6,7 +6,6 @@ import '../../core/module_system/module_summary.dart';
 import 'services/period_service.dart';
 import 'services/prediction_service.dart';
 import 'pages/calendar_page.dart';
-import 'pages/record_page.dart';
 import 'pages/stats_page.dart';
 import '../../../shared/utils/date_utils.dart';
 
@@ -35,10 +34,6 @@ class PeriodTrackerModule implements ToolModule {
 
   @override
   List<RouteBase> buildSubRoutes() => [
-        GoRoute(
-          path: 'record',
-          builder: (context, state) => const PeriodRecordPage(),
-        ),
         GoRoute(
           path: 'stats',
           builder: (context, state) => const PeriodStatsPage(),
