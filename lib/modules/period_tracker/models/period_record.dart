@@ -19,20 +19,22 @@ class PeriodRecord {
   PeriodRecord copyWith({
     String? id,
     DateTime? startDate,
-    DateTime? endDate,
-    int? cycleLength,
+    Object endDate = _sentinel,
+    Object? cycleLength = _sentinel,
     DateTime? createdAt,
-    DateTime? updatedAt,
+    Object? updatedAt = _sentinel,
   }) {
     return PeriodRecord(
       id: id ?? this.id,
       startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
-      cycleLength: cycleLength ?? this.cycleLength,
+      endDate: endDate == _sentinel ? this.endDate : endDate as DateTime?,
+      cycleLength: cycleLength == _sentinel ? this.cycleLength : cycleLength as int?,
       createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      updatedAt: updatedAt == _sentinel ? this.updatedAt : updatedAt as DateTime?,
     );
   }
+
+  static const _sentinel = Object();
 
   /// 经期持续天数
   int? get durationDays {

@@ -5,6 +5,7 @@ import '../models/period_record.dart';
 import '../services/period_service.dart';
 import '../services/prediction_service.dart';
 import '../widgets/period_calendar.dart';
+import '../../../shared/widgets/month_selector.dart';
 import '../../../shared/utils/date_utils.dart';
 import '../../../core/theme/theme_extension.dart';
 
@@ -70,11 +71,8 @@ class _CalendarPageState extends State<CalendarPage>
     }
   }
 
-  void _changeMonth(int offset) {
-    setState(() {
-      _displayedMonth =
-          DateTime(_displayedMonth.year, _displayedMonth.month + offset, 1);
-    });
+  void _onMonthChanged(DateTime month) {
+    setState(() => _displayedMonth = month);
   }
 
   @override
@@ -106,7 +104,10 @@ class _CalendarPageState extends State<CalendarPage>
 
                 // 月份切换
                 SliverToBoxAdapter(
-                  child: _buildMonthSwitcher(appTheme),
+                  child: MonthSelector(
+                    selectedMonth: _displayedMonth,
+                    onMonthChanged: _onMonthChanged,
+                  ),
                 ),
 
                 // 日历
@@ -206,73 +207,6 @@ class _CalendarPageState extends State<CalendarPage>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMonthSwitcher(AppThemeExtension appTheme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: appTheme.earthMedium.withAlpha(20),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // 上一月按钮
-            GestureDetector(
-              onTap: () => _changeMonth(-1),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: appTheme.creamDark,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.chevron_left_rounded,
-                  color: appTheme.earthMedium,
-                  size: 20,
-                ),
-              ),
-            ),
-
-            // 月份显示
-            Text(
-              '${_displayedMonth.year}年${_displayedMonth.month}月',
-              style: TextStyle(
-                fontFamily: 'Playfair Display',
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: appTheme.earth,
-              ),
-            ),
-
-            // 下一月按钮
-            GestureDetector(
-              onTap: () => _changeMonth(1),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: appTheme.creamDark,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  color: appTheme.earthMedium,
-                  size: 20,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

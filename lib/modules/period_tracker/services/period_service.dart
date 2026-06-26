@@ -74,20 +74,33 @@ class PeriodService {
     return PeriodRecord.fromMap(rows.first);
   }
 
-  /// 重新计算所有周期长度
+  /// 重新计算所有周期长度（事务中执行：先清空再重算）
   Future<void> _updateCycleLengths() async {
-    final records = await getAllRecords();
-    final sorted = records.toList()
-      ..sort((a, b) => a.startDate.compareTo(b.startDate));
-
-    for (int i = 1; i < sorted.length; i++) {
-      final cycleLength = sorted[i].startDate.difference(sorted[i - 1].startDate).inDays;
-      await _db.update(
-        _table,
-        {'cycle_length': cycleLength},
-        where: 'id = ?',
-        whereArgs: [sorted[i].id],
+    await _db.transaction((txn) async {
+      // 先清空所有 cycle_length
+      await txn.rawUpdate(
+        'UPDATE $_table SET cycle_length = NULL',
       );
-    }
+
+      // 按 start_date 升序获取所有记录
+      final rows = await txn.rawQuery(
+        'SELECT id, start_date FROM $_table ORDER BY start_date ASC',
+      );
+      final records = rows
+          .map((r) => PeriodRecord.fromMap(r))
+          .toList();
+
+      // 从第二条开始写入与上一条的间隔
+      for (int i = 1; i < records.length; i++) {
+        final cycleLength = records[i]
+            .startDate
+            .difference(records[i - 1].startDate)
+            .inDays;
+        await txn.rawUpdate(
+          'UPDATE $_table SET cycle_length = ? WHERE id = ?',
+          [cycleLength, records[i].id],
+        );
+      }
+    });
   }
 }

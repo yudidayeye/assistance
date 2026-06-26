@@ -111,7 +111,8 @@ class PeriodCalendar extends StatelessWidget {
     // 预测经期
     if (prediction != null) {
       final nextStart = prediction!.nextStartDate;
-      final predictedEnd = nextStart.add(const Duration(days: 4));
+      final predictedEnd = nextStart.add(const Duration(
+          days: PredictionConfig.defaultPeriodDuration - 1));
       if (AppDateUtils.isDateInRangeInclusive(date, nextStart, predictedEnd)) {
         return CalendarDayType.periodPredicted;
       }

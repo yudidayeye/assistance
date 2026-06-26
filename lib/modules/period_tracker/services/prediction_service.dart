@@ -1,6 +1,30 @@
 import '../models/period_record.dart';
 import '../../../shared/utils/date_utils.dart';
 
+/// 预测算法常量配置 — 集中管理，改一处全局生效
+class PredictionConfig {
+  /// 默认周期长度（少于 3 条记录时使用）
+  static const int defaultCycleLength = 28;
+
+  /// 最少需要多少条有效记录才能加权计算
+  static const int minRecordsForWeighted = 3;
+
+  /// 加权窗口大小
+  static const int maxRecordsForWeight = 6;
+
+  /// 排卵日偏移（下次经期前 N 天）
+  static const int ovulationOffset = 14;
+
+  /// 易孕期窗口：排卵前 N 天
+  static const int fertileWindowBefore = 5;
+
+  /// 易孕期窗口：排卵后 N 天
+  static const int fertileWindowAfter = 1;
+
+  /// 预测经期默认持续天数
+  static const int defaultPeriodDuration = 5;
+}
+
 /// 日期范围
 class DateRange {
   final DateTime start;
@@ -33,16 +57,17 @@ class PredictionService {
 
   /// 计算加权平均周期长度
   int predictNextCycle(List<PeriodRecord> records) {
-    // 取最近6个有效周期长度
     final cycleLengths = records
         .where((r) => r.cycleLength != null)
         .map((r) => r.cycleLength!)
         .toList()
         .reversed
-        .take(6)
+        .take(PredictionConfig.maxRecordsForWeight)
         .toList();
 
-    if (cycleLengths.length < 3) return 28; // 默认值
+    if (cycleLengths.length < PredictionConfig.minRecordsForWeighted) {
+      return PredictionConfig.defaultCycleLength;
+    }
 
     // 加权计算: 最近1个权重3, 最近2个权重2, 最近3-6个权重1
     final weights = [3, 2, 1, 1, 1, 1];
@@ -74,13 +99,15 @@ class PredictionService {
       nextStartDate = nextStartDate.add(Duration(days: avgCycle));
     }
 
-    final ovulationDay = nextStartDate.subtract(const Duration(days: 14));
+    final ovulationDay =
+        nextStartDate.subtract(const Duration(days: PredictionConfig.ovulationOffset));
     final fertileWindow = DateRange(
-      start: ovulationDay.subtract(const Duration(days: 5)),
-      end: ovulationDay.add(const Duration(days: 1)),
+      start: ovulationDay
+          .subtract(const Duration(days: PredictionConfig.fertileWindowBefore)),
+      end: ovulationDay
+          .add(const Duration(days: PredictionConfig.fertileWindowAfter)),
     );
 
-    // 当前周期天数（从最后一次经期开始到今天）
     final currentDay = AppDateUtils.dateOnly(now)
         .difference(AppDateUtils.dateOnly(lastRecord.startDate))
         .inDays + 1;
