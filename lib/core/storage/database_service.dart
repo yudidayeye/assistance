@@ -8,7 +8,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 2;
+  static const int _currentVersion = 3;
 
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {
@@ -74,6 +74,7 @@ class DatabaseService {
         start_date TEXT NOT NULL,
         end_date TEXT,
         cycle_length INTEGER,
+        note TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT
       )
@@ -115,6 +116,11 @@ class DatabaseService {
         final batch = txn.batch();
         if (v == 2) {
           await _createV2Schema(db);
+        }
+        if (v == 3) {
+          await db.execute(
+            'ALTER TABLE mod_period_tracker_records ADD COLUMN note TEXT',
+          );
         }
         await batch.commit(noResult: true);
       });

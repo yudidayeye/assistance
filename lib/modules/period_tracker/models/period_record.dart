@@ -4,6 +4,7 @@ class PeriodRecord {
   final DateTime startDate;
   final DateTime? endDate;
   final int? cycleLength;
+  final String? note;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -12,6 +13,7 @@ class PeriodRecord {
     required this.startDate,
     this.endDate,
     this.cycleLength,
+    this.note,
     required this.createdAt,
     this.updatedAt,
   });
@@ -21,6 +23,7 @@ class PeriodRecord {
     DateTime? startDate,
     Object endDate = _sentinel,
     Object? cycleLength = _sentinel,
+    Object? note = _sentinel,
     DateTime? createdAt,
     Object? updatedAt = _sentinel,
   }) {
@@ -29,6 +32,7 @@ class PeriodRecord {
       startDate: startDate ?? this.startDate,
       endDate: endDate == _sentinel ? this.endDate : endDate as DateTime?,
       cycleLength: cycleLength == _sentinel ? this.cycleLength : cycleLength as int?,
+      note: note == _sentinel ? this.note : note as String?,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt == _sentinel ? this.updatedAt : updatedAt as DateTime?,
     );
@@ -52,6 +56,7 @@ class PeriodRecord {
       startDate: DateTime.parse(map['start_date'] as String),
       endDate: map['end_date'] != null ? DateTime.parse(map['end_date'] as String) : null,
       cycleLength: map['cycle_length'] as int?,
+      note: map['note'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : null,
     );
@@ -64,6 +69,7 @@ class PeriodRecord {
       'start_date': startDate.toIso8601String().split('T')[0],
       'end_date': endDate?.toIso8601String().split('T')[0],
       'cycle_length': cycleLength,
+      'note': note,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
