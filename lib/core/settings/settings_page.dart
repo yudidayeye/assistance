@@ -61,15 +61,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: _buildFunctionSection(appTheme),
           ),
 
-          // 数据管理
-          SliverToBoxAdapter(
-            child:
-                _buildSectionHeader(appTheme, '数据管理', Icons.storage_rounded),
-          ),
-          SliverToBoxAdapter(
-            child: _buildDataSection(appTheme),
-          ),
-
           // 关于
           SliverToBoxAdapter(
             child: _buildSectionHeader(
@@ -335,76 +326,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDataSection(AppThemeExtension appTheme) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
-        ),
-      ),
-      child: Column(
-        children: [
-          // 清除数据
-          GestureDetector(
-            onTap: _confirmClearBusinessData,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: appTheme.rose.withAlpha(15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.delete_outline_rounded,
-                      color: appTheme.rose,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '清除所有数据',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: appTheme.rose,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '此操作不可恢复',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: appTheme.earthMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: appTheme.earthMedium.withAlpha(100),
-                    size: 20,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFunctionSection(AppThemeExtension appTheme) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
@@ -433,6 +354,17 @@ class _SettingsPageState extends State<SettingsPage> {
             icon: Icons.help_outline_rounded,
             label: '帮助与反馈',
             onTap: () {},
+          ),
+          Divider(
+            height: 1,
+            indent: 56,
+            color: appTheme.earthMedium.withAlpha(15),
+          ),
+          _buildFunctionItem(
+            appTheme,
+            icon: Icons.delete_outline_rounded,
+            label: '清除业务数据',
+            onTap: _confirmClearBusinessData,
           ),
         ],
       ),
