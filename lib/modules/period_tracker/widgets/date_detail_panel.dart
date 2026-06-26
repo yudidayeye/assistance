@@ -6,7 +6,7 @@ import '../services/period_service.dart';
 import '../../../shared/utils/date_utils.dart';
 import '../../../core/theme/theme_extension.dart';
 
-/// 日期详情面板 — 选中日期后的操作区
+/// 日期详情面板 — 选中日期后的操作区（紧凑版）
 class DateDetailPanel extends StatefulWidget {
   final DateTime selectedDate;
   final List<PeriodRecord> records;
@@ -56,7 +56,6 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
     _noteController.text = record?.note ?? '';
   }
 
-  /// 查找选中日期所属的经期记录
   PeriodRecord? _findRecordForDate(DateTime date) {
     for (final r in widget.records) {
       final start = AppDateUtils.dateOnly(r.startDate);
@@ -70,23 +69,20 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
     return null;
   }
 
-  /// 选中日期是否在实际经期内
   bool get _isInActualPeriod => _findRecordForDate(widget.selectedDate) != null;
 
   Future<void> _togglePeriod(bool on) async {
+    if (_saving) return;
     setState(() => _saving = true);
     try {
       if (on) {
-        // 开启：以选中日期为起点，创建默认4天经期
         final start = AppDateUtils.dateOnly(widget.selectedDate);
         final end = start.add(const Duration(days: _defaultPeriodDays - 1));
-        // 检查是否与已有记录重叠，有则跳过
         final existing = _findRecordForDate(widget.selectedDate);
         if (existing == null) {
           await PeriodService.instance.insertPeriodRange(start, end);
         }
       } else {
-        // 关闭：删除选中日期所在的记录
         final record = _findRecordForDate(widget.selectedDate);
         if (record != null) {
           await PeriodService.instance.deleteRecord(record.id);
@@ -151,8 +147,8 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
     final appTheme = Theme.of(context).appTheme;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -164,92 +160,64 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 日期类型标签
+          // 日期类型标签（缩小版）
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: appTheme.rose.withAlpha(20),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.calendar_month_rounded,
-                  color: appTheme.rose,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
+              Icon(Icons.calendar_month_rounded,
+                  size: 16, color: appTheme.rose),
+              const SizedBox(width: 8),
               Text(
                 _getDayTypeLabel(),
                 style: TextStyle(
                   fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 18,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: appTheme.earth,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Divider(color: appTheme.earthMedium.withAlpha(15)),
+          const SizedBox(height: 10),
 
-          // 开关
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              children: [
-                Icon(Icons.wb_sunny_rounded,
-                    size: 20, color: appTheme.rose.withAlpha(180)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '姨妈来了/姨妈走了',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: appTheme.earth,
-                        ),
-                      ),
-                      Text(
-                        '默认经期$_defaultPeriodDays天',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: appTheme.earthMedium,
-                        ),
-                      ),
-                    ],
+          // 开关行
+          Row(
+            children: [
+              Icon(Icons.wb_sunny_rounded,
+                  size: 18, color: appTheme.rose.withAlpha(180)),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  '姨妈来了/姨妈走了',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                _saving
-                    ? SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: appTheme.rose,
-                        ),
-                      )
-                    : Switch(
-                        value: _isInActualPeriod,
-                        onChanged: _togglePeriod,
-                        activeTrackColor: appTheme.rose.withAlpha(60),
+              ),
+              _saving
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: appTheme.rose,
                       ),
-              ],
-            ),
+                    )
+                  : Switch(
+                      value: _isInActualPeriod,
+                      onChanged: _togglePeriod,
+                      activeTrackColor: appTheme.rose.withAlpha(60),
+                    ),
+            ],
           ),
-          Divider(color: appTheme.earthMedium.withAlpha(15)),
+          const SizedBox(height: 4),
 
-          // 备注
+          // 备注行（样式与开关行一致）
           Row(
             children: [
               Icon(Icons.edit_note_rounded,
-                  size: 20, color: appTheme.earthMedium.withAlpha(120)),
-              const SizedBox(width: 12),
+                  size: 18, color: appTheme.rose.withAlpha(180)),
+              const SizedBox(width: 10),
               Expanded(
                 child: TextField(
                   controller: _noteController,
@@ -257,7 +225,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                     hintText: '备注…',
                     hintStyle: TextStyle(
                       color: appTheme.earthMedium.withAlpha(100),
-                      fontSize: 13,
+                      fontSize: 12,
                     ),
                     border: InputBorder.none,
                     isDense: true,

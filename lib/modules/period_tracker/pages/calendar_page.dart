@@ -104,7 +104,7 @@ class _CalendarPageState extends State<CalendarPage>
                       children: [
                         // 日历 card（内含月份切换）
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
                           child: PeriodCalendar(
                             displayedMonth: _displayedMonth,
                             records: _records,
@@ -130,15 +130,9 @@ class _CalendarPageState extends State<CalendarPage>
 
                         // 预测信息
                         if (_prediction != null)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                            child: _buildPredictionCard(appTheme),
-                          )
+                          _buildPredictionCard(appTheme)
                         else if (!_loading)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                            child: _buildEmptyPrediction(appTheme),
-                          ),
+                          _buildEmptyPrediction(appTheme),
                       ],
                     ),
                   ),
@@ -218,55 +212,36 @@ class _CalendarPageState extends State<CalendarPage>
 
   Widget _buildPredictionCard(AppThemeExtension appTheme) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            appTheme.rose.withAlpha(40),
-            appTheme.roseLight.withAlpha(20),
-          ],
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: appTheme.rose.withAlpha(40),
+          color: appTheme.earthMedium.withAlpha(20),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // 标题
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: appTheme.rose.withAlpha(30),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.calendar_today_rounded,
-                  color: appTheme.rose,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
+              Icon(Icons.calendar_today_rounded,
+                  size: 16, color: appTheme.rose),
+              const SizedBox(width: 8),
               Text(
                 '预测信息',
                 style: TextStyle(
                   fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 18,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: appTheme.earth,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-
-          // 预测详情
+          const SizedBox(height: 10),
           _buildPredictionItem(
             appTheme,
             icon: Icons.event_rounded,
@@ -274,14 +249,14 @@ class _CalendarPageState extends State<CalendarPage>
             value:
                 '${AppDateUtils.formatFullDate(_prediction!.nextStartDate)} - ${AppDateUtils.formatFullDate(_prediction!.nextStartDate.add(const Duration(days: 4)))}',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           _buildPredictionItem(
             appTheme,
             icon: Icons.timelapse_rounded,
             label: '当前周期',
             value: '第${_prediction!.currentDayInCycle}天',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           _buildPredictionItem(
             appTheme,
             icon: Icons.repeat_rounded,
@@ -336,7 +311,8 @@ class _CalendarPageState extends State<CalendarPage>
 
   Widget _buildEmptyPrediction(AppThemeExtension appTheme) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -346,41 +322,16 @@ class _CalendarPageState extends State<CalendarPage>
       ),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: appTheme.rose.withAlpha(15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              Icons.info_outline_rounded,
-              color: appTheme.rose.withAlpha(120),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
+          Icon(Icons.info_outline_rounded,
+              size: 16, color: appTheme.rose.withAlpha(120)),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '暂无预测数据',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: appTheme.earth,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '请先记录经期以获取预测',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: appTheme.earthMedium,
-                  ),
-                ),
-              ],
+            child: Text(
+              '暂无预测数据，请先记录经期',
+              style: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium,
+              ),
             ),
           ),
         ],

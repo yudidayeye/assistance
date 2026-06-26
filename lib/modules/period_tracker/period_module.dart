@@ -7,7 +7,7 @@ import 'services/period_service.dart';
 import 'services/prediction_service.dart';
 import 'pages/calendar_page.dart';
 import 'pages/stats_page.dart';
-import '../../../shared/utils/date_utils.dart';
+import 'package:my_assistant/shared/utils/date_utils.dart';
 
 /// 生理期记录模块注册
 class PeriodTrackerModule implements ToolModule {
