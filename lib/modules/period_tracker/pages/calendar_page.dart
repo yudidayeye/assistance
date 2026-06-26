@@ -5,7 +5,6 @@ import '../models/period_record.dart';
 import '../services/period_service.dart';
 import '../services/prediction_service.dart';
 import '../widgets/period_calendar.dart';
-import '../../../shared/widgets/month_selector.dart';
 import '../../../shared/utils/date_utils.dart';
 import '../../../core/theme/theme_extension.dart';
 
@@ -20,6 +19,7 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage>
     with SingleTickerProviderStateMixin {
   DateTime _displayedMonth = DateTime.now();
+  DateTime? _selectedDate;
   List<PeriodRecord> _records = [];
   PredictionResult? _prediction;
   bool _loading = true;
@@ -71,10 +71,6 @@ class _CalendarPageState extends State<CalendarPage>
     }
   }
 
-  void _onMonthChanged(DateTime month) {
-    setState(() => _displayedMonth = month);
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -102,22 +98,21 @@ class _CalendarPageState extends State<CalendarPage>
                   ),
                 ),
 
-                // 月份切换
-                SliverToBoxAdapter(
-                  child: MonthSelector(
-                    selectedMonth: _displayedMonth,
-                    onMonthChanged: _onMonthChanged,
-                  ),
-                ),
-
-                // 日历
+                // 日历 card（内含月份切换）
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                     child: PeriodCalendar(
                       displayedMonth: _displayedMonth,
                       records: _records,
                       prediction: _prediction,
+                      onMonthChanged: (month) {
+                        setState(() => _displayedMonth = month);
+                      },
+                      selectedDate: _selectedDate,
+                      onDateSelected: (date) {
+                        setState(() => _selectedDate = date);
+                      },
                     ),
                   ),
                 ),

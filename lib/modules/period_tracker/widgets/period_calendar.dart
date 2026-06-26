@@ -13,17 +13,23 @@ enum CalendarDayType {
   periodActual,
 }
 
-/// 经期日历 Widget — 奢华自然主义风格
+/// 经期日历 Widget — 月份切换 + 星期标题 + 日期网格 + 图例，整体为一个 card
 class PeriodCalendar extends StatelessWidget {
   final DateTime displayedMonth;
   final List<PeriodRecord> records;
   final PredictionResult? prediction;
+  final ValueChanged<DateTime>? onMonthChanged;
+  final DateTime? selectedDate;
+  final ValueChanged<DateTime>? onDateSelected;
 
   const PeriodCalendar({
     super.key,
     required this.displayedMonth,
     required this.records,
     this.prediction,
+    this.onMonthChanged,
+    this.selectedDate,
+    this.onDateSelected,
   });
 
   @override
@@ -46,7 +52,12 @@ class PeriodCalendar extends StatelessWidget {
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          // 月份切换 header
+          _buildMonthHeader(appTheme),
+          const SizedBox(height: 12),
+
           // 星期标题
           Row(
             children: ['日', '一', '二', '三', '四', '五', '六']
@@ -86,7 +97,10 @@ class PeriodCalendar extends StatelessWidget {
                   DateTime(displayedMonth.year, displayedMonth.month, day);
               final type = _getDayType(date);
               final isToday = AppDateUtils.isSameDay(date, DateTime.now());
-              return _buildDayCell(appTheme, date, type, isToday: isToday);
+              final isSelected = selectedDate != null &&
+                  AppDateUtils.isSameDay(date, selectedDate!);
+              return _buildDayCell(appTheme, date, type,
+                  isToday: isToday, isSelected: isSelected);
             },
           ),
 
@@ -135,7 +149,7 @@ class PeriodCalendar extends StatelessWidget {
 
   Widget _buildDayCell(
       AppThemeExtension appTheme, DateTime date, CalendarDayType type,
-      {bool isToday = false}) {
+      {bool isToday = false, bool isSelected = false}) {
     Color? bgColor;
     Color textColor = appTheme.earth;
     double borderWidth = 0;
@@ -166,7 +180,7 @@ class PeriodCalendar extends StatelessWidget {
         break;
     }
 
-    // 今日 overlay — 不覆盖业务底色，只加外环标记
+    // 今日 overlay
     if (isToday) {
       borderWidth = borderWidth > 0 ? borderWidth : 2;
       borderColor = borderColor == Colors.transparent
@@ -175,23 +189,85 @@ class PeriodCalendar extends StatelessWidget {
       fontWeight = FontWeight.w700;
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: borderWidth > 0
-            ? Border.all(color: borderColor, width: borderWidth)
-            : null,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        '${date.day}',
-        style: TextStyle(
-          fontSize: 13,
-          color: textColor,
-          fontWeight: fontWeight,
+    // 选中 overlay
+    if (isSelected) {
+      borderWidth = 2;
+      borderColor = appTheme.earth;
+      fontWeight = FontWeight.w700;
+    }
+
+    return GestureDetector(
+      onTap: onDateSelected != null ? () => onDateSelected!(date) : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+          border: borderWidth > 0
+              ? Border.all(color: borderColor, width: borderWidth)
+              : null,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '${date.day}',
+          style: TextStyle(
+            fontSize: 13,
+            color: textColor,
+            fontWeight: fontWeight,
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMonthHeader(AppThemeExtension appTheme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap: () => onMonthChanged?.call(
+            DateTime(displayedMonth.year, displayedMonth.month - 1, 1),
+          ),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: appTheme.creamDark,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.chevron_left_rounded,
+              color: appTheme.earthMedium,
+              size: 20,
+            ),
+          ),
+        ),
+        Text(
+          '${displayedMonth.year}年${displayedMonth.month}月',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: appTheme.earth,
+          ),
+        ),
+        GestureDetector(
+          onTap: () => onMonthChanged?.call(
+            DateTime(displayedMonth.year, displayedMonth.month + 1, 1),
+          ),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: appTheme.creamDark,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.chevron_right_rounded,
+              color: appTheme.earthMedium,
+              size: 20,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
