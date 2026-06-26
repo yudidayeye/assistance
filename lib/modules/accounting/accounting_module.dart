@@ -71,7 +71,7 @@ class AccountingModule implements ToolModule {
 
   @override
   Future<ModuleSummary> getSummary() async {
-    final todayExpense = await TransactionService.instance.getTodayExpenseTotal();
-    return ModuleSummary(line1: '今日支出 ${FormatUtils.formatAmount(todayExpense)}');
+    final monthExpense = await TransactionService.instance.getMonthExpenseTotal(DateTime.now());
+    return ModuleSummary(line1: '本月支出 ${FormatUtils.formatAmount(monthExpense)}');
   }
 }

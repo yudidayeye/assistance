@@ -6,6 +6,7 @@
 ## 注意事项
 1. 默认使用中文回答
 2. 涉及到文件查找使用codegraph
+3. 完成计划时完成一个小功能自动git commit，git push
 
 ## 技术栈
 - **Flutter / Dart** (SDK >=3.0.0 <4.0.0)

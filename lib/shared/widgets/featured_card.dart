@@ -4,9 +4,8 @@ import '../../core/module_system/tool_module.dart';
 import '../../core/theme/theme_extension.dart';
 import 'package:go_router/go_router.dart';
 
-/// 特色功能卡片 — 极简风格
-/// 白底 + 主题色图标 + 标题，无标签和描述
-class FeaturedCard extends StatelessWidget {
+/// 特色功能卡片 — 极简风格 + 底部摘要
+class FeaturedCard extends StatefulWidget {
   final ToolModule module;
   final VoidCallback? onTap;
 
@@ -17,13 +16,34 @@ class FeaturedCard extends StatelessWidget {
   });
 
   @override
+  State<FeaturedCard> createState() => _FeaturedCardState();
+}
+
+class _FeaturedCardState extends State<FeaturedCard> {
+  String? _summary;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSummary();
+  }
+
+  Future<void> _loadSummary() async {
+    final s = await widget.module.getSummary();
+    if (mounted) {
+      setState(() => _summary = s.line1);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final color = module.themeColor;
+    final color = widget.module.themeColor;
     final appTheme = Theme.of(context).appTheme;
 
     return GestureDetector(
-      onTap: onTap ?? () => context.push('/${module.moduleId}'),
+      onTap: widget.onTap ?? () => context.push('/${widget.module.moduleId}'),
       child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
         decoration: BoxDecoration(
           color: appTheme.creamDark,
           borderRadius: BorderRadius.circular(24),
@@ -46,12 +66,12 @@ class FeaturedCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
-                child: module.icon.build(size: 24, color: color),
+                child: widget.module.icon.build(size: 24, color: color),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Text(
-              module.displayName,
+              widget.module.displayName,
               style: TextStyle(
                 fontFamily: GoogleFonts.robotoSlab().fontFamily,
                 fontSize: 15,
@@ -63,6 +83,20 @@ class FeaturedCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+            if (_summary != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                _summary!,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: appTheme.earthMedium,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ],
         ),
       ),
