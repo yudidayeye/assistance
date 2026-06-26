@@ -68,31 +68,16 @@ class _MainShellPageState extends State<MainShellPage> {
           child: Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '欢迎使用',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.dmSans().fontFamily,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: appTheme.earthMedium,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '工具箱',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.robotoSlab().fontFamily,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: appTheme.earth,
-                        height: 1.33,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  '工具箱',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.robotoSlab().fontFamily,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: appTheme.earth,
+                    height: 1.33,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ),
               GestureDetector(

@@ -19,10 +19,10 @@ class ToolboxBottomNav extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appTheme.creamDark,
         border: Border(
           top: BorderSide(
-            color: Colors.black.withAlpha(18),
+            color: appTheme.earthMedium.withAlpha(15),
           ),
         ),
       ),
@@ -76,8 +76,10 @@ class _NavItem extends StatelessWidget {
     final color = isSelected ? selectedColor : unselectedColor;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: SizedBox(
+        width: double.infinity,
         height: 82,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
