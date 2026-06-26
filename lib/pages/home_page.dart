@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/module_system/module_registry.dart';
-import '../core/settings/settings_service.dart';
 import '../shared/widgets/featured_card.dart';
 import '../shared/widgets/toolbox_bottom_nav.dart';
 
@@ -16,7 +15,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedTabIndex = 0;
-  final SettingsService _settings = SettingsService.instance;
 
   @override
   void initState() {
@@ -26,7 +24,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final enabledModules = ModuleRegistry.instance.getEnabledModules(_settings);
+    final enabledModules = ModuleRegistry.instance.getEnabledModules();
 
     return Scaffold(
       backgroundColor: const Color(0xFFf5f6fa),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../storage/database_service.dart';
 import '../module_system/module_registry.dart';
 
@@ -69,5 +70,26 @@ class SettingsService {
   Future<void> loadPrivacyDisclaimer() async {
     final rows = await _db.query('app_settings', where: "key = 'privacy_disclaimer_accepted'");
     _privacyAccepted = rows.isNotEmpty && rows.first['value'] == '1';
+  }
+}
+
+/// 设置状态控制器 — ChangeNotifier，供 UI 层监听模块启停变化
+class SettingsController extends ChangeNotifier {
+  static final SettingsController instance = SettingsController._();
+  SettingsController._();
+
+  final SettingsService _service = SettingsService.instance;
+
+  bool isModuleEnabled(String moduleId) => _service.isModuleEnabled(moduleId);
+
+  Future<void> setModuleEnabled(String moduleId, bool enabled) async {
+    await _service.setModuleEnabled(moduleId, enabled);
+    notifyListeners();
+  }
+
+  /// 从数据库重新加载设置并通知 UI
+  Future<void> reload() async {
+    await _service.loadSettings();
+    notifyListeners();
   }
 }

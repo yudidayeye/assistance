@@ -18,6 +18,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final SettingsService _settings = SettingsService.instance;
+  final SettingsController _controller = SettingsController.instance;
   final DatabaseService _db = DatabaseService.instance;
 
   @override
@@ -240,7 +241,7 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Switch(
               value: enabled,
               onChanged: (val) async {
-                await _settings.setModuleEnabled(module.moduleId, val);
+                await _controller.setModuleEnabled(module.moduleId, val);
                 setState(() {});
               },
               activeThumbColor: module.themeColor,

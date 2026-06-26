@@ -40,9 +40,9 @@ class ModuleRegistry {
   List<ToolModule> get allModules => _modules.values.toList();
 
   /// 获取已启用模块
-  List<ToolModule> getEnabledModules(SettingsService settings) {
+  List<ToolModule> getEnabledModules() {
     return _modules.values
-        .where((m) => settings.isModuleEnabled(m.moduleId))
+        .where((m) => SettingsService.instance.isModuleEnabled(m.moduleId))
         .toList();
   }
 

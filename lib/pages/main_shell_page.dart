@@ -17,7 +17,23 @@ class MainShellPage extends StatefulWidget {
 
 class _MainShellPageState extends State<MainShellPage> {
   int _currentIndex = 0;
-  final SettingsService _settings = SettingsService.instance;
+  final SettingsController _settingsController = SettingsController.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _settingsController.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    _settingsController.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +60,7 @@ class _MainShellPageState extends State<MainShellPage> {
   }
 
   Widget _buildToolboxPage() {
-    final enabledModules = ModuleRegistry.instance.getEnabledModules(_settings);
+    final enabledModules = ModuleRegistry.instance.getEnabledModules();
 
     return Column(
       children: [
