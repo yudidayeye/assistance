@@ -10,8 +10,9 @@ import '../../../core/theme/theme_extension.dart';
 /// 交易记录列表项 — 奢华自然主义风格
 class TransactionItem extends StatelessWidget {
   final Transaction transaction;
+  final VoidCallback? onChanged;
 
-  const TransactionItem({super.key, required this.transaction});
+  const TransactionItem({super.key, required this.transaction, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +29,10 @@ class TransactionItem extends StatelessWidget {
         final categoryIcon = category?.icon ?? Icons.receipt_long;
 
         return GestureDetector(
-          onTap: () => context.push('/accounting/edit/${transaction.id}'),
+          onTap: () async {
+            final result = await context.push<bool>('/accounting/edit/${transaction.id}');
+            if (result == true) onChanged?.call();
+          },
           child: Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(16),

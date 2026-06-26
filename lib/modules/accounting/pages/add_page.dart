@@ -146,19 +146,8 @@ class _AddTransactionPageState extends State<AddTransactionPage>
       );
     }
 
-    if (!context.mounted) return;
-
-    _showSnackBar(widget.editId != null ? '已更新' : '已保存');
-
-    if (widget.editId == null) {
-      setState(() {
-        _amountText = '';
-        _note = '';
-        _selectedDate = DateTime.now();
-      });
-    } else if (mounted) {
-      context.pop();
-    }
+    if (!mounted) return;
+    context.pop(true);
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -361,7 +350,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
               onTap: () async {
                 await TransactionService.instance
                     .deleteTransaction(widget.editId!);
-                if (context.mounted) context.pop();
+                if (context.mounted) context.pop(true);
               },
               child: Container(
                 width: 40,

@@ -422,7 +422,10 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
               // 交易项
               ...dayTxns.map((t) => Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TransactionItem(transaction: t),
+                    child: TransactionItem(
+                      transaction: t,
+                      onChanged: _loadData,
+                    ),
                   )),
 
               // 分隔线
@@ -463,7 +466,10 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => context.push('/accounting/add'),
+        onPressed: () async {
+          final result = await context.push<bool>('/accounting/add');
+          if (result == true) _loadData();
+        },
         backgroundColor: Colors.transparent,
         elevation: 0,
         child: const Icon(
