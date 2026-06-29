@@ -148,9 +148,8 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: appTheme.earthMedium.withAlpha(20),
@@ -177,7 +176,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
           // 开关行
           Row(
