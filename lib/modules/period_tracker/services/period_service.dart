@@ -98,7 +98,7 @@ class PeriodService {
 
       // 按 start_date 升序获取所有记录
       final rows = await txn.rawQuery(
-        'SELECT id, start_date FROM $_table ORDER BY start_date ASC',
+        'SELECT * FROM $_table ORDER BY start_date ASC',
       );
       final records = rows
           .map((r) => PeriodRecord.fromMap(r))
