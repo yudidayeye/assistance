@@ -69,7 +69,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
         backgroundColor: appTheme.cream,
         body: Center(
           child: CircularProgressIndicator(
-            color: appTheme.rose,
+            color: appTheme.primary,
           ),
         ),
       );
@@ -201,12 +201,12 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            appTheme.rose.withAlpha(40),
-            appTheme.roseLight.withAlpha(20),
+            appTheme.primary.withAlpha(25),
+            appTheme.primaryLight.withAlpha(15),
           ],
         ),
         border: Border.all(
-          color: appTheme.rose.withAlpha(40),
+          color: appTheme.primary.withAlpha(30),
         ),
       ),
       child: Column(
@@ -236,7 +236,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
               Container(
                 width: 1,
                 height: 60,
-                color: appTheme.rose.withAlpha(30),
+                color: appTheme.primary.withAlpha(25),
               ),
               Expanded(
                 child: _buildStatItem(
@@ -249,7 +249,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
               Container(
                 width: 1,
                 height: 60,
-                color: appTheme.rose.withAlpha(30),
+                color: appTheme.primary.withAlpha(25),
               ),
               Expanded(
                 child: _buildStatItem(
@@ -278,12 +278,12 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: appTheme.rose.withAlpha(30),
+            color: appTheme.primary.withAlpha(25),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             icon,
-            color: appTheme.rose,
+            color: appTheme.primary,
             size: 20,
           ),
         ),
@@ -449,12 +449,12 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: appTheme.rose.withAlpha(20),
+              color: appTheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
               Icons.calendar_today_rounded,
-              color: appTheme.rose.withAlpha(100),
+              color: appTheme.primary.withAlpha(100),
               size: 36,
             ),
           ),
