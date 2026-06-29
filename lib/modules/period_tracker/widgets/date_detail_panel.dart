@@ -211,10 +211,11 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
           ),
           const SizedBox(height: 4),
 
-          // 备注行（样式与开关行一致）
+          // 备注行
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(Icons.edit_note_rounded,
+              Icon(Icons.sticky_note_2_rounded,
                   size: 18, color: appTheme.rose.withAlpha(180)),
               const SizedBox(width: 10),
               Expanded(
@@ -223,12 +224,18 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                   decoration: InputDecoration(
                     hintText: '备注…',
                     hintStyle: TextStyle(
-                      color: appTheme.earthMedium.withAlpha(100),
-                      fontSize: 12,
+                      color: appTheme.earthMedium.withAlpha(120),
+                      fontSize: 13,
                     ),
-                    border: InputBorder.none,
+                    filled: true,
+                    fillColor: appTheme.creamDark.withAlpha(120),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
                     isDense: true,
-                    contentPadding: EdgeInsets.zero,
                   ),
                   style: TextStyle(
                     color: appTheme.earth,
