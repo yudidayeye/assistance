@@ -43,7 +43,7 @@ class PeriodCalendar extends StatelessWidget {
         DateTime(displayedMonth.year, displayedMonth.month + 1, 0).day;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -105,7 +105,7 @@ class PeriodCalendar extends StatelessWidget {
           ),
 
           // 图例
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           _buildLegendSection(appTheme),
         ],
       ),

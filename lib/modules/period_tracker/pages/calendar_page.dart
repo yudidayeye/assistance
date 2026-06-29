@@ -104,7 +104,7 @@ class _CalendarPageState extends State<CalendarPage>
                       children: [
                         // 日历 card（内含月份切换）
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 2),
                           child: PeriodCalendar(
                             displayedMonth: _displayedMonth,
                             records: _records,
