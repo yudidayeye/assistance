@@ -158,14 +158,14 @@ class PeriodCalendar extends StatelessWidget {
 
     switch (type) {
       case CalendarDayType.periodActual:
-        bgColor = appTheme.rose;
+        bgColor = appTheme.primary;
         textColor = Colors.white;
         fontWeight = FontWeight.w600;
         break;
       case CalendarDayType.periodPredicted:
-        bgColor = appTheme.rose.withAlpha(40);
+        bgColor = appTheme.primary.withAlpha(40);
         borderWidth = 1.5;
-        borderColor = appTheme.rose;
+        borderColor = appTheme.primary;
         break;
       case CalendarDayType.fertileWindow:
         bgColor = appTheme.primary.withAlpha(30);
@@ -280,9 +280,9 @@ class PeriodCalendar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildLegend(appTheme, appTheme.rose, '经期'),
-          _buildLegend(appTheme, appTheme.rose.withAlpha(80), '预测经期'),
-          _buildLegend(appTheme, appTheme.primary, '排卵期'),
+          _buildLegend(appTheme, appTheme.primary, '经期'),
+          _buildLegend(appTheme, appTheme.primary.withAlpha(80), '预测经期'),
+          _buildLegend(appTheme, appTheme.primaryDark, '排卵期'),
           _buildLegend(appTheme, appTheme.sage, '今日'),
         ],
       ),

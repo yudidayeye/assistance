@@ -82,7 +82,7 @@ class _CalendarPageState extends State<CalendarPage>
       body: _loading
           ? Center(
               child: CircularProgressIndicator(
-                color: appTheme.rose,
+                color: appTheme.primary,
               ),
             )
           : Column(
@@ -102,6 +102,12 @@ class _CalendarPageState extends State<CalendarPage>
                     padding: EdgeInsets.zero,
                     child: Column(
                       children: [
+                        // 预测信息（日历上方）
+                        if (_prediction != null)
+                          _buildPredictionCard(appTheme)
+                        else if (!_loading)
+                          _buildEmptyPrediction(appTheme),
+
                         // 日历 card（内含月份切换）
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 8, 20, 2),
@@ -127,12 +133,6 @@ class _CalendarPageState extends State<CalendarPage>
                             prediction: _prediction,
                             onChanged: _loadData,
                           ),
-
-                        // 预测信息
-                        if (_prediction != null)
-                          _buildPredictionCard(appTheme)
-                        else if (!_loading)
-                          _buildEmptyPrediction(appTheme),
                       ],
                     ),
                   ),

@@ -151,14 +151,14 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: appTheme.rose.withAlpha(25),
+          color: appTheme.primary.withAlpha(25),
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            appTheme.rose.withAlpha(10),
-            appTheme.roseLight.withAlpha(6),
+            appTheme.primary.withAlpha(10),
+            appTheme.primaryLight.withAlpha(6),
           ],
         ),
       ),
@@ -173,11 +173,11 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: appTheme.rose.withAlpha(25),
+                  color: appTheme.primary.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.calendar_month_rounded,
-                    size: 15, color: appTheme.rose),
+                    size: 15, color: appTheme.primary),
               ),
               const SizedBox(width: 10),
               Text(
@@ -204,7 +204,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
           Row(
             children: [
               Icon(Icons.wb_sunny_rounded,
-                  size: 18, color: appTheme.rose.withAlpha(180)),
+                  size: 18, color: appTheme.primary.withAlpha(180)),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -222,14 +222,14 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                       height: 24,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: appTheme.rose,
+                        color: appTheme.primary,
                       ),
                     )
                   : Switch(
                       value: _isInActualPeriod,
                       onChanged: _togglePeriod,
                       activeThumbColor: Colors.white,
-                      activeTrackColor: appTheme.rose.withAlpha(160),
+                      activeTrackColor: appTheme.primary.withAlpha(160),
                       inactiveThumbColor: appTheme.earthMedium.withAlpha(120),
                       inactiveTrackColor:
                           appTheme.earthMedium.withAlpha(25),
@@ -243,7 +243,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(Icons.sticky_note_2_rounded,
-                  size: 18, color: appTheme.rose.withAlpha(180)),
+                  size: 18, color: appTheme.primary.withAlpha(180)),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
