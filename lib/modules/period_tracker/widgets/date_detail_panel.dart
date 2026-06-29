@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../models/period_record.dart';
 import '../services/prediction_service.dart';
 import '../services/period_service.dart';
@@ -148,35 +147,58 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
+          color: appTheme.rose.withAlpha(25),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            appTheme.rose.withAlpha(10),
+            appTheme.roseLight.withAlpha(6),
+          ],
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 日期类型标签（缩小版）
+          // 日期类型标签
           Row(
             children: [
-              Icon(Icons.calendar_month_rounded,
-                  size: 16, color: appTheme.rose),
-              const SizedBox(width: 8),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: appTheme.rose.withAlpha(25),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.calendar_month_rounded,
+                    size: 15, color: appTheme.rose),
+              ),
+              const SizedBox(width: 10),
               Text(
                 _getDayTypeLabel(),
                 style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: appTheme.earth,
                 ),
               ),
+              const Spacer(),
+              Text(
+                AppDateUtils.formatFullDate(widget.selectedDate),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: appTheme.earthMedium,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
 
           // 开关行
           Row(
@@ -184,12 +206,13 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
               Icon(Icons.wb_sunny_rounded,
                   size: 18, color: appTheme.rose.withAlpha(180)),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
                   '姨妈来了/姨妈走了',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
+                    color: appTheme.earth,
                   ),
                 ),
               ),
@@ -205,11 +228,15 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                   : Switch(
                       value: _isInActualPeriod,
                       onChanged: _togglePeriod,
-                      activeTrackColor: appTheme.rose.withAlpha(60),
+                      activeThumbColor: Colors.white,
+                      activeTrackColor: appTheme.rose.withAlpha(160),
+                      inactiveThumbColor: appTheme.earthMedium.withAlpha(120),
+                      inactiveTrackColor:
+                          appTheme.earthMedium.withAlpha(25),
                     ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
 
           // 备注行
           Row(
@@ -228,7 +255,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                       fontSize: 13,
                     ),
                     filled: true,
-                    fillColor: appTheme.creamDark.withAlpha(120),
+                    fillColor: appTheme.creamDark.withAlpha(100),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,

@@ -213,118 +213,129 @@ class _CalendarPageState extends State<CalendarPage>
   Widget _buildPredictionCard(AppThemeExtension appTheme) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
+          color: appTheme.primary.withAlpha(25),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            appTheme.primary.withAlpha(12),
+            appTheme.primaryLight.withAlpha(8),
+          ],
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // 标题行
           Row(
             children: [
-              Icon(Icons.calendar_today_rounded,
-                  size: 16, color: appTheme.rose),
-              const SizedBox(width: 8),
+              Icon(Icons.insights_rounded, size: 16, color: appTheme.primary),
+              const SizedBox(width: 6),
               Text(
                 '预测信息',
                 style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: appTheme.earth,
+                  color: appTheme.earthMedium,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          _buildPredictionItem(
-            appTheme,
-            icon: Icons.event_rounded,
-            label: '下次经期',
-            value:
-                '${AppDateUtils.formatFullDate(_prediction!.nextStartDate)} - ${AppDateUtils.formatFullDate(_prediction!.nextStartDate.add(const Duration(days: 4)))}',
-          ),
-          const SizedBox(height: 6),
-          _buildPredictionItem(
-            appTheme,
-            icon: Icons.timelapse_rounded,
-            label: '当前周期',
-            value: '第${_prediction!.currentDayInCycle}天',
-          ),
-          const SizedBox(height: 6),
-          _buildPredictionItem(
-            appTheme,
-            icon: Icons.repeat_rounded,
-            label: '平均周期',
-            value: '${_prediction!.avgCycleLength}天',
+          const SizedBox(height: 12),
+
+          // 三列指标
+          Row(
+            children: [
+              _buildPredictionMetric(
+                appTheme,
+                icon: Icons.event_rounded,
+                label: '下次经期',
+                value: AppDateUtils.formatFullDate(_prediction!.nextStartDate),
+              ),
+              Container(
+                width: 1,
+                height: 40,
+                color: appTheme.primary.withAlpha(20),
+              ),
+              _buildPredictionMetric(
+                appTheme,
+                icon: Icons.timelapse_rounded,
+                label: '当前周期',
+                value: '第${_prediction!.currentDayInCycle}天',
+              ),
+              Container(
+                width: 1,
+                height: 40,
+                color: appTheme.primary.withAlpha(20),
+              ),
+              _buildPredictionMetric(
+                appTheme,
+                icon: Icons.repeat_rounded,
+                label: '平均周期',
+                value: '${_prediction!.avgCycleLength}天',
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPredictionItem(
+  Widget _buildPredictionMetric(
     AppThemeExtension appTheme, {
     required IconData icon,
     required String label,
     required String value,
   }) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 18,
-          color: appTheme.rose.withAlpha(180),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: appTheme.earthMedium,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: appTheme.earth,
-                ),
-              ),
-            ],
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: appTheme.primary.withAlpha(180)),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: appTheme.earth,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: appTheme.earthMedium,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildEmptyPrediction(AppThemeExtension appTheme) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
+          color: appTheme.primary.withAlpha(20),
         ),
       ),
       child: Row(
         children: [
           Icon(Icons.info_outline_rounded,
-              size: 16, color: appTheme.rose.withAlpha(120)),
-          const SizedBox(width: 8),
+              size: 16, color: appTheme.primary.withAlpha(140)),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               '暂无预测数据，请先记录经期',
