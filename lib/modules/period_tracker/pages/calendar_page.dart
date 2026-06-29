@@ -110,7 +110,7 @@ class _CalendarPageState extends State<CalendarPage>
 
                         // 日历 card（内含月份切换）
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 2),
+                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 2),
                           child: PeriodCalendar(
                             displayedMonth: _displayedMonth,
                             records: _records,
@@ -212,7 +212,7 @@ class _CalendarPageState extends State<CalendarPage>
 
   Widget _buildPredictionCard(AppThemeExtension appTheme) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -323,7 +323,7 @@ class _CalendarPageState extends State<CalendarPage>
 
   Widget _buildEmptyPrediction(AppThemeExtension appTheme) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),

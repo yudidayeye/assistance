@@ -43,7 +43,7 @@ class PeriodCalendar extends StatelessWidget {
         DateTime(displayedMonth.year, displayedMonth.month + 1, 0).day;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -56,7 +56,7 @@ class PeriodCalendar extends StatelessWidget {
         children: [
           // 月份切换 header
           _buildMonthHeader(appTheme),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // 星期标题
           Row(
@@ -66,7 +66,7 @@ class PeriodCalendar extends StatelessWidget {
                         child: Text(
                           d,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: appTheme.earthMedium,
                             fontWeight: FontWeight.w600,
                           ),
@@ -75,7 +75,7 @@ class PeriodCalendar extends StatelessWidget {
                     ))
                 .toList(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
 
           // 日历网格
           GridView.builder(
@@ -83,8 +83,8 @@ class PeriodCalendar extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
+              mainAxisSpacing: 4,
+              crossAxisSpacing: 4,
               childAspectRatio: 1,
             ),
             itemCount: startWeekday + daysInMonth,
@@ -105,7 +105,7 @@ class PeriodCalendar extends StatelessWidget {
           ),
 
           // 图例
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _buildLegendSection(appTheme),
         ],
       ),
@@ -201,7 +201,7 @@ class PeriodCalendar extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: borderWidth > 0
               ? Border.all(color: borderColor, width: borderWidth)
               : null,
@@ -210,7 +210,7 @@ class PeriodCalendar extends StatelessWidget {
         child: Text(
           '${date.day}',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             color: textColor,
             fontWeight: fontWeight,
           ),
@@ -228,23 +228,23 @@ class PeriodCalendar extends StatelessWidget {
             DateTime(displayedMonth.year, displayedMonth.month - 1, 1),
           ),
           child: Container(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: appTheme.creamDark,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               Icons.chevron_left_rounded,
               color: appTheme.earthMedium,
-              size: 20,
+              size: 18,
             ),
           ),
         ),
         Text(
           '${displayedMonth.year}年${displayedMonth.month}月',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
             color: appTheme.earth,
           ),
@@ -254,16 +254,16 @@ class PeriodCalendar extends StatelessWidget {
             DateTime(displayedMonth.year, displayedMonth.month + 1, 1),
           ),
           child: Container(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: appTheme.creamDark,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               Icons.chevron_right_rounded,
               color: appTheme.earthMedium,
-              size: 20,
+              size: 18,
             ),
           ),
         ),
@@ -273,7 +273,7 @@ class PeriodCalendar extends StatelessWidget {
 
   Widget _buildLegendSection(AppThemeExtension appTheme) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -295,18 +295,18 @@ class PeriodCalendar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             color: appTheme.earthMedium,
             fontWeight: FontWeight.w500,
           ),
