@@ -6,9 +6,10 @@ import '../models/period_record.dart';
 import '../services/period_service.dart';
 import '../services/prediction_service.dart';
 import '../../../shared/utils/date_utils.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../core/theme/theme_extension.dart';
 
-/// 周期统计页 — 奢华自然主义风格
+/// 周期统计页 — 柔和风格
 class PeriodStatsPage extends StatefulWidget {
   const PeriodStatsPage({super.key});
 
@@ -61,23 +62,18 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final appTheme = theme.appTheme;
+    final appTheme = Theme.of(context).appTheme;
 
     if (_loading) {
       return Scaffold(
         backgroundColor: appTheme.cream,
         body: Center(
-          child: CircularProgressIndicator(
-            color: appTheme.primary,
-          ),
+          child: CircularProgressIndicator(color: appTheme.primary),
         ),
       );
     }
 
-    // 计算统计数据
-    final completedRecords =
-        _records.where((r) => r.endDate != null).toList();
+    final completedRecords = _records.where((r) => r.endDate != null).toList();
     final cycleLengths = _records
         .where((r) => r.cycleLength != null)
         .map((r) => r.cycleLength!)
@@ -93,7 +89,6 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
                 completedRecords.length)
             .round();
 
-    // 规律性评估
     String regularity = '数据不足';
     if (cycleLengths.length >= 3) {
       final stdDev = _calculateStdDev(cycleLengths);
@@ -111,38 +106,32 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // 头部区域
           SliverToBoxAdapter(
             child: _buildHeader(context, appTheme),
           ),
-
-          // 统计卡片
           SliverToBoxAdapter(
             child: FadeTransition(
               opacity: _statsFadeAnim,
               child: _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
             ),
           ),
-
-          // 历史记录标题
           SliverToBoxAdapter(
             child: _buildSectionHeader(appTheme, '历史记录'),
           ),
-
-          // 历史记录列表
           if (_records.isEmpty)
             SliverFillRemaining(
-              child: _buildEmptyState(appTheme),
+              child: EmptyStateWidget(
+                icon: Icons.calendar_today_rounded,
+                title: '暂无历史记录',
+                subtitle: '记录经期后会在这里显示',
+                iconColor: appTheme.primary,
+              ),
             )
           else
             SliverToBoxAdapter(
               child: _buildRecordsList(appTheme),
             ),
-
-          // 底部间距
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 100),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );
@@ -154,18 +143,14 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
           24, MediaQuery.of(context).padding.top + 16, 24, 16),
       child: Row(
         children: [
-          // 返回按钮
           GestureDetector(
             onTap: () => context.pop(),
             child: Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: appTheme.creamDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: appTheme.earthMedium.withAlpha(30),
-                ),
+                color: appTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -196,73 +181,45 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
       margin: const EdgeInsets.fromLTRB(20, 8, 20, 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            appTheme.primary.withAlpha(25),
-            appTheme.primaryLight.withAlpha(15),
-          ],
-        ),
-        border: Border.all(
-          color: appTheme.primary.withAlpha(30),
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        boxShadow: appTheme.cardShadow,
       ),
       child: Column(
         children: [
-          // 标题
           Text(
             '周期概况',
-            style: TextStyle(
-              fontSize: 14,
-              color: appTheme.earth.withAlpha(180),
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 14, color: appTheme.earthMedium, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 24),
-
-          // 三个指标
           Row(
             children: [
               Expanded(
-                child: _buildStatItem(
-                  appTheme,
-                  icon: Icons.repeat_rounded,
-                  label: '平均周期',
-                  value: '$avgCycle天',
-                ),
+                child: _buildStatItem(appTheme,
+                    icon: Icons.repeat_rounded, label: '平均周期', value: '$avgCycle天'),
               ),
-              Container(
-                width: 1,
-                height: 60,
-                color: appTheme.primary.withAlpha(25),
-              ),
+              _buildDivider(appTheme),
               Expanded(
-                child: _buildStatItem(
-                  appTheme,
-                  icon: Icons.calendar_today_rounded,
-                  label: '经期天数',
-                  value: '$avgDuration天',
-                ),
+                child: _buildStatItem(appTheme,
+                    icon: Icons.calendar_today_rounded, label: '经期天数', value: '$avgDuration天'),
               ),
-              Container(
-                width: 1,
-                height: 60,
-                color: appTheme.primary.withAlpha(25),
-              ),
+              _buildDivider(appTheme),
               Expanded(
-                child: _buildStatItem(
-                  appTheme,
-                  icon: Icons.insights_rounded,
-                  label: '规律性',
-                  value: regularity,
-                ),
+                child: _buildStatItem(appTheme,
+                    icon: Icons.insights_rounded, label: '规律性', value: regularity),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDivider(AppThemeExtension appTheme) {
+    return Container(
+      width: 1,
+      height: 60,
+      color: appTheme.earthMedium.withValues(alpha: 0.12),
     );
   }
 
@@ -278,28 +235,18 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: appTheme.primary.withAlpha(25),
-            borderRadius: BorderRadius.circular(12),
+            color: appTheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(appTheme.radiusSm),
           ),
-          child: Icon(
-            icon,
-            color: appTheme.primary,
-            size: 20,
-          ),
+          child: Icon(icon, color: appTheme.primary, size: 20),
         ),
         const SizedBox(height: 12),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: appTheme.earthMedium,
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12, color: appTheme.earthMedium)),
         const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: appTheme.earth,
@@ -328,18 +275,15 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        boxShadow: appTheme.cardShadow,
       ),
       child: Column(
         children: _records.asMap().entries.map((entry) {
           final index = entry.key;
           final record = entry.value;
           final isLast = index == _records.length - 1;
-
           return Column(
             children: [
               _buildRecordItem(appTheme, record),
@@ -347,7 +291,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
                 Divider(
                   height: 1,
                   indent: 60,
-                  color: appTheme.earthMedium.withAlpha(15),
+                  color: appTheme.earthMedium.withValues(alpha: 0.1),
                 ),
             ],
           );
@@ -358,7 +302,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
 
   Widget _buildRecordItem(AppThemeExtension appTheme, PeriodRecord record) {
     final isActive = record.endDate == null;
-    final statusColor = isActive ? appTheme.primary : appTheme.primaryDark;
+    final statusColor = isActive ? appTheme.rose : appTheme.earthMedium;
 
     return GestureDetector(
       onLongPress: () => _confirmDelete(record.id),
@@ -366,13 +310,12 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
-            // 状态指示器
             Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: statusColor.withAlpha(20),
-                borderRadius: BorderRadius.circular(12),
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
               ),
               child: Center(
                 child: Container(
@@ -386,8 +329,6 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
               ),
             ),
             const SizedBox(width: 16),
-
-            // 记录信息
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,10 +336,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
                   Text(
                     AppDateUtils.formatFullDate(record.startDate),
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.earth,
-                    ),
+                        fontSize: 15, fontWeight: FontWeight.w600, color: appTheme.earth),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -407,31 +345,23 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
                         : '进行中',
                     style: TextStyle(
                       fontSize: 13,
-                      color: isActive
-                          ? appTheme.primary
-                          : appTheme.earthMedium,
+                      color: isActive ? appTheme.rose : appTheme.earthMedium,
                     ),
                   ),
                 ],
               ),
             ),
-
-            // 周期天数
             if (record.cycleLength != null)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: appTheme.creamDark,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 ),
                 child: Text(
                   '${record.cycleLength}天',
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: appTheme.earthMedium,
-                  ),
+                      fontSize: 12, fontWeight: FontWeight.w500, color: appTheme.earthMedium),
                 ),
               ),
           ],
@@ -440,51 +370,10 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
     );
   }
 
-  Widget _buildEmptyState(AppThemeExtension appTheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: appTheme.primary.withAlpha(20),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Icon(
-              Icons.calendar_today_rounded,
-              color: appTheme.primary.withAlpha(100),
-              size: 36,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '暂无历史记录',
-            style: TextStyle(
-              fontSize: 16,
-              color: appTheme.earthMedium,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '记录经期后会在这里显示',
-            style: TextStyle(
-              fontSize: 14,
-              color: appTheme.earthMedium.withAlpha(150),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   double _calculateStdDev(List<int> values) {
     final mean = values.reduce((a, b) => a + b) / values.length;
     final variance =
-        values.map((v) => (v - mean) * (v - mean)).reduce((a, b) => a + b) /
-            values.length;
+        values.map((v) => (v - mean) * (v - mean)).reduce((a, b) => a + b) / values.length;
     return sqrt(variance);
   }
 
@@ -493,34 +382,28 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
 
     showDialog(
       context: context,
+      barrierColor: appTheme.surfaceOverlay,
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(appTheme.radiusXl),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 图标
               Container(
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: appTheme.rose.withAlpha(20),
+                  color: appTheme.rose.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(
-                  Icons.delete_outline_rounded,
-                  color: appTheme.rose,
-                  size: 32,
-                ),
+                child: Icon(Icons.delete_outline_rounded, color: appTheme.rose, size: 32),
               ),
               const SizedBox(height: 20),
-
-              // 标题
               Text(
                 '确认删除？',
                 style: TextStyle(
@@ -531,18 +414,11 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
                 ),
               ),
               const SizedBox(height: 12),
-
-              // 内容
               Text(
                 '删除后该记录将无法恢复。',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: appTheme.earthMedium,
-                ),
+                style: TextStyle(fontSize: 14, color: appTheme.earthMedium),
               ),
               const SizedBox(height: 24),
-
-              // 按钮
               Row(
                 children: [
                   Expanded(
@@ -552,20 +428,12 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           color: appTheme.creamDark,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: appTheme.earthMedium.withAlpha(30),
-                          ),
+                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
                         ),
                         child: Center(
-                          child: Text(
-                            '取消',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: appTheme.earthMedium,
-                            ),
-                          ),
+                          child: Text('取消',
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w600, color: appTheme.earthMedium)),
                         ),
                       ),
                     ),
@@ -582,17 +450,12 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           color: appTheme.rose,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
                         ),
                         child: const Center(
-                          child: Text(
-                            '删除',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
+                          child: Text('删除',
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
                         ),
                       ),
                     ),

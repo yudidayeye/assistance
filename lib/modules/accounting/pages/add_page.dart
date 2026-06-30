@@ -11,7 +11,7 @@ import '../widgets/amount_input.dart';
 import '../../../shared/widgets/number_keyboard.dart';
 import '../../../core/theme/theme_extension.dart';
 
-/// 快速记账页 — 奢华自然主义风格
+/// 快速记账页 — 柔和风格
 class AddTransactionPage extends StatefulWidget {
   final String? editId;
 
@@ -236,11 +236,8 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                   // 备注输入
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: appTheme.earthMedium.withAlpha(30),
-                      ),
+                      color: Colors.white.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(appTheme.radiusMd),
                     ),
                     child: TextField(
                       controller: _noteController,
@@ -318,11 +315,8 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: appTheme.creamDark,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: appTheme.earthMedium.withAlpha(30),
-                    ),
+                    color: appTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Icon(
                     Icons.arrow_back_ios_new_rounded,
@@ -380,10 +374,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: appTheme.creamDark,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: appTheme.earthMedium.withAlpha(20),
-          ),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
         ),
         child: Row(
           children: [
@@ -424,11 +415,8 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withAlpha(30) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: isSelected
-              ? Border.all(color: color.withAlpha(60))
-              : null,
+          color: isSelected ? color.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(appTheme.radiusSm),
         ),
         child: Center(
           child: Text(

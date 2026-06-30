@@ -7,7 +7,7 @@ import '../models/transaction.dart';
 import '../services/category_service.dart';
 import '../../../core/theme/theme_extension.dart';
 
-/// 分类管理页面 — 奢华自然主义风格
+/// 分类管理页面 — 柔和风格
 class CategorySettingsPage extends StatefulWidget {
   const CategorySettingsPage({super.key});
 
@@ -101,11 +101,8 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: appTheme.creamDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: appTheme.earthMedium.withAlpha(30),
-                ),
+                color: appTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -169,11 +166,9 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        boxShadow: appTheme.cardShadow,
       ),
       child: Column(
         children: [
@@ -417,7 +412,7 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: appTheme.cream,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(appTheme.radiusXl),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -434,11 +429,8 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
             const SizedBox(height: 20),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: appTheme.earthMedium.withAlpha(30),
-                ),
+                color: Colors.white.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: TextField(
                 controller: _nameController,
@@ -470,11 +462,8 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: appTheme.earthMedium.withAlpha(20),
-                ),
+                color: Colors.white.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: Wrap(
                 spacing: 8,
