@@ -11,31 +11,14 @@ class AppRouter {
 
   late GoRouter _router;
 
-  /// 构建带有自定义过渡动画的页面
-  static Page<dynamic> _buildPageWithTransition({
-    required BuildContext context,
+  /// 构建标准页面（无过渡动画 — 简洁扁平）
+  static Page<dynamic> _buildPage({
     required GoRouterState state,
     required Widget child,
   }) {
-    return CustomTransitionPage(
+    return MaterialPage<dynamic>(
       key: state.pageKey,
       child: child,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.02, 0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOut,
-            )),
-            child: child,
-          ),
-        );
-      },
-      transitionDuration: const Duration(milliseconds: 250),
     );
   }
 
@@ -45,8 +28,7 @@ class AppRouter {
     return modules.map((module) {
       return GoRoute(
         path: '/${module.moduleId}',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context: context,
+        pageBuilder: (context, state) => _buildPage(
           state: state,
           child: module.buildEntryPage(context),
         ),
@@ -66,8 +48,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/settings',
-          pageBuilder: (context, state) => _buildPageWithTransition(
-            context: context,
+          pageBuilder: (context, state) => _buildPage(
             state: state,
             child: const SettingsPage(),
           ),

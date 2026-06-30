@@ -20,42 +20,24 @@ class AccountingEntryPage extends StatefulWidget {
   State<AccountingEntryPage> createState() => _AccountingEntryPageState();
 }
 
-class _AccountingEntryPageState extends State<AccountingEntryPage>
-    with SingleTickerProviderStateMixin {
+class _AccountingEntryPageState extends State<AccountingEntryPage> {
   DateTime _selectedMonth = DateTime.now();
   List<Transaction> _transactions = [];
   Map<String, Category> _categoryCache = {};
   double _monthExpense = 0;
   double _monthIncome = 0;
   bool _loading = true;
-  late AnimationController _summaryController;
-  late Animation<double> _summaryFadeAnim;
   int _loadVersion = 0; // 5.4: 异步竞态防护
 
   @override
   void initState() {
     super.initState();
-    _summaryController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _summaryFadeAnim = CurvedAnimation(
-      parent: _summaryController,
-      curve: Curves.easeOut,
-    );
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    _summaryController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
     final version = ++_loadVersion;
     setState(() => _loading = true);
-    _summaryController.reset();
 
     final cats = await CategoryService.instance.getAllCategories();
     final txns = await TransactionService.instance.getTransactionsByMonth(_selectedMonth);
@@ -75,7 +57,6 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
       _monthIncome = income;
       _loading = false;
     });
-    _summaryController.forward();
   }
 
   void _onMonthChanged(DateTime month) {
@@ -108,10 +89,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
 
           // 月度摘要卡片
           SliverToBoxAdapter(
-            child: FadeTransition(
-              opacity: _summaryFadeAnim,
-              child: _buildSummaryCard(context, appTheme),
-            ),
+            child: _buildSummaryCard(context, appTheme),
           ),
 
           // 交易列表

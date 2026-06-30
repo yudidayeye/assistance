@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,7 +8,7 @@ import '../core/storage/database_service.dart';
 import '../core/theme/theme_extension.dart';
 import '../core/settings/settings_service.dart';
 
-/// 我的页面 — 用户中心 + 模块概览（Calm + Soft Tech 风格）
+/// 我的页面 — 用户中心 + 模块概览（简洁扁平风格）
 class ProfilePageContent extends StatefulWidget {
   const ProfilePageContent({super.key});
 
@@ -17,27 +16,14 @@ class ProfilePageContent extends StatefulWidget {
   State<ProfilePageContent> createState() => _ProfilePageContentState();
 }
 
-class _ProfilePageContentState extends State<ProfilePageContent>
-    with SingleTickerProviderStateMixin {
+class _ProfilePageContentState extends State<ProfilePageContent> {
   String _userName = '用户';
   List<_ModuleSnapshot> _moduleSnapshots = [];
-
-  late final AnimationController _animCtrl;
 
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    _animCtrl.dispose();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -66,24 +52,12 @@ class _ProfilePageContentState extends State<ProfilePageContent>
     }
     if (mounted) {
       setState(() => _moduleSnapshots = snapshots);
-      _animCtrl.forward();
     }
-  }
-
-  Animation<double> _stagger(int index, int total) {
-    final start = (index / (total + 1)).clamp(0.0, 0.75);
-    final end = (start + 0.2).clamp(0.1, 1.0);
-    return CurvedAnimation(
-      parent: _animCtrl,
-      curve: Interval(start, end, curve: Curves.easeOutCubic),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
-    // 区块: 0=头部, 1=用户卡片, 2..N=模块摘要, 最后=底部
-    final totalSections = 2 + _moduleSnapshots.length + 1;
 
     return Scaffold(
       body: Container(
@@ -91,41 +65,26 @@ class _ProfilePageContentState extends State<ProfilePageContent>
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // ── 0: 头部 ──
+            // ── 头部 ──
             SliverToBoxAdapter(
-              child: _StaggerSection(
-                animation: _stagger(0, totalSections),
-                slideBegin: const Offset(0, -0.06),
-                child: _buildHeader(appTheme),
-              ),
+              child: _buildHeader(appTheme),
             ),
 
-            // ── 1: 用户卡片（页面焦点） ──
+            // ── 用户卡片（页面焦点） ──
             SliverToBoxAdapter(
-              child: _StaggerSection(
-                animation: _stagger(1, totalSections),
-                child: _buildUserCard(appTheme),
-              ),
+              child: _buildUserCard(appTheme),
             ),
 
             // ── 模块摘要卡片 ──
-            ..._moduleSnapshots.asMap().entries.map((entry) {
-              final idx = entry.key;
-              final snap = entry.value;
+            ..._moduleSnapshots.map((snap) {
               return SliverToBoxAdapter(
-                child: _StaggerSection(
-                  animation: _stagger(2 + idx, totalSections),
-                  child: _buildModuleSnapshotCard(appTheme, snap),
-                ),
+                child: _buildModuleSnapshotCard(appTheme, snap),
               );
             }),
 
             // ── 底部信息 ──
             SliverToBoxAdapter(
-              child: _StaggerSection(
-                animation: _stagger(totalSections - 1, totalSections),
-                child: _buildFooter(appTheme),
-              ),
+              child: _buildFooter(appTheme),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
@@ -495,7 +454,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
 }
 
 // ═════════════════════════════════════════════════════════════════
-// 内部数据类 & 复用组件
+// 内部数据类
 // ═════════════════════════════════════════════════════════════════
 
 class _ModuleSnapshot {
@@ -512,30 +471,4 @@ class _ModuleSnapshot {
     required this.themeColor,
     required this.summary,
   });
-}
-
-/// 交错淡入+微上滑区块包装器
-class _StaggerSection extends StatelessWidget {
-  final Animation<double> animation;
-  final Offset slideBegin;
-  final Widget child;
-
-  const _StaggerSection({
-    required this.animation,
-    this.slideBegin = const Offset(0, 0.06),
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: animation.drive(
-          Tween<Offset>(begin: slideBegin, end: Offset.zero),
-        ),
-        child: child,
-      ),
-    );
-  }
 }

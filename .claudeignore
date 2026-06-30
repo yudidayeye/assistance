@@ -1,0 +1,84 @@
+# Build output
+/build/
+.dart_tool/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Generated Flutter files
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Codegraph index
+.codegraph/
+
+# Claude's own files
+.claude/
+
+# Android
+**/android/.gradle/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/android/captures/
+**/android/local.properties
+**/android/gradlew
+**/android/gradlew.bat
+**/android/**/GeneratedPluginRegistrant.java
+
+# iOS
+**/ios/Flutter/.last_build_id
+**/ios/Pods/
+**/ios/.symlinks/
+
+# Windows ephemeral (generated C++ wrappers)
+windows/flutter/ephemeral/
+
+# Binary assets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.otf
+*.ttf
+*.dat
+
+# Generated code
+**/doc/api/
+*.g.dart
+*.freezed.dart
+
+# Spec files
+specs/
+
+# Test assets
+build/unit_test_assets/
+
+# Coverage
+coverage/
+
+# Logs & temp
+*.log
+*.pyc
+*.swp
+.DS_Store
+.history
+
+# Pub cache
+.pub-cache/
+.pub/
+
+# Android Studio
+.android/
+
+# Misc
+.atom/
+.swiftpm/

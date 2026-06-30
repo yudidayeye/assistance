@@ -8,6 +8,9 @@
 2. 涉及到文件查找使用codegraph
 3. 完成计划时完成一个小功能自动git commit，git push
 
+## 参考文档
+1. UI设计风格参考文档, 修改前端视觉、调颜色、调间距时 → 必读 `./docs/UI.md`
+
 ## 技术栈
 - **Flutter / Dart** (SDK >=3.0.0 <4.0.0)
 - **go_router** ^14.0.0 — 路由管理

@@ -8,7 +8,7 @@ import '../storage/database_service.dart';
 import '../theme/theme_extension.dart';
 import '../theme/theme_provider.dart';
 
-/// 全局设置页面 — 柔和漂浮风格（Calm + Soft Tech）
+/// 全局设置页面 — 简洁扁平风格
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -16,45 +16,15 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage>
-    with SingleTickerProviderStateMixin {
+class _SettingsPageState extends State<SettingsPage> {
   final SettingsService _settings = SettingsService.instance;
   final SettingsController _controller = SettingsController.instance;
   final DatabaseService _db = DatabaseService.instance;
-
-  late final AnimationController _animCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _animCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _animCtrl.forward();
-  }
-
-  @override
-  void dispose() {
-    _animCtrl.dispose();
-    super.dispose();
-  }
-
-  /// 交错淡入 + 微上滑 (index: 0-based, total: section count)
-  Animation<double> _stagger(int index, int total) {
-    final start = (index / (total + 1)).clamp(0.0, 0.75);
-    final end = (start + 0.2).clamp(0.1, 1.0);
-    return CurvedAnimation(
-      parent: _animCtrl,
-      curve: Interval(start, end, curve: Curves.easeOutCubic),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
     final modules = ModuleRegistry.instance.allModules;
-    const total = 5; // 头部 + 4 个卡片区块
 
     return Scaffold(
       body: Container(
@@ -62,57 +32,41 @@ class _SettingsPageState extends State<SettingsPage>
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // ── 0: 头部 ──
+            // ── 头部 ──
             SliverToBoxAdapter(
-              child: _StaggerSection(
-                animation: _stagger(0, total),
-                slideBegin: const Offset(0, -0.06),
-                child: _buildHeader(context, appTheme),
-              ),
+              child: _buildHeader(context, appTheme),
             ),
 
-            // ── 1: 模块管理 ──
+            // ── 模块管理 ──
             SliverToBoxAdapter(
-              child: _StaggerSection(
-                animation: _stagger(1, total),
-                child: Column(children: [
-                  _buildSectionHeader(appTheme, '模块管理', Icons.apps_rounded),
-                  _buildModuleSection(appTheme, modules),
-                ]),
-              ),
+              child: Column(children: [
+                _buildSectionHeader(appTheme, '模块管理', Icons.apps_rounded),
+                _buildModuleSection(appTheme, modules),
+              ]),
             ),
 
-            // ── 2: 主题设置 ──
+            // ── 主题设置 ──
             SliverToBoxAdapter(
-              child: _StaggerSection(
-                animation: _stagger(2, total),
-                child: Column(children: [
-                  _buildSectionHeader(appTheme, '主题设置', Icons.palette_rounded),
-                  _buildThemeSection(appTheme),
-                ]),
-              ),
+              child: Column(children: [
+                _buildSectionHeader(appTheme, '主题设置', Icons.palette_rounded),
+                _buildThemeSection(appTheme),
+              ]),
             ),
 
-            // ── 3: 功能 ──
+            // ── 功能 ──
             SliverToBoxAdapter(
-              child: _StaggerSection(
-                animation: _stagger(3, total),
-                child: Column(children: [
-                  _buildSectionHeader(appTheme, '功能', Icons.tune_rounded),
-                  _buildFunctionSection(appTheme),
-                ]),
-              ),
+              child: Column(children: [
+                _buildSectionHeader(appTheme, '功能', Icons.tune_rounded),
+                _buildFunctionSection(appTheme),
+              ]),
             ),
 
-            // ── 4: 关于 ──
+            // ── 关于 ──
             SliverToBoxAdapter(
-              child: _StaggerSection(
-                animation: _stagger(4, total),
-                child: Column(children: [
-                  _buildSectionHeader(appTheme, '关于', Icons.info_outline_rounded),
-                  _buildAboutSection(appTheme),
-                ]),
-              ),
+              child: Column(children: [
+                _buildSectionHeader(appTheme, '关于', Icons.info_outline_rounded),
+                _buildAboutSection(appTheme),
+              ]),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
@@ -620,30 +574,4 @@ class _SoftCard extends StatelessWidget {
 Widget _softDivider(AppThemeExtension appTheme) {
   return Divider(
       height: 1, color: appTheme.earthMedium.withValues(alpha: 0.08));
-}
-
-/// 交错淡入+上滑区块包装器
-class _StaggerSection extends StatelessWidget {
-  final Animation<double> animation;
-  final Offset slideBegin;
-  final Widget child;
-
-  const _StaggerSection({
-    required this.animation,
-    this.slideBegin = const Offset(0, 0.06),
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: animation.drive(
-          Tween<Offset>(begin: slideBegin, end: Offset.zero),
-        ),
-        child: child,
-      ),
-    );
-  }
 }

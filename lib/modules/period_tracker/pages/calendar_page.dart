@@ -17,43 +17,17 @@ class CalendarPage extends StatefulWidget {
   State<CalendarPage> createState() => _CalendarPageState();
 }
 
-class _CalendarPageState extends State<CalendarPage>
-    with SingleTickerProviderStateMixin {
+class _CalendarPageState extends State<CalendarPage> {
   DateTime _displayedMonth = DateTime.now();
   DateTime? _selectedDate;
   List<PeriodRecord> _records = [];
   PredictionResult? _prediction;
   bool _loading = true;
-  late AnimationController _headerController;
-  late Animation<double> _headerFadeAnim;
-  late Animation<Offset> _headerSlideAnim;
 
   @override
   void initState() {
     super.initState();
-    _headerController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _headerFadeAnim = CurvedAnimation(
-      parent: _headerController,
-      curve: Curves.easeOut,
-    );
-    _headerSlideAnim = Tween<Offset>(
-      begin: const Offset(0, -0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _headerController,
-      curve: Curves.easeOutCubic,
-    ));
-
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    _headerController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -68,7 +42,6 @@ class _CalendarPageState extends State<CalendarPage>
         _prediction = prediction;
         _loading = false;
       });
-      _headerController.forward();
     }
   }
 
@@ -88,13 +61,7 @@ class _CalendarPageState extends State<CalendarPage>
           : Column(
               children: [
                 // 头部区域
-                FadeTransition(
-                  opacity: _headerFadeAnim,
-                  child: SlideTransition(
-                    position: _headerSlideAnim,
-                    child: _buildHeader(context, appTheme),
-                  ),
-                ),
+                _buildHeader(context, appTheme),
 
                 // 可滚动内容区
                 Expanded(

@@ -15,40 +15,22 @@ class AccountingStatsPage extends StatefulWidget {
   State<AccountingStatsPage> createState() => _AccountingStatsPageState();
 }
 
-class _AccountingStatsPageState extends State<AccountingStatsPage>
-    with SingleTickerProviderStateMixin {
+class _AccountingStatsPageState extends State<AccountingStatsPage> {
   DateTime _selectedMonth = DateTime.now();
   List<CategoryStats> _stats = [];
   Map<String, double> _overview = {};
   bool _loading = true;
-  late AnimationController _chartController;
-  late Animation<double> _chartFadeAnim;
   int _loadVersion = 0;
 
   @override
   void initState() {
     super.initState();
-    _chartController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _chartFadeAnim = CurvedAnimation(
-      parent: _chartController,
-      curve: Curves.easeOut,
-    );
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    _chartController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
     final version = ++_loadVersion;
     setState(() => _loading = true);
-    _chartController.reset();
 
     final stats =
         await StatsService.instance.getExpenseStatsByCategory(_selectedMonth);
@@ -61,7 +43,6 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
       _overview = overview;
       _loading = false;
     });
-    _chartController.forward();
   }
 
   void _changeMonth(int offset) {
@@ -94,17 +75,11 @@ class _AccountingStatsPageState extends State<AccountingStatsPage>
                   child: _buildMonthSwitcher(appTheme),
                 ),
                 SliverToBoxAdapter(
-                  child: FadeTransition(
-                    opacity: _chartFadeAnim,
-                    child: _buildOverviewCard(appTheme),
-                  ),
+                  child: _buildOverviewCard(appTheme),
                 ),
                 if (_stats.isNotEmpty)
                   SliverToBoxAdapter(
-                    child: FadeTransition(
-                      opacity: _chartFadeAnim,
-                      child: _buildChartCard(appTheme),
-                    ),
+                    child: _buildChartCard(appTheme),
                   ),
                 if (_stats.isNotEmpty)
                   SliverToBoxAdapter(

@@ -17,36 +17,18 @@ class PeriodStatsPage extends StatefulWidget {
   State<PeriodStatsPage> createState() => _PeriodStatsPageState();
 }
 
-class _PeriodStatsPageState extends State<PeriodStatsPage>
-    with SingleTickerProviderStateMixin {
+class _PeriodStatsPageState extends State<PeriodStatsPage> {
   List<PeriodRecord> _records = [];
   bool _loading = true;
-  late AnimationController _statsController;
-  late Animation<double> _statsFadeAnim;
 
   @override
   void initState() {
     super.initState();
-    _statsController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _statsFadeAnim = CurvedAnimation(
-      parent: _statsController,
-      curve: Curves.easeOut,
-    );
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    _statsController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
     setState(() => _loading = true);
-    _statsController.reset();
 
     final records = await PeriodService.instance.getAllRecords();
     PredictionService.instance.predict(records);
@@ -56,7 +38,6 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
         _records = records;
         _loading = false;
       });
-      _statsController.forward();
     }
   }
 
@@ -110,10 +91,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage>
             child: _buildHeader(context, appTheme),
           ),
           SliverToBoxAdapter(
-            child: FadeTransition(
-              opacity: _statsFadeAnim,
-              child: _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
-            ),
+            child: _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
           ),
           SliverToBoxAdapter(
             child: _buildSectionHeader(appTheme, '历史记录'),
