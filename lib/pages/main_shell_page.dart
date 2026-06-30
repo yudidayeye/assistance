@@ -40,13 +40,15 @@ class _MainShellPageState extends State<MainShellPage> {
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
     return Scaffold(
-      backgroundColor: appTheme.cream,
-      body: IndexedStack(
+      body: Container(
+        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
+        child: IndexedStack(
         index: _currentIndex,
         children: [
           _buildToolboxPage(appTheme),
           const ProfilePageContent(),
         ],
+      ),
       ),
       bottomNavigationBar: ToolboxBottomNav(
         selectedIndex: _currentIndex,
