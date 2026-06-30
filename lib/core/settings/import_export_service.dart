@@ -53,28 +53,23 @@ class ImportExportService {
       final jsonString =
           const JsonEncoder.withIndent('  ').convert(payload);
       final bytes = Uint8List.fromList(utf8.encode(jsonString));
+      final fileName = 'my_assistant_backup_${_dateStamp()}.json';
 
-      // 5. 打开系统"另存为"对话框
-      final outputPath = await FilePicker.platform.saveFile(
-        dialogTitle: '导出数据',
-        fileName: 'my_assistant_backup_${_dateStamp()}.json',
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-        lockParentWindow: true,
-        bytes: bytes,
+      // 5. 打开系统目录选择对话框
+      final directory = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: '选择导出目录',
       );
 
-      if (outputPath == null) {
+      if (directory == null) {
         return ExportResult.userCancelled();
       }
 
-      // 6. 兜底写入（桌面端 file_picker 可能只返回路径未实际写入）
-      final file = File(outputPath);
-      if (!await file.exists()) {
-        await file.writeAsBytes(bytes);
-      }
+      // 6. 写入文件
+      final filePath = '$directory${Platform.pathSeparator}$fileName';
+      final file = File(filePath);
+      await file.writeAsBytes(bytes);
 
-      return ExportResult.success(outputPath);
+      return ExportResult.success(filePath);
     } catch (e, stack) {
       debugPrint('Export error: $e\n$stack');
       return ExportResult.error(e.toString());
