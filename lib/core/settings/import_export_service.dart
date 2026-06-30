@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../storage/database_service.dart';
 import '../theme/theme_provider.dart';
 import 'settings_service.dart';
 
 /// 数据导入导出服务 — JSON 格式备份与恢复（设置 + 生理期记录）
+/// 导出到系统下载/文档目录，导入从指定路径读取文件。
 class ImportExportService {
   static final ImportExportService instance = ImportExportService._();
   ImportExportService._();
@@ -20,7 +21,7 @@ class ImportExportService {
   // 导出
   // ═══════════════════════════════════════════════════════════════
 
-  /// 将数据导出到用户选择的 JSON 文件。
+  /// 将数据导出为 JSON 文件（保存到下载/文档目录）。
   Future<ExportResult> exportData() async {
     try {
       // 1. 读取所有 app_settings
@@ -49,69 +50,53 @@ class ImportExportService {
         },
       };
 
-      // 4. 编码为 JSON 字节
+      // 4. 编码为 JSON
       final jsonString =
           const JsonEncoder.withIndent('  ').convert(payload);
       final bytes = Uint8List.fromList(utf8.encode(jsonString));
       final fileName = 'my_assistant_backup_${_dateStamp()}.json';
 
-      // 5. 打开系统目录选择对话框
-      final directory = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: '选择导出目录',
-      );
-
-      if (directory == null) {
-        return ExportResult.userCancelled();
-      }
-
-      // 6. 写入文件
-      final filePath = '$directory${Platform.pathSeparator}$fileName';
-      final file = File(filePath);
+      // 5. 写入下载目录（回退到应用文档目录）
+      final directory = await _getExportDirectory();
+      final file = File('${directory.path}$fileName');
       await file.writeAsBytes(bytes);
 
-      return ExportResult.success(filePath);
+      return ExportResult.success(file.path);
     } catch (e, stack) {
       debugPrint('Export error: $e\n$stack');
       return ExportResult.error(e.toString());
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // 导入预览
-  // ═══════════════════════════════════════════════════════════════
-
-  /// 打开文件选择器并预览导入内容（不写入数据库）。
-  Future<ImportPreviewResult> previewImport() async {
+  /// 获取导出目标目录（优先下载目录，回退应用文档目录）
+  Future<Directory> _getExportDirectory() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        dialogTitle: '选择备份文件',
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-        allowMultiple: false,
-        lockParentWindow: true,
-      );
+      final downloads = await getDownloadsDirectory();
+      if (downloads != null) return downloads;
+    } catch (_) {}
+    return getApplicationDocumentsDirectory();
+  }
 
-      if (result == null || result.files.isEmpty) {
-        return ImportPreviewResult.userCancelled();
-      }
+  // ═══════════════════════════════════════════════════════════════
+  // 导入预览（从文件路径读取）
+  // ═══════════════════════════════════════════════════════════════
 
-      final filePath = result.files.single.path;
-      if (filePath == null) {
-        return ImportPreviewResult.invalidFormat('无法获取文件路径');
-      }
-
-      // 读取并解析 JSON
+  /// 从给定路径解析并校验 JSON 结构（不写入数据库）。
+  ImportPreviewResult previewImportFromPath(String filePath) {
+    try {
       final file = File(filePath);
-      final content = await file.readAsString(encoding: utf8);
+      if (!file.existsSync()) {
+        return ImportPreviewResult.invalidFormat('文件不存在：$filePath');
+      }
+
+      final content = file.readAsStringSync(encoding: utf8);
       final json = jsonDecode(content) as Map<String, dynamic>;
 
-      // 校验结构
       final validationError = _validateStructure(json);
       if (validationError != null) {
         return ImportPreviewResult.invalidFormat(validationError);
       }
 
-      // 提取预览信息
       final data = json['data'] as Map<String, dynamic>;
       final settings = data['app_settings'] as Map<String, dynamic>? ?? {};
       final periodRecords =
@@ -147,7 +132,7 @@ class ImportExportService {
       int periodRecordsCount = 0;
 
       await _db.transaction((txn) async {
-        // Phase 1: 合并 app_settings（INSERT OR REPLACE 覆盖，不删未包含的 key）
+        // Phase 1: 合并 app_settings
         final settings = data['app_settings'] as Map<String, dynamic>? ?? {};
         for (final entry in settings.entries) {
           await txn.rawInsert(
@@ -185,7 +170,7 @@ class ImportExportService {
         }
       });
 
-      // 导入后刷新运行时缓存（模块开关、主题等）
+      // 导入后刷新运行时缓存
       await SettingsService.instance.loadSettings();
       await ThemeProvider.instance.loadTheme();
 
@@ -203,20 +188,15 @@ class ImportExportService {
   // 周期长度重算（事务内执行）
   // ═══════════════════════════════════════════════════════════════
 
-  /// 在给定事务中重算所有 cycle_length。
-  /// 先清空全部 cycle_length，再按 start_date 升序计算相邻记录间隔。
   Future<void> _recalculateCycleLengthsInTransaction(dynamic txn) async {
-    // 清空
     await txn.rawUpdate(
       'UPDATE mod_period_tracker_records SET cycle_length = NULL',
     );
 
-    // 按 start_date 升序获取（作为 ISO 8601 字符串存储在数据库中）
     final rows = await txn.rawQuery(
       'SELECT * FROM mod_period_tracker_records ORDER BY start_date ASC',
     );
 
-    // 从第二条开始计算与前一条的天数差
     for (int i = 1; i < rows.length; i++) {
       final current = DateTime.parse(rows[i]['start_date'] as String);
       final previous = DateTime.parse(rows[i - 1]['start_date'] as String);
@@ -233,7 +213,6 @@ class ImportExportService {
   // 结构校验
   // ═══════════════════════════════════════════════════════════════
 
-  /// 验证 JSON 结构。返回 null 表示有效，否则返回错误字符串。
   String? _validateStructure(Map<String, dynamic> json) {
     if (json['version'] is! int) {
       return '无效的文件格式：缺少版本号';
@@ -251,30 +230,37 @@ class ImportExportService {
     }
 
     final data = json['data'] as Map<String, dynamic>;
-
     if (data['app_settings'] != null && data['app_settings'] is! Map) {
       return '设置数据格式不正确';
     }
-
     if (data['period_tracker_records'] != null &&
         data['period_tracker_records'] is! List) {
       return '生理期记录数据格式不正确';
     }
 
-    return null; // 有效
+    return null;
   }
 
   // ═══════════════════════════════════════════════════════════════
   // 工具
   // ═══════════════════════════════════════════════════════════════
 
-  /// 生成文件名时间戳 YYYYMMDD_HHmm
   static String _dateStamp() {
     final now = DateTime.now();
     return '${now.year}${now.month.toString().padLeft(2, '0')}'
         '${now.day.toString().padLeft(2, '0')}_'
         '${now.hour.toString().padLeft(2, '0')}'
         '${now.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// 获取默认导入目录（与导出目录一致）
+  Future<String> getDefaultImportDirectory() async {
+    try {
+      final downloads = await getDownloadsDirectory();
+      if (downloads != null) return downloads.path;
+    } catch (_) {}
+    final docs = await getApplicationDocumentsDirectory();
+    return docs.path;
   }
 }
 

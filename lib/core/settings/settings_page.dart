@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -452,35 +453,33 @@ class _SettingsPageState extends State<SettingsPage> {
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-    if (result.isCancelled) return;
-
     if (result.isSuccess) {
-      _showSnackBar('数据导出成功');
+      _showSnackBar('已导出到：${result.filePath}');
     } else {
       _showErrorDialog('导出失败', result.error ?? '未知错误');
     }
   }
 
   Future<void> _handleImport() async {
-    // 1. 选择文件并预览
-    final preview = await _importExport.previewImport();
-    if (!mounted) return;
+    // 1. 弹出路径输入对话框
+    final filePath = await _showPathInputDialog();
+    if (!mounted || filePath == null) return;
 
-    if (preview.isCancelled) return;
-
+    // 2. 预览解析
+    final preview = _importExport.previewImportFromPath(filePath);
     if (!preview.isReady) {
       _showErrorDialog('导入失败', preview.error ?? '文件格式无效');
       return;
     }
 
-    // 2. 确认对话框
+    // 3. 确认对话框
     final confirmed = await _showImportConfirmDialog(
       settingsCount: preview.settingsCount,
       periodRecordsCount: preview.periodRecordsCount,
     );
     if (!mounted || confirmed != true) return;
 
-    // 3. 执行导入
+    // 4. 执行导入
     _showSnackBar('正在导入数据...');
     final result = await _importExport.executeImport(preview.filePath!);
     if (!mounted) return;
@@ -490,10 +489,110 @@ class _SettingsPageState extends State<SettingsPage> {
     if (result.isSuccess) {
       _showSnackBar(
         '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录');
-      setState(() {}); // 刷新设置页显示
+      setState(() {});
     } else {
       _showErrorDialog('导入失败', result.error ?? '未知错误');
     }
+  }
+
+  Future<String?> _showPathInputDialog() async {
+    final appTheme = Theme.of(context).appTheme;
+    final defaultDir = await _importExport.getDefaultImportDirectory();
+    final ctrl = TextEditingController(text: '$defaultDir${Platform.pathSeparator}');
+
+    return showDialog<String>(
+      context: context,
+      barrierColor: appTheme.surfaceOverlay,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: appTheme.cream,
+            borderRadius: BorderRadius.circular(appTheme.radiusXl),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(Icons.download_rounded,
+                    color: appTheme.primary, size: 28),
+              ),
+              const SizedBox(height: 18),
+              Text('输入备份文件路径',
+                  style: TextStyle(
+                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w600,
+                      color: appTheme.earth)),
+              const SizedBox(height: 18),
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: '/path/to/my_assistant_backup.json',
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.7),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                style: TextStyle(color: appTheme.earth, fontSize: 14),
+              ),
+              const SizedBox(height: 22),
+              Row(children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: appTheme.creamDark,
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                      ),
+                      child: Center(
+                          child: Text('取消',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: appTheme.earthMedium))),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx, ctrl.text.trim()),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [appTheme.primary, appTheme.primaryDark],
+                        ),
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                      ),
+                      child: const Center(
+                          child: Text('确认',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white))),
+                    ),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<bool?> _showImportConfirmDialog({
