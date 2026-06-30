@@ -58,6 +58,12 @@ class PeriodService {
     await _updateCycleLengths();
   }
 
+  /// 公开重算所有 cycle_length 值。
+  /// 用于批量导入后一次性重算，避免每条记录单独触发。
+  Future<void> recalculateCycleLengths() async {
+    await _updateCycleLengths();
+  }
+
   /// 获取单条记录
   Future<PeriodRecord?> getRecord(String id) async {
     final rows = await _db.query(_table, where: 'id = ?', whereArgs: [id]);

@@ -7,6 +7,7 @@ import 'settings_service.dart';
 import '../storage/database_service.dart';
 import '../theme/theme_extension.dart';
 import '../theme/theme_provider.dart';
+import 'import_export_service.dart';
 
 /// 全局设置页面 — 简洁扁平风格
 class SettingsPage extends StatefulWidget {
@@ -20,6 +21,7 @@ class _SettingsPageState extends State<SettingsPage> {
   final SettingsService _settings = SettingsService.instance;
   final SettingsController _controller = SettingsController.instance;
   final DatabaseService _db = DatabaseService.instance;
+  final ImportExportService _importExport = ImportExportService.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -302,6 +304,22 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       children: [
         _buildFunctionItem(appTheme,
+            icon: Icons.upload_file_rounded,
+            label: '导出数据',
+            onTap: _handleExport),
+        Padding(
+          padding: const EdgeInsets.only(left: 60),
+          child: _softDivider(appTheme),
+        ),
+        _buildFunctionItem(appTheme,
+            icon: Icons.download_rounded,
+            label: '导入数据',
+            onTap: _handleImport),
+        Padding(
+          padding: const EdgeInsets.only(left: 60),
+          child: _softDivider(appTheme),
+        ),
+        _buildFunctionItem(appTheme,
             icon: Icons.notifications_outlined, label: '通知管理', onTap: () {}),
         Padding(
           padding: const EdgeInsets.only(left: 60),
@@ -420,6 +438,219 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
       ]),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 数据导入导出
+  // ═══════════════════════════════════════════════════════════════
+
+  Future<void> _handleExport() async {
+    _showSnackBar('正在导出数据...');
+    final result = await _importExport.exportData();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    if (result.isCancelled) return;
+
+    if (result.isSuccess) {
+      _showSnackBar('数据导出成功');
+    } else {
+      _showErrorDialog('导出失败', result.error ?? '未知错误');
+    }
+  }
+
+  Future<void> _handleImport() async {
+    // 1. 选择文件并预览
+    final preview = await _importExport.previewImport();
+    if (!mounted) return;
+
+    if (preview.isCancelled) return;
+
+    if (!preview.isReady) {
+      _showErrorDialog('导入失败', preview.error ?? '文件格式无效');
+      return;
+    }
+
+    // 2. 确认对话框
+    final confirmed = await _showImportConfirmDialog(
+      settingsCount: preview.settingsCount,
+      periodRecordsCount: preview.periodRecordsCount,
+    );
+    if (!mounted || confirmed != true) return;
+
+    // 3. 执行导入
+    _showSnackBar('正在导入数据...');
+    final result = await _importExport.executeImport(preview.filePath!);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    if (result.isSuccess) {
+      _showSnackBar(
+        '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录');
+      setState(() {}); // 刷新设置页显示
+    } else {
+      _showErrorDialog('导入失败', result.error ?? '未知错误');
+    }
+  }
+
+  Future<bool?> _showImportConfirmDialog({
+    required int settingsCount,
+    required int periodRecordsCount,
+  }) {
+    final appTheme = Theme.of(context).appTheme;
+    return showDialog<bool>(
+      context: context,
+      barrierColor: appTheme.surfaceOverlay,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: appTheme.cream,
+            borderRadius: BorderRadius.circular(appTheme.radiusXl),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(Icons.download_rounded,
+                    color: appTheme.primary, size: 30),
+              ),
+              const SizedBox(height: 20),
+              Text('确认导入数据？',
+                  style: TextStyle(
+                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 10),
+              Text(
+                '将导入 $settingsCount 项设置和 $periodRecordsCount 条生理期记录。\n'
+                '已存在的设置和记录将被覆盖，不会影响记账数据。',
+                style: TextStyle(
+                    fontSize: 14, color: appTheme.earthMedium, height: 1.5),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx, false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: appTheme.creamDark,
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                      ),
+                      child: Center(
+                          child: Text('取消',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: appTheme.earthMedium))),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx, true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [appTheme.primary, appTheme.primaryDark],
+                        ),
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                      ),
+                      child: const Center(
+                          child: Text('确认导入',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white))),
+                    ),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showErrorDialog(String title, String message) {
+    final appTheme = Theme.of(context).appTheme;
+    showDialog(
+      context: context,
+      barrierColor: appTheme.surfaceOverlay,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: appTheme.cream,
+            borderRadius: BorderRadius.circular(appTheme.radiusXl),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: appTheme.rose.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(Icons.error_outline_rounded,
+                    color: appTheme.rose, size: 30),
+              ),
+              const SizedBox(height: 20),
+              Text(title,
+                  style: TextStyle(
+                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 10),
+              Text(message,
+                  style: TextStyle(
+                      fontSize: 14, color: appTheme.earthMedium, height: 1.5),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: appTheme.primary,
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                  ),
+                  child: const Center(
+                      child: Text('确定',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white))),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
