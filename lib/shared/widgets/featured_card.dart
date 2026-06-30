@@ -4,7 +4,7 @@ import '../../core/module_system/tool_module.dart';
 import '../../core/theme/theme_extension.dart';
 import 'package:go_router/go_router.dart';
 
-/// 特色功能卡片 — 极简风格 + 底部摘要
+/// 特色功能卡片 — 柔和状态容器风格
 class FeaturedCard extends StatefulWidget {
   final ToolModule module;
   final VoidCallback? onTap;
@@ -43,39 +43,42 @@ class _FeaturedCardState extends State<FeaturedCard> {
     return GestureDetector(
       onTap: widget.onTap ?? () => context.push('/${widget.module.moduleId}'),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: appTheme.creamDark,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: color.withAlpha(8),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          gradient: LinearGradient(
+            colors: [
+              appTheme.cardBackground,
+              appTheme.cardBackground.withValues(alpha: 0.6),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(appTheme.radiusLg),
+          boxShadow: appTheme.cardShadow,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // 模块图标
             Container(
-              width: 48,
-              height: 48,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
-                color: color.withAlpha(20),
-                borderRadius: BorderRadius.circular(16),
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: Center(
-                child: widget.module.icon.build(size: 24, color: color),
+                child: widget.module.icon.build(size: 28, color: color),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: appTheme.spaceMd),
+            // 标题
             Text(
               widget.module.displayName,
               style: TextStyle(
-                fontFamily: GoogleFonts.robotoSlab().fontFamily,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
                 color: appTheme.earth,
                 letterSpacing: -0.2,
               ),
@@ -88,7 +91,7 @@ class _FeaturedCardState extends State<FeaturedCard> {
               Text(
                 _summary!,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   color: appTheme.earthMedium,
                   fontWeight: FontWeight.w500,
                 ),

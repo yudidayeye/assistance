@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/theme_extension.dart';
 
-/// 工具箱底部导航栏
+/// 工具箱底部导航栏 — 毛玻璃柔和风格
 class ToolboxBottomNav extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTap;
@@ -16,15 +16,12 @@ class ToolboxBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Container(
-      margin: const EdgeInsets.only(top: 14),
+      padding: EdgeInsets.only(bottom: bottomPadding),
       decoration: BoxDecoration(
-        color: appTheme.creamDark,
-        border: Border(
-          top: BorderSide(
-            color: appTheme.earthMedium.withAlpha(15),
-          ),
-        ),
+        color: Colors.white.withValues(alpha: 0.85),
       ),
       child: Row(
         children: [
@@ -34,8 +31,7 @@ class ToolboxBottomNav extends StatelessWidget {
               label: '工具箱',
               isSelected: selectedIndex == 0,
               onTap: () => onTap(0),
-              selectedColor: appTheme.sage,
-              unselectedColor: appTheme.earthMedium,
+              appTheme: appTheme,
             ),
           ),
           Expanded(
@@ -44,8 +40,7 @@ class ToolboxBottomNav extends StatelessWidget {
               label: '我的',
               isSelected: selectedIndex == 1,
               onTap: () => onTap(1),
-              selectedColor: appTheme.sage,
-              unselectedColor: appTheme.earthMedium,
+              appTheme: appTheme,
             ),
           ),
         ],
@@ -59,33 +54,44 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  final Color selectedColor;
-  final Color unselectedColor;
+  final AppThemeExtension appTheme;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.isSelected,
     required this.onTap,
-    required this.selectedColor,
-    required this.unselectedColor,
+    required this.appTheme,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? selectedColor : unselectedColor;
+    final color = isSelected ? appTheme.primary : appTheme.earthLight;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: SizedBox(
         width: double.infinity,
-        height: 82,
+        height: 60,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // 选中指示短线
+            if (isSelected)
+              Container(
+                width: 20,
+                height: 3,
+                margin: const EdgeInsets.only(bottom: 6),
+                decoration: BoxDecoration(
+                  color: appTheme.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              )
+            else
+              const SizedBox(height: 9),
             Icon(icon, size: 22, color: color),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/theme_extension.dart';
 
-/// 月份选择器 — 奢华自然主义风格
+/// 月份选择器 — 柔和风格
 class MonthSelector extends StatefulWidget {
   final DateTime selectedMonth;
   final ValueChanged<DateTime> onMonthChanged;
@@ -40,85 +40,52 @@ class _MonthSelectorState extends State<MonthSelector> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final appTheme = theme.appTheme;
+    final appTheme = Theme.of(context).appTheme;
     final monthStr = '${_current.year}年${_current.month}月';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: appTheme.earthMedium.withAlpha(20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // 上一月按钮
+          _ArrowButton(
+            icon: Icons.chevron_left_rounded,
+            onTap: () => _goToMonth(-1),
+            appTheme: appTheme,
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // 上一月按钮
-            GestureDetector(
-              onTap: () => _goToMonth(-1),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: appTheme.creamDark,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.chevron_left_rounded,
-                  color: appTheme.earthMedium,
-                  size: 20,
-                ),
-              ),
-            ),
 
-            // 月份显示
-            GestureDetector(
-              onTap: _showMonthPicker,
-              child: Row(
-                children: [
-                  Text(
-                    monthStr,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.earth,
-                    ),
+          // 月份显示
+          GestureDetector(
+            onTap: _showMonthPicker,
+            child: Row(
+              children: [
+                Text(
+                  monthStr,
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.dmSans().fontFamily,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: appTheme.earth,
                   ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 20,
-                    color: appTheme.earthMedium.withAlpha(150),
-                  ),
-                ],
-              ),
-            ),
-
-            // 下一月按钮
-            GestureDetector(
-              onTap: () => _goToMonth(1),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: appTheme.creamDark,
-                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  color: appTheme.earthMedium,
+                const SizedBox(width: 2),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
                   size: 20,
+                  color: appTheme.earthMedium,
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // 下一月按钮
+          _ArrowButton(
+            icon: Icons.chevron_right_rounded,
+            onTap: () => _goToMonth(1),
+            appTheme: appTheme,
+          ),
+        ],
       ),
     );
   }
@@ -149,5 +116,37 @@ class _MonthSelectorState extends State<MonthSelector> {
         widget.onMonthChanged(newMonth);
       }
     });
+  }
+}
+
+class _ArrowButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final AppThemeExtension appTheme;
+
+  const _ArrowButton({
+    required this.icon,
+    required this.onTap,
+    required this.appTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: appTheme.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        ),
+        child: Icon(
+          icon,
+          color: appTheme.earthMedium,
+          size: 20,
+        ),
+      ),
+    );
   }
 }
