@@ -24,7 +24,7 @@ class PeriodTrackerModule implements ToolModule {
   ModuleIcon get icon => const ModuleIcon.icon(Icons.favorite_rounded);
 
   @override
-  Color get themeColor => const Color(0xFFC97D7D); // 玫瑰色主题
+  Color get themeColor => const Color(0xFFD4879A); // 柔粉 — 关怀粉
 
   @override
   Widget buildEntryPage(BuildContext context) => const CalendarPage();

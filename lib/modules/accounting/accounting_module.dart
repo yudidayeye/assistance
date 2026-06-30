@@ -26,7 +26,7 @@ class AccountingModule implements ToolModule {
   ModuleIcon get icon => const ModuleIcon.icon(Icons.auto_awesome_rounded);
 
   @override
-  Color get themeColor => const Color(0xFFD4AF37); // 金色主题
+  Color get themeColor => const Color(0xFF9CAD8A); // 叶语绿 — 温和的绿
 
   @override
   Widget buildEntryPage(BuildContext context) => const AccountingEntryPage();

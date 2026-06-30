@@ -2,16 +2,30 @@ import 'package:flutter/material.dart';
 import '../storage/database_service.dart';
 import 'app_theme.dart';
 
-/// 主题类型枚举
+/// 主题类型枚举 — 4 套柔和配色
 enum AppThemeType {
-  gold('金色', Color(0xFFD4AF37)),
-  blue('蓝色', Color(0xFF4A90D9)),
-  green('绿色', Color(0xFF4CAF50)),
-  pink('粉色', Color(0xFFE91E63));
+  softNight('柔夜', Color(0xFF7B8BAA)),
+  morningMist('晨雾', Color(0xFF8AADB8)),
+  leafWhisper('叶语', Color(0xFF9CAD8A)),
+  flowerMist('花雾', Color(0xFFC9A0AA));
 
   final String label;
   final Color color;
   const AppThemeType(this.label, this.color);
+
+  /// 旧名称 → 新枚举的迁移映射
+  static AppThemeType fromLegacyName(String legacyName) {
+    return switch (legacyName) {
+      'gold' => AppThemeType.softNight,
+      'blue' => AppThemeType.morningMist,
+      'green' => AppThemeType.leafWhisper,
+      'pink' => AppThemeType.flowerMist,
+      _ => AppThemeType.values.firstWhere(
+          (t) => t.name == legacyName,
+          orElse: () => AppThemeType.softNight,
+        ),
+    };
+  }
 }
 
 /// 主题管理器 — 全局单例
@@ -19,19 +33,16 @@ class ThemeProvider extends ChangeNotifier {
   static final ThemeProvider instance = ThemeProvider._();
   ThemeProvider._();
 
-  AppThemeType _currentTheme = AppThemeType.gold;
+  AppThemeType _currentTheme = AppThemeType.softNight;
   AppThemeType get currentTheme => _currentTheme;
 
-  /// 从数据库加载主题设置
+  /// 从数据库加载主题设置（兼容旧名称）
   Future<void> loadTheme() async {
     final db = DatabaseService.instance;
     final rows = await db.query('app_settings', where: "key = 'theme_type'");
     if (rows.isNotEmpty) {
       final themeName = rows.first['value'] as String;
-      _currentTheme = AppThemeType.values.firstWhere(
-        (t) => t.name == themeName,
-        orElse: () => AppThemeType.gold,
-      );
+      _currentTheme = AppThemeType.fromLegacyName(themeName);
     }
   }
 

@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'theme_extension.dart';
 import 'theme_provider.dart';
 
-/// 应用主题 — 支持多套配色
+/// 应用主题 — 4 套柔和配色（柔夜/晨雾/叶语/花雾）
 class AppTheme {
   AppTheme._();
 
@@ -11,143 +11,117 @@ class AppTheme {
   static const Color _white = Colors.white;
   static const Color _error = Color(0xFFCF6679);
 
-  // ── 金色配色（默认）──────────────────────────────────
-  static const Color _goldPrimary = Color(0xFFD4AF37);
-  static const Color _goldLight = Color(0xFFF5E6CC);
-  static const Color _goldDark = Color(0xFFB8941F);
-  static const Color _goldEarth = Color(0xFF2C1810);
-  static const Color _goldEarthLight = Color(0xFF4A3228);
-  static const Color _goldEarthMedium = Color(0xFF8B6F5C);
-  static const Color _goldCream = Color(0xFFFDF8F0);
-  static const Color _goldCreamDark = Color(0xFFF5EDE0);
-  static const Color _goldSage = Color(0xFF7A8B6F);
-  static const Color _goldSageLight = Color(0xFFB8C4AB);
-  static const Color _goldRose = Color(0xFFC97D7D);
-  static const Color _goldRoseLight = Color(0xFFE8B4B4);
+  // ── 通用文字色系（所有主题共用） ──────────────────────
+  static const Color _earth = Color(0xFF3D3D3D);
+  static const Color _earthLight = Color(0xFF6B6B6B);
+  static const Color _earthMedium = Color(0xFF9B9B9B);
 
-  // ── 蓝色配色 ──────────────────────────────────────
-  static const Color _bluePrimary = Color(0xFF4A90D9);
-  static const Color _blueLight = Color(0xFFD6E8FA);
-  static const Color _blueDark = Color(0xFF2E6DB4);
-  static const Color _blueEarth = Color(0xFF1A2332);
-  static const Color _blueEarthLight = Color(0xFF2D3F55);
-  static const Color _blueEarthMedium = Color(0xFF6B7D94);
-  static const Color _blueCream = Color(0xFFF5F8FC);
-  static const Color _blueCreamDark = Color(0xFFE8EFF7);
-  static const Color _blueSage = Color(0xFF5C9AC9);
-  static const Color _blueSageLight = Color(0xFFA8CCE8);
-  static const Color _blueRose = Color(0xFFE8746A);
-  static const Color _blueRoseLight = Color(0xFFF5B8B3);
+  // ── 通用辅助色（所有主题共用） ──────────────────────
+  static const Color _sage = Color(0xFF8CADA0);
+  static const Color _sageLight = Color(0xFFCDE0D6);
+  static const Color _rose = Color(0xFFD4879A);
+  static const Color _roseLight = Color(0xFFEDCDD4);
 
-  // ── 绿色配色 ──────────────────────────────────────
-  static const Color _greenPrimary = Color(0xFF4CAF50);
-  static const Color _greenLight = Color(0xFFD7EDDA);
-  static const Color _greenDark = Color(0xFF388E3C);
-  static const Color _greenEarth = Color(0xFF1B2E1C);
-  static const Color _greenEarthLight = Color(0xFF2D4A2F);
-  static const Color _greenEarthMedium = Color(0xFF6B8B6E);
-  static const Color _greenCream = Color(0xFFF5FAF5);
-  static const Color _greenCreamDark = Color(0xFFE8F2E9);
-  static const Color _greenSage = Color(0xFF81C784);
-  static const Color _greenSageLight = Color(0xFFB8DFBA);
-  static const Color _greenRose = Color(0xFFFF8A65);
-  static const Color _greenRoseLight = Color(0xFFFFC0A8);
+  // ── 通用卡片阴影（所有主题共用） ──────────────────────
+  static final List<BoxShadow> _cardShadow = [
+    BoxShadow(
+      color: _earth.withValues(alpha: 0.04),
+      blurRadius: 20,
+      offset: const Offset(0, 2),
+    ),
+  ];
 
-  // ── 粉色配色 ──────────────────────────────────────
-  static const Color _pinkPrimary = Color(0xFFE91E63);
-  static const Color _pinkLight = Color(0xFFFCE4EC);
-  static const Color _pinkDark = Color(0xFFC2185B);
-  static const Color _pinkEarth = Color(0xFF2D1A22);
-  static const Color _pinkEarthLight = Color(0xFF4A2D38);
-  static const Color _pinkEarthMedium = Color(0xFF8B6B75);
-  static const Color _pinkCream = Color(0xFFFFF5F7);
-  static const Color _pinkCreamDark = Color(0xFFFCE8ED);
-  static const Color _pinkSage = Color(0xFFF48FB1);
-  static const Color _pinkSageLight = Color(0xFFF8BBD0);
-  static const Color _pinkRose = Color(0xFF7C4DFF);
-  static const Color _pinkRoseLight = Color(0xFFB388FF);
+  static const Color _surfaceOverlay = Color(0x4D000000); // 30% 黑
+
+  // ══════════════════════════════════════════════════════
+  // 主题 1: 柔夜 (Soft Night) — 默认主题
+  // ══════════════════════════════════════════════════════
+  static const Color _softNightPrimary = Color(0xFF7B8BAA);
+  static const Color _softNightPrimaryLight = Color(0xFFD8DFE8);
+  static const Color _softNightPrimaryDark = Color(0xFF5A6B8A);
+  static const Color _softNightCream = Color(0xFFF5F3F0);
+  static const Color _softNightCreamDark = Color(0xFFEBE8E4);
+
+  // ══════════════════════════════════════════════════════
+  // 主题 2: 晨雾 (Morning Mist)
+  // ══════════════════════════════════════════════════════
+  static const Color _morningMistPrimary = Color(0xFF8AADB8);
+  static const Color _morningMistPrimaryLight = Color(0xFFD6E5EA);
+  static const Color _morningMistPrimaryDark = Color(0xFF6A8E9A);
+  static const Color _morningMistCream = Color(0xFFF4F6F7);
+  static const Color _morningMistCreamDark = Color(0xFFE8EDEF);
+
+  // ══════════════════════════════════════════════════════
+  // 主题 3: 叶语 (Leaf Whisper)
+  // ══════════════════════════════════════════════════════
+  static const Color _leafWhisperPrimary = Color(0xFF9CAD8A);
+  static const Color _leafWhisperPrimaryLight = Color(0xFFDDE5D6);
+  static const Color _leafWhisperPrimaryDark = Color(0xFF7A8D6A);
+  static const Color _leafWhisperCream = Color(0xFFF5F4F0);
+  static const Color _leafWhisperCreamDark = Color(0xFFEBE9E4);
+
+  // ══════════════════════════════════════════════════════
+  // 主题 4: 花雾 (Flower Mist)
+  // ══════════════════════════════════════════════════════
+  static const Color _flowerMistPrimary = Color(0xFFC9A0AA);
+  static const Color _flowerMistPrimaryLight = Color(0xFFEDD8DE);
+  static const Color _flowerMistPrimaryDark = Color(0xFFA8808A);
+  static const Color _flowerMistCream = Color(0xFFF7F4F5);
+  static const Color _flowerMistCreamDark = Color(0xFFEFEAEB);
 
   /// 根据主题类型获取 ThemeData
   static ThemeData getTheme(AppThemeType type) {
     switch (type) {
-      case AppThemeType.gold:
+      case AppThemeType.softNight:
         return _buildTheme(
-          primary: _goldPrimary,
-          primaryLight: _goldLight,
-          primaryDark: _goldDark,
-          earth: _goldEarth,
-          earthLight: _goldEarthLight,
-          earthMedium: _goldEarthMedium,
-          cream: _goldCream,
-          creamDark: _goldCreamDark,
-          sage: _goldSage,
-          sageLight: _goldSageLight,
-          rose: _goldRose,
-          roseLight: _goldRoseLight,
+          primary: _softNightPrimary,
+          primaryLight: _softNightPrimaryLight,
+          primaryDark: _softNightPrimaryDark,
+          cream: _softNightCream,
+          creamDark: _softNightCreamDark,
         );
-      case AppThemeType.blue:
+      case AppThemeType.morningMist:
         return _buildTheme(
-          primary: _bluePrimary,
-          primaryLight: _blueLight,
-          primaryDark: _blueDark,
-          earth: _blueEarth,
-          earthLight: _blueEarthLight,
-          earthMedium: _blueEarthMedium,
-          cream: _blueCream,
-          creamDark: _blueCreamDark,
-          sage: _blueSage,
-          sageLight: _blueSageLight,
-          rose: _blueRose,
-          roseLight: _blueRoseLight,
+          primary: _morningMistPrimary,
+          primaryLight: _morningMistPrimaryLight,
+          primaryDark: _morningMistPrimaryDark,
+          cream: _morningMistCream,
+          creamDark: _morningMistCreamDark,
         );
-      case AppThemeType.green:
+      case AppThemeType.leafWhisper:
         return _buildTheme(
-          primary: _greenPrimary,
-          primaryLight: _greenLight,
-          primaryDark: _greenDark,
-          earth: _greenEarth,
-          earthLight: _greenEarthLight,
-          earthMedium: _greenEarthMedium,
-          cream: _greenCream,
-          creamDark: _greenCreamDark,
-          sage: _greenSage,
-          sageLight: _greenSageLight,
-          rose: _greenRose,
-          roseLight: _greenRoseLight,
+          primary: _leafWhisperPrimary,
+          primaryLight: _leafWhisperPrimaryLight,
+          primaryDark: _leafWhisperPrimaryDark,
+          cream: _leafWhisperCream,
+          creamDark: _leafWhisperCreamDark,
         );
-      case AppThemeType.pink:
+      case AppThemeType.flowerMist:
         return _buildTheme(
-          primary: _pinkPrimary,
-          primaryLight: _pinkLight,
-          primaryDark: _pinkDark,
-          earth: _pinkEarth,
-          earthLight: _pinkEarthLight,
-          earthMedium: _pinkEarthMedium,
-          cream: _pinkCream,
-          creamDark: _pinkCreamDark,
-          sage: _pinkSage,
-          sageLight: _pinkSageLight,
-          rose: _pinkRose,
-          roseLight: _pinkRoseLight,
+          primary: _flowerMistPrimary,
+          primaryLight: _flowerMistPrimaryLight,
+          primaryDark: _flowerMistPrimaryDark,
+          cream: _flowerMistCream,
+          creamDark: _flowerMistCreamDark,
         );
     }
   }
 
-  /// 构建 ThemeData
+  /// 构建 ThemeData — 统一柔和风格
   static ThemeData _buildTheme({
     required Color primary,
     required Color primaryLight,
     required Color primaryDark,
-    required Color earth,
-    required Color earthLight,
-    required Color earthMedium,
     required Color cream,
     required Color creamDark,
-    required Color sage,
-    required Color sageLight,
-    required Color rose,
-    required Color roseLight,
   }) {
+    // 页面柔光渐变
+    final scaffoldGradient = LinearGradient(
+      colors: [cream, creamDark.withValues(alpha: 0.6)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -158,13 +132,13 @@ class AppTheme {
         primary: primary,
         onPrimary: _white,
         primaryContainer: primaryLight,
-        secondary: sage,
+        secondary: _sage,
         onSecondary: _white,
-        secondaryContainer: sageLight,
-        tertiary: rose,
-        tertiaryContainer: roseLight,
+        secondaryContainer: _sageLight,
+        tertiary: _rose,
+        tertiaryContainer: _roseLight,
         surface: cream,
-        onSurface: earth,
+        onSurface: _earth,
         error: _error,
         onError: _white,
       ),
@@ -172,10 +146,10 @@ class AppTheme {
       // Scaffold
       scaffoldBackgroundColor: cream,
 
-      // AppBar
+      // AppBar — 透明无分割线
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: earth,
+        foregroundColor: _earth,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
@@ -183,43 +157,43 @@ class AppTheme {
           fontFamily: GoogleFonts.playfairDisplay().fontFamily,
           fontSize: 28,
           fontWeight: FontWeight.w700,
-          color: earth,
+          color: _earth,
           letterSpacing: -0.5,
         ),
       ),
 
-      // 卡片
+      // 卡片 — 大圆角 24px, 无边框, 极轻阴影
       cardTheme: CardThemeData(
         color: _white,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
         clipBehavior: Clip.antiAlias,
         margin: EdgeInsets.zero,
       ),
 
-      // 输入
+      // 输入框 — 圆角 16px, 无边框, 半透明白底
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: _white,
+        fillColor: _white.withValues(alpha: 0.7),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: earthMedium.withAlpha(40)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: earthMedium.withAlpha(40)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: primary, width: 2),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: primary, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: TextStyle(color: earthMedium.withAlpha(120)),
+        hintStyle: TextStyle(color: _earthMedium),
       ),
 
-      // 按钮
+      // 按钮 — 圆角 16px, 无阴影
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
@@ -227,21 +201,21 @@ class AppTheme {
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
+            letterSpacing: 0.3,
           ),
         ),
       ),
 
-      // 底部导航
+      // 底部导航 — 半透明毛玻璃效果
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: _white,
+        backgroundColor: _white.withValues(alpha: 0.85),
         selectedItemColor: primary,
-        unselectedItemColor: earthMedium,
+        unselectedItemColor: _earthLight,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
         selectedLabelStyle: const TextStyle(
@@ -254,32 +228,34 @@ class AppTheme {
         ),
       ),
 
-      // FAB
+      // FAB — 圆角 16px
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: primary,
         foregroundColor: _white,
-        elevation: 4,
-        shape: const CircleBorder(),
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
 
-      // Divider
+      // Divider — 极淡
       dividerTheme: DividerThemeData(
-        color: earthMedium.withAlpha(20),
+        color: _earthMedium.withValues(alpha: 0.12),
         thickness: 1,
         space: 0,
       ),
 
-      // Chip
+      // Chip — 圆角 12px
       chipTheme: ChipThemeData(
         backgroundColor: creamDark,
         selectedColor: primaryLight,
-        labelStyle: TextStyle(
+        labelStyle: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
-          color: earth,
+          color: _earth,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
@@ -290,25 +266,30 @@ class AppTheme {
           primary: primary,
           primaryLight: primaryLight,
           primaryDark: primaryDark,
-          earth: earth,
-          earthLight: earthLight,
-          earthMedium: earthMedium,
+          earth: _earth,
+          earthLight: _earthLight,
+          earthMedium: _earthMedium,
           cream: cream,
           creamDark: creamDark,
-          sage: sage,
-          sageLight: sageLight,
-          rose: rose,
-          roseLight: roseLight,
+          sage: _sage,
+          sageLight: _sageLight,
+          rose: _rose,
+          roseLight: _roseLight,
           gradientPrimary: LinearGradient(
             colors: [primary, primaryDark],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           gradientEarth: LinearGradient(
-            colors: [earth, earthLight],
+            colors: [const Color(0xFF3D3D3D), const Color(0xFF6B6B6B)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
+          cardBackground: _white,
+          cardBorder: creamDark,
+          cardShadow: _cardShadow,
+          scaffoldGradient: scaffoldGradient,
+          surfaceOverlay: _surfaceOverlay,
         ),
         ModuleThemeExtension(moduleColor: primary),
       ],
@@ -317,7 +298,7 @@ class AppTheme {
 
   /// 创建带有模块主题色的 ThemeData
   static ThemeData withModuleColor(Color moduleColor) {
-    final base = getTheme(AppThemeType.gold);
+    final base = getTheme(AppThemeType.softNight);
     return base.copyWith(
       extensions: [
         base.extension<AppThemeExtension>()!,
