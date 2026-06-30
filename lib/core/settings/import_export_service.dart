@@ -49,9 +49,10 @@ class ImportExportService {
         },
       };
 
-      // 4. 编码为格式化的 JSON
+      // 4. 编码为 JSON 字节
       final jsonString =
           const JsonEncoder.withIndent('  ').convert(payload);
+      final bytes = Uint8List.fromList(utf8.encode(jsonString));
 
       // 5. 打开系统"另存为"对话框
       final outputPath = await FilePicker.platform.saveFile(
@@ -60,15 +61,18 @@ class ImportExportService {
         type: FileType.custom,
         allowedExtensions: ['json'],
         lockParentWindow: true,
+        bytes: bytes,
       );
 
       if (outputPath == null) {
         return ExportResult.userCancelled();
       }
 
-      // 6. 写入文件
+      // 6. 兜底写入（桌面端 file_picker 可能只返回路径未实际写入）
       final file = File(outputPath);
-      await file.writeAsString(jsonString, encoding: utf8);
+      if (!await file.exists()) {
+        await file.writeAsBytes(bytes);
+      }
 
       return ExportResult.success(outputPath);
     } catch (e, stack) {
