@@ -9,6 +9,7 @@ class AppTheme {
 
   // ── 通用属性 ──────────────────────────────────────
   static const Color _white = Colors.white;
+  static const Color _cardWhite = Color(0xFFFAF8F5); // 柔和卡片白，非纯白
   static const Color _error = Color(0xFFCF6679);
 
   // ── 通用文字色系（所有主题共用） ──────────────────────
@@ -162,9 +163,9 @@ class AppTheme {
         ),
       ),
 
-      // 卡片 — 大圆角 24px, 无边框, 极轻阴影
+      // 卡片 — 大圆角 24px, 无边框, 极轻阴影, 柔和底色
       cardTheme: CardThemeData(
-        color: _white,
+        color: _cardWhite,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
@@ -285,7 +286,7 @@ class AppTheme {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          cardBackground: _white,
+          cardBackground: _cardWhite,
           cardBorder: creamDark,
           cardShadow: _cardShadow,
           scaffoldGradient: scaffoldGradient,

@@ -214,7 +214,7 @@ extension AppThemeGetter on ThemeData {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
-      cardBackground: const Color(0xFFFFFFFF),
+      cardBackground: const Color(0xFFFAF8F5),
       cardBorder: const Color(0xFFEBE8E4),
       cardShadow: [
         BoxShadow(
