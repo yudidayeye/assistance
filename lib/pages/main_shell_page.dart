@@ -60,22 +60,22 @@ class _MainShellPageState extends State<MainShellPage> {
 
   Widget _buildToolboxPage(AppThemeExtension appTheme) {
     final enabledModules = ModuleRegistry.instance.getEnabledModules();
+    final safeTop = MediaQuery.of(context).padding.top;
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
+          padding: EdgeInsets.fromLTRB(24, safeTop + 24, 24, 20),
           child: Row(
             children: [
               Expanded(
                 child: Text(
                   '工具箱',
                   style: TextStyle(
-                    fontFamily: GoogleFonts.robotoSlab().fontFamily,
-                    fontSize: 24,
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                    fontSize: 28,
                     fontWeight: FontWeight.w700,
                     color: appTheme.earth,
-                    height: 1.33,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -86,11 +86,8 @@ class _MainShellPageState extends State<MainShellPage> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: appTheme.earthMedium.withAlpha(30),
-                    ),
+                    color: appTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Icon(
                     Icons.settings_outlined,
@@ -104,11 +101,11 @@ class _MainShellPageState extends State<MainShellPage> {
         ),
         Expanded(
           child: GridView.count(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 0.82,
+            mainAxisSpacing: 20,
+            crossAxisSpacing: 20,
+            childAspectRatio: 0.88,
             children: enabledModules
                 .map((module) => FeaturedCard(module: module))
                 .toList(),

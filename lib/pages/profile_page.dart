@@ -35,13 +35,14 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
 
     await showDialog(
       context: context,
+      barrierColor: appTheme.surfaceOverlay,
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(appTheme.radiusXl),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -62,9 +63,9 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                 decoration: InputDecoration(
                   hintText: '输入用户名',
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Colors.white.withValues(alpha: 0.7),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
                     borderSide: BorderSide.none,
                   ),
                 ),
@@ -80,17 +81,14 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           color: appTheme.creamDark,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: appTheme.earthMedium.withAlpha(30),
-                          ),
+                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text('取消',
                               style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF8B6F5C))),
+                                  color: appTheme.earthMedium)),
                         ),
                       ),
                     ),
@@ -114,7 +112,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                           gradient: LinearGradient(
                             colors: [appTheme.primary, appTheme.primaryDark],
                           ),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
                         ),
                         child: const Center(
                           child: Text('保存',
@@ -137,8 +135,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final appTheme = theme.appTheme;
+    final appTheme = Theme.of(context).appTheme;
 
     return Scaffold(
       backgroundColor: appTheme.cream,
@@ -163,19 +160,16 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                 GestureDetector(
                   onTap: () => context.push('/settings'),
                   child: Container(
-                    width: 40,
-                    height: 40,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: appTheme.earthMedium.withAlpha(30),
-                      ),
+                      color: appTheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(appTheme.radiusMd),
                     ),
                     child: Icon(
                       Icons.settings_outlined,
                       color: appTheme.earthMedium,
-                      size: 20,
+                      size: 22,
                     ),
                   ),
                 ),
@@ -189,29 +183,23 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: appTheme.earth.withAlpha(8),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  color: appTheme.cardBackground,
+                  borderRadius: BorderRadius.circular(appTheme.radiusLg),
+                  boxShadow: appTheme.cardShadow,
                 ),
                 child: Row(
                   children: [
                     Container(
-                      width: 64,
-                      height: 64,
+                      width: 56,
+                      height: 56,
                       decoration: BoxDecoration(
-                        color: appTheme.primary.withAlpha(20),
-                        borderRadius: BorderRadius.circular(20),
+                        color: appTheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
                       ),
                       child: Icon(
                         Icons.person_rounded,
                         color: appTheme.primary,
-                        size: 32,
+                        size: 28,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -242,7 +230,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                     ),
                     Icon(
                       Icons.chevron_right_rounded,
-                      color: appTheme.earthMedium.withAlpha(100),
+                      color: appTheme.earthMedium.withValues(alpha: 0.4),
                       size: 20,
                     ),
                   ],

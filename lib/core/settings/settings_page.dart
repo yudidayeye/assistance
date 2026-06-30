@@ -92,11 +92,8 @@ class _SettingsPageState extends State<SettingsPage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: appTheme.creamDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: appTheme.earthMedium.withAlpha(30),
-                ),
+                color: appTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -132,7 +129,7 @@ class _SettingsPageState extends State<SettingsPage> {
             height: 32,
             decoration: BoxDecoration(
               color: appTheme.primary.withAlpha(20),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
@@ -160,11 +157,8 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
       ),
       child: Column(
         children: modules.asMap().entries.map((entry) {
@@ -261,11 +255,8 @@ class _SettingsPageState extends State<SettingsPage> {
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -330,11 +321,8 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
       ),
       child: Column(
         children: [
@@ -422,11 +410,8 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
       ),
       child: Column(
         children: [
@@ -497,13 +482,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
     showDialog(
       context: context,
+      barrierColor: appTheme.surfaceOverlay,
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(appTheme.radiusXl),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -552,10 +538,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           color: appTheme.creamDark,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: appTheme.earthMedium.withAlpha(30),
-                          ),
+                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
                         ),
                         child: Center(
                           child: Text(
@@ -583,7 +566,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           color: appTheme.rose,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
                         ),
                         child: const Center(
                           child: Text(
