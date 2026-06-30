@@ -45,11 +45,9 @@ class PeriodCalendar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.earthMedium.withAlpha(20),
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        boxShadow: appTheme.cardShadow,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -158,20 +156,20 @@ class PeriodCalendar extends StatelessWidget {
 
     switch (type) {
       case CalendarDayType.periodActual:
-        bgColor = appTheme.primary;
+        bgColor = appTheme.rose;
         textColor = Colors.white;
         fontWeight = FontWeight.w600;
         break;
       case CalendarDayType.periodPredicted:
-        bgColor = appTheme.primary.withAlpha(40);
+        bgColor = appTheme.roseLight;
         borderWidth = 1.5;
-        borderColor = appTheme.primary;
+        borderColor = appTheme.rose;
         break;
       case CalendarDayType.fertileWindow:
-        bgColor = appTheme.primary.withAlpha(30);
+        bgColor = appTheme.sageLight.withValues(alpha: 0.6);
         break;
       case CalendarDayType.ovulationDay:
-        bgColor = appTheme.primary;
+        bgColor = appTheme.sage;
         textColor = Colors.white;
         fontWeight = FontWeight.w600;
         break;
@@ -231,8 +229,8 @@ class PeriodCalendar extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: appTheme.creamDark,
-              borderRadius: BorderRadius.circular(8),
+              color: appTheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(appTheme.radiusSm),
             ),
             child: Icon(
               Icons.chevron_left_rounded,
@@ -257,8 +255,8 @@ class PeriodCalendar extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: appTheme.creamDark,
-              borderRadius: BorderRadius.circular(8),
+              color: appTheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(appTheme.radiusSm),
             ),
             child: Icon(
               Icons.chevron_right_rounded,
@@ -280,10 +278,10 @@ class PeriodCalendar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildLegend(appTheme, appTheme.primary, '经期'),
-          _buildLegend(appTheme, appTheme.primary.withAlpha(80), '预测经期'),
-          _buildLegend(appTheme, appTheme.primaryDark, '排卵期'),
-          _buildLegend(appTheme, appTheme.sage, '今日'),
+          _buildLegend(appTheme, appTheme.rose, '经期'),
+          _buildLegend(appTheme, appTheme.roseLight, '预测经期'),
+          _buildLegend(appTheme, appTheme.sage, '排卵期'),
+          _buildLegend(appTheme, appTheme.sageLight, '易孕期'),
         ],
       ),
     );

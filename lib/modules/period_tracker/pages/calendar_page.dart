@@ -9,7 +9,7 @@ import '../widgets/date_detail_panel.dart';
 import '../../../shared/utils/date_utils.dart';
 import '../../../core/theme/theme_extension.dart';
 
-/// 生理期日历视图主页 — 奢华自然主义风格
+/// 生理期日历视图主页 — 柔和健康陪伴风格
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
@@ -158,11 +158,8 @@ class _CalendarPageState extends State<CalendarPage>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: appTheme.creamDark,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: appTheme.earthMedium.withAlpha(30),
-                    ),
+                    color: appTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Icon(
                     Icons.arrow_back_ios_new_rounded,
@@ -192,11 +189,8 @@ class _CalendarPageState extends State<CalendarPage>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: appTheme.creamDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: appTheme.earthMedium.withAlpha(30),
-                ),
+                color: appTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: Icon(
                 Icons.bar_chart_rounded,
@@ -215,18 +209,9 @@ class _CalendarPageState extends State<CalendarPage>
       margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.primary.withAlpha(25),
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            appTheme.primary.withAlpha(12),
-            appTheme.primaryLight.withAlpha(8),
-          ],
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        boxShadow: appTheme.cardShadow,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -326,10 +311,9 @@ class _CalendarPageState extends State<CalendarPage>
       margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.primary.withAlpha(20),
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        boxShadow: appTheme.cardShadow,
       ),
       child: Row(
         children: [

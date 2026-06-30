@@ -8,10 +8,11 @@ import '../services/category_service.dart';
 import '../widgets/transaction_item.dart';
 import '../../../shared/widgets/month_selector.dart';
 import '../../../shared/utils/format_utils.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../shared/utils/date_utils.dart';
 import '../../../core/theme/theme_extension.dart';
 
-/// 记账模块主页 — 奢华自然主义风格
+/// 记账模块主页 — 柔和风格
 class AccountingEntryPage extends StatefulWidget {
   const AccountingEntryPage({super.key});
 
@@ -149,11 +150,8 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: appTheme.creamDark,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: appTheme.earthMedium.withAlpha(30),
-                    ),
+                    color: appTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Icon(
                     Icons.arrow_back_ios_new_rounded,
@@ -211,11 +209,8 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: appTheme.creamDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: appTheme.earthMedium.withAlpha(30),
-          ),
+          color: appTheme.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
         ),
         child: Icon(
           icon,
@@ -231,22 +226,9 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
       margin: const EdgeInsets.fromLTRB(20, 8, 20, 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            appTheme.earth,
-            appTheme.earthLight,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: appTheme.earth.withAlpha(60),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        boxShadow: appTheme.cardShadow,
       ),
       child: Column(
         children: [
@@ -257,7 +239,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
                 '本月支出',
                 style: TextStyle(
                   fontSize: 13,
-                  color: appTheme.cream.withAlpha(180),
+                  color: appTheme.earthMedium,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -265,10 +247,10 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
               Text(
                 FormatUtils.formatAmount(_monthExpense),
                 style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
                   fontSize: 36,
                   fontWeight: FontWeight.w700,
-                  color: appTheme.cream,
+                  color: appTheme.earth,
                   letterSpacing: -1,
                 ),
               ),
@@ -279,7 +261,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
           Container(
             margin: const EdgeInsets.symmetric(vertical: 20),
             height: 1,
-            color: appTheme.cream.withAlpha(30),
+            color: appTheme.earthMedium.withValues(alpha: 0.12),
           ),
 
           // 收入和结余
@@ -296,7 +278,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
               Container(
                 width: 1,
                 height: 40,
-                color: appTheme.cream.withAlpha(30),
+                color: appTheme.earthMedium.withValues(alpha: 0.12),
               ),
               Expanded(
                 child: _buildSummaryItem(
@@ -329,7 +311,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
           label,
           style: TextStyle(
             fontSize: 12,
-            color: appTheme.cream.withAlpha(150),
+            color: appTheme.earthMedium,
           ),
         ),
         const SizedBox(height: 4),
@@ -338,7 +320,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
               ? FormatUtils.formatBalance(amount)
               : FormatUtils.formatAmount(amount),
           style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: color,
@@ -349,42 +331,11 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
   }
 
   Widget _buildEmptyState(AppThemeExtension appTheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: appTheme.primary.withAlpha(20),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Icon(
-              Icons.receipt_long_outlined,
-              color: appTheme.primary.withAlpha(100),
-              size: 36,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '暂无记录',
-            style: TextStyle(
-              fontSize: 16,
-              color: appTheme.earthMedium,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '点击下方按钮开始记账',
-            style: TextStyle(
-              fontSize: 14,
-              color: appTheme.earthMedium.withAlpha(150),
-            ),
-          ),
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: Icons.receipt_long_outlined,
+      title: '暂无记录',
+      subtitle: '点击下方按钮开始记账',
+      iconColor: appTheme.primary,
     );
   }
 
@@ -460,7 +411,7 @@ class _AccountingEntryPageState extends State<AccountingEntryPage>
   Widget _buildFAB(BuildContext context, AppThemeExtension appTheme) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

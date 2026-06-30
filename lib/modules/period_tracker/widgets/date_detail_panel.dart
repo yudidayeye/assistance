@@ -149,18 +149,9 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
       margin: const EdgeInsets.fromLTRB(20, 6, 20, 12),
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: appTheme.primary.withAlpha(25),
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            appTheme.primary.withAlpha(10),
-            appTheme.primaryLight.withAlpha(6),
-          ],
-        ),
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        boxShadow: appTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
