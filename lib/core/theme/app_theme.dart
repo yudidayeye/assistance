@@ -147,7 +147,7 @@ class AppTheme {
       // Scaffold
       scaffoldBackgroundColor: cream,
 
-      // AppBar — 透明无分割线
+      // AppBar — 透明无分割线，标题更克制
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: _earth,
@@ -155,11 +155,11 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-          fontSize: 28,
+          fontFamily: GoogleFonts.dmSans().fontFamily,
+          fontSize: 22,
           fontWeight: FontWeight.w700,
           color: _earth,
-          letterSpacing: -0.5,
+          letterSpacing: -0.3,
         ),
       ),
 
@@ -190,8 +190,9 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: primary, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: TextStyle(color: _earthMedium),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        hintStyle: const TextStyle(color: _earthMedium),
       ),
 
       // 按钮 — 圆角 16px, 无阴影
@@ -281,8 +282,8 @@ class AppTheme {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          gradientEarth: LinearGradient(
-            colors: [const Color(0xFF3D3D3D), const Color(0xFF6B6B6B)],
+          gradientEarth: const LinearGradient(
+            colors: [Color(0xFF3D3D3D), Color(0xFF6B6B6B)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

@@ -43,12 +43,12 @@ class _MainShellPageState extends State<MainShellPage> {
       body: Container(
         decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
         child: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildToolboxPage(appTheme),
-          const ProfilePageContent(),
-        ],
-      ),
+          index: _currentIndex,
+          children: [
+            _buildToolboxPage(appTheme),
+            const ProfilePageContent(),
+          ],
+        ),
       ),
       bottomNavigationBar: ToolboxBottomNav(
         selectedIndex: _currentIndex,
@@ -67,34 +67,50 @@ class _MainShellPageState extends State<MainShellPage> {
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(24, safeTop + 24, 24, 20),
+          padding: EdgeInsets.fromLTRB(24, safeTop + 18, 24, 16),
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  '工具箱',
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: appTheme.earth,
-                    letterSpacing: -0.5,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '工具箱',
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.dmSans().fontFamily,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: appTheme.earth,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '安静管理你的日常工具',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: appTheme.earthMedium,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               GestureDetector(
                 onTap: () => context.push('/settings'),
                 child: Container(
-                  width: 44,
-                  height: 44,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: appTheme.primary.withValues(alpha: 0.08),
+                    color: appTheme.primary.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Icon(
                     Icons.settings_outlined,
-                    color: appTheme.earthMedium,
-                    size: 22,
+                    color: appTheme.primaryDark,
+                    size: 20,
                   ),
                 ),
               ),
