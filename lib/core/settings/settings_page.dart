@@ -78,6 +78,34 @@ class _SettingsPageState extends State<SettingsPage> {
 
               const SizedBox(height: 16),
 
+              // ── 数据 ──
+              _SectionLabel(
+                appTheme: appTheme,
+                title: '数据',
+              ),
+              _SectionCard(
+                appTheme: appTheme,
+                child: Column(children: [
+                  _buildFunctionItem(appTheme,
+                      icon: Icons.download_rounded,
+                      label: '导入数据',
+                      onTap: _handleImport),
+                  _buildSeparator(appTheme),
+                  _buildFunctionItem(appTheme,
+                      icon: Icons.upload_file_rounded,
+                      label: '导出数据',
+                      onTap: _handleExport),
+                  _buildSeparator(appTheme),
+                  _buildFunctionItem(appTheme,
+                      icon: Icons.delete_outline_rounded,
+                      label: '清除业务数据',
+                      onTap: _confirmClearBusinessData,
+                      isDestructive: true),
+                ]),
+              ),
+
+              const SizedBox(height: 16),
+
               // ── 功能 ──
               _SectionLabel(
                 appTheme: appTheme,
@@ -87,16 +115,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 appTheme: appTheme,
                 child: Column(children: [
                   _buildFunctionItem(appTheme,
-                      icon: Icons.upload_file_rounded,
-                      label: '导出数据',
-                      onTap: _handleExport),
-                  _buildSeparator(appTheme),
-                  _buildFunctionItem(appTheme,
-                      icon: Icons.download_rounded,
-                      label: '导入数据',
-                      onTap: _handleImport),
-                  _buildSeparator(appTheme),
-                  _buildFunctionItem(appTheme,
                       icon: Icons.notifications_outlined,
                       label: '通知管理',
                       onTap: () {}),
@@ -105,12 +123,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       icon: Icons.help_outline_rounded,
                       label: '帮助与反馈',
                       onTap: () {}),
-                  _buildSeparator(appTheme),
-                  _buildFunctionItem(appTheme,
-                      icon: Icons.delete_outline_rounded,
-                      label: '清除业务数据',
-                      onTap: _confirmClearBusinessData,
-                      isDestructive: true),
                 ]),
               ),
 
