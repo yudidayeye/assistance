@@ -173,8 +173,8 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildPredictionCard(AppThemeExtension appTheme) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusLg),
@@ -186,19 +186,31 @@ class _CalendarPageState extends State<CalendarPage> {
           // 标题行
           Row(
             children: [
-              Icon(Icons.insights_rounded, size: 16, color: appTheme.primary),
-              const SizedBox(width: 6),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withAlpha(25),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.insights_rounded,
+                  size: 15,
+                  color: appTheme.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
               Text(
                 '预测信息',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: appTheme.earthMedium,
+                  color: appTheme.earth,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // 三列指标
           Row(
@@ -207,7 +219,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 appTheme,
                 icon: Icons.event_rounded,
                 label: '下次经期',
-                value: AppDateUtils.formatFullDate(_prediction!.nextStartDate),
+                value: AppDateUtils.formatDate(_prediction!.nextStartDate),
               ),
               Container(
                 width: 1,
