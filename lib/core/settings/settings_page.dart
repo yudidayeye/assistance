@@ -845,15 +845,6 @@ class _SectionLabel extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 3,
-            height: 16,
-            decoration: BoxDecoration(
-              color: appTheme.primary.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          SizedBox(width: appTheme.spaceSm),
           Text(
             title,
             style: TextStyle(
