@@ -189,7 +189,7 @@ class PeriodCalendar extends StatelessWidget {
     // 选中 overlay
     if (isSelected) {
       borderWidth = 2;
-      borderColor = appTheme.earth;
+      borderColor = appTheme.primary;
       fontWeight = FontWeight.w700;
     }
 
