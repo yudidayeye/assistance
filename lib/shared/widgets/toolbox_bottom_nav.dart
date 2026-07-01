@@ -19,56 +19,38 @@ class ToolboxBottomNav extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, bottomPadding + 10),
+      padding: EdgeInsets.only(bottom: bottomPadding),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            appTheme.cream.withValues(alpha: 0.92),
-            appTheme.creamDark.withValues(alpha: 0.78),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+        color: appTheme.cream.withValues(alpha: 0.94),
         boxShadow: [
           BoxShadow(
-            color: appTheme.primaryDark.withValues(alpha: 0.06),
-            blurRadius: 24,
-            offset: const Offset(0, -8),
+            color: appTheme.primaryDark.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, -6),
           ),
         ],
       ),
-      child: Container(
-        height: 56,
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: appTheme.cardBackground.withValues(alpha: 0.72),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: appTheme.primary.withValues(alpha: 0.10),
+      child: Row(
+        children: [
+          Expanded(
+            child: _NavItem(
+              icon: Icons.handyman_rounded,
+              label: '工具箱',
+              isSelected: selectedIndex == 0,
+              onTap: () => onTap(0),
+              appTheme: appTheme,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _NavItem(
-                icon: Icons.handyman_rounded,
-                label: '工具箱',
-                isSelected: selectedIndex == 0,
-                onTap: () => onTap(0),
-                appTheme: appTheme,
-              ),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.person_rounded,
+              label: '我的',
+              isSelected: selectedIndex == 1,
+              onTap: () => onTap(1),
+              appTheme: appTheme,
             ),
-            Expanded(
-              child: _NavItem(
-                icon: Icons.person_rounded,
-                label: '我的',
-                isSelected: selectedIndex == 1,
-                onTap: () => onTap(1),
-                appTheme: appTheme,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -96,30 +78,32 @@ class _NavItem extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
+      child: SizedBox(
         width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? appTheme.primary.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
+        height: 60,
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 6),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              width: isSelected ? 28 : 0,
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 6),
+              decoration: BoxDecoration(
+                color: appTheme.primary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Icon(icon, size: 22, color: color),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontFamily: GoogleFonts.dmSans().fontFamily,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: color,
-                letterSpacing: 0.1,
               ),
             ),
           ],
