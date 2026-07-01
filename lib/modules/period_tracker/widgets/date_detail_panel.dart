@@ -160,17 +160,6 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
           // 日期类型标签
           Row(
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: appTheme.primary.withAlpha(25),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.calendar_month_rounded,
-                    size: 15, color: appTheme.primary),
-              ),
-              const SizedBox(width: 10),
               Text(
                 _getDayTypeLabel(),
                 style: TextStyle(
