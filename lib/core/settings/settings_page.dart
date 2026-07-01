@@ -86,15 +86,15 @@ class _SettingsPageState extends State<SettingsPage> {
               _SectionCard(
                 appTheme: appTheme,
                 child: Column(children: [
-                  _buildDataActionRow(appTheme,
-                      item1: _DataAction(
-                          icon: Icons.download_rounded,
-                          label: '导入数据',
-                          onTap: _handleImport),
-                      item2: _DataAction(
-                          icon: Icons.ios_share_rounded,
-                          label: '导出数据',
-                          onTap: _handleExport)),
+                  _buildFunctionItem(appTheme,
+                      icon: Icons.download_outlined,
+                      label: '导入数据',
+                      onTap: _handleImport),
+                  _buildSeparator(appTheme),
+                  _buildFunctionItem(appTheme,
+                      icon: Icons.upload_file_rounded,
+                      label: '导出数据',
+                      onTap: _handleExport),
                   _buildSeparator(appTheme),
                   _buildFunctionItem(appTheme,
                       icon: Icons.delete_outline_rounded,
@@ -360,54 +360,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     color: isDestructive ? appTheme.rose : appTheme.earth)),
           ),
         ]),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // 数据操作行 — 导入/导出并排
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildDataActionRow(
-    AppThemeExtension appTheme, {
-    required _DataAction item1,
-    required _DataAction item2,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(children: [
-        Expanded(child: _buildDataActionItem(appTheme, item1)),
-        Container(
-          width: 1,
-          height: 32,
-          color: appTheme.earthMedium.withValues(alpha: 0.1),
-        ),
-        Expanded(child: _buildDataActionItem(appTheme, item2)),
-      ]),
-    );
-  }
-
-  Widget _buildDataActionItem(AppThemeExtension appTheme, _DataAction action) {
-    return GestureDetector(
-      onTap: action.onTap,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: appTheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(action.icon, color: appTheme.primary, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Text(action.label,
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: appTheme.earth)),
-        ],
       ),
     );
   }
@@ -948,17 +900,4 @@ class _SectionCard extends StatelessWidget {
       child: child,
     );
   }
-}
-
-/// 数据操作项数据 — 用于 _buildDataActionRow
-class _DataAction {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _DataAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
 }
