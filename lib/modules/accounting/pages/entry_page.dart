@@ -40,9 +40,12 @@ class _AccountingEntryPageState extends State<AccountingEntryPage> {
     setState(() => _loading = true);
 
     final cats = await CategoryService.instance.getAllCategories();
-    final txns = await TransactionService.instance.getTransactionsByMonth(_selectedMonth);
-    final expense = await TransactionService.instance.getMonthExpenseTotal(_selectedMonth);
-    final income = await TransactionService.instance.getMonthIncomeTotal(_selectedMonth);
+    final txns = await TransactionService.instance
+        .getTransactionsByMonth(_selectedMonth);
+    final expense =
+        await TransactionService.instance.getMonthExpenseTotal(_selectedMonth);
+    final income =
+        await TransactionService.instance.getMonthIncomeTotal(_selectedMonth);
 
     final cache = <String, Category>{};
     for (final c in cats) {
@@ -142,11 +145,11 @@ class _AccountingEntryPageState extends State<AccountingEntryPage> {
               Text(
                 '记账',
                 style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 28,
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: appTheme.earth,
-                  letterSpacing: -0.5,
+                  letterSpacing: -0.3,
                 ),
               ),
             ],

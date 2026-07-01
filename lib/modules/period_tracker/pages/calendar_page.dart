@@ -139,11 +139,11 @@ class _CalendarPageState extends State<CalendarPage> {
               Text(
                 '生理期记录',
                 style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 28,
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: appTheme.earth,
-                  letterSpacing: -0.5,
+                  letterSpacing: -0.3,
                 ),
               ),
             ],

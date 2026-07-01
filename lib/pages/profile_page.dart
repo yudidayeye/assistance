@@ -107,11 +107,11 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
           Text(
             '我的',
             style: TextStyle(
-              fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-              fontSize: 28,
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: appTheme.earth,
-              letterSpacing: -0.5,
+              letterSpacing: -0.3,
             ),
           ),
           GestureDetector(

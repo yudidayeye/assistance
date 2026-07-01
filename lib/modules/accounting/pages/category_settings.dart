@@ -115,11 +115,11 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
           Text(
             '分类管理',
             style: TextStyle(
-              fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-              fontSize: 28,
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: appTheme.earth,
-              letterSpacing: -0.5,
+              letterSpacing: -0.3,
             ),
           ),
         ],
@@ -161,8 +161,8 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
     );
   }
 
-  Widget _buildCategorySection(
-      AppThemeExtension appTheme, List<Category> categories, TransactionType type) {
+  Widget _buildCategorySection(AppThemeExtension appTheme,
+      List<Category> categories, TransactionType type) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       decoration: BoxDecoration(
@@ -239,7 +239,8 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
           if (cat.isCustom)
             GestureDetector(
               onTap: () async {
-                final result = await CategoryService.instance.deleteCategory(cat.id);
+                final result =
+                    await CategoryService.instance.deleteCategory(cat.id);
                 if (result == DeleteCategoryResult.referenced && mounted) {
                   _showSnackBar('该分类下还有交易记录，无法删除', isError: true);
                   return;
@@ -387,7 +388,8 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
-    final currentCats = await CategoryService.instance.getCategories(widget.type);
+    final currentCats =
+        await CategoryService.instance.getCategories(widget.type);
     await CategoryService.instance.addCustomCategory(
       Category(
         id: 'custom_${const Uuid().v4().substring(0, 8)}',
@@ -440,8 +442,8 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
                     color: appTheme.earthMedium.withAlpha(120),
                   ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
                 style: TextStyle(
                   color: appTheme.earth,

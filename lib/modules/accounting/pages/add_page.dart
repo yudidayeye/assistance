@@ -59,7 +59,8 @@ class _AddTransactionPageState extends State<AddTransactionPage>
   }
 
   Future<void> _loadExistingTransaction() async {
-    final txn = await TransactionService.instance.getTransaction(widget.editId!);
+    final txn =
+        await TransactionService.instance.getTransaction(widget.editId!);
     if (txn != null && mounted) {
       setState(() {
         _type = txn.type;
@@ -329,11 +330,11 @@ class _AddTransactionPageState extends State<AddTransactionPage>
               Text(
                 widget.editId != null ? '编辑账目' : '记一笔',
                 style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 28,
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: appTheme.earth,
-                  letterSpacing: -0.5,
+                  letterSpacing: -0.3,
                 ),
               ),
             ],
@@ -366,8 +367,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
     );
   }
 
-  Widget _buildTypeSwitcher(
-      BuildContext context, AppThemeExtension appTheme) {
+  Widget _buildTypeSwitcher(BuildContext context, AppThemeExtension appTheme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: Container(
@@ -415,7 +415,8 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.15) : Colors.transparent,
+          color:
+              isSelected ? color.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(appTheme.radiusSm),
         ),
         child: Center(

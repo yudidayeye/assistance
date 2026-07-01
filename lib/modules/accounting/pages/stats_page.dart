@@ -132,11 +132,11 @@ class _AccountingStatsPageState extends State<AccountingStatsPage> {
           Text(
             '月度统计',
             style: TextStyle(
-              fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-              fontSize: 28,
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: appTheme.earth,
-              letterSpacing: -0.5,
+              letterSpacing: -0.3,
             ),
           ),
         ],
@@ -220,7 +220,9 @@ class _AccountingStatsPageState extends State<AccountingStatsPage> {
             children: [
               Expanded(
                 child: _buildOverviewItem(appTheme,
-                    label: '收入', value: _overview['income'] ?? 0, color: appTheme.sage),
+                    label: '收入',
+                    value: _overview['income'] ?? 0,
+                    color: appTheme.sage),
               ),
               Container(
                 width: 1,
@@ -229,7 +231,9 @@ class _AccountingStatsPageState extends State<AccountingStatsPage> {
               ),
               Expanded(
                 child: _buildOverviewItem(appTheme,
-                    label: '支出', value: _overview['expense'] ?? 0, color: appTheme.rose),
+                    label: '支出',
+                    value: _overview['expense'] ?? 0,
+                    color: appTheme.rose),
               ),
               Container(
                 width: 1,
@@ -259,10 +263,13 @@ class _AccountingStatsPageState extends State<AccountingStatsPage> {
   }) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: 12, color: appTheme.earthMedium)),
+        Text(label,
+            style: TextStyle(fontSize: 12, color: appTheme.earthMedium)),
         const SizedBox(height: 8),
         Text(
-          isBalance ? FormatUtils.formatBalance(value) : FormatUtils.formatAmount(value),
+          isBalance
+              ? FormatUtils.formatBalance(value)
+              : FormatUtils.formatAmount(value),
           style: TextStyle(
             fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 18,
@@ -363,7 +370,10 @@ class _AccountingStatsPageState extends State<AccountingStatsPage> {
           Expanded(
             child: Text(
               stat.category.name,
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: appTheme.earth),
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: appTheme.earth),
             ),
           ),
           Column(

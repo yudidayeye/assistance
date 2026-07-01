@@ -141,11 +141,11 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
           Text(
             '周期统计',
             style: TextStyle(
-              fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-              fontSize: 28,
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: appTheme.earth,
-              letterSpacing: -0.5,
+              letterSpacing: -0.3,
             ),
           ),
         ],
@@ -167,24 +167,33 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
         children: [
           Text(
             '周期概况',
-            style: TextStyle(fontSize: 14, color: appTheme.earthMedium, fontWeight: FontWeight.w500),
+            style: TextStyle(
+                fontSize: 14,
+                color: appTheme.earthMedium,
+                fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
                 child: _buildStatItem(appTheme,
-                    icon: Icons.repeat_rounded, label: '平均周期', value: '$avgCycle天'),
+                    icon: Icons.repeat_rounded,
+                    label: '平均周期',
+                    value: '$avgCycle天'),
               ),
               _buildDivider(appTheme),
               Expanded(
                 child: _buildStatItem(appTheme,
-                    icon: Icons.calendar_today_rounded, label: '经期天数', value: '$avgDuration天'),
+                    icon: Icons.calendar_today_rounded,
+                    label: '经期天数',
+                    value: '$avgDuration天'),
               ),
               _buildDivider(appTheme),
               Expanded(
                 child: _buildStatItem(appTheme,
-                    icon: Icons.insights_rounded, label: '规律性', value: regularity),
+                    icon: Icons.insights_rounded,
+                    label: '规律性',
+                    value: regularity),
               ),
             ],
           ),
@@ -219,7 +228,8 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
           child: Icon(icon, color: appTheme.primary, size: 20),
         ),
         const SizedBox(height: 12),
-        Text(label, style: TextStyle(fontSize: 12, color: appTheme.earthMedium)),
+        Text(label,
+            style: TextStyle(fontSize: 12, color: appTheme.earthMedium)),
         const SizedBox(height: 4),
         Text(
           value,
@@ -314,7 +324,9 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                   Text(
                     AppDateUtils.formatFullDate(record.startDate),
                     style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600, color: appTheme.earth),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: appTheme.earth),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -331,7 +343,8 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
             ),
             if (record.cycleLength != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: appTheme.creamDark,
                   borderRadius: BorderRadius.circular(appTheme.radiusSm),
@@ -339,7 +352,9 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                 child: Text(
                   '${record.cycleLength}天',
                   style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w500, color: appTheme.earthMedium),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: appTheme.earthMedium),
                 ),
               ),
           ],
@@ -351,7 +366,8 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
   double _calculateStdDev(List<int> values) {
     final mean = values.reduce((a, b) => a + b) / values.length;
     final variance =
-        values.map((v) => (v - mean) * (v - mean)).reduce((a, b) => a + b) / values.length;
+        values.map((v) => (v - mean) * (v - mean)).reduce((a, b) => a + b) /
+            values.length;
     return sqrt(variance);
   }
 
@@ -379,7 +395,8 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                   color: appTheme.rose.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(Icons.delete_outline_rounded, color: appTheme.rose, size: 32),
+                child: Icon(Icons.delete_outline_rounded,
+                    color: appTheme.rose, size: 32),
               ),
               const SizedBox(height: 20),
               Text(
@@ -406,12 +423,15 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           color: appTheme.creamDark,
-                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                          borderRadius:
+                              BorderRadius.circular(appTheme.radiusMd),
                         ),
                         child: Center(
                           child: Text('取消',
                               style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.w600, color: appTheme.earthMedium)),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: appTheme.earthMedium)),
                         ),
                       ),
                     ),
@@ -428,12 +448,15 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           color: appTheme.rose,
-                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                          borderRadius:
+                              BorderRadius.circular(appTheme.radiusMd),
                         ),
                         child: const Center(
                           child: Text('删除',
                               style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
                         ),
                       ),
                     ),

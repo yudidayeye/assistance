@@ -105,11 +105,11 @@ class _SettingsPageState extends State<SettingsPage> {
           Text(
             '设置',
             style: TextStyle(
-              fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-              fontSize: 28,
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: appTheme.earth,
-              letterSpacing: -0.5,
+              letterSpacing: -0.3,
             ),
           ),
         ],
@@ -222,10 +222,8 @@ class _SettingsPageState extends State<SettingsPage> {
               },
               activeTrackColor: module.themeColor.withValues(alpha: 0.28),
               activeThumbColor: module.themeColor,
-              inactiveThumbColor:
-                  appTheme.earthMedium.withValues(alpha: 0.45),
-              inactiveTrackColor:
-                  appTheme.creamDark.withValues(alpha: 0.7),
+              inactiveThumbColor: appTheme.earthMedium.withValues(alpha: 0.45),
+              inactiveTrackColor: appTheme.creamDark.withValues(alpha: 0.7),
               trackOutlineColor:
                   const WidgetStatePropertyAll(Colors.transparent),
             ),
@@ -286,9 +284,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       fontSize: 12.5,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isSelected
-                          ? appTheme.earth
-                          : appTheme.earthMedium)),
+                      color:
+                          isSelected ? appTheme.earth : appTheme.earthMedium)),
             ]),
           );
         }).toList(),
@@ -313,9 +310,7 @@ class _SettingsPageState extends State<SettingsPage> {
           child: _softDivider(appTheme),
         ),
         _buildFunctionItem(appTheme,
-            icon: Icons.download_rounded,
-            label: '导入数据',
-            onTap: _handleImport),
+            icon: Icons.download_rounded, label: '导入数据', onTap: _handleImport),
         Padding(
           padding: const EdgeInsets.only(left: 60),
           child: _softDivider(appTheme),
@@ -488,7 +483,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     if (result.isSuccess) {
       _showSnackBar(
-        '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录');
+          '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录');
       setState(() {});
     } else {
       _showErrorDialog('导入失败', result.error ?? '未知错误');
@@ -498,7 +493,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<String?> _showPathInputDialog() async {
     final appTheme = Theme.of(context).appTheme;
     final defaultDir = await _importExport.getDefaultImportDirectory();
-    final ctrl = TextEditingController(text: '$defaultDir${Platform.pathSeparator}');
+    final ctrl =
+        TextEditingController(text: '$defaultDir${Platform.pathSeparator}');
 
     return showDialog<String>(
       context: context,
@@ -851,8 +847,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final appTheme = Theme.of(context).appTheme;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message,
-          style: TextStyle(
-              color: appTheme.earth, fontWeight: FontWeight.w500)),
+          style: TextStyle(color: appTheme.earth, fontWeight: FontWeight.w500)),
       backgroundColor: appTheme.primaryLight,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
