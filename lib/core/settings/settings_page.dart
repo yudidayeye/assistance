@@ -878,7 +878,7 @@ class _SectionCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: appTheme.cardShadow,
         border: Border.all(
           color: appTheme.cardBorder,
