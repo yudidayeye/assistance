@@ -92,7 +92,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       onTap: _handleImport),
                   _buildSeparator(appTheme),
                   _buildFunctionItem(appTheme,
-                      icon: Icons.upload_file_rounded,
+                      icon: Icons.upload_outlined,
                       label: '导出数据',
                       onTap: _handleExport),
                   _buildSeparator(appTheme),
