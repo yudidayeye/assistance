@@ -146,7 +146,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
     final appTheme = Theme.of(context).appTheme;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 6, 20, 12),
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
@@ -199,7 +199,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '姨妈来了/姨妈走了',
+                  '姨妈来了',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -222,8 +222,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                       activeThumbColor: Colors.white,
                       activeTrackColor: appTheme.primary.withAlpha(160),
                       inactiveThumbColor: appTheme.earthMedium.withAlpha(120),
-                      inactiveTrackColor:
-                          appTheme.earthMedium.withAlpha(25),
+                      inactiveTrackColor: appTheme.earthMedium.withAlpha(25),
                     ),
             ],
           ),
@@ -251,8 +250,8 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     isDense: true,
                   ),
                   style: TextStyle(

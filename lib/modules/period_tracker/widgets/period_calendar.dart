@@ -73,7 +73,7 @@ class PeriodCalendar extends StatelessWidget {
                     ))
                 .toList(),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 3),
 
           // 日历网格
           GridView.builder(
@@ -103,7 +103,7 @@ class PeriodCalendar extends StatelessWidget {
           ),
 
           // 图例
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           _buildLegendSection(appTheme),
         ],
       ),
@@ -123,8 +123,8 @@ class PeriodCalendar extends StatelessWidget {
     // 预测经期
     if (prediction != null) {
       final nextStart = prediction!.nextStartDate;
-      final predictedEnd = nextStart.add(const Duration(
-          days: PredictionConfig.defaultPeriodDuration - 1));
+      final predictedEnd = nextStart.add(
+          const Duration(days: PredictionConfig.defaultPeriodDuration - 1));
       if (AppDateUtils.isDateInRangeInclusive(date, nextStart, predictedEnd)) {
         return CalendarDayType.periodPredicted;
       }
@@ -181,9 +181,8 @@ class PeriodCalendar extends StatelessWidget {
     // 今日 overlay
     if (isToday) {
       borderWidth = borderWidth > 0 ? borderWidth : 2;
-      borderColor = borderColor == Colors.transparent
-          ? appTheme.sage
-          : borderColor;
+      borderColor =
+          borderColor == Colors.transparent ? appTheme.sage : borderColor;
       fontWeight = FontWeight.w700;
     }
 
@@ -271,7 +270,7 @@ class PeriodCalendar extends StatelessWidget {
 
   Widget _buildLegendSection(AppThemeExtension appTheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -287,8 +286,7 @@ class PeriodCalendar extends StatelessWidget {
     );
   }
 
-  Widget _buildLegend(
-      AppThemeExtension appTheme, Color color, String label) {
+  Widget _buildLegend(AppThemeExtension appTheme, Color color, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
