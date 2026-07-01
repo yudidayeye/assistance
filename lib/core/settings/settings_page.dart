@@ -187,12 +187,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildModuleItem(AppThemeExtension appTheme, ToolModule module) {
     final enabled = _settings.isModuleEnabled(module.moduleId);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: module.themeColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
@@ -328,11 +328,11 @@ class _SettingsPageState extends State<SettingsPage> {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
@@ -362,11 +362,11 @@ class _SettingsPageState extends State<SettingsPage> {
     required IconData icon,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: appTheme.primary.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(14),
@@ -472,7 +472,7 @@ class _SettingsPageState extends State<SettingsPage> {
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusXl),
+            borderRadius: BorderRadius.circular(appTheme.radiusLg),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -572,7 +572,7 @@ class _SettingsPageState extends State<SettingsPage> {
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusXl),
+            borderRadius: BorderRadius.circular(appTheme.radiusLg),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -663,7 +663,7 @@ class _SettingsPageState extends State<SettingsPage> {
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusXl),
+            borderRadius: BorderRadius.circular(appTheme.radiusLg),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -727,7 +727,7 @@ class _SettingsPageState extends State<SettingsPage> {
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusXl),
+            borderRadius: BorderRadius.circular(appTheme.radiusLg),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -860,7 +860,7 @@ class _SectionLabel extends StatelessWidget {
               fontFamily: GoogleFonts.dmSans().fontFamily,
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: appTheme.earth,
+              color: appTheme.earthMedium,
               letterSpacing: 0.2,
             ),
           ),
@@ -887,7 +887,7 @@ class _SectionCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusXl),
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
         boxShadow: appTheme.cardShadow,
         border: Border.all(
           color: appTheme.cardBorder,
