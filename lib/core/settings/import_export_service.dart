@@ -34,9 +34,8 @@ class ImportExportService {
       // 2. 读取所有生理期记录（按日期升序）
       final periodRows = await _db.query('mod_period_tracker_records',
           orderBy: 'start_date ASC');
-      final periodRecords = periodRows
-          .map((r) => Map<String, dynamic>.from(r))
-          .toList();
+      final periodRecords =
+          periodRows.map((r) => Map<String, dynamic>.from(r)).toList();
 
       // 3. 构建导出 payload
       final payload = {
@@ -51,8 +50,7 @@ class ImportExportService {
       };
 
       // 4. 编码为 JSON
-      final jsonString =
-          const JsonEncoder.withIndent('  ').convert(payload);
+      final jsonString = const JsonEncoder.withIndent('  ').convert(payload);
       final bytes = Uint8List.fromList(utf8.encode(jsonString));
       final fileName = 'my_assistant_backup_${_dateStamp()}.json';
 
@@ -284,7 +282,8 @@ class ExportResult {
   factory ExportResult.success(String path) =>
       ExportResult._(isSuccess: true, filePath: path);
 
-  factory ExportResult.userCancelled() => ExportResult._(isCancelled: true);
+  factory ExportResult.userCancelled() =>
+      const ExportResult._(isCancelled: true);
 
   factory ExportResult.error(String message) =>
       ExportResult._(isSuccess: false, error: message);
@@ -320,7 +319,7 @@ class ImportPreviewResult {
       );
 
   factory ImportPreviewResult.userCancelled() =>
-      ImportPreviewResult._(isCancelled: true);
+      const ImportPreviewResult._(isCancelled: true);
 
   factory ImportPreviewResult.invalidFormat(String message) =>
       ImportPreviewResult._(isReady: false, error: message);

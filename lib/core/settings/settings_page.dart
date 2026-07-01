@@ -493,6 +493,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<String?> _showPathInputDialog() async {
     final appTheme = Theme.of(context).appTheme;
     final defaultDir = await _importExport.getDefaultImportDirectory();
+    if (!mounted) return null;
     final ctrl =
         TextEditingController(text: '$defaultDir${Platform.pathSeparator}');
 

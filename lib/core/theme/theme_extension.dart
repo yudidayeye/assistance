@@ -191,51 +191,53 @@ class ModuleThemeExtension extends ThemeExtension<ModuleThemeExtension> {
 /// 从 Theme 中获取应用主题扩展
 extension AppThemeGetter on ThemeData {
   AppThemeExtension get appTheme {
-    return extension<AppThemeExtension>() ?? AppThemeExtension(
-      primary: const Color(0xFF7B8BAA),
-      primaryLight: const Color(0xFFD8DFE8),
-      primaryDark: const Color(0xFF5A6B8A),
-      earth: const Color(0xFF3D3D3D),
-      earthLight: const Color(0xFF6B6B6B),
-      earthMedium: const Color(0xFF9B9B9B),
-      cream: const Color(0xFFF5F3F0),
-      creamDark: const Color(0xFFEBE8E4),
-      sage: const Color(0xFF8CADA0),
-      sageLight: const Color(0xFFCDE0D6),
-      rose: const Color(0xFFD4879A),
-      roseLight: const Color(0xFFEDCDD4),
-      gradientPrimary: const LinearGradient(
-        colors: [Color(0xFF7B8BAA), Color(0xFF5A6B8A)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      gradientEarth: const LinearGradient(
-        colors: [Color(0xFF3D3D3D), Color(0xFF6B6B6B)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      cardBackground: const Color(0xFFFAF8F5),
-      cardBorder: const Color(0xFFEBE8E4),
-      cardShadow: [
-        BoxShadow(
-          color: Color(0x0A3D3D3D),
-          blurRadius: 20,
-          offset: Offset(0, 2),
-        ),
-      ],
-      scaffoldGradient: const LinearGradient(
-        colors: [Color(0xFFF5F3F0), Color(0xFFEBE8E4)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      surfaceOverlay: const Color(0x4D000000),
-    );
+    return extension<AppThemeExtension>() ??
+        const AppThemeExtension(
+          primary: Color(0xFF7B8BAA),
+          primaryLight: Color(0xFFD8DFE8),
+          primaryDark: Color(0xFF5A6B8A),
+          earth: Color(0xFF3D3D3D),
+          earthLight: Color(0xFF6B6B6B),
+          earthMedium: Color(0xFF9B9B9B),
+          cream: Color(0xFFF5F3F0),
+          creamDark: Color(0xFFEBE8E4),
+          sage: Color(0xFF8CADA0),
+          sageLight: Color(0xFFCDE0D6),
+          rose: Color(0xFFD4879A),
+          roseLight: Color(0xFFEDCDD4),
+          gradientPrimary: LinearGradient(
+            colors: [Color(0xFF7B8BAA), Color(0xFF5A6B8A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          gradientEarth: LinearGradient(
+            colors: [Color(0xFF3D3D3D), Color(0xFF6B6B6B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          cardBackground: Color(0xFFFAF8F5),
+          cardBorder: Color(0xFFEBE8E4),
+          cardShadow: [
+            BoxShadow(
+              color: Color(0x0A3D3D3D),
+              blurRadius: 20,
+              offset: Offset(0, 2),
+            ),
+          ],
+          scaffoldGradient: LinearGradient(
+            colors: [Color(0xFFF5F3F0), Color(0xFFEBE8E4)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          surfaceOverlay: Color(0x4D000000),
+        );
   }
 }
 
 /// 从 Theme 中获取模块主题色
 extension ModuleThemeGetter on ThemeData {
   ModuleThemeExtension get moduleTheme {
-    return extension<ModuleThemeExtension>() ?? const ModuleThemeExtension(moduleColor: Colors.blue);
+    return extension<ModuleThemeExtension>() ??
+        const ModuleThemeExtension(moduleColor: Colors.blue);
   }
 }
