@@ -72,7 +72,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ]),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 120)),
+            const SliverToBoxAdapter(child: SizedBox(height: 72)),
           ],
         ),
       ),
@@ -85,7 +85,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          24, MediaQuery.of(context).padding.top + 16, 24, 20),
+          24, MediaQuery.of(context).padding.top + 12, 24, 14),
       child: Row(
         children: [
           GestureDetector(
@@ -123,24 +123,24 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSectionHeader(
       AppThemeExtension appTheme, String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 10),
+      padding: const EdgeInsets.fromLTRB(24, 18, 24, 6),
       child: Row(
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 22,
+            height: 22,
             decoration: BoxDecoration(
               color: appTheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 15, color: appTheme.primary),
+            child: Icon(icon, size: 12, color: appTheme.primary),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Text(
             title,
             style: TextStyle(
-              fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-              fontSize: 17,
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
               color: appTheme.earth,
             ),
@@ -157,7 +157,7 @@ class _SettingsPageState extends State<SettingsPage> {
       AppThemeExtension appTheme, List<ToolModule> modules) {
     return _SoftCard(
       appTheme: appTheme,
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       children: modules.asMap().entries.map((entry) {
         final index = entry.key;
         final module = entry.value;
@@ -166,7 +166,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildModuleItem(appTheme, module),
           if (!isLast)
             Padding(
-              padding: const EdgeInsets.only(left: 64),
+              padding: const EdgeInsets.only(left: 56),
               child: _softDivider(appTheme),
             ),
         ]);
@@ -177,35 +177,35 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildModuleItem(AppThemeExtension appTheme, ToolModule module) {
     final enabled = _settings.isModuleEnabled(module.moduleId);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: module.themeColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
-              child: module.icon.build(size: 21, color: module.themeColor),
+              child: module.icon.build(size: 18, color: module.themeColor),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(module.displayName,
                     style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: appTheme.earth,
                         height: 1.2)),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(enabled ? '已启用' : '已禁用',
                     style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 12,
                         color: enabled
                             ? appTheme.sage.withValues(alpha: 0.85)
                             : appTheme.earthMedium.withValues(alpha: 0.6))),
@@ -240,7 +240,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final currentTheme = ThemeProvider.instance.currentTheme;
     return _SoftCard(
       appTheme: appTheme,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: AppThemeType.values.map((type) {
@@ -254,34 +254,34 @@ class _SettingsPageState extends State<SettingsPage> {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOutCubic,
-                width: 52,
-                height: 52,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [type.color, type.color.withValues(alpha: 0.7)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
                             color: type.color.withValues(alpha: 0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           )
                         ]
                       : null,
                 ),
                 child: isSelected
                     ? const Icon(Icons.check_rounded,
-                        color: Colors.white, size: 26)
+                        color: Colors.white, size: 22)
                     : null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Text(type.label,
                   style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 11.5,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w500,
                       color:
@@ -299,32 +299,32 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildFunctionSection(AppThemeExtension appTheme) {
     return _SoftCard(
       appTheme: appTheme,
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       children: [
         _buildFunctionItem(appTheme,
             icon: Icons.upload_file_rounded,
             label: '导出数据',
             onTap: _handleExport),
         Padding(
-          padding: const EdgeInsets.only(left: 60),
+          padding: const EdgeInsets.only(left: 52),
           child: _softDivider(appTheme),
         ),
         _buildFunctionItem(appTheme,
             icon: Icons.download_rounded, label: '导入数据', onTap: _handleImport),
         Padding(
-          padding: const EdgeInsets.only(left: 60),
+          padding: const EdgeInsets.only(left: 52),
           child: _softDivider(appTheme),
         ),
         _buildFunctionItem(appTheme,
             icon: Icons.notifications_outlined, label: '通知管理', onTap: () {}),
         Padding(
-          padding: const EdgeInsets.only(left: 60),
+          padding: const EdgeInsets.only(left: 52),
           child: _softDivider(appTheme),
         ),
         _buildFunctionItem(appTheme,
             icon: Icons.help_outline_rounded, label: '帮助与反馈', onTap: () {}),
         Padding(
-          padding: const EdgeInsets.only(left: 60),
+          padding: const EdgeInsets.only(left: 52),
           child: _softDivider(appTheme),
         ),
         _buildFunctionItem(appTheme,
@@ -344,22 +344,22 @@ class _SettingsPageState extends State<SettingsPage> {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
         child: Row(children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: appTheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: appTheme.primary, size: 21),
+            child: Icon(icon, color: appTheme.primary, size: 18),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Text(label,
                 style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: appTheme.earth)),
           ),
@@ -376,16 +376,16 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildAboutSection(AppThemeExtension appTheme) {
     return _SoftCard(
       appTheme: appTheme,
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       children: [
         _buildAboutItem(appTheme, '版本', 'V1.0.0'),
         Padding(
-          padding: const EdgeInsets.only(left: 60),
+          padding: const EdgeInsets.only(left: 52),
           child: _softDivider(appTheme),
         ),
         _buildAboutItem(appTheme, '隐私声明', '所有数据仅存储在本地'),
         Padding(
-          padding: const EdgeInsets.only(left: 60),
+          padding: const EdgeInsets.only(left: 52),
           child: _softDivider(appTheme),
         ),
         _buildAboutItem(appTheme, '免责声明', '生理期预测仅供参考'),
@@ -404,31 +404,31 @@ class _SettingsPageState extends State<SettingsPage> {
       icon = Icons.shield_outlined;
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
       child: Row(children: [
         Container(
-          width: 42,
-          height: 42,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: appTheme.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: appTheme.primary, size: 21),
+          child: Icon(icon, color: appTheme.primary, size: 18),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title,
                   style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: appTheme.earth)),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(subtitle,
                   style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: appTheme.earthMedium.withValues(alpha: 0.75))),
             ],
           ),
