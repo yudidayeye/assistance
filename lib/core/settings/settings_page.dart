@@ -64,7 +64,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
 
               // ── 主题设置 ──
               _SectionLabel(
@@ -76,7 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: _buildThemeSelector(appTheme),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
 
               // ── 功能 ──
               _SectionLabel(
@@ -114,7 +114,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ]),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
 
               // ── 关于 ──
               _SectionLabel(
@@ -472,7 +472,7 @@ class _SettingsPageState extends State<SettingsPage> {
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusLg),
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -572,7 +572,7 @@ class _SettingsPageState extends State<SettingsPage> {
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusLg),
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -663,7 +663,7 @@ class _SettingsPageState extends State<SettingsPage> {
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusLg),
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -727,7 +727,7 @@ class _SettingsPageState extends State<SettingsPage> {
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusLg),
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -878,7 +878,7 @@ class _SectionCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
         boxShadow: appTheme.cardShadow,
         border: Border.all(
           color: appTheme.cardBorder,
