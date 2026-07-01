@@ -186,12 +186,22 @@ class _CalendarPageState extends State<CalendarPage> {
           // 标题行
           Row(
             children: [
+              Container(
+                width: 3,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withAlpha(160),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
               Text(
                 '预测信息',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: appTheme.earth,
+                  color: appTheme.earthMedium,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
