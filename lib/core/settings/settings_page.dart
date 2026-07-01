@@ -48,7 +48,6 @@ class _SettingsPageState extends State<SettingsPage> {
               _SectionLabel(
                 appTheme: appTheme,
                 title: '模块管理',
-                icon: Icons.apps_rounded,
               ),
               _SectionCard(
                 appTheme: appTheme,
@@ -71,7 +70,6 @@ class _SettingsPageState extends State<SettingsPage> {
               _SectionLabel(
                 appTheme: appTheme,
                 title: '主题设置',
-                icon: Icons.palette_rounded,
               ),
               _SectionCard(
                 appTheme: appTheme,
@@ -84,7 +82,6 @@ class _SettingsPageState extends State<SettingsPage> {
               _SectionLabel(
                 appTheme: appTheme,
                 title: '功能',
-                icon: Icons.tune_rounded,
               ),
               _SectionCard(
                 appTheme: appTheme,
@@ -123,7 +120,6 @@ class _SettingsPageState extends State<SettingsPage> {
               _SectionLabel(
                 appTheme: appTheme,
                 title: '关于',
-                icon: Icons.info_outline_rounded,
               ),
               _SectionCard(
                 appTheme: appTheme,
@@ -832,16 +828,14 @@ class _SettingsPageState extends State<SettingsPage> {
 // 扁平组件：分区标签 + 卡片容器
 // ═════════════════════════════════════════════════════════════════
 
-/// 分区标签 — 强调色竖条 + 图标 + 文字，置于卡片上方
+/// 分区标签 — 强调色竖条 + 文字，置于卡片上方
 class _SectionLabel extends StatelessWidget {
   final AppThemeExtension appTheme;
   final String title;
-  final IconData icon;
 
   const _SectionLabel({
     required this.appTheme,
     required this.title,
-    required this.icon,
   });
 
   @override
@@ -860,8 +854,6 @@ class _SectionLabel extends StatelessWidget {
             ),
           ),
           SizedBox(width: appTheme.spaceSm),
-          Icon(icon, size: 16, color: appTheme.primary),
-          const SizedBox(width: 6),
           Text(
             title,
             style: TextStyle(
