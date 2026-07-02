@@ -1,25 +1,17 @@
-# 我的工具箱 (My Toolbox)
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 项目概述
+
 轻量级个人工具集 Flutter App — 记账模块 + 生理期记录模块，所有数据仅存储在本地 SQLite。
 
 ## 注意事项
+
 1. 默认使用中文回答
-2. 涉及到文件查找使用codegraph
-3. 完成计划时完成一个小功能自动git commit，git push，提交信息用中文写
-
-## 参考文档
-1. UI设计风格参考文档, 修改前端视觉、调颜色、调间距时 → 必读 `./docs/UI.md`
-
-## 技术栈
-- **Flutter / Dart** (SDK >=3.0.0 <4.0.0)
-- **go_router** ^14.0.0 — 路由管理
-- **sqflite** + **sqflite_common_ffi** — 本地 SQLite 数据库（Windows/Android/iOS）
-- **fl_chart** — 图表（饼图、统计图）
-- **google_fonts** — 字体：DM Sans（正文）、Roboto Slab（标题）、Playfair Display（"我的"页）
-- **flutter_riverpod** — 已引入但当前未深度使用
-- **uuid** — 记录 ID 生成
-- **intl** — 国际化
+2. 文件查找使用 codegraph
+3. 完成计划时，每完成一个小功能自动 git commit，git push，提交信息用中文写
+4. 修改前端视觉、调颜色、调间距时 → 必读 `./docs/UI.md`
 
 ## 常用命令
 
@@ -29,6 +21,9 @@ flutter run -d windows
 
 # 运行测试
 flutter test
+
+# 运行单个测试文件
+flutter test test/path/to/test_file.dart
 
 # 代码静态分析
 flutter analyze
@@ -49,18 +44,108 @@ flutter build windows
 
 所有已注册模块通过 `ModuleRegistry.instance.allModules` 获取，路由和首页卡片均由此动态生成。添加新模块只需：实现 `ToolModule` → 在 `main()` 中注册 → 在 `AppRouter._getModuleSubRoutes()` 中添加子路由。
 
+### 初始化顺序（main.dart）
+
+```
+1. DatabaseService.initializeFactory()  — Windows FFI 兼容初始化
+2. DatabaseService.instance.database    — 打开/创建 SQLite
+3. ModuleRegistry.registerAll([...])    — 注册模块并 await onRegister
+4. SettingsService.seedDefaultsForModules() — 首次启动写入模块启用状态
+5. SettingsService.loadSettings()       — 加载设置到内存缓存
+6. ThemeProvider.loadTheme()            — 加载主题偏好
+7. AppRouter.initRouter()               — 此时模块路由已就绪，构建 GoRouter
+```
+
+### 主题系统
+
+4 套配色通过 `AppThemeType` 枚举切换，中文名称与 legacy 映射：
+
+| 枚举值 | 中文名 | 旧名称 |
+|--------|--------|--------|
+| softNight | 柔夜 | gold |
+| morningMist | 晨雾 | blue |
+| leafWhisper | 叶语 | green |
+| flowerMist | 花雾 | pink |
+
+每套颜色语义化为 12 个 token + 圆角/间距设计系统：
+
+- `primary` / `primaryLight` / `primaryDark` — 主色调
+- `earth` / `earthLight` / `earthMedium` — 文字色系
+- `cream` / `creamDark` — 背景色系
+- `sage` / `sageLight` — 辅助色（绿色调）
+- `rose` / `roseLight` — 强调色（红色调）
+
+通过 `Theme.of(context).appTheme` 获取 `AppThemeExtension`（含色彩、卡片、圆角、间距 token），通过 `Theme.of(context).moduleTheme` 获取模块主题色。
+
+**UI 设计原则（详见 `docs/UI.md`）：**
+- 安静科技感 + 温和健康陪伴
+- 低对比、高柔和度、轻渐变过渡
+- 大圆角（16-28px）、极轻阴影、无硬边框
+- 信息密度低、单焦点中心结构
+- 卡片风格为"状态容器"而非"按钮化"
+
+### 服务单例模式
+
+所有核心服务使用 `static final instance = ClassName._();` 单例模式：
+- `DatabaseService.instance`
+- `SettingsService.instance` / `SettingsController.instance`
+- `ThemeProvider.instance`
+- `ModuleRegistry.instance`
+- `TransactionService.instance` / `CategoryService.instance`
+- `PeriodService.instance` / `PredictionService.instance`
+- `ImportExportService.instance`
+
+### 数据库
+
+- 全局设置：`app_settings` (key-value)
+- 模块表前缀：`mod_{moduleId}_...`
+  - `mod_accounting_transactions`
+  - `mod_accounting_categories`
+  - `mod_period_tracker_records`
+- 当前版本：`3`，支持 `onUpgrade` 迁移（v2 加索引，v3 加 note 字段）
+- `DatabaseService` 提供 CRUD helpers + `clearModuleData()` / `clearAllBusinessData()` / `factoryReset()`
+
+### 数据导入导出
+
+`ImportExportService` 负责 JSON 格式的备份与恢复：
+- 导出：`app_settings` + 生理期记录，保存到下载目录
+- 导入：先 preview 校验结构，再在事务中原子合并（INSERT OR REPLACE）
+- 导入后自动重算周期长度
+
+### 导航路由
+
+| 路径 | 页面 |
+|------|------|
+| `/` | MainShellPage（底部双 Tab） |
+| `/settings` | SettingsPage |
+| `/accounting` | AccountingEntryPage |
+| `/accounting/add` | AddTransactionPage |
+| `/accounting/edit/:id` | AddTransactionPage（编辑模式） |
+| `/accounting/stats` | AccountingStatsPage |
+| `/accounting/categories` | CategorySettingsPage |
+| `/period_tracker` | CalendarPage |
+| `/period_tracker/record` | PeriodRecordPage |
+| `/period_tracker/stats` | PeriodStatsPage |
+
+### 字体系统
+
+- **DM Sans** — 正文、标题（通过 `GoogleFonts.dmSans()`）
+- **Roboto Slab** — 项目中未直接使用（历史遗留）
+- **Playfair Display** — 弹窗标题（如设置页确认框）
+
 ### 目录结构
 
 ```
 lib/
-├── main.dart                    # 入口：初始化 DB/Settings/Theme → 注册模块 → 启动路由
+├── main.dart                    # 入口：按序初始化 DB/模块/设置/主题/路由
 ├── core/
 │   ├── module_system/           # 模块抽象层（接口、注册中心、上下文、摘要）
 │   ├── routing/
 │   │   └── app_router.dart      # GoRouter 路由定义，动态收集模块路由
 │   ├── settings/
 │   │   ├── settings_service.dart # 模块启停状态、隐私免责声明持久化
-│   │   └── settings_page.dart    # 设置页面 UI
+│   │   ├── settings_page.dart    # 设置页面 UI
+│   │   └── import_export_service.dart # JSON 导入导出
 │   ├── storage/
 │   │   └── database_service.dart # SQLite 封装（自动处理 Windows FFI）
 │   └── theme/
@@ -89,54 +174,8 @@ lib/
     └── widgets/                  # FeaturedCard, MonthSelector, NumberKeyboard, ToolboxBottomNav
 ```
 
-### 数据库表命名约定
-
-- 全局设置：`app_settings` (key-value)
-- 模块表前缀：`mod_{moduleId}_...`
-  - `mod_accounting_transactions`
-  - `mod_accounting_categories`
-  - `mod_period_tracker_records`
-
-### 导航路由
-
-| 路径 | 页面 |
-|------|------|
-| `/` | MainShellPage（底部双 Tab） |
-| `/settings` | SettingsPage |
-| `/accounting` | AccountingEntryPage |
-| `/accounting/add` | AddTransactionPage |
-| `/accounting/edit/:id` | AddTransactionPage（编辑模式） |
-| `/accounting/stats` | AccountingStatsPage |
-| `/accounting/categories` | CategorySettingsPage |
-| `/period_tracker` | CalendarPage |
-| `/period_tracker/record` | PeriodRecordPage |
-| `/period_tracker/stats` | PeriodStatsPage |
-
-### 主题系统
-
-4 套配色通过 `AppThemeType` 枚举切换：gold（默认）、blue、green、pink。每套颜色语义化为 12 个 token：
-- `primary` / `primaryLight` / `primaryDark` — 主色调
-- `earth` / `earthLight` / `earthMedium` — 文字色系
-- `cream` / `creamDark` — 背景色系
-- `sage` / `sageLight` — 辅助色（绿色调）
-- `rose` / `roseLight` — 强调色（红色调）
-
-通过 `Theme.of(context).appTheme` 获取 `AppThemeExtension`，通过 `Theme.of(context).moduleTheme` 获取模块主题色。
-
-### 服务单例模式
-
-所有核心服务使用 `static final instance = ClassName._();` 单例模式：
-- `DatabaseService.instance`
-- `SettingsService.instance`
-- `ThemeProvider.instance`
-- `ModuleRegistry.instance`
-- `TransactionService.instance` / `CategoryService.instance`
-- `PeriodService.instance` / `PredictionService.instance`
-
 ### 注意事项
 
-- `home_page.dart` 是旧版首页，当前路由使用 `main_shell_page.dart`，旧文件可考虑清理
-- `module_card.dart` 标记为 DEPRECATED，已被 `featured_card.dart` 替代
 - Windows 桌面开发需要 Visual Studio 2022 的 "Desktop development with C++" 工作负载
 - 数据库初始化在 `main()` 中 `initializeFactory()` 处理 Windows FFI 兼容
 - 应用默认语言为中文 (`zh_CN`)
