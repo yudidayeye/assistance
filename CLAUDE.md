@@ -16,8 +16,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 常用命令
 
 ```bash
-# 运行项目（Windows 桌面）
-flutter run -d windows
+# 运行项目（默认连接已启用的移动设备/模拟器）
+flutter run
+
+# 指定 Android 设备运行
+flutter run -d android
+
+# 指定 iOS 设备运行（需要 macOS + Xcode）
+flutter run -d ios
 
 # 运行测试
 flutter test
@@ -28,8 +34,14 @@ flutter test test/path/to/test_file.dart
 # 代码静态分析
 flutter analyze
 
-# 构建 Windows 发布版
-flutter build windows
+# 构建 Android 发布版（AAB）
+flutter build appbundle
+
+# 构建 Android APK
+flutter build apk
+
+# 构建 iOS 发布版（需要 macOS + Xcode）
+flutter build ios
 ```
 
 ## 架构概览
@@ -47,7 +59,7 @@ flutter build windows
 ### 初始化顺序（main.dart）
 
 ```
-1. DatabaseService.initializeFactory()  — Windows FFI 兼容初始化
+1. DatabaseService.initializeFactory()  — 平台 FFI 初始化（移动端无需额外处理，Windows 需 C++ 工作负载）
 2. DatabaseService.instance.database    — 打开/创建 SQLite
 3. ModuleRegistry.registerAll([...])    — 注册模块并 await onRegister
 4. SettingsService.seedDefaultsForModules() — 首次启动写入模块启用状态
@@ -167,7 +179,6 @@ lib/
 │       └── widgets/              # period_calendar
 ├── pages/
 │   ├── main_shell_page.dart      # 底部双 Tab（工具箱 / 我的），IndexedStack
-│   ├── home_page.dart            # ⚠️ 旧首页（含底部导航），当前路由未使用
 │   └── profile_page.dart         # "我的"页面内容（ProfilePageContent）
 └── shared/
     ├── utils/                    # AppDateUtils, FormatUtils
@@ -176,6 +187,6 @@ lib/
 
 ### 注意事项
 
-- Windows 桌面开发需要 Visual Studio 2022 的 "Desktop development with C++" 工作负载
-- 数据库初始化在 `main()` 中 `initializeFactory()` 处理 Windows FFI 兼容
+- 项目主要面向移动端（Android / iOS），开发时优先在真机或模拟器上测试
+- 如需在 Windows 桌面运行，需安装 Visual Studio 2022 的 "Desktop development with C++" 工作负载，`main()` 中 `initializeFactory()` 会处理 Windows FFI 兼容
 - 应用默认语言为中文 (`zh_CN`)
