@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. 文件查找使用 codegraph
 3. 完成计划时，每完成一个小功能自动 git commit，git push，提交信息用中文写
 4. 修改前端视觉、调颜色、调间距时 → 必读 `./docs/UI.md`
+5. 生成的开发计划默认保存到 `./.claude/plans` 目录下
 
 ## 常用命令
 
@@ -49,6 +50,7 @@ flutter build ios
 ### 模块系统（插件式架构）
 
 核心抽象在 `lib/core/module_system/`：
+
 - **`ToolModule`** — 模块抽象接口。每个模块实现：`moduleId`、`displayName`、`icon`、`themeColor`、`buildEntryPage()`、`onRegister()`、`onOpen()`、`onClose()`、`getSummary()`
 - **`ModuleRegistry`** — 单例注册中心。在 `main()` 中注册所有模块，管理模块生命周期
 - **`ModuleSummary`** — 首页卡片显示的摘要信息（`line1`、`line2`）
@@ -72,12 +74,12 @@ flutter build ios
 
 4 套配色通过 `AppThemeType` 枚举切换，中文名称与 legacy 映射：
 
-| 枚举值 | 中文名 | 旧名称 |
-|--------|--------|--------|
-| softNight | 柔夜 | gold |
-| morningMist | 晨雾 | blue |
-| leafWhisper | 叶语 | green |
-| flowerMist | 花雾 | pink |
+| 枚举值      | 中文名 | 旧名称 |
+| ----------- | ------ | ------ |
+| softNight   | 柔夜   | gold   |
+| morningMist | 晨雾   | blue   |
+| leafWhisper | 叶语   | green  |
+| flowerMist  | 花雾   | pink   |
 
 每套颜色语义化为 12 个 token + 圆角/间距设计系统：
 
@@ -90,6 +92,7 @@ flutter build ios
 通过 `Theme.of(context).appTheme` 获取 `AppThemeExtension`（含色彩、卡片、圆角、间距 token），通过 `Theme.of(context).moduleTheme` 获取模块主题色。
 
 **UI 设计原则（详见 `docs/UI.md`）：**
+
 - 安静科技感 + 温和健康陪伴
 - 低对比、高柔和度、轻渐变过渡
 - 大圆角（16-28px）、极轻阴影、无硬边框
@@ -99,6 +102,7 @@ flutter build ios
 ### 服务单例模式
 
 所有核心服务使用 `static final instance = ClassName._();` 单例模式：
+
 - `DatabaseService.instance`
 - `SettingsService.instance` / `SettingsController.instance`
 - `ThemeProvider.instance`
@@ -120,24 +124,25 @@ flutter build ios
 ### 数据导入导出
 
 `ImportExportService` 负责 JSON 格式的备份与恢复：
+
 - 导出：`app_settings` + 生理期记录，保存到下载目录
 - 导入：先 preview 校验结构，再在事务中原子合并（INSERT OR REPLACE）
 - 导入后自动重算周期长度
 
 ### 导航路由
 
-| 路径 | 页面 |
-|------|------|
-| `/` | MainShellPage（底部双 Tab） |
-| `/settings` | SettingsPage |
-| `/accounting` | AccountingEntryPage |
-| `/accounting/add` | AddTransactionPage |
-| `/accounting/edit/:id` | AddTransactionPage（编辑模式） |
-| `/accounting/stats` | AccountingStatsPage |
-| `/accounting/categories` | CategorySettingsPage |
-| `/period_tracker` | CalendarPage |
-| `/period_tracker/record` | PeriodRecordPage |
-| `/period_tracker/stats` | PeriodStatsPage |
+| 路径                     | 页面                           |
+| ------------------------ | ------------------------------ |
+| `/`                      | MainShellPage（底部双 Tab）    |
+| `/settings`              | SettingsPage                   |
+| `/accounting`            | AccountingEntryPage            |
+| `/accounting/add`        | AddTransactionPage             |
+| `/accounting/edit/:id`   | AddTransactionPage（编辑模式） |
+| `/accounting/stats`      | AccountingStatsPage            |
+| `/accounting/categories` | CategorySettingsPage           |
+| `/period_tracker`        | CalendarPage                   |
+| `/period_tracker/record` | PeriodRecordPage               |
+| `/period_tracker/stats`  | PeriodStatsPage                |
 
 ### 字体系统
 
