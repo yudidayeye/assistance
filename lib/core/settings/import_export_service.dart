@@ -21,8 +21,10 @@ class ImportExportService {
   // 导出
   // ═══════════════════════════════════════════════════════════════
 
-  /// 将数据导出为 JSON 文件（保存到下载/文档目录）。
-  Future<ExportResult> exportData() async {
+  /// 将数据导出为 JSON 文件。
+  ///
+  /// [directory] 可选参数，指定保存目录。若不传则保存到下载/文档目录。
+  Future<ExportResult> exportData({String? directory}) async {
     try {
       // 1. 读取所有 app_settings
       final settingsRows = await _db.query('app_settings');
@@ -54,9 +56,10 @@ class ImportExportService {
       final bytes = Uint8List.fromList(utf8.encode(jsonString));
       final fileName = 'my_assistant_backup_${_dateStamp()}.json';
 
-      // 5. 写入下载目录（回退到应用文档目录）
-      final directory = await _getExportDirectory();
-      final file = File('${directory.path}$fileName');
+      // 5. 写入指定目录（若未指定则使用下载/文档目录）
+      final dirPath = directory ?? (await _getExportDirectory()).path;
+      final separator = Platform.pathSeparator;
+      final file = File('$dirPath$separator$fileName');
       await file.writeAsBytes(bytes);
 
       return ExportResult.success(file.path);
