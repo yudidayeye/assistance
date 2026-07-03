@@ -173,8 +173,8 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildPredictionCard(AppThemeExtension appTheme) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusLg),
@@ -191,7 +191,7 @@ class _CalendarPageState extends State<CalendarPage> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
           Row(
             children: [
               _buildPredictionMetric(

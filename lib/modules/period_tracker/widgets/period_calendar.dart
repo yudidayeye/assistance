@@ -43,7 +43,7 @@ class PeriodCalendar extends StatelessWidget {
         DateTime(displayedMonth.year, displayedMonth.month + 1, 0).day;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusLg),
@@ -73,7 +73,7 @@ class PeriodCalendar extends StatelessWidget {
                     ))
                 .toList(),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 0),
 
           // 日历网格
           GridView.builder(
@@ -82,8 +82,8 @@ class PeriodCalendar extends StatelessWidget {
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
               mainAxisSpacing: 4,
-              crossAxisSpacing: 4,
-              childAspectRatio: 1,
+              crossAxisSpacing: 6,
+              childAspectRatio: 1.1,
             ),
             itemCount: startWeekday + daysInMonth,
             itemBuilder: (context, index) {
@@ -103,7 +103,7 @@ class PeriodCalendar extends StatelessWidget {
           ),
 
           // 图例
-          const SizedBox(height: 4),
+          const SizedBox(height: 0),
           _buildLegendSection(appTheme),
         ],
       ),
@@ -270,7 +270,7 @@ class PeriodCalendar extends StatelessWidget {
 
   Widget _buildLegendSection(AppThemeExtension appTheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -295,7 +295,7 @@ class PeriodCalendar extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(4),
           ),
         ),
         const SizedBox(width: 4),
