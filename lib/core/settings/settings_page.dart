@@ -425,7 +425,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _handleExport() async {
     // 1. 弹出目录选择器
-    final selectedDir = await FilePicker.platform.getDirectoryPath(
+    final selectedDir = await FilePicker.getDirectoryPath(
       dialogTitle: '选择导出保存目录',
     );
     if (selectedDir == null) return; // 用户取消
@@ -445,7 +445,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _handleImport() async {
     // 1. 弹出文件选择器，限定 .json
-    final picked = await FilePicker.platform.pickFiles(
+    final picked = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
       allowMultiple: false,
