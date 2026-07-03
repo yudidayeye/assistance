@@ -424,23 +424,31 @@ class _SettingsPageState extends State<SettingsPage> {
   // ═══════════════════════════════════════════════════════════════
 
   Future<void> _handleExport() async {
-    // 1. 弹出目录选择器
-    final selectedDir = await FilePicker.getDirectoryPath(
-      dialogTitle: '选择导出保存目录',
-    );
-    if (selectedDir == null) return; // 用户取消
+    // 生成默认文件名
+    final now = DateTime.now();
+    final stamp = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+    final defaultFileName = 'my_assistant_backup_$stamp.json';
 
-    _showSnackBar('正在导出数据...');
-    final result = await _importExport.exportData(directory: selectedDir);
+    _showSnackBar('正在准备导出数据...');
+
+    // 1. 先生成 JSON bytes
+    final bytes = await _importExport.generateExportBytes();
     if (!mounted) return;
 
+    // 2. 弹出文件保存对话框（使用 SAF，自动处理权限）
+    final filePath = await FilePicker.saveFile(
+      dialogTitle: '选择导出保存位置',
+      fileName: defaultFileName,
+      bytes: bytes,
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+    if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-    if (result.isSuccess) {
-      _showSnackBar('已导出到：${result.filePath}');
-    } else {
-      _showErrorDialog('导出失败', result.error ?? '未知错误');
-    }
+    if (filePath == null) return; // 用户取消
+
+    _showSnackBar('已导出到：$filePath');
   }
 
   Future<void> _handleImport() async {

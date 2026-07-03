@@ -21,45 +21,57 @@ class ImportExportService {
   // 导出
   // ═══════════════════════════════════════════════════════════════
 
+  /// 生成导出 JSON 的 bytes，供 FilePicker.saveFile 写入（通过 SAF 处理权限）
+  Future<Uint8List> generateExportBytes() async {
+    // 1. 读取所有 app_settings
+    final settingsRows = await _db.query('app_settings');
+    final settings = <String, String>{};
+    for (final row in settingsRows) {
+      settings[row['key'] as String] = row['value'] as String;
+    }
+
+    // 2. 读取所有生理期记录（按日期升序）
+    final periodRows = await _db.query('mod_period_tracker_records',
+        orderBy: 'start_date ASC');
+    final periodRecords =
+        periodRows.map((r) => Map<String, dynamic>.from(r)).toList();
+
+    // 3. 构建导出 payload
+    final payload = {
+      'version': _schemaVersion,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'appName': 'my_assistant',
+      'appVersion': '1.0.0',
+      'data': {
+        'app_settings': settings,
+        'period_tracker_records': periodRecords,
+      },
+    };
+
+    // 4. 编码为 JSON bytes
+    final jsonString = const JsonEncoder.withIndent('  ').convert(payload);
+    return Uint8List.fromList(utf8.encode(jsonString));
+  }
+
   /// 将数据导出为 JSON 文件。
   ///
-  /// [directory] 可选参数，指定保存目录。若不传则保存到下载/文档目录。
-  Future<ExportResult> exportData({String? directory}) async {
+  /// [filePath] 可选参数，指定完整文件路径。
+  /// 若不传则保存到下载/文档目录。
+  Future<ExportResult> exportData({String? filePath}) async {
     try {
-      // 1. 读取所有 app_settings
-      final settingsRows = await _db.query('app_settings');
-      final settings = <String, String>{};
-      for (final row in settingsRows) {
-        settings[row['key'] as String] = row['value'] as String;
+      final bytes = await generateExportBytes();
+
+      // 确定目标路径（若未指定则使用下载/文档目录）
+      String targetPath;
+      if (filePath != null) {
+        targetPath = filePath;
+      } else {
+        final dir = (await _getExportDirectory()).path;
+        final fileName = 'my_assistant_backup_${_dateStamp()}.json';
+        targetPath = '$dir${Platform.pathSeparator}$fileName';
       }
 
-      // 2. 读取所有生理期记录（按日期升序）
-      final periodRows = await _db.query('mod_period_tracker_records',
-          orderBy: 'start_date ASC');
-      final periodRecords =
-          periodRows.map((r) => Map<String, dynamic>.from(r)).toList();
-
-      // 3. 构建导出 payload
-      final payload = {
-        'version': _schemaVersion,
-        'exportedAt': DateTime.now().toIso8601String(),
-        'appName': 'my_assistant',
-        'appVersion': '1.0.0',
-        'data': {
-          'app_settings': settings,
-          'period_tracker_records': periodRecords,
-        },
-      };
-
-      // 4. 编码为 JSON
-      final jsonString = const JsonEncoder.withIndent('  ').convert(payload);
-      final bytes = Uint8List.fromList(utf8.encode(jsonString));
-      final fileName = 'my_assistant_backup_${_dateStamp()}.json';
-
-      // 5. 写入指定目录（若未指定则使用下载/文档目录）
-      final dirPath = directory ?? (await _getExportDirectory()).path;
-      final separator = Platform.pathSeparator;
-      final file = File('$dirPath$separator$fileName');
+      final file = File(targetPath);
       await file.writeAsBytes(bytes);
 
       return ExportResult.success(file.path);
