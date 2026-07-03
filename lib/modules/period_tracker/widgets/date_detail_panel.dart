@@ -146,7 +146,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
     final appTheme = Theme.of(context).appTheme;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 12),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
