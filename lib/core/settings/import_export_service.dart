@@ -253,16 +253,6 @@ class ImportExportService {
         '${now.hour.toString().padLeft(2, '0')}'
         '${now.minute.toString().padLeft(2, '0')}';
   }
-
-  /// 获取默认导入目录（与导出目录一致）
-  Future<String> getDefaultImportDirectory() async {
-    try {
-      final downloads = await getDownloadsDirectory();
-      if (downloads != null) return downloads.path;
-    } catch (_) {}
-    final docs = await getApplicationDocumentsDirectory();
-    return docs.path;
-  }
 }
 
 // ═════════════════════════════════════════════════════════════════
