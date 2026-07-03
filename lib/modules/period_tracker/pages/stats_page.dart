@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/period_record.dart';
 import '../services/period_service.dart';
 import '../services/prediction_service.dart';
-import '../../../shared/utils/date_utils.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../core/theme/theme_extension.dart';
 
@@ -260,6 +259,12 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
   }
 
   Widget _buildRecordsList(AppThemeExtension appTheme) {
+    final headerStyle = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      color: appTheme.earthMedium.withValues(alpha: 0.7),
+    );
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       decoration: BoxDecoration(
@@ -267,100 +272,102 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
         borderRadius: BorderRadius.circular(appTheme.radiusLg),
         boxShadow: appTheme.cardShadow,
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
-        children: _records.asMap().entries.map((entry) {
-          final index = entry.key;
-          final record = entry.value;
-          final isLast = index == _records.length - 1;
-          return Column(
+        children: [
+          // 表头
+          Row(
             children: [
-              _buildRecordItem(appTheme, record),
-              if (!isLast)
-                Divider(
-                  height: 1,
-                  indent: 60,
-                  color: appTheme.earthMedium.withValues(alpha: 0.1),
+              Expanded(
+                flex: 3,
+                child: Text('经期开始时间', style: headerStyle),
+              ),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text('经期天数', style: headerStyle),
                 ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text('周期天数', style: headerStyle),
+                ),
+              ),
             ],
-          );
-        }).toList(),
+          ),
+          const SizedBox(height: 16),
+          // 数据行
+          ..._records.asMap().entries.map((entry) {
+            final index = entry.key;
+            final record = entry.value;
+            final isLast = index == _records.length - 1;
+
+            return Column(
+              children: [
+                GestureDetector(
+                  onLongPress: () => _confirmDelete(record.id),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            _formatShortDate(record.startDate),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: appTheme.earth,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Center(
+                            child: Text(
+                              record.durationDays?.toString() ?? '-',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: appTheme.earth,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Center(
+                            child: Text(
+                              record.cycleLength?.toString() ?? '-',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: appTheme.earth,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (!isLast)
+                  Divider(
+                    height: 1,
+                    color: appTheme.earthMedium.withValues(alpha: 0.08),
+                  ),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }
 
-  Widget _buildRecordItem(AppThemeExtension appTheme, PeriodRecord record) {
-    final isActive = record.endDate == null;
-    final statusColor = isActive ? appTheme.rose : appTheme.earthMedium;
-
-    return GestureDetector(
-      onLongPress: () => _confirmDelete(record.id),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-              ),
-              child: Center(
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppDateUtils.formatFullDate(record.startDate),
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: appTheme.earth),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    record.endDate != null
-                        ? '结束 ${AppDateUtils.formatFullDate(record.endDate!)} · 持续${record.durationDays ?? "?"}天'
-                        : '进行中',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isActive ? appTheme.rose : appTheme.earthMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (record.cycleLength != null)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: appTheme.creamDark,
-                  borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                ),
-                child: Text(
-                  '${record.cycleLength}天',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: appTheme.earthMedium),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
+  /// 短日期格式：YYYY/MM/DD
+  String _formatShortDate(DateTime date) {
+    return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
   }
 
   double _calculateStdDev(List<int> values) {
