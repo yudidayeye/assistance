@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -424,8 +425,14 @@ class _SettingsPageState extends State<SettingsPage> {
   // ═══════════════════════════════════════════════════════════════
 
   Future<void> _handleExport() async {
+    // 1. 弹出目录选择器
+    final selectedDir = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: '选择导出保存目录',
+    );
+    if (selectedDir == null) return; // 用户取消
+
     _showSnackBar('正在导出数据...');
-    final result = await _importExport.exportData();
+    final result = await _importExport.exportData(directory: selectedDir);
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
