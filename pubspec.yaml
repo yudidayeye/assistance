@@ -21,6 +21,7 @@ dependencies:
   path: ^1.9.0
   sqflite_common_ffi: ^2.4.1
   google_fonts: ^6.1.0
+  file_picker: ^9.0.0
 
 dev_dependencies:
   flutter_test:
