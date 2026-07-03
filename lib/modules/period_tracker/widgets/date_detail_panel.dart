@@ -146,8 +146,8 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
     final appTheme = Theme.of(context).appTheme;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      margin: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusLg),
@@ -183,8 +183,8 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
           // 开关行
           Row(
             children: [
-              Icon(Icons.wb_sunny_rounded,
-                  size: 18, color: appTheme.primary.withAlpha(180)),
+              Icon(Icons.local_fire_department_rounded,
+                  size: 18, color: appTheme.rose.withAlpha(200)),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -209,12 +209,12 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                       value: _isInActualPeriod,
                       onChanged: _togglePeriod,
                       activeTrackColor:
-                          appTheme.primary.withValues(alpha: 0.12),
-                      activeThumbColor: appTheme.primary,
+                          appTheme.rose.withValues(alpha: 0.2),
+                      activeThumbColor: appTheme.rose,
                       inactiveThumbColor:
-                          appTheme.earthMedium.withValues(alpha: 0.25),
+                          appTheme.earthMedium.withValues(alpha: 0.4),
                       inactiveTrackColor:
-                          appTheme.creamDark.withValues(alpha: 0.35),
+                          appTheme.earthMedium.withValues(alpha: 0.2),
                       trackOutlineColor:
                           const WidgetStatePropertyAll(Colors.transparent),
                     ),
@@ -227,7 +227,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(Icons.sticky_note_2_rounded,
-                  size: 18, color: appTheme.primary.withAlpha(180)),
+                  size: 18, color: appTheme.primary.withAlpha(200)),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
