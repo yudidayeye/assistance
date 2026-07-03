@@ -173,73 +173,42 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildPredictionCard(AppThemeExtension appTheme) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusLg),
         boxShadow: appTheme.cardShadow,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          // 标题行
-          Row(
-            children: [
-              Container(
-                width: 3,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: appTheme.primary.withAlpha(160),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '预测信息',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earthMedium,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
+          _buildPredictionMetric(
+            appTheme,
+            icon: Icons.event_rounded,
+            label: '下次经期',
+            value: AppDateUtils.formatDate(_prediction!.nextStartDate),
           ),
-          const SizedBox(height: 10),
-
-          // 三列指标
-          Row(
-            children: [
-              _buildPredictionMetric(
-                appTheme,
-                icon: Icons.event_rounded,
-                label: '下次经期',
-                value: AppDateUtils.formatDate(_prediction!.nextStartDate),
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: appTheme.primary.withAlpha(20),
-              ),
-              _buildPredictionMetric(
-                appTheme,
-                icon: Icons.timelapse_rounded,
-                label: '当前周期',
-                value: '第${_prediction!.currentDayInCycle}天',
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: appTheme.primary.withAlpha(20),
-              ),
-              _buildPredictionMetric(
-                appTheme,
-                icon: Icons.repeat_rounded,
-                label: '平均周期',
-                value: '${_prediction!.avgCycleLength}天',
-              ),
-            ],
+          Container(
+            width: 1,
+            height: 40,
+            color: appTheme.primary.withAlpha(20),
+          ),
+          _buildPredictionMetric(
+            appTheme,
+            icon: Icons.timelapse_rounded,
+            label: '当前周期',
+            value: '第${_prediction!.currentDayInCycle}天',
+          ),
+          Container(
+            width: 1,
+            height: 40,
+            color: appTheme.primary.withAlpha(20),
+          ),
+          _buildPredictionMetric(
+            appTheme,
+            icon: Icons.repeat_rounded,
+            label: '平均周期',
+            value: '${_prediction!.avgCycleLength}天',
           ),
         ],
       ),

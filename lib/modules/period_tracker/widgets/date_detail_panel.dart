@@ -157,25 +157,15 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 日期类型标签
+          // 日期类型标签 + 日期
           Row(
             children: [
-              Container(
-                width: 3,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: appTheme.primary.withAlpha(160),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 8),
               Text(
                 _getDayTypeLabel(),
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earthMedium,
-                  letterSpacing: 0.3,
+                  fontWeight: FontWeight.w500,
+                  color: appTheme.earthMedium.withValues(alpha: 0.7),
                 ),
               ),
               const Spacer(),
@@ -188,7 +178,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
           // 开关行
           Row(
@@ -218,10 +208,15 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                   : Switch(
                       value: _isInActualPeriod,
                       onChanged: _togglePeriod,
-                      activeThumbColor: Colors.white,
-                      activeTrackColor: appTheme.primary.withAlpha(160),
-                      inactiveThumbColor: appTheme.earthMedium.withAlpha(120),
-                      inactiveTrackColor: appTheme.earthMedium.withAlpha(25),
+                      activeTrackColor:
+                          appTheme.primary.withValues(alpha: 0.12),
+                      activeThumbColor: appTheme.primary,
+                      inactiveThumbColor:
+                          appTheme.earthMedium.withValues(alpha: 0.25),
+                      inactiveTrackColor:
+                          appTheme.creamDark.withValues(alpha: 0.35),
+                      trackOutlineColor:
+                          const WidgetStatePropertyAll(Colors.transparent),
                     ),
             ],
           ),
