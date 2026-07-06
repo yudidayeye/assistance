@@ -8,9 +8,12 @@ import '../models/period_record.dart';
 import '../models/addition_record.dart';
 import '../models/expense_record.dart';
 import '../services/period_book_service.dart';
+import '../services/period_book_stats_service.dart';
 import '../widgets/period_summary_card.dart';
 import '../widgets/expense_list_item.dart';
 import '../widgets/addition_list_item.dart';
+import '../widgets/expense_pie_chart.dart';
+import '../widgets/balance_trend_chart.dart';
 
 /// 当前周期详情页（入口页）
 class PeriodDetailPage extends StatefulWidget {
@@ -25,11 +28,14 @@ class PeriodDetailPage extends StatefulWidget {
 
 class _PeriodDetailPageState extends State<PeriodDetailPage> {
   final _service = PeriodBookService.instance;
+  final _statsService = PeriodBookStatsService.instance;
 
   PeriodRecord? _period;
   PeriodCalculations? _calc;
   List<AdditionRecord> _additions = [];
   List<ExpenseRecord> _expenses = [];
+  Map<String, double> _pieData = {};
+  List<Map<String, dynamic>> _trendData = [];
   bool _loading = true;
 
   bool get _isReadOnly => widget.periodId != null;
@@ -53,10 +59,14 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           _service.getPeriodCalculations(_period!.id!),
           _service.getAdditionsByPeriod(_period!.id!),
           _service.getExpensesByPeriod(_period!.id!),
+          _statsService.getPieChartData(_period!.id!),
+          _statsService.getBalanceTrendData(),
         ]);
         _calc = results[0] as PeriodCalculations;
         _additions = results[1] as List<AdditionRecord>;
         _expenses = results[2] as List<ExpenseRecord>;
+        _pieData = results[3] as Map<String, double>;
+        _trendData = results[4] as List<Map<String, dynamic>>;
       }
     } catch (e) {
       debugPrint('PeriodDetailPage load error: $e');
@@ -109,6 +119,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             SliverToBoxAdapter(child: _buildAdditionsSection(appTheme)),
             SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceLg)),
             SliverToBoxAdapter(child: _buildExpensesSection(appTheme)),
+            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceLg)),
+            SliverToBoxAdapter(child: ExpensePieChart(data: _pieData)),
+            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceLg)),
+            SliverToBoxAdapter(child: BalanceTrendChart(data: _trendData)),
             SliverToBoxAdapter(child: const SizedBox(height: 80)),
           ],
         ),
