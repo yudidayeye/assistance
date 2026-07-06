@@ -8,11 +8,13 @@ import '../models/expense_record.dart';
 class ExpenseListItem extends StatelessWidget {
   final ExpenseRecord expense;
   final VoidCallback onDelete;
+  final bool isReadOnly;
 
   const ExpenseListItem({
     super.key,
     required this.expense,
     required this.onDelete,
+    this.isReadOnly = false,
   });
 
   @override
@@ -20,6 +22,58 @@ class ExpenseListItem extends StatelessWidget {
     final appTheme = Theme.of(context).appTheme;
     final isShopping = expense.category == 'shopping';
     final color = isShopping ? appTheme.sage : appTheme.roseLight;
+
+    final child = Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: appTheme.cream.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isShopping ? Icons.shopping_bag_outlined : Icons.category_outlined,
+              size: 18,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              expense.description,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: appTheme.earth,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Text(
+            '-${FormatUtils.formatAmount(expense.amount)}',
+            style: TextStyle(
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: appTheme.earth,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isReadOnly) {
+      return child;
+    }
 
     return Dismissible(
       key: Key('expense_${expense.id}'),
@@ -36,53 +90,7 @@ class ExpenseListItem extends StatelessWidget {
             color: appTheme.rose, size: 20),
       ),
       onDismissed: (_) => onDelete(),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: appTheme.cream.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                isShopping ? Icons.shopping_bag_outlined : Icons.category_outlined,
-                size: 18,
-                color: color,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                expense.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: appTheme.earth,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Text(
-              '-${FormatUtils.formatAmount(expense.amount)}',
-              style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: appTheme.earth,
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: child,
     );
   }
 }

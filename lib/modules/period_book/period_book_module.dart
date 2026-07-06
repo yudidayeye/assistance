@@ -45,6 +45,13 @@ class PeriodBookModule implements ToolModule {
           builder: (context, state) => const PeriodHistoryPage(),
         ),
         GoRoute(
+          path: 'detail/:id',
+          builder: (context, state) {
+            final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+            return PeriodDetailPage(periodId: id);
+          },
+        ),
+        GoRoute(
           path: 'add-expense',
           builder: (context, state) {
             final periodId =

@@ -8,11 +8,13 @@ import '../models/addition_record.dart';
 class AdditionListItem extends StatelessWidget {
   final AdditionRecord addition;
   final VoidCallback onDelete;
+  final bool isReadOnly;
 
   const AdditionListItem({
     super.key,
     required this.addition,
     required this.onDelete,
+    this.isReadOnly = false,
   });
 
   String _formatDate(String isoDate) {
@@ -23,6 +25,72 @@ class AdditionListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
+
+    final child = Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: appTheme.cream.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: appTheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.add_circle_outline_rounded,
+              size: 18,
+              color: appTheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  addition.reason,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: appTheme.earth,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _formatDate(addition.createdAt),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: appTheme.earthMedium.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '+${FormatUtils.formatAmount(addition.amount)}',
+            style: TextStyle(
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: appTheme.sage,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isReadOnly) {
+      return child;
+    }
 
     return Dismissible(
       key: Key('addition_${addition.id}'),
@@ -39,67 +107,7 @@ class AdditionListItem extends StatelessWidget {
             color: appTheme.rose, size: 20),
       ),
       onDismissed: (_) => onDelete(),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: appTheme.cream.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.add_circle_outline_rounded,
-                size: 18,
-                color: appTheme.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    addition.reason,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: appTheme.earth,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatDate(addition.createdAt),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: appTheme.earthMedium.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              '+${FormatUtils.formatAmount(addition.amount)}',
-              style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: appTheme.sage,
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: child,
     );
   }
 }

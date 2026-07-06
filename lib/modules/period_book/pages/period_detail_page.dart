@@ -267,6 +267,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 ..._additions.map((a) => AdditionListItem(
                       addition: a,
                       onDelete: () => _deleteAddition(a),
+                      isReadOnly: _isReadOnly,
                     )),
               if (!_isReadOnly) ...[
                 const SizedBox(height: 4),
@@ -438,6 +439,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           ...items.map((e) => ExpenseListItem(
                 expense: e,
                 onDelete: () => _deleteExpense(e),
+                isReadOnly: _isReadOnly,
               )),
       ],
     );
