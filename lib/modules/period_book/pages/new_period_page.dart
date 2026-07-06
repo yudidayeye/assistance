@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
+import '../../../shared/widgets/number_keyboard.dart';
+import '../services/period_book_service.dart';
+import '../services/period_book_settings.dart';
 
-/// 新建周期页 — Phase 2 实现
+/// 新建周期页
 class NewPeriodPage extends StatefulWidget {
   const NewPeriodPage({super.key});
 
@@ -10,22 +15,561 @@ class NewPeriodPage extends StatefulWidget {
 }
 
 class _NewPeriodPageState extends State<NewPeriodPage> {
+  final _service = PeriodBookService.instance;
+  final _settings = PeriodBookSettings.instance;
+
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String _baseAmount = '';
+  String _balance = '';
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDefaults();
+  }
+
+  Future<void> _initDefaults() async {
+    final start = await _settings.getDefaultStartDate();
+    final end = await _settings.getDefaultEndDate();
+    if (mounted) {
+      setState(() {
+        _startDate = start;
+        _endDate = end;
+      });
+    }
+  }
+
+  String _fmt(DateTime dt) {
+    return '${dt.month.toString().padLeft(2, '0')}月${dt.day.toString().padLeft(2, '0')}日';
+  }
+
+  String _toIso(DateTime dt) {
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 构建
+  // ═══════════════════════════════════════════════════════════
+
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: Center(
-          child: Text(
-            '新建周期页（开发中）',
-            style: TextStyle(
-              fontSize: 16,
-              color: appTheme.earthMedium,
+        child: Column(
+          children: [
+            // 头部
+            _buildHeader(appTheme),
+
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
+                    // 日期选择
+                    _buildDateCard(appTheme),
+                    const SizedBox(height: 16),
+                    // 初始本金
+                    _buildAmountCard(
+                      appTheme: appTheme,
+                      label: '初始本金',
+                      icon: Icons.account_balance_wallet_outlined,
+                      value: _baseAmount,
+                      onTap: () => _showAmountKeyboard(
+                        isBalance: false,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // 余额
+                    _buildAmountCard(
+                      appTheme: appTheme,
+                      label: '余额',
+                      subtitle: '可选，留空显示缺省',
+                      icon: Icons.savings_outlined,
+                      value: _balance,
+                      isOptional: true,
+                      onTap: () => _showAmountKeyboard(
+                        isBalance: true,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    // 保存按钮
+                    _buildSaveButton(appTheme),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 头部
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildHeader(AppThemeExtension appTheme) {
+    final safeTop = MediaQuery.of(context).padding.top;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24, safeTop + 16, 24, 16),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: appTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
+              ),
+              child: Icon(Icons.arrow_back_ios_new_rounded,
+                  color: appTheme.earthMedium, size: 18),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            '新建周期',
+            style: TextStyle(
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: appTheme.earth,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 日期选择卡片
+  // ══════════════════════════════════════════════════════════
+
+  Widget _buildDateCard(AppThemeExtension appTheme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: appTheme.cardShadow,
+        border: Border.all(color: appTheme.cardBorder, width: 0.5),
+      ),
+      child: Column(
+        children: [
+          _buildDateRow(
+            appTheme: appTheme,
+            label: '开始日期',
+            icon: Icons.event_available_rounded,
+            iconColor: appTheme.primary,
+            date: _startDate,
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _startDate ?? DateTime.now(),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+              );
+              if (picked != null) {
+                setState(() => _startDate = picked);
+                // 如果结束日期早于开始日期，自动调整
+                if (_endDate != null && _endDate!.isBefore(picked)) {
+                  setState(() => _endDate = picked.add(const Duration(days: 29)));
+                }
+              }
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 78),
+            child: Divider(
+              height: 1,
+              color: appTheme.earthMedium.withValues(alpha: 0.07),
+            ),
+          ),
+          _buildDateRow(
+            appTheme: appTheme,
+            label: '结束日期',
+            icon: Icons.event_rounded,
+            iconColor: appTheme.sage,
+            date: _endDate,
+            required: true,
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _endDate ?? DateTime.now(),
+                firstDate: _startDate ?? DateTime(2020),
+                lastDate: DateTime(2030),
+              );
+              if (picked != null) {
+                setState(() => _endDate = picked);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateRow({
+    required AppThemeExtension appTheme,
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+    required DateTime? date,
+    required VoidCallback onTap,
+    bool required = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: appTheme.earth,
+                    ),
+                  ),
+                  if (required)
+                    Text(
+                      '必填',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: appTheme.earthMedium.withValues(alpha: 0.4),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Text(
+              date != null ? _fmt(date) : '请选择',
+              style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: date != null ? appTheme.earth : appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right_rounded,
+                size: 18, color: appTheme.earthMedium.withValues(alpha: 0.3)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // 金额输入卡片
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildAmountCard({
+    required AppThemeExtension appTheme,
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+    required IconData icon,
+    String? subtitle,
+    bool isOptional = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          color: appTheme.cardBackground,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: appTheme.cardShadow,
+          border: Border.all(color: appTheme.cardBorder, width: 0.5),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: appTheme.primary, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: appTheme.earth,
+                      ),
+                    ),
+                    if (subtitle != null)
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: appTheme.earthMedium.withValues(alpha: 0.4),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Text(
+                value.isEmpty
+                    ? (isOptional ? '—' : '0')
+                    : '¥$value',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: value.isEmpty && !isOptional
+                      ? appTheme.earthMedium.withValues(alpha: 0.4)
+                      : appTheme.earth,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded,
+                  size: 18, color: appTheme.earthMedium.withValues(alpha: 0.3)),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 保存按钮
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildSaveButton(AppThemeExtension appTheme) {
+    final canSave = _startDate != null &&
+        _endDate != null &&
+        _baseAmount.isNotEmpty &&
+        !_saving;
+
+    return GestureDetector(
+      onTap: canSave ? _savePeriod : null,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          gradient: canSave
+              ? LinearGradient(
+                  colors: [appTheme.primary, appTheme.primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: canSave ? null : appTheme.creamDark,
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          boxShadow: canSave
+              ? [
+                  BoxShadow(
+                    color: appTheme.primary.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
+        ),
+        child: Center(
+          child: _saving
+              ? SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  '创建周期',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: canSave ? Colors.white : appTheme.earthMedium.withValues(alpha: 0.4),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 金额键盘弹窗
+  // ═══════════════════════════════════════════════════════════
+
+  void _showAmountKeyboard({required bool isBalance}) {
+    final appTheme = Theme.of(context).appTheme;
+    final current = isBalance ? _balance : _baseAmount;
+    final controller = TextEditingController(text: current);
+    final label = isBalance ? '余额' : '初始本金';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: appTheme.cream,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(appTheme.radiusXl),
+            topRight: Radius.circular(appTheme.radiusXl),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 12),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: appTheme.earth,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: appTheme.creamDark,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      '¥',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: appTheme.earthMedium.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        readOnly: true,
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          color: appTheme.earth,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                    if (controller.text.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          controller.clear();
+                          if (isBalance) {
+                            setState(() => _balance = '');
+                          } else {
+                            setState(() => _baseAmount = '');
+                          }
+                        },
+                        child: Icon(Icons.clear_rounded,
+                            color: appTheme.earthMedium.withValues(alpha: 0.4),
+                            size: 22),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            NumberKeyboard(
+              currentValue: controller.text,
+              onValueChanged: (v) {
+                controller.text = v;
+                controller.selection = TextSelection.fromPosition(
+                  TextPosition(offset: v.length),
+                );
+                if (isBalance) {
+                  setState(() => _balance = v);
+                } else {
+                  setState(() => _baseAmount = v);
+                }
+              },
+              onDone: () {
+                Navigator.pop(ctx);
+              },
+              doneColor: appTheme.primary,
+              doneText: '完成',
+            ),
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // 保存
+  // ═══════════════════════════════════════════════════════════
+
+  Future<void> _savePeriod() async {
+    if (_startDate == null || _endDate == null || _baseAmount.isEmpty) return;
+
+    setState(() => _saving = true);
+    try {
+      final balance = _balance.isEmpty ? null : double.parse(_balance);
+      await _service.createPeriod(
+        startDate: _toIso(_startDate!),
+        endDate: _toIso(_endDate!),
+        baseAmount: double.parse(_baseAmount),
+        balance: balance,
+      );
+      if (mounted) {
+        context.pop(); // 返回上一页（详情页会自动刷新）
+      }
+    } catch (e) {
+      debugPrint('Save period error: $e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 }

@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/theme/theme_extension.dart';
+import '../../../../shared/utils/format_utils.dart';
+import '../models/expense_record.dart';
+
+/// 支出明细条目 — 左滑删除
+class ExpenseListItem extends StatelessWidget {
+  final ExpenseRecord expense;
+  final VoidCallback onDelete;
+
+  const ExpenseListItem({
+    super.key,
+    required this.expense,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
+    final isShopping = expense.category == 'shopping';
+    final color = isShopping ? appTheme.sage : appTheme.roseLight;
+
+    return Dismissible(
+      key: Key('expense_${expense.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.only(top: 4),
+        decoration: BoxDecoration(
+          color: appTheme.rose.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(Icons.delete_outline_rounded,
+            color: appTheme.rose, size: 20),
+      ),
+      onDismissed: (_) => onDelete(),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: appTheme.cream.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isShopping ? Icons.shopping_bag_outlined : Icons.category_outlined,
+                size: 18,
+                color: color,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                expense.description,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: appTheme.earth,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              '-${FormatUtils.formatAmount(expense.amount)}',
+              style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: appTheme.earth,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
