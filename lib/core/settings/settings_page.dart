@@ -535,7 +535,7 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 10),
               Text(
                 '将导入 $settingsCount 项设置和 $periodRecordsCount 条生理期记录。\n'
-                '已存在的设置和记录将被覆盖，不会影响记账数据。',
+                '已存在的设置和记录将被覆盖，不会影响周期记账数据。',
                 style: TextStyle(
                     fontSize: 14, color: appTheme.earthMedium, height: 1.5),
                 textAlign: TextAlign.center,
@@ -688,7 +688,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       color: appTheme.earth),
                   textAlign: TextAlign.center),
               const SizedBox(height: 10),
-              Text('此操作将删除所有记账和生理期记录，但保留设置和主题偏好。',
+              Text('此操作将删除所有周期记账和生理期记录，但保留设置和主题偏好。',
                   style: TextStyle(
                       fontSize: 14, color: appTheme.earthMedium, height: 1.5),
                   textAlign: TextAlign.center),

@@ -8,7 +8,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 4;
+  static const int _currentVersion = 5;
 
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {
@@ -46,29 +46,6 @@ class DatabaseService {
       )
     ''');
     await db.execute('''
-      CREATE TABLE mod_accounting_transactions (
-        id TEXT PRIMARY KEY,
-        type TEXT NOT NULL,
-        category_id TEXT NOT NULL,
-        amount REAL NOT NULL,
-        note TEXT,
-        date TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT
-      )
-    ''');
-    await db.execute('''
-      CREATE TABLE mod_accounting_categories (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        type TEXT NOT NULL,
-        icon_code_point INTEGER NOT NULL,
-        icon_font_family TEXT NOT NULL DEFAULT 'MaterialIcons',
-        is_custom INTEGER NOT NULL DEFAULT 0,
-        sort_order INTEGER NOT NULL
-      )
-    ''');
-    await db.execute('''
       CREATE TABLE mod_period_tracker_records (
         id TEXT PRIMARY KEY,
         start_date TEXT NOT NULL,
@@ -82,16 +59,7 @@ class DatabaseService {
   }
 
   static Future<void> _createV2Schema(Database db) async {
-    // 3.3: 添加必要索引
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_txns_type_date ON mod_accounting_transactions(type, date)',
-    );
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_txns_category_id ON mod_accounting_transactions(category_id)',
-    );
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_categories_type_sort ON mod_accounting_categories(type, sort_order)',
-    );
+    // 添加必要索引
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_period_start_date ON mod_period_tracker_records(start_date)',
     );
@@ -145,6 +113,12 @@ class DatabaseService {
     );
   }
 
+  static Future<void> _createV5Schema(Database db) async {
+    // 删除旧 accounting 模块的表和索引
+    await db.execute('DROP TABLE IF EXISTS mod_accounting_transactions');
+    await db.execute('DROP TABLE IF EXISTS mod_accounting_categories');
+  }
+
   // --- Lifecycle ---
 
   Future<void> _onCreate(Database db, int version) async {
@@ -156,6 +130,8 @@ class DatabaseService {
       await _createV2Schema(db);
       // v4 period_book tables
       await _createV4Schema(db);
+      // v5 删除旧 accounting 模块表
+      await _createV5Schema(db);
       await batch.commit(noResult: true);
     });
   }
@@ -174,6 +150,9 @@ class DatabaseService {
         }
         if (v == 4) {
           await _createV4Schema(db);
+        }
+        if (v == 5) {
+          await _createV5Schema(db);
         }
         await batch.commit(noResult: true);
       });

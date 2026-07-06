@@ -6,7 +6,6 @@ import 'core/storage/database_service.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/routing/app_router.dart';
 import 'core/settings/settings_service.dart';
-import 'modules/accounting/accounting_module.dart';
 import 'modules/period_tracker/period_module.dart';
 import 'modules/period_book/period_book_module.dart';
 
@@ -21,7 +20,6 @@ void main() async {
 
   // 3. 注册并 await 所有模块（确保 onRegister 完成后再继续）
   await ModuleRegistry.instance.registerAll([
-    AccountingModule(),
     PeriodTrackerModule(),
     PeriodBookModule(),
   ]);
