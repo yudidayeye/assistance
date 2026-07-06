@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/module_system/tool_module.dart';
+import '../../core/module_system/module_summary.dart';
 import '../../core/theme/theme_extension.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,7 +21,7 @@ class FeaturedCard extends StatefulWidget {
 }
 
 class _FeaturedCardState extends State<FeaturedCard> {
-  String? _summary;
+  ModuleSummary? _summary;
 
   @override
   void initState() {
@@ -31,7 +32,7 @@ class _FeaturedCardState extends State<FeaturedCard> {
   Future<void> _loadSummary() async {
     final s = await widget.module.getSummary();
     if (mounted) {
-      setState(() => _summary = s.line1);
+      setState(() => _summary = s);
     }
   }
 
@@ -86,14 +87,28 @@ class _FeaturedCardState extends State<FeaturedCard> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            if (_summary != null) ...[
+            if (_summary?.line1 != null) ...[
               const SizedBox(height: 6),
               Text(
-                _summary!,
+                _summary!.line1,
                 style: TextStyle(
                   fontSize: 12,
                   color: appTheme.earthMedium,
                   fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            if (_summary?.line2 != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                _summary!.line2!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: appTheme.earthMedium.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w400,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,

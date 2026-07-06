@@ -8,7 +8,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 3;
+  static const int _currentVersion = 4;
 
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {
@@ -97,6 +97,54 @@ class DatabaseService {
     );
   }
 
+  static Future<void> _createV4Schema(Database db) async {
+    // 周期记账模块三张表
+    await db.execute('''
+      CREATE TABLE mod_period_book_periods (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        in_progress_date TEXT,
+        base_amount REAL NOT NULL,
+        balance REAL,
+        is_closed INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE mod_period_book_additions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        period_id INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        reason TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE mod_period_book_expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        period_id INTEGER NOT NULL,
+        category TEXT NOT NULL,
+        amount REAL NOT NULL,
+        description TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
+      )
+    ''');
+    // 索引
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_pb_periods_start_date ON mod_period_book_periods(start_date)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_pb_expenses_period ON mod_period_book_expenses(period_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_pb_additions_period ON mod_period_book_additions(period_id)',
+    );
+  }
+
   // --- Lifecycle ---
 
   Future<void> _onCreate(Database db, int version) async {
@@ -106,6 +154,8 @@ class DatabaseService {
       await _createV1Schema(db);
       // v2 indices
       await _createV2Schema(db);
+      // v4 period_book tables
+      await _createV4Schema(db);
       await batch.commit(noResult: true);
     });
   }
@@ -121,6 +171,9 @@ class DatabaseService {
           await db.execute(
             'ALTER TABLE mod_period_tracker_records ADD COLUMN note TEXT',
           );
+        }
+        if (v == 4) {
+          await _createV4Schema(db);
         }
         await batch.commit(noResult: true);
       });

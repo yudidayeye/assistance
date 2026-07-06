@@ -8,6 +8,7 @@ import 'core/routing/app_router.dart';
 import 'core/settings/settings_service.dart';
 import 'modules/accounting/accounting_module.dart';
 import 'modules/period_tracker/period_module.dart';
+import 'modules/period_book/period_book_module.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,7 @@ void main() async {
   await ModuleRegistry.instance.registerAll([
     AccountingModule(),
     PeriodTrackerModule(),
+    PeriodBookModule(),
   ]);
 
   // 4. 初始化设置默认值（基于已注册模块动态 seed）
