@@ -9,6 +9,7 @@ import '../storage/database_service.dart';
 import '../theme/theme_extension.dart';
 import '../theme/theme_provider.dart';
 import 'import_export_service.dart';
+import '../../modules/period_book/services/period_book_settings.dart';
 
 /// 全局设置页面 — 简洁扁平风格
 ///
@@ -27,6 +28,22 @@ class _SettingsPageState extends State<SettingsPage> {
   final SettingsController _controller = SettingsController.instance;
   final DatabaseService _db = DatabaseService.instance;
   final ImportExportService _importExport = ImportExportService.instance;
+  final PeriodBookSettings _periodSettings = PeriodBookSettings.instance;
+
+  int _payday = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPayday();
+  }
+
+  Future<void> _loadPayday() async {
+    final payday = await _periodSettings.getPayday();
+    if (mounted) {
+      setState(() => _payday = payday);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +79,18 @@ class _SettingsPageState extends State<SettingsPage> {
                     ]);
                   }).toList(),
                 ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── 周期记账 ──
+              _SectionLabel(
+                appTheme: appTheme,
+                title: '周期记账',
+              ),
+              _SectionCard(
+                appTheme: appTheme,
+                child: _buildPeriodSettings(appTheme),
               ),
 
               const SizedBox(height: 16),
@@ -251,6 +280,163 @@ class _SettingsPageState extends State<SettingsPage> {
                 const WidgetStatePropertyAll(Colors.transparent),
           ),
         ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 周期记账设置 — 发薪日配置
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildPeriodSettings(AppThemeExtension appTheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: GestureDetector(
+        onTap: _showPaydayPicker,
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: appTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(Icons.calendar_month_rounded,
+                  color: appTheme.primary, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '发薪日',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: appTheme.earth,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '每月$_payday号（新建周期默认使用）',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: appTheme.earthMedium.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded,
+                size: 18, color: appTheme.earthMedium.withValues(alpha: 0.4)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPaydayPicker() {
+    final appTheme = Theme.of(context).appTheme;
+    showDialog(
+      context: context,
+      barrierColor: appTheme.surfaceOverlay,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: appTheme.cream,
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '设置发薪日',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                  color: appTheme.earth,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '每月几号发薪？（1~31）',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: appTheme.earthMedium,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _PaydayPicker(
+                initialValue: _payday,
+                onChanged: (value) {
+                  setState(() => _payday = value);
+                },
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: appTheme.creamDark,
+                          borderRadius:
+                              BorderRadius.circular(appTheme.radiusMd),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '取消',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: appTheme.earthLight,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        await _periodSettings.setPayday(_payday);
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        _showSnackBar('发薪日已设置为每月$_payday号');
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: appTheme.primary,
+                          borderRadius:
+                              BorderRadius.circular(appTheme.radiusMd),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '确认',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -477,6 +663,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final confirmed = await _showImportConfirmDialog(
       settingsCount: preview.settingsCount,
       periodRecordsCount: preview.periodRecordsCount,
+      bookPeriodsCount: preview.bookPeriodsCount,
     );
     if (!mounted || confirmed != true) return;
 
@@ -488,7 +675,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     if (result.isSuccess) {
       _showSnackBar(
-          '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录');
+          '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录、${result.bookPeriodsCount}个记账周期');
       setState(() {});
     } else {
       _showErrorDialog('导入失败', result.error ?? '未知错误');
@@ -498,6 +685,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<bool?> _showImportConfirmDialog({
     required int settingsCount,
     required int periodRecordsCount,
+    required int bookPeriodsCount,
   }) {
     final appTheme = Theme.of(context).appTheme;
     return showDialog<bool>(
@@ -534,8 +722,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   textAlign: TextAlign.center),
               const SizedBox(height: 10),
               Text(
-                '将导入 $settingsCount 项设置和 $periodRecordsCount 条生理期记录。\n'
-                '已存在的设置和记录将被覆盖，不会影响周期记账数据。',
+                '将导入 $settingsCount 项设置、$periodRecordsCount 条生理期记录'
+                '${bookPeriodsCount > 0 ? '、$bookPeriodsCount 个记账周期' : ''}。\n'
+                '已存在的设置和记录将被覆盖。',
                 style: TextStyle(
                     fontSize: 14, color: appTheme.earthMedium, height: 1.5),
                 textAlign: TextAlign.center,
@@ -758,6 +947,94 @@ class _SettingsPageState extends State<SettingsPage> {
           borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.all(16),
     ));
+  }
+}
+
+/// 发薪日选择器 — 数字滚轮
+class _PaydayPicker extends StatefulWidget {
+  final int initialValue;
+  final ValueChanged<int> onChanged;
+
+  const _PaydayPicker({
+    required this.initialValue,
+    required this.onChanged,
+  });
+
+  @override
+  State<_PaydayPicker> createState() => _PaydayPickerState();
+}
+
+class _PaydayPickerState extends State<_PaydayPicker> {
+  late int _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initialValue;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () {
+            if (_value > 1) {
+              setState(() {
+                _value--;
+                widget.onChanged(_value);
+              });
+            }
+          },
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: appTheme.creamDark,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.remove_rounded,
+                color: _value > 1 ? appTheme.earth : appTheme.earthMedium.withValues(alpha: 0.3),
+                size: 22),
+          ),
+        ),
+        const SizedBox(width: 20),
+        Text(
+          '$_value',
+          style: TextStyle(
+            fontFamily: GoogleFonts.dmSans().fontFamily,
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+          ),
+        ),
+        const SizedBox(width: 20),
+        GestureDetector(
+          onTap: () {
+            if (_value < 31) {
+              setState(() {
+                _value++;
+                widget.onChanged(_value);
+              });
+            }
+          },
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: appTheme.creamDark,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.add_rounded,
+                color: _value < 31 ? appTheme.earth : appTheme.earthMedium.withValues(alpha: 0.3),
+                size: 22),
+          ),
+        ),
+      ],
+    );
   }
 }
 
