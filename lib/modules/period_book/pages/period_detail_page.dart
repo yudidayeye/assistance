@@ -50,18 +50,20 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         _period = await _service.getOngoingPeriod();
       }
       if (_period != null) {
+        // 一次性获取所有数据（性能优化）
         _calc = await _service.getPeriodCalculations(_period!.id!);
         _stages = await _service.getStagesByPeriod(_period!.id!);
+        final allAdditions = await _service.getAdditionsByPeriod(_period!.id!);
+        final allExpenses = await _service.getExpensesByPeriod(_period!.id!);
 
-        // 加载每个阶段的追加和支出
-        _stageAdditions = [];
-        _stageExpenses = [];
-        for (final stage in _stages) {
-          final additions = await _service.getAdditionsByStage(stage.id!);
-          final expenses = await _service.getExpensesByStage(stage.id!);
-          _stageAdditions.add(additions);
-          _stageExpenses.add(expenses);
-        }
+        // 按阶段分组追加和支出记录
+        _stageAdditions = _stages.map((stage) {
+          return allAdditions.where((a) => a.stageId == stage.id!).toList();
+        }).toList();
+
+        _stageExpenses = _stages.map((stage) {
+          return allExpenses.where((e) => e.stageId == stage.id!).toList();
+        }).toList();
       }
     } catch (e) {
       debugPrint('PeriodDetailPage load error: $e');

@@ -325,15 +325,19 @@ class PeriodBookService {
     return rows.map(AdditionRecord.fromMap).toList();
   }
 
-  /// 获取周期所有阶段的追加记录
+  /// 获取周期所有阶段的追加记录（批量查询，性能优化）
   Future<List<AdditionRecord>> getAdditionsByPeriod(int periodId) async {
     final stages = await getStagesByPeriod(periodId);
-    final allAdditions = <AdditionRecord>[];
-    for (final stage in stages) {
-      final additions = await getAdditionsByStage(stage.id!);
-      allAdditions.addAll(additions);
-    }
-    return allAdditions;
+    if (stages.isEmpty) return [];
+
+    final stageIds = stages.map((s) => s.id!).toList();
+    final placeholders = stageIds.map((_) => '?').join(',');
+
+    final rows = await _db.rawQuery(
+      'SELECT * FROM mod_period_book_additions WHERE stage_id IN ($placeholders) ORDER BY created_at ASC',
+      stageIds,
+    );
+    return rows.map(AdditionRecord.fromMap).toList();
   }
 
   Future<void> deleteAddition(int id) async {
@@ -388,15 +392,19 @@ class PeriodBookService {
     return rows.map(ExpenseRecord.fromMap).toList();
   }
 
-  /// 获取周期所有阶段的支出记录
+  /// 获取周期所有阶段的支出记录（批量查询，性能优化）
   Future<List<ExpenseRecord>> getExpensesByPeriod(int periodId) async {
     final stages = await getStagesByPeriod(periodId);
-    final allExpenses = <ExpenseRecord>[];
-    for (final stage in stages) {
-      final expenses = await getExpensesByStage(stage.id!);
-      allExpenses.addAll(expenses);
-    }
-    return allExpenses;
+    if (stages.isEmpty) return [];
+
+    final stageIds = stages.map((s) => s.id!).toList();
+    final placeholders = stageIds.map((_) => '?').join(',');
+
+    final rows = await _db.rawQuery(
+      'SELECT * FROM mod_period_book_expenses WHERE stage_id IN ($placeholders) ORDER BY created_at ASC',
+      stageIds,
+    );
+    return rows.map(ExpenseRecord.fromMap).toList();
   }
 
   Future<List<ExpenseRecord>> getExpensesByCategory(
@@ -470,46 +478,91 @@ class PeriodBookService {
     );
   }
 
-  /// 获取周期的完整计算数据（汇总所有阶段）
+  /// 获取周期的完整计算数据（汇总所有阶段，性能优化）
   Future<PeriodCalculations> getPeriodCalculations(int periodId) async {
     final period = await getPeriodById(periodId);
     if (period == null) {
       throw Exception('周期不存在: $periodId');
     }
 
+    // 一次性获取所有阶段数据
     final stages = await getStagesByPeriod(periodId);
-    final stageCalculations = <StageCalculations>[];
+    final allAdditions = await getAdditionsByPeriod(periodId);
+    final allExpenses = await getExpensesByPeriod(periodId);
 
-    double totalBase = period.baseAmount; // 初始本金
+    // 按 stage_id 分组
+    final additionsByStage = <int, List<AdditionRecord>>{};
+    for (final addition in allAdditions) {
+      additionsByStage.putIfAbsent(addition.stageId, () => []);
+      additionsByStage[addition.stageId]!.add(addition);
+    }
+
+    final expensesByStage = <int, List<ExpenseRecord>>{};
+    for (final expense in allExpenses) {
+      expensesByStage.putIfAbsent(expense.stageId, () => []);
+      expensesByStage[expense.stageId]!.add(expense);
+    }
+
+    // 计算每个阶段的数据
+    final stageCalculations = <StageCalculations>[];
     double totalAdditions = 0;
     double shoppingTotal = 0;
     double otherTotal = 0;
-    double previousBalance = period.baseAmount; // 第一阶段本金 = 初始本金
-    double? lastBalance; // 最新阶段余额
+    double previousBalance = period.baseAmount;
+    double? lastBalance;
 
     for (final stage in stages) {
-      // 计算本阶段（第一阶段：previousBalance = baseAmount，additionsTotal = 0）
-      final calc = await getStageCalculations(stage.id!, previousBalance - totalAdditions);
-      stageCalculations.add(calc);
+      final stageAdditions = additionsByStage[stage.id!] ?? [];
+      final stageExpenses = expensesByStage[stage.id!] ?? [];
 
-      // 更新累计值
-      totalAdditions += calc.additionsTotal;
-      shoppingTotal += calc.shoppingTotal;
-      otherTotal += calc.otherTotal;
+      final additionsTotal = stageAdditions.fold<double>(0, (sum, a) => sum + a.amount);
+      final baseAmount = previousBalance + additionsTotal;
 
-      // 更新 previousBalance 为当前阶段的余额（用于链式传递）
-      if (calc.balance != null) {
-        previousBalance = calc.balance!;
-        lastBalance = calc.balance;
+      double stageShoppingTotal = 0;
+      double stageOtherTotal = 0;
+      for (final e in stageExpenses) {
+        if (e.category == 'shopping') {
+          stageShoppingTotal += e.amount;
+        } else {
+          stageOtherTotal += e.amount;
+        }
+      }
+
+      final balance = stage.balance;
+      final totalDays = stage.totalDays;
+
+      double? livingTotal;
+      double? livingDailyAvg;
+      if (balance != null) {
+        livingTotal = baseAmount - stageShoppingTotal - stageOtherTotal - balance;
+        livingDailyAvg = totalDays > 0 ? livingTotal / totalDays : 0;
+      }
+
+      stageCalculations.add(StageCalculations(
+        baseAmount: baseAmount,
+        additionsTotal: additionsTotal,
+        shoppingTotal: stageShoppingTotal,
+        otherTotal: stageOtherTotal,
+        balance: balance,
+        livingTotal: livingTotal,
+        livingDailyAvg: livingDailyAvg,
+        totalDays: totalDays,
+      ));
+
+      totalAdditions += additionsTotal;
+      shoppingTotal += stageShoppingTotal;
+      otherTotal += stageOtherTotal;
+
+      if (balance != null) {
+        previousBalance = balance;
+        lastBalance = balance;
       } else {
-        // 如果当前阶段没有余额，使用阶段本金 - 支出作为估算
-        previousBalance = calc.baseAmount - calc.shoppingTotal - calc.otherTotal;
+        previousBalance = baseAmount - stageShoppingTotal - stageOtherTotal;
       }
     }
 
-    totalBase = period.baseAmount + totalAdditions;
+    final totalBase = period.baseAmount + totalAdditions;
 
-    // 生活支出 = 总本金 - 购物 - 其他 - 最新余额
     double? livingTotal;
     double? livingDailyAvg;
     if (lastBalance != null) {
