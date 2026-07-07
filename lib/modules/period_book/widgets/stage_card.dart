@@ -16,6 +16,7 @@ class StageCard extends StatefulWidget {
   final bool isReadOnly;
   final VoidCallback? onEditBalance;
   final VoidCallback? onAddAddition;
+  final VoidCallback? onEdit;
   final void Function(AdditionRecord)? onDeleteAddition;
   final void Function(ExpenseRecord)? onDeleteExpense;
 
@@ -29,6 +30,7 @@ class StageCard extends StatefulWidget {
     required this.isReadOnly,
     this.onEditBalance,
     this.onAddAddition,
+    this.onEdit,
     this.onDeleteAddition,
     this.onDeleteExpense,
   });
@@ -129,7 +131,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '第${stage.sortOrder}周',
+                          '第${stage.sortOrder}阶段',
                           style: TextStyle(
                             fontFamily: GoogleFonts.dmSans().fontFamily,
                             fontSize: 15,
@@ -157,6 +159,26 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                       size: 24,
                     ),
                   ),
+                  // 编辑图标
+                  if (widget.onEdit != null) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: widget.onEdit,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: appTheme.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.edit_outlined,
+                          size: 16,
+                          color: appTheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

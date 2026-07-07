@@ -486,6 +486,12 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               isReadOnly: _isReadOnly,
               onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(stage),
               onAddAddition: _isReadOnly ? null : () => _showAddAdditionDialog(stage),
+              onEdit: _isReadOnly ? null : () async {
+                await context.push('/period_book/stage_edit/${_period!.id}');
+                if (mounted) {
+                  _loadData();
+                }
+              },
               onDeleteAddition: _isReadOnly ? null : (a) => _deleteAddition(a),
               onDeleteExpense: _isReadOnly ? null : (e) => _deleteExpense(e),
             );

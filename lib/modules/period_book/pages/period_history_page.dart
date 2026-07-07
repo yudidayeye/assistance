@@ -50,6 +50,82 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     return '${dt.month.toString().padLeft(2, '0')}月${dt.day.toString().padLeft(2, '0')}日';
   }
 
+  Future<bool> _showDeleteConfirmDialog(PeriodRecord period) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final appTheme = Theme.of(context).appTheme;
+        return AlertDialog(
+          backgroundColor: appTheme.cream,
+          title: Text(
+            '删除周期',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: appTheme.earth,
+            ),
+          ),
+          content: Text(
+            '确定要删除 ${_fmtDate(period.startDate)} ~ ${_fmtDate(period.endDate)} 的周期吗？\n\n删除后该周期的所有数据将无法恢复。',
+            style: TextStyle(
+              fontSize: 14,
+              color: appTheme.earthMedium,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                '取消',
+                style: TextStyle(color: appTheme.earthMedium),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                '删除',
+                style: TextStyle(color: appTheme.rose),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
+
+  Future<void> _deletePeriod(PeriodRecord period) async {
+    try {
+      await _service.deletePeriod(period.id!);
+      setState(() {
+        _periods.removeWhere((p) => p.id == period.id);
+        _balances.remove(period.id);
+        _totalBases.remove(period.id);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('删除成功'),
+            backgroundColor: Theme.of(context).appTheme.sage,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('删除失败: $e'),
+            backgroundColor: Theme.of(context).appTheme.rose,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      // 如果删除失败，重新加载数据
+      _loadData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
@@ -83,7 +159,31 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                             itemCount: _periods.length,
                             itemBuilder: (ctx, i) {
                               final period = _periods[i];
-                              return _buildPeriodRow(appTheme, period);
+                              return Dismissible(
+                                key: Key('period_${period.id}'),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  decoration: BoxDecoration(
+                                    color: appTheme.rose.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  alignment: Alignment.centerRight,
+                                  child: Icon(
+                                    Icons.delete_outline,
+                                    color: appTheme.rose,
+                                    size: 24,
+                                  ),
+                                ),
+                                confirmDismiss: (direction) async {
+                                  return await _showDeleteConfirmDialog(period);
+                                },
+                                onDismissed: (direction) async {
+                                  await _deletePeriod(period);
+                                },
+                                child: _buildPeriodRow(appTheme, period),
+                              );
                             },
                           ),
                         ),
