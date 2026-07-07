@@ -1,7 +1,7 @@
 /// 支出明细实体
 class ExpenseRecord {
   final int? id;
-  final int periodId;
+  final int stageId;
   final String category; // 'shopping' / 'other'
   final double amount;
   final String description;
@@ -9,7 +9,7 @@ class ExpenseRecord {
 
   const ExpenseRecord({
     this.id,
-    required this.periodId,
+    required this.stageId,
     required this.category,
     required this.amount,
     required this.description,
@@ -19,7 +19,7 @@ class ExpenseRecord {
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
-      'period_id': periodId,
+      'stage_id': stageId,
       'category': category,
       'amount': amount,
       'description': description,
@@ -30,7 +30,7 @@ class ExpenseRecord {
   factory ExpenseRecord.fromMap(Map<String, dynamic> map) {
     return ExpenseRecord(
       id: map['id'] as int?,
-      periodId: map['period_id'] as int,
+      stageId: map['stage_id'] as int,
       category: map['category'] as String,
       amount: (map['amount'] as num).toDouble(),
       description: map['description'] as String,
@@ -40,7 +40,7 @@ class ExpenseRecord {
 
   ExpenseRecord copyWith({
     int? id,
-    int? periodId,
+    int? stageId,
     String? category,
     double? amount,
     String? description,
@@ -48,7 +48,7 @@ class ExpenseRecord {
   }) {
     return ExpenseRecord(
       id: id ?? this.id,
-      periodId: periodId ?? this.periodId,
+      stageId: stageId ?? this.stageId,
       category: category ?? this.category,
       amount: amount ?? this.amount,
       description: description ?? this.description,
@@ -58,6 +58,6 @@ class ExpenseRecord {
 
   @override
   String toString() {
-    return 'ExpenseRecord(id: $id, periodId: $periodId, $category: $amount, $description)';
+    return 'ExpenseRecord(id: $id, stageId: $stageId, $category: $amount, $description)';
   }
 }

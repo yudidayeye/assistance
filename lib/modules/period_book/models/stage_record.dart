@@ -1,19 +1,21 @@
-/// 记账周期实体
-class PeriodRecord {
+/// 阶段记录实体
+class StageRecord {
   final int? id;
+  final int periodId;
   final String startDate; // yyyy-MM-dd
   final String endDate; // yyyy-MM-dd
-  final double baseAmount;
-  final bool isClosed;
+  final double? balance; // 本阶段余额（手动输入）
+  final int sortOrder; // 排序序号
   final String createdAt;
   final String updatedAt;
 
-  const PeriodRecord({
+  const StageRecord({
     this.id,
+    required this.periodId,
     required this.startDate,
     required this.endDate,
-    required this.baseAmount,
-    this.isClosed = false,
+    this.balance,
+    required this.sortOrder,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -21,52 +23,56 @@ class PeriodRecord {
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
+      'period_id': periodId,
       'start_date': startDate,
       'end_date': endDate,
-      'base_amount': baseAmount,
-      'is_closed': isClosed ? 1 : 0,
+      'balance': balance,
+      'sort_order': sortOrder,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
   }
 
-  factory PeriodRecord.fromMap(Map<String, dynamic> map) {
-    return PeriodRecord(
+  factory StageRecord.fromMap(Map<String, dynamic> map) {
+    return StageRecord(
       id: map['id'] as int?,
+      periodId: map['period_id'] as int,
       startDate: map['start_date'] as String,
       endDate: map['end_date'] as String,
-      baseAmount: (map['base_amount'] as num).toDouble(),
-      isClosed: (map['is_closed'] as int) == 1,
+      balance: map['balance'] != null ? (map['balance'] as num).toDouble() : null,
+      sortOrder: map['sort_order'] as int,
       createdAt: map['created_at'] as String,
       updatedAt: map['updated_at'] as String,
     );
   }
 
-  /// 周期天数
+  /// 阶段天数
   int get totalDays {
     final start = DateTime.parse(startDate);
     final end = DateTime.parse(endDate);
     return end.difference(start).inDays + 1;
   }
 
-  /// 是否进行中（未关闭）
-  bool get isOngoing => !isClosed;
+  /// 是否有余额数据
+  bool get hasBalance => balance != null;
 
-  PeriodRecord copyWith({
+  StageRecord copyWith({
     int? id,
+    int? periodId,
     String? startDate,
     String? endDate,
-    double? baseAmount,
-    bool? isClosed,
+    double? balance,
+    int? sortOrder,
     String? createdAt,
     String? updatedAt,
   }) {
-    return PeriodRecord(
+    return StageRecord(
       id: id ?? this.id,
+      periodId: periodId ?? this.periodId,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
-      baseAmount: baseAmount ?? this.baseAmount,
-      isClosed: isClosed ?? this.isClosed,
+      balance: balance ?? this.balance,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -74,6 +80,6 @@ class PeriodRecord {
 
   @override
   String toString() {
-    return 'PeriodRecord(id: $id, $startDate ~ $endDate, base: $baseAmount, closed: $isClosed)';
+    return 'StageRecord(id: $id, periodId: $periodId, $startDate ~ $endDate, balance: $balance, sort: $sortOrder)';
   }
 }
