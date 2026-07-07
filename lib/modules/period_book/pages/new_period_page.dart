@@ -21,7 +21,6 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
   DateTime? _startDate;
   DateTime? _endDate;
   String _baseAmount = '';
-  String _balance = '';
   bool _saving = false;
 
   @override
@@ -31,8 +30,22 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
   }
 
   Future<void> _initDefaults() async {
-    final start = await _settings.getDefaultStartDate();
-    final end = await _settings.getDefaultEndDate();
+    // 检查是否有当前周期
+    final ongoingPeriod = await _service.getOngoingPeriod();
+    DateTime start;
+    DateTime end;
+
+    if (ongoingPeriod != null) {
+      // 如果有当前周期，默认从当前周期结束日期的下一天开始
+      final currentEnd = DateTime.parse(ongoingPeriod.endDate);
+      start = currentEnd.add(const Duration(days: 1));
+      end = start.add(const Duration(days: 29)); // 默认一个月
+    } else {
+      // 没有当前周期，使用默认值
+      start = await _settings.getDefaultStartDate();
+      end = await _settings.getDefaultEndDate();
+    }
+
     if (mounted) {
       setState(() {
         _startDate = start;
@@ -80,22 +93,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
                       label: '初始本金',
                       icon: Icons.account_balance_wallet_outlined,
                       value: _baseAmount,
-                      onTap: () => _showAmountKeyboard(
-                        isBalance: false,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // 余额
-                    _buildAmountCard(
-                      appTheme: appTheme,
-                      label: '余额',
-                      subtitle: '可选，留空显示缺省',
-                      icon: Icons.savings_outlined,
-                      value: _balance,
-                      isOptional: true,
-                      onTap: () => _showAmountKeyboard(
-                        isBalance: true,
-                      ),
+                      onTap: () => _showAmountKeyboard(),
                     ),
                     const SizedBox(height: 32),
                     // 保存按钮
@@ -432,11 +430,11 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
   // 金额键盘弹窗
   // ═══════════════════════════════════════════════════════════
 
-  void _showAmountKeyboard({required bool isBalance}) {
+  void _showAmountKeyboard() {
     final appTheme = Theme.of(context).appTheme;
-    final current = isBalance ? _balance : _baseAmount;
+    final current = _baseAmount;
     final controller = TextEditingController(text: current);
-    final label = isBalance ? '余额' : '初始本金';
+    final label = '初始本金';
 
     showModalBottomSheet(
       context: context,
@@ -506,11 +504,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
                       GestureDetector(
                         onTap: () {
                           controller.clear();
-                          if (isBalance) {
-                            setState(() => _balance = '');
-                          } else {
-                            setState(() => _baseAmount = '');
-                          }
+                          setState(() => _baseAmount = '');
                         },
                         child: Icon(Icons.clear_rounded,
                             color: appTheme.earthMedium.withValues(alpha: 0.4),
@@ -528,11 +522,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
                 controller.selection = TextSelection.fromPosition(
                   TextPosition(offset: v.length),
                 );
-                if (isBalance) {
-                  setState(() => _balance = v);
-                } else {
-                  setState(() => _baseAmount = v);
-                }
+                setState(() => _baseAmount = v);
               },
               onDone: () {
                 Navigator.pop(ctx);
@@ -565,6 +555,19 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
         context.pop(); // 返回上一页（详情页会自动刷新）
       }
     } catch (e) {
+      if (mounted) {
+        // 显示错误提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('日期与已有周期重叠，请调整'),
+            backgroundColor: Theme.of(context).appTheme.rose,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
       debugPrint('Save period error: $e');
     } finally {
       if (mounted) setState(() => _saving = false);
