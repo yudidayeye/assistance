@@ -93,94 +93,91 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 头部：可展开/收起
-          GestureDetector(
-            onTap: _toggleExpand,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
-              child: Row(
-                children: [
-                  // 阶段序号
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          appTheme.primary.withValues(alpha: 0.15),
-                          appTheme.primary.withValues(alpha: 0.05),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${stage.sortOrder}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: appTheme.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // 日期范围
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '第${stage.sortOrder}阶段',
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.dmSans().fontFamily,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: appTheme.earth,
-                          ),
-                        ),
-                        Text(
-                          '${start.month}.${start.day.toString().padLeft(2, '0')} ~ ${end.month}.${end.day.toString().padLeft(2, '0')}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: appTheme.earthMedium.withValues(alpha: 0.6),
-                          ),
-                        ),
+          // 头部：纯展示（不再有点击展开）
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
+            child: Row(
+              children: [
+                // 阶段序号
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        appTheme.primary.withValues(alpha: 0.15),
+                        appTheme.primary.withValues(alpha: 0.05),
                       ],
                     ),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  // 展开/收起图标
-                  AnimatedRotation(
-                    turns: _expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 250),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: appTheme.earthMedium.withValues(alpha: 0.4),
-                      size: 24,
-                    ),
-                  ),
-                  // 编辑图标
-                  if (widget.onEdit != null) ...[
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: widget.onEdit,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: appTheme.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.edit_outlined,
-                          size: 16,
-                          color: appTheme.primary,
-                        ),
+                  child: Center(
+                    child: Text(
+                      '${stage.sortOrder}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: appTheme.primary,
                       ),
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // 日期范围
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '第${stage.sortOrder}阶段',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: appTheme.earth,
+                        ),
+                      ),
+                      Text(
+                        '${start.month}.${start.day.toString().padLeft(2, '0')} ~ ${end.month}.${end.day.toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: appTheme.earthMedium.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // 展开/收起图标
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 250),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: appTheme.earthMedium.withValues(alpha: 0.4),
+                    size: 24,
+                  ),
+                ),
+                // 编辑图标
+                if (widget.onEdit != null) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: widget.onEdit,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: appTheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: appTheme.primary,
+                      ),
+                    ),
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
           // 简要信息
@@ -260,6 +257,8 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
               ],
             ),
           ),
+          // 底部展开/收起按钮
+          _buildExpandButton(appTheme),
           // 展开的详细内容
           SizeTransition(
             sizeFactor: _expandAnimation,
@@ -301,6 +300,39 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
           trailing,
         ],
       ],
+    );
+  }
+
+  Widget _buildExpandButton(AppThemeExtension appTheme) {
+    return GestureDetector(
+      onTap: _toggleExpand,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: appTheme.primary.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+              size: 18,
+              color: appTheme.primary.withValues(alpha: 0.7),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _expanded ? '收起明细' : '展开明细',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: appTheme.primary.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
