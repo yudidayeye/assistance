@@ -44,7 +44,7 @@ class _FeaturedCardState extends State<FeaturedCard> {
     return GestureDetector(
       onTap: widget.onTap ?? () => context.push('/${widget.module.moduleId}'),
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -58,7 +58,8 @@ class _FeaturedCardState extends State<FeaturedCard> {
           boxShadow: appTheme.cardShadow,
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // 模块图标
             Container(
