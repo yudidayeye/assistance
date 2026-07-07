@@ -485,7 +485,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               expenses: expenses,
               isReadOnly: _isReadOnly,
               onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(stage),
-              onAddAddition: _isReadOnly ? null : () => _showAddAdditionDialog(stage),
               onEdit: _isReadOnly ? null : () async {
                 await context.push('/period_book/stage_edit/${_period!.id}');
                 if (mounted) {

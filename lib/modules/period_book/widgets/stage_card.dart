@@ -15,7 +15,6 @@ class StageCard extends StatefulWidget {
   final List<ExpenseRecord> expenses;
   final bool isReadOnly;
   final VoidCallback? onEditBalance;
-  final VoidCallback? onAddAddition;
   final VoidCallback? onEdit;
   final void Function(AdditionRecord)? onDeleteAddition;
   final void Function(ExpenseRecord)? onDeleteExpense;
@@ -29,7 +28,6 @@ class StageCard extends StatefulWidget {
     required this.expenses,
     required this.isReadOnly,
     this.onEditBalance,
-    this.onAddAddition,
     this.onEdit,
     this.onDeleteAddition,
     this.onDeleteExpense,
@@ -265,8 +263,6 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
             sizeFactor: _expandAnimation,
             child: _buildExpandedContent(appTheme),
           ),
-          // 底部操作按钮
-          if (!widget.isReadOnly) _buildBottomActions(appTheme),
         ],
       ),
     );
@@ -502,62 +498,6 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: appTheme.sage,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomActions(AppThemeExtension appTheme) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: appTheme.cardBorder,
-            width: 0.5,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildActionButton(
-              appTheme: appTheme,
-              icon: Icons.add_circle_outline,
-              label: '追加',
-              color: appTheme.sage,
-              onTap: widget.onAddAddition,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required AppThemeExtension appTheme,
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: color,
               ),
             ),
           ],
