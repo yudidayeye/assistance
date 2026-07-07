@@ -183,7 +183,7 @@ class PeriodBookService {
     }
   }
 
-  /// 生成阶段列表（按周拆分）
+  /// 生成阶段列表（按自然周划分：周一到周日）
   List<StageRecord> _generateStages(int periodId, String startDate, String endDate) {
     final stages = <StageRecord>[];
     final start = DateTime.parse(startDate);
@@ -194,10 +194,36 @@ class PeriodBookService {
     var sortOrder = 1;
 
     while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
-      // 本周结束日期 = current + 6天 或 end（取较小值）
-      var stageEnd = current.add(const Duration(days: 6));
-      if (stageEnd.isAfter(end)) {
-        stageEnd = end;
+      // 计算当前阶段的结束日期
+      DateTime stageEnd;
+
+      if (sortOrder == 1) {
+        // 第一个阶段：从开始日期到当周周日
+        // weekday: Monday=1, Sunday=7
+        final daysUntilSunday = 7 - current.weekday;
+        final sundayOfFirstWeek = current.add(Duration(days: daysUntilSunday));
+
+        if (sundayOfFirstWeek.isAfter(end)) {
+          // 如果当周周日超过结束日期，则到结束日期
+          stageEnd = end;
+        } else {
+          stageEnd = sundayOfFirstWeek;
+        }
+      } else {
+        // 后续阶段：从周一开始
+        // 计算本周一
+        final daysFromMonday = current.weekday - 1;
+        final mondayOfThisWeek = current.subtract(Duration(days: daysFromMonday));
+
+        // 本阶段从周一开始，到周日结束
+        final sundayOfThisWeek = mondayOfThisWeek.add(const Duration(days: 6));
+
+        if (sundayOfThisWeek.isAfter(end)) {
+          // 如果本周日超过结束日期，则到结束日期
+          stageEnd = end;
+        } else {
+          stageEnd = sundayOfThisWeek;
+        }
       }
 
       stages.add(StageRecord(
