@@ -136,7 +136,13 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       floatingActionButton: _isReadOnly
           ? null
           : FloatingActionButton.extended(
-              onPressed: () => context.push('/period_book/batch_expense/${_period!.id}'),
+              onPressed: () async {
+                await context.push('/period_book/batch_expense/${_period!.id}');
+                // 从批量记账页返回后刷新数据
+                if (mounted) {
+                  _loadData();
+                }
+              },
               backgroundColor: appTheme.primary,
               heroTag: 'batch_expense',
               icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
@@ -512,6 +518,11 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     final appTheme = Theme.of(context).appTheme;
     String balance = stage.balance?.toStringAsFixed(2) ?? '';
 
+    // 获取当前阶段的本金
+    final stageIndex = _stages.indexWhere((s) => s.id == stage.id);
+    final stageCalc = stageIndex >= 0 ? _calc!.stages[stageIndex] : null;
+    final maxBalance = stageCalc?.baseAmount ?? 0;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -542,6 +553,18 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     ),
                   ),
                 ),
+                // 提示文字
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    '最大余额: ¥${maxBalance.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: appTheme.earthMedium.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 // 输入显示
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -570,7 +593,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                               fontFamily: GoogleFonts.dmSans().fontFamily,
                               fontSize: 28,
                               fontWeight: FontWeight.w600,
-                              color: appTheme.earth,
+                              color: _isValidBalance(balance, maxBalance)
+                                  ? appTheme.earth
+                                  : appTheme.rose,
                             ),
                           ),
                         ),
@@ -596,6 +621,20 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   },
                   onDone: () async {
                     final val = double.tryParse(balance);
+                    // 验证余额不能超过本金
+                    if (val != null && val > maxBalance) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}'),
+                          backgroundColor: appTheme.rose,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      );
+                      return;
+                    }
                     await _service.updateStageBalance(
                       stage.id!,
                       val,
@@ -603,7 +642,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     await _loadData();
                     Navigator.pop(ctx);
                   },
-                  doneColor: appTheme.primary,
+                  doneColor: _isValidBalance(balance, maxBalance)
+                      ? appTheme.primary
+                      : appTheme.rose,
                 ),
                 SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
               ],
@@ -612,6 +653,14 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         },
       ),
     );
+  }
+
+  /// 验证余额是否有效（不超过本金）
+  bool _isValidBalance(String balance, double maxBalance) {
+    if (balance.isEmpty) return true;
+    final val = double.tryParse(balance);
+    if (val == null) return true;
+    return val <= maxBalance;
   }
 
   // ═══════════════════════════════════════════════════════════

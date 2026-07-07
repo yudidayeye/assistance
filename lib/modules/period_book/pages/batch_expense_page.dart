@@ -31,6 +31,10 @@ class _BatchExpensePageState extends State<BatchExpensePage> {
   String _newAmount = '';
   String _newDescription = '';
 
+  // 使用 controller 来清空输入框
+  final _amountController = TextEditingController();
+  final _descriptionController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -68,6 +72,9 @@ class _BatchExpensePageState extends State<BatchExpensePage> {
       });
       _newAmount = '';
       _newDescription = '';
+      // 清空输入框
+      _amountController.clear();
+      _descriptionController.clear();
     });
   }
 
@@ -220,48 +227,99 @@ class _BatchExpensePageState extends State<BatchExpensePage> {
 
   Widget _buildStageSelector(AppThemeExtension appTheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.layers_outlined, color: appTheme.primary, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            '选择阶段:',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earth,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButton<StageRecord>(
-              value: _selectedStage,
-              isExpanded: true,
-              underline: const SizedBox(),
-              items: _stages.map((stage) {
-                final start = DateTime.parse(stage.startDate);
-                final end = DateTime.parse(stage.endDate);
-                return DropdownMenuItem(
-                  value: stage,
-                  child: Text(
-                    '第${stage.sortOrder}周 (${start.month}.${start.day}-${end.month}.${end.day})',
-                    style: TextStyle(fontSize: 13, color: appTheme.earth),
+          // 标题
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      appTheme.primary.withValues(alpha: 0.15),
+                      appTheme.primary.withValues(alpha: 0.05),
+                    ],
                   ),
-                );
-              }).toList(),
-              onChanged: (stage) {
-                if (stage != null) {
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.layers_outlined, color: appTheme.primary, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '选择阶段',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earth,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // 阶段选择网格
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _stages.map((stage) {
+              final isSelected = _selectedStage?.id == stage.id;
+              final start = DateTime.parse(stage.startDate);
+              final end = DateTime.parse(stage.endDate);
+
+              return GestureDetector(
+                onTap: () {
                   setState(() => _selectedStage = stage);
-                }
-              },
-            ),
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? appTheme.primary.withValues(alpha: 0.12)
+                        : appTheme.creamDark,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected
+                          ? appTheme.primary.withValues(alpha: 0.3)
+                          : appTheme.cardBorder,
+                      width: isSelected ? 1.5 : 0.5,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '第${stage.sortOrder}周',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? appTheme.primary : appTheme.earth,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${start.month}.${start.day}-${end.month}.${end.day}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isSelected
+                              ? appTheme.primary.withValues(alpha: 0.7)
+                              : appTheme.earthMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -387,6 +445,17 @@ class _BatchExpensePageState extends State<BatchExpensePage> {
               ),
             ),
           ),
+          const SizedBox(width: 8),
+          // 编辑按钮
+          GestureDetector(
+            onTap: () => _showEditExpenseDialog(index, expense),
+            child: Icon(
+              Icons.edit_outlined,
+              size: 18,
+              color: appTheme.primary.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: () => _removeExpense(index),
             child: Icon(
@@ -450,6 +519,7 @@ class _BatchExpensePageState extends State<BatchExpensePage> {
           const SizedBox(height: 12),
           // 金额输入
           TextField(
+            controller: _amountController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               hintText: '金额',
@@ -471,6 +541,7 @@ class _BatchExpensePageState extends State<BatchExpensePage> {
           const SizedBox(height: 12),
           // 描述输入
           TextField(
+            controller: _descriptionController,
             decoration: InputDecoration(
               hintText: '描述（如：超市采购）',
               hintStyle: TextStyle(
@@ -655,6 +726,270 @@ class _BatchExpensePageState extends State<BatchExpensePage> {
                     letterSpacing: 0.5,
                   ),
                 ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 编辑条目对话框
+  // ═══════════════════════════════════════════════════════════
+
+  void _showEditExpenseDialog(int index, Map<String, dynamic> expense) {
+    final appTheme = Theme.of(context).appTheme;
+    final categoryController = TextEditingController(text: expense['category'] as String);
+    final amountController = TextEditingController(text: (expense['amount'] as double).toString());
+    final descriptionController = TextEditingController(text: expense['description'] as String);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: appTheme.cardBackground,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: appTheme.cardShadow,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '编辑条目',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: appTheme.earth,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // 分类选择
+            Text(
+              '分类',
+              style: TextStyle(
+                fontSize: 14,
+                color: appTheme.earthMedium,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCategoryButton(
+                    appTheme,
+                    '购物',
+                    Icons.shopping_bag_outlined,
+                    categoryController.text == 'shopping',
+                    appTheme.sage,
+                    () {
+                      setState(() => categoryController.text = 'shopping');
+                      Navigator.pop(ctx);
+                      _showEditExpenseDialog(index, {
+                        ...expense,
+                        'category': 'shopping',
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildCategoryButton(
+                    appTheme,
+                    '其他',
+                    Icons.category_outlined,
+                    categoryController.text == 'other',
+                    appTheme.roseLight,
+                    () {
+                      setState(() => categoryController.text = 'other');
+                      Navigator.pop(ctx);
+                      _showEditExpenseDialog(index, {
+                        ...expense,
+                        'category': 'other',
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // 金额输入
+            Text(
+              '金额',
+              style: TextStyle(
+                fontSize: 14,
+                color: appTheme.earthMedium,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                hintText: '输入金额',
+                hintStyle: TextStyle(
+                  fontSize: 14,
+                  color: appTheme.earthMedium.withValues(alpha: 0.4),
+                ),
+                filled: true,
+                fillColor: appTheme.creamDark,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: appTheme.earth,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // 描述输入
+            Text(
+              '描述',
+              style: TextStyle(
+                fontSize: 14,
+                color: appTheme.earthMedium,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: descriptionController,
+              decoration: InputDecoration(
+                hintText: '输入描述',
+                hintStyle: TextStyle(
+                  fontSize: 14,
+                  color: appTheme.earthMedium.withValues(alpha: 0.4),
+                ),
+                filled: true,
+                fillColor: appTheme.creamDark,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              style: TextStyle(
+                fontSize: 16,
+                color: appTheme.earth,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // 保存按钮
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: appTheme.creamDark,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '取消',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: appTheme.earthMedium,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: GestureDetector(
+                    onTap: () {
+                      final amount = double.tryParse(amountController.text);
+                      final description = descriptionController.text.trim();
+                      final category = categoryController.text;
+
+                      if (amount == null || amount <= 0 || description.isEmpty) {
+                        return;
+                      }
+
+                      setState(() {
+                        _expenses[index] = {
+                          'category': category,
+                          'amount': amount,
+                          'description': description,
+                        };
+                      });
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [appTheme.primary, appTheme.primaryDark],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '保存',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryButton(
+    AppThemeExtension appTheme,
+    String label,
+    IconData icon,
+    bool isSelected,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.15) : appTheme.creamDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color.withValues(alpha: 0.5) : appTheme.cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: isSelected ? color : appTheme.earthMedium),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? color : appTheme.earthMedium,
+              ),
+            ),
+          ],
         ),
       ),
     );
