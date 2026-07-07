@@ -147,16 +147,6 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                     ],
                   ),
                 ),
-                // 展开/收起图标
-                AnimatedRotation(
-                  turns: _expanded ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 250),
-                  child: Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: appTheme.earthMedium.withValues(alpha: 0.4),
-                    size: 24,
-                  ),
-                ),
                 // 编辑图标
                 if (widget.onEdit != null) ...[
                   const SizedBox(width: 8),
