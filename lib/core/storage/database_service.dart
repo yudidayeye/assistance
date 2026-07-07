@@ -8,7 +8,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 6;
+  static const int _currentVersion = 7;
 
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {
@@ -108,6 +108,7 @@ class DatabaseService {
         category TEXT NOT NULL,
         amount REAL NOT NULL,
         description TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         FOREIGN KEY (stage_id) REFERENCES mod_period_book_stages(id) ON DELETE CASCADE
       )
@@ -157,9 +158,15 @@ class DatabaseService {
       await _migrateToV6(db, oldVersion);
     }
 
+    // 如果从 v6 升级到 v7，添加 sort_order 字段到 expenses 表
+    if (oldVersion < 7 && newVersion >= 7) {
+      await _migrateToV7(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
+      if (v == 7) continue; // 已经在上面处理了
 
       await db.transaction((txn) async {
         if (v == 2) {
@@ -244,6 +251,7 @@ class DatabaseService {
           category TEXT NOT NULL,
           amount REAL NOT NULL,
           description TEXT NOT NULL,
+          sort_order INTEGER NOT NULL DEFAULT 0,
           created_at TEXT NOT NULL,
           FOREIGN KEY (stage_id) REFERENCES mod_period_book_stages(id) ON DELETE CASCADE
         )
@@ -321,6 +329,13 @@ class DatabaseService {
         }
       }
     });
+  }
+
+  /// v7 迁移：为 expenses 表添加 sort_order 字段
+  Future<void> _migrateToV7(Database db) async {
+    await db.execute(
+      'ALTER TABLE mod_period_book_expenses ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
+    );
   }
 
   // --- CRUD Helpers (3.2) ---

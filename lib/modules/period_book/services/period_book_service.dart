@@ -382,11 +382,18 @@ class PeriodBookService {
     String description,
   ) async {
     final now = DateTime.now().toIso8601String();
+    // 获取当前最大 sort_order
+    final existingExpenses = await getExpensesByStage(stageId);
+    final sortOrder = existingExpenses.isNotEmpty
+        ? existingExpenses.map((e) => e.sortOrder).reduce((a, b) => a > b ? a : b) + 1
+        : 0;
+
     return _db.insert('mod_period_book_expenses', {
       'stage_id': stageId,
       'category': category,
       'amount': amount,
       'description': description,
+      'sort_order': sortOrder,
       'created_at': now,
     });
   }
@@ -397,14 +404,22 @@ class PeriodBookService {
     List<Map<String, dynamic>> expenses,
   ) async {
     final now = DateTime.now().toIso8601String();
+    // 获取当前最大 sort_order
+    final existingExpenses = await getExpensesByStage(stageId);
+    var sortOrder = existingExpenses.isNotEmpty
+        ? existingExpenses.map((e) => e.sortOrder).reduce((a, b) => a > b ? a : b) + 1
+        : 0;
+
     for (final expense in expenses) {
       await _db.insert('mod_period_book_expenses', {
         'stage_id': stageId,
         'category': expense['category'],
         'amount': expense['amount'],
         'description': expense['description'],
+        'sort_order': sortOrder,
         'created_at': now,
       });
+      sortOrder++;
     }
   }
 
@@ -413,7 +428,7 @@ class PeriodBookService {
       'mod_period_book_expenses',
       where: 'stage_id = ?',
       whereArgs: [stageId],
-      orderBy: 'created_at ASC',
+      orderBy: 'sort_order ASC, created_at ASC',
     );
     return rows.map(ExpenseRecord.fromMap).toList();
   }
@@ -427,7 +442,7 @@ class PeriodBookService {
     final placeholders = stageIds.map((_) => '?').join(',');
 
     final rows = await _db.rawQuery(
-      'SELECT * FROM mod_period_book_expenses WHERE stage_id IN ($placeholders) ORDER BY created_at ASC',
+      'SELECT * FROM mod_period_book_expenses WHERE stage_id IN ($placeholders) ORDER BY sort_order ASC, created_at ASC',
       stageIds,
     );
     return rows.map(ExpenseRecord.fromMap).toList();
@@ -441,7 +456,7 @@ class PeriodBookService {
       'mod_period_book_expenses',
       where: 'stage_id = ? AND category = ?',
       whereArgs: [stageId, category],
-      orderBy: 'created_at ASC',
+      orderBy: 'sort_order ASC, created_at ASC',
     );
     return rows.map(ExpenseRecord.fromMap).toList();
   }
@@ -449,6 +464,17 @@ class PeriodBookService {
   Future<void> deleteExpense(int id) async {
     await _db.delete('mod_period_book_expenses',
         where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// 批量更新支出排序
+  Future<void> updateExpensesOrder(List<ExpenseRecord> expenses) async {
+    for (var i = 0; i < expenses.length; i++) {
+      final expense = expenses[i];
+      if (expense.id != null) {
+        await _db.update('mod_period_book_expenses', {'sort_order': i},
+            where: 'id = ?', whereArgs: [expense.id]);
+      }
+    }
   }
 
   // ══════════════════════════════════════════════════════════

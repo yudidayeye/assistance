@@ -477,6 +477,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               },
               onDeleteAddition: _isReadOnly ? null : (a) => _deleteAddition(a),
               onDeleteExpense: _isReadOnly ? null : (e) => _deleteExpense(e),
+              onReorderExpenses: _isReadOnly ? null : (reorderedExpenses) => _reorderExpenses(stage.id!, reorderedExpenses),
             );
           },
           childCount: _stages.length,
@@ -491,6 +492,11 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   Future<void> _deleteExpense(ExpenseRecord e) async {
     await _service.deleteExpense(e.id!);
+    await _loadData();
+  }
+
+  Future<void> _reorderExpenses(int stageId, List<ExpenseRecord> expenses) async {
+    await _service.updateExpensesOrder(expenses);
     await _loadData();
   }
 

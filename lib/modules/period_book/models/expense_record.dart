@@ -5,6 +5,7 @@ class ExpenseRecord {
   final String category; // 'shopping' / 'other'
   final double amount;
   final String description;
+  final int sortOrder; // 排序序号
   final String createdAt;
 
   const ExpenseRecord({
@@ -13,6 +14,7 @@ class ExpenseRecord {
     required this.category,
     required this.amount,
     required this.description,
+    this.sortOrder = 0,
     required this.createdAt,
   });
 
@@ -23,6 +25,7 @@ class ExpenseRecord {
       'category': category,
       'amount': amount,
       'description': description,
+      'sort_order': sortOrder,
       'created_at': createdAt,
     };
   }
@@ -34,6 +37,7 @@ class ExpenseRecord {
       category: map['category'] as String,
       amount: (map['amount'] as num).toDouble(),
       description: map['description'] as String,
+      sortOrder: (map['sort_order'] as int?) ?? 0,
       createdAt: map['created_at'] as String,
     );
   }
@@ -44,6 +48,7 @@ class ExpenseRecord {
     String? category,
     double? amount,
     String? description,
+    int? sortOrder,
     String? createdAt,
   }) {
     return ExpenseRecord(
@@ -52,12 +57,13 @@ class ExpenseRecord {
       category: category ?? this.category,
       amount: amount ?? this.amount,
       description: description ?? this.description,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
     );
   }
 
   @override
   String toString() {
-    return 'ExpenseRecord(id: $id, stageId: $stageId, $category: $amount, $description)';
+    return 'ExpenseRecord(id: $id, stageId: $stageId, $category: $amount, $description, sort: $sortOrder)';
   }
 }

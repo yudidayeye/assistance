@@ -18,6 +18,7 @@ class StageCard extends StatefulWidget {
   final VoidCallback? onEdit;
   final void Function(AdditionRecord)? onDeleteAddition;
   final void Function(ExpenseRecord)? onDeleteExpense;
+  final void Function(List<ExpenseRecord>)? onReorderExpenses;
 
   const StageCard({
     super.key,
@@ -31,6 +32,7 @@ class StageCard extends StatefulWidget {
     this.onEdit,
     this.onDeleteAddition,
     this.onDeleteExpense,
+    this.onReorderExpenses,
   });
 
   @override
@@ -303,8 +305,8 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
   }
 
   Widget _buildExpandedContent(AppThemeExtension appTheme) {
-    final shopping = widget.expenses.where((e) => e.category == 'shopping').toList();
-    final other = widget.expenses.where((e) => e.category == 'other').toList();
+    // 不再分组，使用全局排序的支出列表
+    final expenses = List<ExpenseRecord>.from(widget.expenses);
 
     return Container(
       decoration: BoxDecoration(
@@ -321,7 +323,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
             child: Text(
-              '明细',
+              '支出明细',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -329,31 +331,14 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
               ),
             ),
           ),
-          // 购物明细
-          if (shopping.isNotEmpty) ...[
-            _buildExpenseGroup(
-              appTheme: appTheme,
-              label: '购物',
-              icon: Icons.shopping_bag_outlined,
-              iconColor: appTheme.sage,
-              items: shopping,
-            ),
-          ],
-          // 其他明细
-          if (other.isNotEmpty) ...[
-            _buildExpenseGroup(
-              appTheme: appTheme,
-              label: '其他',
-              icon: Icons.category_outlined,
-              iconColor: appTheme.roseLight,
-              items: other,
-            ),
-          ],
+          // 可拖动的支出列表
+          if (expenses.isNotEmpty)
+            _buildReorderableExpenseList(appTheme, expenses),
           // 追加明细
           if (widget.additions.isNotEmpty) ...[
             _buildAdditionList(appTheme),
           ],
-          if (shopping.isEmpty && other.isEmpty && widget.additions.isEmpty)
+          if (expenses.isEmpty && widget.additions.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(
@@ -372,72 +357,135 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _buildExpenseGroup({
-    required AppThemeExtension appTheme,
-    required String label,
-    required IconData icon,
-    required Color iconColor,
-    required List<ExpenseRecord> items,
-  }) {
+  Widget _buildReorderableExpenseList(
+    AppThemeExtension appTheme,
+    List<ExpenseRecord> expenses,
+  ) {
+    // 非只读模式且提供了回调时，支持拖动排序
+    if (!widget.isReadOnly && widget.onReorderExpenses != null) {
+      return ReorderableListView(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        onReorder: (oldIndex, newIndex) {
+          setState(() {
+            if (newIndex > oldIndex) {
+              newIndex -= 1;
+            }
+            final item = expenses.removeAt(oldIndex);
+            expenses.insert(newIndex, item);
+            widget.onReorderExpenses!(expenses);
+          });
+        },
+        children: expenses.map((expense) {
+          return _buildDraggableExpenseItem(appTheme, expense, expenses.indexOf(expense));
+        }).toList(),
+      );
+    }
+
+    // 只读模式，不支持拖动
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-          child: Row(
-            children: [
-              Icon(icon, size: 14, color: iconColor),
-              const SizedBox(width: 4),
-              Text(
-                '$label (${items.length})',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: appTheme.earthMedium,
+      children: expenses.map((expense) {
+        return _buildExpenseItem(appTheme, expense);
+      }).toList(),
+    );
+  }
+
+  Widget _buildDraggableExpenseItem(
+    AppThemeExtension appTheme,
+    ExpenseRecord expense,
+    int index,
+  ) {
+    final icon = expense.category == 'shopping'
+        ? Icons.shopping_bag_outlined
+        : Icons.category_outlined;
+    final color = expense.category == 'shopping' ? appTheme.sage : appTheme.roseLight;
+
+    return Container(
+      key: Key('expense_${expense.id}'),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      decoration: BoxDecoration(
+        border: index > 0
+            ? Border(
+                top: BorderSide(
+                  color: appTheme.earthMedium.withValues(alpha: 0.07),
+                  width: 0.5,
                 ),
-              ),
-            ],
+              )
+            : null,
+      ),
+      child: Row(
+        children: [
+          // 拖动手柄
+          Icon(
+            Icons.drag_handle_rounded,
+            color: appTheme.earthMedium.withValues(alpha: 0.4),
+            size: 18,
           ),
-        ),
-        ...items.map((e) => _buildExpenseItem(appTheme, e)),
-      ],
+          const SizedBox(width: 8),
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              expense.description,
+              style: TextStyle(
+                fontSize: 13,
+                color: appTheme.earth,
+              ),
+            ),
+          ),
+          Text(
+            '-¥${expense.amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: appTheme.earth,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => widget.onDeleteExpense?.call(expense),
+            child: Icon(
+              Icons.close,
+              size: 16,
+              color: appTheme.earthMedium.withValues(alpha: 0.4),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildExpenseItem(AppThemeExtension appTheme, ExpenseRecord expense) {
-    return Dismissible(
-      key: Key('expense_${expense.id}'),
-      direction: widget.isReadOnly ? DismissDirection.none : DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: appTheme.rose.withValues(alpha: 0.1),
-        child: Icon(Icons.delete_outline, color: appTheme.rose, size: 18),
-      ),
-      onDismissed: (_) => widget.onDeleteExpense?.call(expense),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                expense.description,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: appTheme.earth,
-                ),
-              ),
-            ),
-            Text(
-              '-¥${expense.amount.toStringAsFixed(2)}',
+    final icon = expense.category == 'shopping'
+        ? Icons.shopping_bag_outlined
+        : Icons.category_outlined;
+    final color = expense.category == 'shopping' ? appTheme.sage : appTheme.roseLight;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              expense.description,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: appTheme.earthMedium,
+                color: appTheme.earth,
               ),
             ),
-          ],
-        ),
+          ),
+          Text(
+            '-¥${expense.amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: appTheme.earthMedium,
+            ),
+          ),
+        ],
       ),
     );
   }
