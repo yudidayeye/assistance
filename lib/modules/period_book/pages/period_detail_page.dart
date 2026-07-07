@@ -133,22 +133,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           ],
         ),
       ),
-      floatingActionButton: _isReadOnly
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () async {
-                await context.push('/period_book/batch_expense/${_period!.id}');
-                // 从批量记账页返回后刷新数据
-                if (mounted) {
-                  _loadData();
-                }
-              },
-              backgroundColor: appTheme.primary,
-              heroTag: 'batch_expense',
-              icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
-              label: const Text('批量记账',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            ),
     );
   }
 
@@ -486,7 +470,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               isReadOnly: _isReadOnly,
               onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(stage),
               onEdit: _isReadOnly ? null : () async {
-                await context.push('/period_book/stage_edit/${_period!.id}');
+                await context.push('/period_book/stage_edit/${stage.id}');
                 if (mounted) {
                   _loadData();
                 }
