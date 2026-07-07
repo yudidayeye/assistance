@@ -484,7 +484,7 @@ class PeriodBookService {
     double totalAdditions = 0;
     double shoppingTotal = 0;
     double otherTotal = 0;
-    double? previousBalance = period.baseAmount; // 第一阶段本金 = 初始本金
+    double previousBalance = period.baseAmount; // 第一阶段本金 = 初始本金
     double? lastBalance; // 最新阶段余额
 
     for (final stage in stages) {
@@ -499,7 +499,7 @@ class PeriodBookService {
 
       // 更新 previousBalance 为当前阶段的余额（用于链式传递）
       if (calc.balance != null) {
-        previousBalance = calc.balance;
+        previousBalance = calc.balance!;
         lastBalance = calc.balance;
       } else {
         // 如果当前阶段没有余额，使用阶段本金 - 支出作为估算

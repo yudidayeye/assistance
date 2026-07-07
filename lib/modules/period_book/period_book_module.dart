@@ -87,7 +87,10 @@ class PeriodBookModule implements ToolModule {
     final startFmt = _formatDateShort(period.startDate);
     final endFmt = _formatDateShort(period.endDate);
     final line1 = '$startFmt ~ $endFmt';
-    final balance = period.balance;
+    // 获取最后一个阶段的余额
+    final stages = await PeriodBookService.instance.getStagesByPeriod(period.id!);
+    final lastStage = stages.isNotEmpty ? stages.last : null;
+    final balance = lastStage?.balance;
     final line2 = balance != null
         ? '余额 ¥${balance.toStringAsFixed(2)}'
         : '余额 —';

@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../shared/utils/format_utils.dart';
+import '../models/period_record.dart';
 import '../services/period_book_service.dart';
 
 /// 周期汇总卡片 — 展示总本金/购物/其他/余额/生活/生活日均
 class PeriodSummaryCard extends StatelessWidget {
   final PeriodCalculations calc;
+  final PeriodRecord? period;
   final VoidCallback? onEditBalance;
+  final VoidCallback? onTapTotalBase;
 
   const PeriodSummaryCard({
     super.key,
     required this.calc,
+    this.period,
     this.onEditBalance,
+    this.onTapTotalBase,
   });
 
   @override
@@ -23,6 +28,8 @@ class PeriodSummaryCard extends StatelessWidget {
         label: '总本金',
         value: FormatUtils.formatAmount(calc.totalBase),
         color: appTheme.primary,
+        isClickable: onTapTotalBase != null,
+        onTap: onTapTotalBase,
       ),
       _SummaryItem(
         label: '购物',
@@ -49,14 +56,6 @@ class PeriodSummaryCard extends StatelessWidget {
             ? '-${FormatUtils.formatAmount(calc.livingTotal!)}'
             : '—',
         color: appTheme.earthLight,
-      ),
-      _SummaryItem(
-        label: '生活日均',
-        value: calc.livingDailyAvg != null
-            ? '-${FormatUtils.formatAmount(calc.livingDailyAvg!)}'
-            : '—',
-        color: appTheme.earthLight,
-        subtitle: '${calc.totalDays}天',
       ),
     ];
 
@@ -110,78 +109,106 @@ class PeriodSummaryCard extends StatelessWidget {
                       color: appTheme.earthMedium.withValues(alpha: 0.07),
                     ),
                   ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: item.color.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Center(
-                          child: Text(
-                            item.label,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: item.color,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Text(
-                          item.subtitle != null
-                              ? '${item.label}（${item.subtitle}）'
-                              : item.label,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: appTheme.earth,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        item.value,
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: item.value == '—'
-                              ? appTheme.earthMedium.withValues(alpha: 0.5)
-                              : appTheme.earth,
-                        ),
-                      ),
-                      if (item.isEditable) ...[
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: item.onEdit,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: appTheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.edit_outlined,
-                              size: 14,
-                              color: appTheme.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+                _buildItemRow(appTheme, item),
               ],
             );
           }).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemRow(AppThemeExtension appTheme, _SummaryItem item) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: item.color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Center(
+              child: Text(
+                item.label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: item.color,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              item.label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: appTheme.earth,
+              ),
+            ),
+          ),
+          if (item.isClickable)
+            GestureDetector(
+              onTap: item.onTap,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    item.value,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: item.value == '—'
+                          ? appTheme.earthMedium.withValues(alpha: 0.5)
+                          : item.color,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: item.color.withValues(alpha: 0.6),
+                  ),
+                ],
+              ),
+            )
+          else
+            Text(
+              item.value,
+              style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: item.value == '—'
+                    ? appTheme.earthMedium.withValues(alpha: 0.5)
+                    : appTheme.earth,
+              ),
+            ),
+          if (item.isEditable && item.onEdit != null) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: item.onEdit,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.edit_outlined,
+                  size: 14,
+                  color: appTheme.primary,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -194,7 +221,8 @@ class _SummaryItem {
   final Color color;
   final bool isEditable;
   final VoidCallback? onEdit;
-  final String? subtitle;
+  final bool isClickable;
+  final VoidCallback? onTap;
 
   _SummaryItem({
     required this.label,
@@ -202,6 +230,7 @@ class _SummaryItem {
     required this.color,
     this.isEditable = false,
     this.onEdit,
-    this.subtitle,
+    this.isClickable = false,
+    this.onTap,
   });
 }

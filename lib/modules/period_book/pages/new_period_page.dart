@@ -556,12 +556,10 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
 
     setState(() => _saving = true);
     try {
-      final balance = _balance.isEmpty ? null : double.parse(_balance);
       await _service.createPeriod(
         startDate: _toIso(_startDate!),
         endDate: _toIso(_endDate!),
         baseAmount: double.parse(_baseAmount),
-        balance: balance,
       );
       if (mounted) {
         context.pop(); // 返回上一页（详情页会自动刷新）
