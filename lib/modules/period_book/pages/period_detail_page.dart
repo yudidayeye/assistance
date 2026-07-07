@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
+import '../../../shared/widgets/number_keyboard.dart';
 import '../models/period_record.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
@@ -89,12 +90,27 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       return Scaffold(
         body: Container(
           decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-          child: EmptyStateWidget(
-            icon: Icons.account_balance_wallet_outlined,
-            title: '还没有记账周期',
-            subtitle: '创建第一个周期，开始记录你的收支',
-            actionLabel: '新建周期',
-            onAction: () => context.push('/period_book/new'),
+          child: Column(
+            children: [
+              // 返回导航
+              _buildEmptyHeader(appTheme),
+              // 空状态内容
+              Expanded(
+                child: EmptyStateWidget(
+                  icon: Icons.account_balance_wallet_outlined,
+                  title: '还没有记账周期',
+                  subtitle: '创建第一个周期，开始记录你的收支',
+                  actionLabel: '新建周期',
+                  onAction: () async {
+                    await context.push('/period_book/new');
+                    // 从新建页返回后刷新数据
+                    if (mounted) {
+                      _loadData();
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -117,28 +133,42 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       ),
       floatingActionButton: _isReadOnly
           ? null
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 添加阶段按钮
-                FloatingActionButton.small(
-                  onPressed: _showAddStageDialog,
-                  backgroundColor: appTheme.sage,
-                  heroTag: 'add_stage',
-                  child: const Icon(Icons.add_rounded, color: Colors.white),
-                ),
-                const SizedBox(height: 12),
-                // 批量记账按钮
-                FloatingActionButton.extended(
-                  onPressed: () => context.push('/period_book/batch_expense/${_period!.id}'),
-                  backgroundColor: appTheme.primary,
-                  heroTag: 'batch_expense',
-                  icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
-                  label: const Text('批量记账',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                ),
-              ],
+          : FloatingActionButton.extended(
+              onPressed: () => context.push('/period_book/batch_expense/${_period!.id}'),
+              backgroundColor: appTheme.primary,
+              heroTag: 'batch_expense',
+              icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
+              label: const Text('批量记账',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
             ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 空状态头部（返回导航）
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildEmptyHeader(AppThemeExtension appTheme) {
+    final safeTop = MediaQuery.of(context).padding.top;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24, safeTop + 16, 24, 0),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: appTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
+              ),
+              child: Icon(Icons.arrow_back_ios_new_rounded,
+                  color: appTheme.earthMedium, size: 18),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -477,8 +507,109 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   // ═══════════════════════════════════════════════════════════
 
   void _showEditStageBalanceDialog(StageRecord stage) {
-    // TODO: 实现编辑阶段余额对话框
-    // 使用 NumberKeyboard 输入余额
+    final appTheme = Theme.of(context).appTheme;
+    String balance = stage.balance?.toStringAsFixed(2) ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Container(
+            decoration: BoxDecoration(
+              color: appTheme.cream,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(appTheme.radiusXl),
+                topRight: Radius.circular(appTheme.radiusXl),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 标题
+                Padding(
+                  padding: const EdgeInsets.only(top: 20, bottom: 12),
+                  child: Text(
+                    '编辑余额',
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                    ),
+                  ),
+                ),
+                // 输入显示
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: appTheme.creamDark,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '¥',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                            color: appTheme.earthMedium.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            balance.isEmpty ? '0' : balance,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.dmSans().fontFamily,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                              color: appTheme.earth,
+                            ),
+                          ),
+                        ),
+                        if (balance.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              setModalState(() => balance = '');
+                            },
+                            child: Icon(Icons.clear_rounded,
+                                color: appTheme.earthMedium.withValues(alpha: 0.4),
+                                size: 22),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // 数字键盘
+                NumberKeyboard(
+                  currentValue: balance,
+                  onValueChanged: (v) {
+                    setModalState(() => balance = v);
+                  },
+                  onDone: () async {
+                    final val = double.tryParse(balance);
+                    await _service.updateStageBalance(
+                      stage.id!,
+                      val,
+                    );
+                    await _loadData();
+                    Navigator.pop(ctx);
+                  },
+                  doneColor: appTheme.primary,
+                ),
+                SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -486,14 +617,129 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   // ═══════════════════════════════════════════════════════════
 
   void _showAddAdditionDialog(StageRecord stage) {
-    // TODO: 实现追加本金对话框
-  }
+    final appTheme = Theme.of(context).appTheme;
+    final reasonController = TextEditingController();
+    String amount = '';
 
-  // ═══════════════════════════════════════════════════════════
-  // 弹窗：添加阶段
-  // ═══════════════════════════════════════════════════════════
-
-  void _showAddStageDialog() {
-    // TODO: 实现添加阶段对话框
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Container(
+            decoration: BoxDecoration(
+              color: appTheme.cream,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(appTheme.radiusXl),
+                topRight: Radius.circular(appTheme.radiusXl),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 20, bottom: 16),
+                  child: Text(
+                    '追加本金',
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                    ),
+                  ),
+                ),
+                // 原因输入
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: TextField(
+                    controller: reasonController,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: appTheme.earth,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: '追加原因（必填）',
+                      hintStyle: TextStyle(
+                        color: appTheme.earthMedium.withValues(alpha: 0.5),
+                        fontSize: 14,
+                      ),
+                      filled: true,
+                      fillColor: appTheme.creamDark,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                    maxLength: 50,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // 金额显示
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: appTheme.creamDark,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '¥',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                            color: appTheme.earthMedium.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            amount.isEmpty ? '0' : amount,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.dmSans().fontFamily,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                              color: appTheme.earth,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                NumberKeyboard(
+                  currentValue: amount,
+                  onValueChanged: (v) {
+                    setModalState(() => amount = v);
+                  },
+                  onDone: () async {
+                    final val = double.tryParse(amount);
+                    final reason = reasonController.text.trim();
+                    if (val == null || val <= 0 || reason.isEmpty) return;
+                    await _service.addAddition(
+                      stage.id!,
+                      val,
+                      reason,
+                    );
+                    await _loadData();
+                    Navigator.pop(ctx);
+                  },
+                  doneColor: appTheme.sage,
+                ),
+                SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 }

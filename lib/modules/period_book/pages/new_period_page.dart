@@ -432,107 +432,113 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
 
   void _showAmountKeyboard() {
     final appTheme = Theme.of(context).appTheme;
-    final current = _baseAmount;
-    final controller = TextEditingController(text: current);
+    String amount = _baseAmount;
+    final controller = TextEditingController(text: amount);
     final label = '初始本金';
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: appTheme.cream,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(appTheme.radiusXl),
-            topRight: Radius.circular(appTheme.radiusXl),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 20, bottom: 12),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: appTheme.earth,
-                ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Container(
+            decoration: BoxDecoration(
+              color: appTheme.cream,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(appTheme.radiusXl),
+                topRight: Radius.circular(appTheme.radiusXl),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: appTheme.creamDark,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      '¥',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: appTheme.earthMedium.withValues(alpha: 0.6),
-                      ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 20, bottom: 12),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: controller,
-                        readOnly: true,
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.earth,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ),
-                    if (controller.text.isNotEmpty)
-                      GestureDetector(
-                        onTap: () {
-                          controller.clear();
-                          setState(() => _baseAmount = '');
-                        },
-                        child: Icon(Icons.clear_rounded,
-                            color: appTheme.earthMedium.withValues(alpha: 0.4),
-                            size: 22),
-                      ),
-                  ],
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: appTheme.creamDark,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '¥',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                            color: appTheme.earthMedium.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: controller,
+                            readOnly: true,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.dmSans().fontFamily,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                              color: appTheme.earth,
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+                        if (amount.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              controller.clear();
+                              setModalState(() => amount = '');
+                              setState(() => _baseAmount = '');
+                            },
+                            child: Icon(Icons.clear_rounded,
+                                color: appTheme.earthMedium.withValues(alpha: 0.4),
+                                size: 22),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                NumberKeyboard(
+                  currentValue: amount,
+                  onValueChanged: (v) {
+                    controller.text = v;
+                    controller.selection = TextSelection.fromPosition(
+                      TextPosition(offset: v.length),
+                    );
+                    setModalState(() => amount = v);
+                    setState(() => _baseAmount = v);
+                  },
+                  onDone: () {
+                    Navigator.pop(ctx);
+                  },
+                  doneColor: appTheme.primary,
+                  doneText: '完成',
+                ),
+                SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+              ],
             ),
-            const SizedBox(height: 12),
-            NumberKeyboard(
-              currentValue: controller.text,
-              onValueChanged: (v) {
-                controller.text = v;
-                controller.selection = TextSelection.fromPosition(
-                  TextPosition(offset: v.length),
-                );
-                setState(() => _baseAmount = v);
-              },
-              onDone: () {
-                Navigator.pop(ctx);
-              },
-              doneColor: appTheme.primary,
-              doneText: '完成',
-            ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

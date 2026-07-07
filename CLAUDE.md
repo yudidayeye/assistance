@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. 文件查找使用 codegraph
 3. 完成计划时，每完成一个小功能自动 git commit，提交信息用中文写
 4. 修改前端视觉、调颜色、调间距时 → 必读 `./docs/UI.md`
-5. 生成的开发计划默认保存到 `./.claude/plans` 目录下
+5. 生成的需求文档和开发计划默认保存到 `./.claude/plans` 目录下，命名规则分别为`requirement-<日期>-<标题>.md`和`plan-<日期>-<标题>.md`
 
 ## 常用命令
 
