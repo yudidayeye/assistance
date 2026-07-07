@@ -9,7 +9,6 @@ import 'pages/period_detail_page.dart';
 import 'pages/new_period_page.dart';
 import 'pages/edit_period_page.dart';
 import 'pages/period_history_page.dart';
-import 'pages/add_expense_page.dart';
 import 'pages/stage_edit_page.dart';
 
 /// 周期记账模块注册
@@ -69,16 +68,17 @@ class PeriodBookModule implements ToolModule {
         ),
         GoRoute(
           path: 'add-expense',
-          builder: (context, state) {
-            final periodId =
-                int.tryParse(state.uri.queryParameters['period_id'] ?? '') ?? 0;
-            final defaultCategory =
-                state.uri.queryParameters['category'] ?? 'shopping';
-            return AddExpensePage(
-              periodId: periodId,
-              defaultCategory: defaultCategory,
-            );
-          },
+          // TODO: 后续可扩展为独立记一笔页面，当前阶段编辑页已内嵌表单
+          // builder: (context, state) {
+          //   final periodId =
+          //       int.tryParse(state.uri.queryParameters['period_id'] ?? '') ?? 0;
+          //   final defaultCategory =
+          //       state.uri.queryParameters['category'] ?? 'shopping';
+          //   return AddExpensePage(
+          //     periodId: periodId,
+          //     defaultCategory: defaultCategory,
+          //   );
+          // },
         ),
       ];
 

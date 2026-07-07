@@ -31,6 +31,15 @@ class _StageEditPageState extends State<StageEditPage> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
 
+  // 内嵌表单状态
+  bool _additionFormExpanded = false;
+  bool _expenseFormExpanded = false;
+  final _additionReasonController = TextEditingController();
+  String _additionAmount = '';
+  String _expenseCategory = 'shopping';
+  final _expenseAmountController = TextEditingController();
+  final _expenseDescriptionController = TextEditingController();
+
   bool _loading = true;
   bool _saving = false;
 
@@ -44,6 +53,9 @@ class _StageEditPageState extends State<StageEditPage> {
   void dispose() {
     _amountController.dispose();
     _descriptionController.dispose();
+    _additionReasonController.dispose();
+    _expenseAmountController.dispose();
+    _expenseDescriptionController.dispose();
     super.dispose();
   }
 
@@ -367,26 +379,29 @@ class _StageEditPageState extends State<StageEditPage> {
           else
             ..._additions.map((addition) => _buildAdditionItem(appTheme, addition)),
           const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => _showAddAdditionDialog(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: appTheme.sage.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  '+ 添加追加',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: appTheme.sage,
+          if (_additionFormExpanded)
+            _buildAdditionForm(appTheme)
+          else
+            GestureDetector(
+              onTap: () => setState(() => _additionFormExpanded = true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: appTheme.sage.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Center(
+                  child: Text(
+                    '+ 添加追加',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -467,6 +482,30 @@ class _StageEditPageState extends State<StageEditPage> {
             )
           else
             ..._expenses.map((expense) => _buildExpenseItem(appTheme, expense)),
+          const SizedBox(height: 8),
+          if (_expenseFormExpanded)
+            _buildExpenseForm(appTheme)
+          else
+            GestureDetector(
+              onTap: () => setState(() => _expenseFormExpanded = true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: Text(
+                    '+ 添加支出',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: 8),
         ],
       ),
@@ -882,131 +921,6 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
-  void _showAddAdditionDialog() {
-    final appTheme = Theme.of(context).appTheme;
-    final reasonController = TextEditingController();
-    String amount = '';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) {
-          return Container(
-            decoration: BoxDecoration(
-              color: appTheme.cream,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(appTheme.radiusXl),
-                topRight: Radius.circular(appTheme.radiusXl),
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 20, bottom: 16),
-                  child: Text(
-                    '追加本金',
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: TextField(
-                    controller: reasonController,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: appTheme.earth,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: '追加原因（必填）',
-                      hintStyle: TextStyle(
-                        color: appTheme.earthMedium.withValues(alpha: 0.5),
-                        fontSize: 14,
-                      ),
-                      filled: true,
-                      fillColor: appTheme.creamDark,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                    maxLength: 50,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          '¥',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            color: appTheme.earthMedium.withValues(alpha: 0.6),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            amount.isEmpty ? '0' : amount,
-                            style: TextStyle(
-                              fontFamily: GoogleFonts.dmSans().fontFamily,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w600,
-                              color: appTheme.earth,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                NumberKeyboard(
-                  currentValue: amount,
-                  onValueChanged: (v) {
-                    setModalState(() => amount = v);
-                  },
-                  onDone: () async {
-                    final val = double.tryParse(amount);
-                    final reason = reasonController.text.trim();
-                    if (val == null || val <= 0 || reason.isEmpty) return;
-                    await _service.addAddition(
-                      widget.stageId,
-                      val,
-                      reason,
-                    );
-                    await _loadData();
-                    Navigator.pop(ctx);
-                  },
-                  doneColor: appTheme.sage,
-                ),
-                SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Future<void> _deleteAddition(AdditionRecord addition) async {
     await _service.deleteAddition(addition.id!);
     await _loadData();
@@ -1015,5 +929,304 @@ class _StageEditPageState extends State<StageEditPage> {
   Future<void> _deleteExpense(ExpenseRecord expense) async {
     await _service.deleteExpense(expense.id!);
     await _loadData();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 内嵌表单逻辑（需求2）
+  // ═══════════════════════════════════════════════════════════
+
+  void _submitAddition() {
+    final amount = double.tryParse(_additionAmount);
+    final reason = _additionReasonController.text.trim();
+    if (amount == null || amount <= 0 || reason.isEmpty) return;
+
+    _service.addAddition(widget.stageId, amount, reason).then((_) {
+      _additionReasonController.clear();
+      _additionAmount = '';
+      _loadData();
+      // 保持展开状态，不清空
+    });
+  }
+
+  void _submitExpense() {
+    final amount = double.tryParse(_expenseAmountController.text);
+    final description = _expenseDescriptionController.text.trim();
+    if (amount == null || amount <= 0 || description.isEmpty) return;
+
+    _service.addExpense(
+      widget.stageId,
+      _expenseCategory,
+      amount,
+      description,
+    ).then((_) {
+      _expenseAmountController.clear();
+      _expenseDescriptionController.clear();
+      _expenseCategory = 'shopping';
+      _loadData();
+      // 保持展开状态，不清空
+    });
+  }
+
+  Widget _buildAdditionForm(AppThemeExtension appTheme) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: appTheme.creamDark.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 原因输入
+          TextField(
+            controller: _additionReasonController,
+            decoration: InputDecoration(
+              hintText: '追加原因（必填）',
+              hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              filled: true,
+              fillColor: appTheme.cream,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            style: TextStyle(fontSize: 13, color: appTheme.earth),
+          ),
+          const SizedBox(height: 10),
+          // 金额输入
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: appTheme.cream,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  '¥',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: appTheme.earthMedium.withValues(alpha: 0.6),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _additionAmount.isEmpty ? '0' : _additionAmount,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: appTheme.earth,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          // 数字键盘
+          NumberKeyboard(
+            currentValue: _additionAmount,
+            onValueChanged: (v) => setState(() => _additionAmount = v),
+            onDone: _submitAddition,
+            doneColor: appTheme.sage,
+          ),
+          const SizedBox(height: 10),
+          // 操作按钮行
+          Row(
+            children: [
+              // 收起按钮
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _additionFormExpanded = false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: appTheme.creamDark,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '收起',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: appTheme.earthMedium,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // 确认添加按钮
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  onTap: _submitAddition,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: appTheme.sage,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '确认添加',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpenseForm(AppThemeExtension appTheme) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: appTheme.creamDark.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 分类选择
+          Row(
+            children: [
+              _buildCategoryChip(
+                appTheme: appTheme,
+                label: '购物',
+                icon: Icons.shopping_bag_outlined,
+                isSelected: _expenseCategory == 'shopping',
+                color: appTheme.sage,
+                onTap: () => setState(() => _expenseCategory = 'shopping'),
+              ),
+              const SizedBox(width: 10),
+              _buildCategoryChip(
+                appTheme: appTheme,
+                label: '其他',
+                icon: Icons.category_outlined,
+                isSelected: _expenseCategory == 'other',
+                color: appTheme.roseLight,
+                onTap: () => setState(() => _expenseCategory = 'other'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // 金额输入
+          TextField(
+            controller: _expenseAmountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              hintText: '金额',
+              hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              filled: true,
+              fillColor: appTheme.cream,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            style: TextStyle(fontSize: 13, color: appTheme.earth),
+          ),
+          const SizedBox(height: 10),
+          // 描述输入
+          TextField(
+            controller: _expenseDescriptionController,
+            decoration: InputDecoration(
+              hintText: '描述（如：超市采购）',
+              hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              filled: true,
+              fillColor: appTheme.cream,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            style: TextStyle(fontSize: 13, color: appTheme.earth),
+          ),
+          const SizedBox(height: 10),
+          // 操作按钮行
+          Row(
+            children: [
+              // 收起按钮
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _expenseFormExpanded = false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: appTheme.creamDark,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '收起',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: appTheme.earthMedium,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // 确认添加按钮
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  onTap: _submitExpense,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: appTheme.primary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '确认添加',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+        ],
+      ),
+    );
   }
 }
