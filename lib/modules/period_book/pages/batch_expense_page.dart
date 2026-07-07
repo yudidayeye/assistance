@@ -356,12 +356,12 @@ class _BatchExpensePageState extends State<BatchExpensePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        border: Border(
-          top: index > 0 ? BorderSide(
+        border: index > 0 ? Border(
+          top: BorderSide(
             color: appTheme.earthMedium.withValues(alpha: 0.07),
             width: 0.5,
-          ) : null,
-        ),
+          ),
+        ) : null,
       ),
       child: Row(
         children: [
