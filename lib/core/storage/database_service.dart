@@ -151,183 +151,176 @@ class DatabaseService {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // 如果从 v5 以下升级到 v6，先执行中间版本的迁移
+    if (oldVersion < 6 && newVersion >= 6) {
+      // 直接跳到 v6 迁移，因为 v4 和 v5 的表结构在 v6 迁移中会被重建
+      await _migrateToV6(db, oldVersion);
+    }
+
+    // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
+      if (v == 6) continue; // 已经在上面处理了
+
       await db.transaction((txn) async {
-        final batch = txn.batch();
         if (v == 2) {
           await _createV2Schema(db);
-        }
-        if (v == 3) {
+        } else if (v == 3) {
           await db.execute(
             'ALTER TABLE mod_period_tracker_records ADD COLUMN note TEXT',
           );
-        }
-        if (v == 4) {
-          await _createV4Schema(db);
-        }
-        if (v == 5) {
+        } else if (v == 5) {
           await _createV5Schema(db);
         }
-        if (v == 6) {
-          await _migrateToV6(db);
-        }
-        await batch.commit(noResult: true);
       });
     }
   }
 
   /// v6 迁移：引入阶段概念，保留旧数据
-  Future<void> _migrateToV6(Database db) async {
-    // 1. 备份旧数据
-    final oldPeriods = await db.query('mod_period_book_periods');
-    final oldAdditions = await db.query('mod_period_book_additions');
-    final oldExpenses = await db.query('mod_period_book_expenses');
-
-    // 2. 创建 stages 表
-    await db.execute('''
-      CREATE TABLE mod_period_book_stages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        period_id INTEGER NOT NULL,
-        start_date TEXT NOT NULL,
-        end_date TEXT NOT NULL,
-        balance REAL,
-        sort_order INTEGER NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_pb_stages_period ON mod_period_book_stages(period_id)',
-    );
-
-    // 3. 删除旧表并重建
-    await db.execute('DROP TABLE IF EXISTS mod_period_book_additions');
-    await db.execute('DROP TABLE IF EXISTS mod_period_book_expenses');
-    await db.execute('DROP TABLE IF EXISTS mod_period_book_periods');
-
-    // 4. 重建 periods 表（删除 in_progress_date 和 balance）
-    await db.execute('''
-      CREATE TABLE mod_period_book_periods (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        start_date TEXT NOT NULL,
-        end_date TEXT NOT NULL,
-        base_amount REAL NOT NULL,
-        is_closed INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_pb_periods_start_date ON mod_period_book_periods(start_date)',
-    );
-
-    // 5. 重建 additions 表（period_id → stage_id）
-    await db.execute('''
-      CREATE TABLE mod_period_book_additions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        stage_id INTEGER NOT NULL,
-        amount REAL NOT NULL,
-        reason TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (stage_id) REFERENCES mod_period_book_stages(id) ON DELETE CASCADE
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_pb_additions_stage ON mod_period_book_additions(stage_id)',
-    );
-
-    // 6. 重建 expenses 表（period_id → stage_id）
-    await db.execute('''
-      CREATE TABLE mod_period_book_expenses (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        stage_id INTEGER NOT NULL,
-        category TEXT NOT NULL,
-        amount REAL NOT NULL,
-        description TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (stage_id) REFERENCES mod_period_book_stages(id) ON DELETE CASCADE
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_pb_expenses_stage ON mod_period_book_expenses(stage_id)',
-    );
-
-    // 7. 迁移旧数据：每个旧周期归入一个默认阶段
-    final now = DateTime.now().toIso8601String();
-    for (final period in oldPeriods) {
-      final periodId = period['id'] as int;
-      final startDate = period['start_date'] as String;
-      final endDate = period['end_date'] as String;
-      final baseAmount = period['base_amount'] as double;
-      final isClosed = period['is_closed'] as int;
-      final createdAt = period['created_at'] as String;
-      final updatedAt = period['updated_at'] as String;
-
-      // 插入新 periods 记录
-      await db.insert('mod_period_book_periods', {
-        'start_date': startDate,
-        'end_date': endDate,
-        'base_amount': baseAmount,
-        'is_closed': isClosed,
-        'created_at': createdAt,
-        'updated_at': updatedAt,
-      });
-
-      // 获取新 period id
-      final newPeriodRows = await db.query(
-        'mod_period_book_periods',
-        where: 'start_date = ? AND base_amount = ?',
-        whereArgs: [startDate, baseAmount],
-        limit: 1,
-      );
-      if (newPeriodRows.isEmpty) continue;
-      final newPeriodId = newPeriodRows.first['id'] as int;
-
-      // 创建默认阶段（整个周期作为一个阶段）
-      await db.insert('mod_period_book_stages', {
-        'period_id': newPeriodId,
-        'start_date': startDate,
-        'end_date': endDate,
-        'balance': period['balance'], // 保留旧的 balance 到阶段
-        'sort_order': 1,
-        'created_at': now,
-        'updated_at': now,
-      });
-
-      // 获取默认阶段 id
-      final stageRows = await db.query(
-        'mod_period_book_stages',
-        where: 'period_id = ?',
-        whereArgs: [newPeriodId],
-        limit: 1,
-      );
-      if (stageRows.isEmpty) continue;
-      final stageId = stageRows.first['id'] as int;
-
-      // 迁移该周期的 additions
-      final periodAdditions = oldAdditions.where((a) => a['period_id'] == periodId);
-      for (final addition in periodAdditions) {
-        await db.insert('mod_period_book_additions', {
-          'stage_id': stageId,
-          'amount': addition['amount'],
-          'reason': addition['reason'],
-          'created_at': addition['created_at'],
-        });
+  Future<void> _migrateToV6(Database db, int fromVersion) async {
+    await db.transaction((txn) async {
+      // 如果从 v4 或更早版本升级，需要先创建 v4 的表结构
+      if (fromVersion < 4) {
+        await _createV4Schema(db);
       }
 
-      // 迁移该周期的 expenses
-      final periodExpenses = oldExpenses.where((e) => e['period_id'] == periodId);
-      for (final expense in periodExpenses) {
-        await db.insert('mod_period_book_expenses', {
-          'stage_id': stageId,
-          'category': expense['category'],
-          'amount': expense['amount'],
-          'description': expense['description'],
-          'created_at': expense['created_at'],
-        });
+      // 如果从 v5 或更早版本升级，执行 v5 的清理
+      if (fromVersion < 5) {
+        await _createV5Schema(db);
       }
-    }
+
+      // 1. 备份旧数据
+      final oldPeriods = await txn.query('mod_period_book_periods');
+      final oldAdditions = await txn.query('mod_period_book_additions');
+      final oldExpenses = await txn.query('mod_period_book_expenses');
+
+      // 2. 删除旧表
+      await txn.execute('DROP TABLE IF EXISTS mod_period_book_expenses');
+      await txn.execute('DROP TABLE IF EXISTS mod_period_book_additions');
+      await txn.execute('DROP TABLE IF EXISTS mod_period_book_stages');
+      await txn.execute('DROP TABLE IF EXISTS mod_period_book_periods');
+
+      // 3. 创建新的 v6 表结构
+      await txn.execute('''
+        CREATE TABLE mod_period_book_periods (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          start_date TEXT NOT NULL,
+          end_date TEXT NOT NULL,
+          base_amount REAL NOT NULL,
+          is_closed INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE mod_period_book_stages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          period_id INTEGER NOT NULL,
+          start_date TEXT NOT NULL,
+          end_date TEXT NOT NULL,
+          balance REAL,
+          sort_order INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE mod_period_book_additions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          stage_id INTEGER NOT NULL,
+          amount REAL NOT NULL,
+          reason TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (stage_id) REFERENCES mod_period_book_stages(id) ON DELETE CASCADE
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE mod_period_book_expenses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          stage_id INTEGER NOT NULL,
+          category TEXT NOT NULL,
+          amount REAL NOT NULL,
+          description TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (stage_id) REFERENCES mod_period_book_stages(id) ON DELETE CASCADE
+        )
+      ''');
+
+      // 4. 创建索引
+      await txn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_pb_periods_start_date ON mod_period_book_periods(start_date)',
+      );
+      await txn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_pb_stages_period ON mod_period_book_stages(period_id)',
+      );
+      await txn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_pb_expenses_stage ON mod_period_book_expenses(stage_id)',
+      );
+      await txn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_pb_additions_stage ON mod_period_book_additions(stage_id)',
+      );
+
+      // 5. 迁移旧数据：每个旧周期归入一个默认阶段
+      final now = DateTime.now().toIso8601String();
+      for (final period in oldPeriods) {
+        final periodId = period['id'] as int;
+        final startDate = period['start_date'] as String;
+        final endDate = period['end_date'] as String;
+        final baseAmount = period['base_amount'] as double;
+        final isClosed = period['is_closed'] as int;
+        final createdAt = period['created_at'] as String;
+        final updatedAt = period['updated_at'] as String;
+
+        // 插入新 periods 记录
+        final newPeriodId = await txn.insert('mod_period_book_periods', {
+          'start_date': startDate,
+          'end_date': endDate,
+          'base_amount': baseAmount,
+          'is_closed': isClosed,
+          'created_at': createdAt,
+          'updated_at': updatedAt,
+        });
+
+        // 创建默认阶段（整个周期作为一个阶段）
+        final stageId = await txn.insert('mod_period_book_stages', {
+          'period_id': newPeriodId,
+          'start_date': startDate,
+          'end_date': endDate,
+          'balance': period['balance'], // 保留旧的 balance 到阶段
+          'sort_order': 1,
+          'created_at': now,
+          'updated_at': now,
+        });
+
+        // 迁移该周期的 additions
+        for (final addition in oldAdditions) {
+          if (addition['period_id'] == periodId) {
+            await txn.insert('mod_period_book_additions', {
+              'stage_id': stageId,
+              'amount': addition['amount'],
+              'reason': addition['reason'],
+              'created_at': addition['created_at'],
+            });
+          }
+        }
+
+        // 迁移该周期的 expenses
+        for (final expense in oldExpenses) {
+          if (expense['period_id'] == periodId) {
+            await txn.insert('mod_period_book_expenses', {
+              'stage_id': stageId,
+              'category': expense['category'],
+              'amount': expense['amount'],
+              'description': expense['description'],
+              'created_at': expense['created_at'],
+            });
+          }
+        }
+      }
+    });
   }
 
   // --- CRUD Helpers (3.2) ---
