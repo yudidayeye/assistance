@@ -66,20 +66,7 @@ class PeriodBookModule implements ToolModule {
             return PeriodDetailPage(periodId: id);
           },
         ),
-        GoRoute(
-          path: 'add-expense',
-          // TODO: 后续可扩展为独立记一笔页面，当前阶段编辑页已内嵌表单
-          // builder: (context, state) {
-          //   final periodId =
-          //       int.tryParse(state.uri.queryParameters['period_id'] ?? '') ?? 0;
-          //   final defaultCategory =
-          //       state.uri.queryParameters['category'] ?? 'shopping';
-          //   return AddExpensePage(
-          //     periodId: periodId,
-          //     defaultCategory: defaultCategory,
-          //   );
-          // },
-        ),
+        // 'add-expense' 路由已移除，阶段编辑页已内嵌添加支出/追加表单
       ];
 
   @override
