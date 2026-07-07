@@ -508,14 +508,14 @@ class PeriodBookService {
     }
 
     final balance = stage.balance;
-    final totalDays = stage.totalDays;
+    final livingDays = stage.livingDays;
 
     // 余额未填 → 生活相关显示缺省
     double? livingTotal;
     double? livingDailyAvg;
     if (balance != null) {
       livingTotal = baseAmount - shoppingTotal - otherTotal - balance;
-      livingDailyAvg = totalDays > 0 ? livingTotal / totalDays : 0;
+      livingDailyAvg = livingDays > 0 ? livingTotal / livingDays : 0;
     }
 
     return StageCalculations(
@@ -526,7 +526,7 @@ class PeriodBookService {
       balance: balance,
       livingTotal: livingTotal,
       livingDailyAvg: livingDailyAvg,
-      totalDays: totalDays,
+      totalDays: livingDays,
     );
   }
 
@@ -581,13 +581,13 @@ class PeriodBookService {
       }
 
       final balance = stage.balance;
-      final totalDays = stage.totalDays;
+      final livingDays = stage.livingDays;
 
       double? livingTotal;
       double? livingDailyAvg;
       if (balance != null) {
         livingTotal = baseAmount - stageShoppingTotal - stageOtherTotal - balance;
-        livingDailyAvg = totalDays > 0 ? livingTotal / totalDays : 0;
+        livingDailyAvg = livingDays > 0 ? livingTotal / livingDays : 0;
       }
 
       stageCalculations.add(StageCalculations(
@@ -598,7 +598,7 @@ class PeriodBookService {
         balance: balance,
         livingTotal: livingTotal,
         livingDailyAvg: livingDailyAvg,
-        totalDays: totalDays,
+        totalDays: livingDays,
       ));
 
       totalAdditions += additionsTotal;

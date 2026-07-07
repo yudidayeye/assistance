@@ -64,6 +64,10 @@ class _StageEditPageState extends State<StageEditPage> {
     try {
       _stage = await _service.getStageById(widget.stageId);
       if (_stage != null) {
+        // 如果 currentDate 为空，默认设为 endDate
+        if (_stage!.currentDate == null || _stage!.currentDate!.isEmpty) {
+          _stage = _stage!.copyWith(currentDate: _stage!.endDate);
+        }
         _additions = await _service.getAdditionsByStage(widget.stageId);
         _expenses = await _service.getExpensesByStage(widget.stageId);
       }
@@ -104,6 +108,7 @@ class _StageEditPageState extends State<StageEditPage> {
         await _service.updateStage(_stage!.id!, {
           'start_date': _stage!.startDate,
           'end_date': _stage!.endDate,
+          'current_date': _stage!.currentDate,
         });
       }
 
@@ -283,6 +288,8 @@ class _StageEditPageState extends State<StageEditPage> {
               });
             },
           ),
+          const SizedBox(height: 12),
+          _buildCurrentDateRow(appTheme),
         ],
       ),
     );
@@ -331,6 +338,89 @@ class _StageEditPageState extends State<StageEditPage> {
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: appTheme.earth,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.calendar_today,
+                  size: 14,
+                  color: appTheme.primary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrentDateRow(AppThemeExtension appTheme) {
+    final currentDateStr = _stage?.currentDate;
+    final start = DateTime.parse(_stage!.startDate);
+    final end = DateTime.parse(_stage!.endDate);
+    final displayDate = currentDateStr != null
+        ? DateTime.parse(currentDateStr)
+        : end;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '当前日期（用于计算日均）',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: appTheme.earthMedium.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '生活费日均 = 生活支出 ÷ ${_stage!.livingDays}天',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: appTheme.earthMedium.withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: () async {
+            final initialDate = currentDateStr != null
+                ? DateTime.parse(currentDateStr)
+                : end;
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: initialDate,
+              firstDate: start,
+              lastDate: end,
+            );
+            if (picked != null) {
+              setState(() {
+                _stage = _stage!.copyWith(
+                  currentDate:
+                      '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}',
+                );
+              });
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: appTheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${displayDate.month.toString().padLeft(2, '0')}.${displayDate.day.toString().padLeft(2, '0')}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: appTheme.primary,
                   ),
                 ),
                 const SizedBox(width: 4),

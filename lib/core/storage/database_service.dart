@@ -8,7 +8,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 7;
+  static const int _currentVersion = 8;
 
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {
@@ -84,6 +84,7 @@ class DatabaseService {
         period_id INTEGER NOT NULL,
         start_date TEXT NOT NULL,
         end_date TEXT NOT NULL,
+        current_date TEXT,
         balance REAL,
         sort_order INTEGER NOT NULL,
         created_at TEXT NOT NULL,
@@ -154,7 +155,6 @@ class DatabaseService {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     // 如果从 v5 以下升级到 v6，先执行中间版本的迁移
     if (oldVersion < 6 && newVersion >= 6) {
-      // 直接跳到 v6 迁移，因为 v4 和 v5 的表结构在 v6 迁移中会被重建
       await _migrateToV6(db, oldVersion);
     }
 
@@ -163,10 +163,16 @@ class DatabaseService {
       await _migrateToV7(db);
     }
 
+    // 如果从 v7 升级到 v8，添加 current_date 字段到 stages 表
+    if (oldVersion < 8 && newVersion >= 8) {
+      await _migrateToV8(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
       if (v == 7) continue; // 已经在上面处理了
+      if (v == 8) continue; // 已经在上面处理了
 
       await db.transaction((txn) async {
         if (v == 2) {
@@ -335,6 +341,13 @@ class DatabaseService {
   Future<void> _migrateToV7(Database db) async {
     await db.execute(
       'ALTER TABLE mod_period_book_expenses ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
+    );
+  }
+
+  /// v8 迁移：为 stages 表添加 current_date 字段
+  Future<void> _migrateToV8(Database db) async {
+    await db.execute(
+      'ALTER TABLE mod_period_book_stages ADD COLUMN current_date TEXT',
     );
   }
 
