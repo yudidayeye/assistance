@@ -7,8 +7,10 @@ import 'services/period_book_service.dart';
 import 'services/period_book_settings.dart';
 import 'pages/period_detail_page.dart';
 import 'pages/new_period_page.dart';
+import 'pages/edit_period_page.dart';
 import 'pages/period_history_page.dart';
 import 'pages/add_expense_page.dart';
+import 'pages/batch_expense_page.dart';
 
 /// 周期记账模块注册
 class PeriodBookModule implements ToolModule {
@@ -39,6 +41,20 @@ class PeriodBookModule implements ToolModule {
         GoRoute(
           path: 'new',
           builder: (context, state) => const NewPeriodPage(),
+        ),
+        GoRoute(
+          path: 'edit/:id',
+          builder: (context, state) {
+            final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+            return EditPeriodPage(periodId: id);
+          },
+        ),
+        GoRoute(
+          path: 'batch_expense/:periodId',
+          builder: (context, state) {
+            final periodId = int.tryParse(state.pathParameters['periodId'] ?? '') ?? 0;
+            return BatchExpensePage(periodId: periodId);
+          },
         ),
         GoRoute(
           path: 'history',
