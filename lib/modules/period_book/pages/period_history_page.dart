@@ -19,6 +19,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   List<PeriodRecord> _periods = [];
   Map<int, double?> _balances = {};
   Map<int, double> _totalBases = {};
+  Map<int, PeriodCalculations> _calcMap = {};
   bool _loading = true;
 
   @override
@@ -33,11 +34,12 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       final periods = await _service.getAllPeriods();
       _periods = periods;
 
-      // 批量获取余额和总本金
+      // 批量获取余额、总本金和计算数据
       for (final p in periods) {
         final calc = await _service.getPeriodCalculations(p.id!);
         _balances[p.id!] = calc.balance;
         _totalBases[p.id!] = calc.totalBase;
+        _calcMap[p.id!] = calc;
       }
     } catch (e) {
       debugPrint('PeriodHistoryPage load error: $e');
@@ -101,6 +103,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
         _periods.removeWhere((p) => p.id == period.id);
         _balances.remove(period.id);
         _totalBases.remove(period.id);
+        _calcMap.remove(period.id);
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -151,40 +154,18 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                             ),
                           ),
                         )
-                      : RefreshIndicator(
-                          onRefresh: _loadData,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            itemCount: _periods.length,
-                            itemBuilder: (ctx, i) {
-                              final period = _periods[i];
-                              return Dismissible(
-                                key: Key('period_${period.id}'),
-                                direction: DismissDirection.endToStart,
-                                background: Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                                  decoration: BoxDecoration(
-                                    color: appTheme.rose.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  alignment: Alignment.centerRight,
-                                  child: Icon(
-                                    Icons.delete_outline,
-                                    color: appTheme.rose,
-                                    size: 24,
-                                  ),
-                                ),
-                                confirmDismiss: (direction) async {
-                                  return await _showDeleteConfirmDialog(period);
-                                },
-                                onDismissed: (direction) async {
-                                  await _deletePeriod(period);
-                                },
-                                child: _buildPeriodRow(appTheme, period),
-                              );
-                            },
+                      : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 表头
+                              _buildTableHeader(appTheme),
+                              // 数据行
+                              ..._periods.map((period) {
+                                return _buildPeriodRow(appTheme, period);
+                              }),
+                            ],
                           ),
                         ),
             ),
@@ -229,90 +210,171 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     );
   }
 
+  Widget _buildTableHeader(AppThemeExtension appTheme) {
+    final headerStyle = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: appTheme.earthMedium.withValues(alpha: 0.7),
+    );
+
+    return Container(
+      width: 720, // 确保最小宽度，移动端可横向滚动
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: appTheme.creamDark.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(flex: 3, child: Text('周期', style: headerStyle)),
+          Expanded(flex: 2, child: Text('开始日期', style: headerStyle)),
+          Expanded(flex: 2, child: Text('结束日期', style: headerStyle)),
+          Expanded(flex: 2, child: Text('总支出', style: headerStyle)),
+          Expanded(flex: 2, child: Text('总追加', style: headerStyle)),
+          Expanded(flex: 2, child: Text('余额', style: headerStyle)),
+          Expanded(flex: 1, child: Text('操作', style: headerStyle)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPeriodRow(AppThemeExtension appTheme, PeriodRecord period) {
     final balance = _balances[period.id];
-    final totalBase = _totalBases[period.id] ?? 0;
+    final calc = _calcMap[period.id];
+    final shoppingTotal = calc?.shoppingTotal ?? 0;
+    final otherTotal = calc?.otherTotal ?? 0;
+    final totalExpense = shoppingTotal + otherTotal;
+    final totalAddition = calc?.stages.fold<double>(0, (sum, s) => sum + s.additionsTotal) ?? 0;
     final isClosed = period.isClosed;
 
     return GestureDetector(
       onTap: () => context.push('/period_book/detail/${period.id}'),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        width: 720,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: appTheme.cardShadow,
-          border: Border.all(color: appTheme.cardBorder, width: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: appTheme.cardBorder.withValues(alpha: 0.5), width: 0.5),
         ),
         child: Row(
           children: [
-            // 日期范围
+            // 周期名称
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+              flex: 3,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        isClosed ? Icons.lock_outline_rounded : Icons.schedule_rounded,
-                        size: 16,
-                        color: isClosed ? appTheme.earthMedium : appTheme.sage,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${_fmtDate(period.startDate)} ~ ${_fmtDate(period.endDate)}',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.earth,
-                        ),
-                      ),
-                    ],
+                  Icon(
+                    isClosed ? Icons.lock_outline_rounded : Icons.schedule_rounded,
+                    size: 14,
+                    color: isClosed ? appTheme.earthMedium : appTheme.sage,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '共${period.totalDays}天',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: appTheme.earthMedium.withValues(alpha: 0.5),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '${_fmtDate(period.startDate)} ~ ${_fmtDate(period.endDate)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: appTheme.earth,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
-            // 金额信息
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  FormatUtils.formatAmount(totalBase),
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.dmSans().fontFamily,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: appTheme.earth,
+            // 开始日期
+            Expanded(
+              flex: 2,
+              child: Text(
+                _fmtDate(period.startDate),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: appTheme.earthMedium,
+                ),
+              ),
+            ),
+            // 结束日期
+            Expanded(
+              flex: 2,
+              child: Text(
+                _fmtDate(period.endDate),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: appTheme.earthMedium,
+                ),
+              ),
+            ),
+            // 总支出
+            Expanded(
+              flex: 2,
+              child: Text(
+                FormatUtils.formatAmount(totalExpense),
+                style: TextStyle(
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earth,
+                ),
+              ),
+            ),
+            // 总追加
+            Expanded(
+              flex: 2,
+              child: Text(
+                '+${FormatUtils.formatAmount(totalAddition)}',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.sage,
+                ),
+              ),
+            ),
+            // 余额
+            Expanded(
+              flex: 2,
+              child: Text(
+                balance != null
+                    ? FormatUtils.formatAmount(balance)
+                    : '—',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: balance != null
+                      ? appTheme.primary
+                      : appTheme.earthMedium.withValues(alpha: 0.4),
+                ),
+              ),
+            ),
+            // 操作
+            Expanded(
+              flex: 1,
+              child: GestureDetector(
+                onTap: () => _confirmDelete(period),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: appTheme.rose.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: appTheme.rose,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  balance != null
-                      ? FormatUtils.formatAmount(balance)
-                      : '—',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: balance != null
-                        ? appTheme.primary
-                        : appTheme.earthMedium.withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(PeriodRecord period) async {
+    final confirmed = await _showDeleteConfirmDialog(period);
+    if (!confirmed) return;
+    await _deletePeriod(period);
   }
 }
