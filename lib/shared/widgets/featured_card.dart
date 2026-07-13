@@ -44,7 +44,7 @@ class _FeaturedCardState extends State<FeaturedCard> {
     return GestureDetector(
       onTap: widget.onTap ?? () => context.push('/${widget.module.moduleId}'),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -58,28 +58,28 @@ class _FeaturedCardState extends State<FeaturedCard> {
           boxShadow: appTheme.cardShadow,
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             // 模块图标
             Container(
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: Center(
-                child: widget.module.icon.build(size: 28, color: color),
+                child: widget.module.icon.build(size: 24, color: color),
               ),
             ),
-            SizedBox(height: appTheme.spaceMd),
+            const SizedBox(height: 10),
             // 标题
             Text(
               widget.module.displayName,
               style: TextStyle(
                 fontFamily: GoogleFonts.dmSans().fontFamily,
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: appTheme.earth,
                 letterSpacing: -0.2,
@@ -89,11 +89,11 @@ class _FeaturedCardState extends State<FeaturedCard> {
               overflow: TextOverflow.ellipsis,
             ),
             if (_summary?.line1 != null) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 _summary!.line1,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: appTheme.earthMedium,
                   fontWeight: FontWeight.w500,
                 ),
@@ -107,7 +107,7 @@ class _FeaturedCardState extends State<FeaturedCard> {
               Text(
                 _summary!.line2!,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: appTheme.earthMedium.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w400,
                 ),
