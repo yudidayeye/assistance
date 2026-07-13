@@ -795,7 +795,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.7),
+              fillColor: Colors.white.withValues(alpha: 0.5),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -819,7 +819,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.7),
+              fillColor: Colors.white.withValues(alpha: 0.5),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -935,7 +935,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.7),
+              fillColor: Colors.white.withValues(alpha: 0.5),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -958,7 +958,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.7),
+              fillColor: Colors.white.withValues(alpha: 0.5),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
