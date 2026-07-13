@@ -203,27 +203,20 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                 _buildInfoRow(
                   appTheme: appTheme,
                   label: '余额',
+                  labelTrailing: widget.onEditBalance != null
+                      ? GestureDetector(
+                          onTap: widget.onEditBalance,
+                          child: Icon(
+                            Icons.create_outlined,
+                            size: 14,
+                            color: appTheme.primary.withValues(alpha: 0.6),
+                          ),
+                        )
+                      : null,
                   value: calc.balance != null
                       ? '¥${calc.balance!.toStringAsFixed(2)}'
                       : '¥0.00',
                   valueColor: calc.balance != null ? appTheme.primary : appTheme.earthMedium.withValues(alpha: 0.4),
-                  trailing: widget.onEditBalance != null
-                      ? GestureDetector(
-                          onTap: widget.onEditBalance,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: appTheme.primary.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Icon(
-                              Icons.edit_outlined,
-                              size: 14,
-                              color: appTheme.primary,
-                            ),
-                          ),
-                        )
-                      : null,
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
@@ -265,6 +258,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
     required String value,
     required Color valueColor,
     double valueFontSize = 14,
+    Widget? labelTrailing,
     Widget? trailing,
   }) {
     return Row(
@@ -276,6 +270,10 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
             color: appTheme.earthMedium.withValues(alpha: 0.7),
           ),
         ),
+        if (labelTrailing != null) ...[
+          const SizedBox(width: 6),
+          labelTrailing,
+        ],
         const Spacer(),
         Text(
           value,
@@ -327,8 +325,8 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
   }
 
   Widget _buildExpandedContent(AppThemeExtension appTheme) {
-    // 不再分组，使用全局排序的支出列表
-    final expenses = List<ExpenseRecord>.from(widget.expenses);
+    // 只读展示，不可排序不可删除
+    final expenses = widget.expenses;
 
     return Container(
       decoration: BoxDecoration(
@@ -353,10 +351,8 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
               ),
             ),
           ),
-          // 可拖动的支出列表
           if (expenses.isNotEmpty)
-            _buildReorderableExpenseList(appTheme, expenses),
-          // 追加明细
+            ...expenses.map((expense) => _buildExpenseItem(appTheme, expense)),
           if (widget.additions.isNotEmpty) ...[
             _buildAdditionList(appTheme),
           ],
@@ -374,105 +370,6 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
               ),
             ),
           const SizedBox(height: 12),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReorderableExpenseList(
-    AppThemeExtension appTheme,
-    List<ExpenseRecord> expenses,
-  ) {
-    // 非只读模式且提供了回调时，支持拖动排序
-    if (!widget.isReadOnly && widget.onReorderExpenses != null) {
-      return ReorderableListView(
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        padding: EdgeInsets.zero,
-        onReorder: (oldIndex, newIndex) {
-          setState(() {
-            if (newIndex > oldIndex) {
-              newIndex -= 1;
-            }
-            final item = expenses.removeAt(oldIndex);
-            expenses.insert(newIndex, item);
-            widget.onReorderExpenses!(expenses);
-          });
-        },
-        children: expenses.map((expense) {
-          return _buildDraggableExpenseItem(appTheme, expense, expenses.indexOf(expense));
-        }).toList(),
-      );
-    }
-
-    // 只读模式，不支持拖动
-    return Column(
-      children: expenses.map((expense) {
-        return _buildExpenseItem(appTheme, expense);
-      }).toList(),
-    );
-  }
-
-  Widget _buildDraggableExpenseItem(
-    AppThemeExtension appTheme,
-    ExpenseRecord expense,
-    int index,
-  ) {
-    final icon = expense.category == 'shopping'
-        ? Icons.shopping_bag_outlined
-        : Icons.category_outlined;
-    final color = expense.category == 'shopping' ? appTheme.sage : appTheme.roseLight;
-
-    return Container(
-      key: Key('expense_${expense.id}'),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      decoration: BoxDecoration(
-        border: index > 0
-            ? Border(
-                top: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.07),
-                  width: 0.5,
-                ),
-              )
-            : null,
-      ),
-      child: Row(
-        children: [
-          // 拖动手柄
-          Icon(
-            Icons.drag_handle_rounded,
-            color: appTheme.earthMedium.withValues(alpha: 0.4),
-            size: 18,
-          ),
-          const SizedBox(width: 8),
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              expense.description,
-              style: TextStyle(
-                fontSize: 13,
-                color: appTheme.earth,
-              ),
-            ),
-          ),
-          Text(
-            '-¥${expense.amount.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earth,
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => widget.onDeleteExpense?.call(expense),
-            child: Icon(
-              Icons.close,
-              size: 16,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
-            ),
-          ),
         ],
       ),
     );
