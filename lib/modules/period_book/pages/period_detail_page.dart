@@ -136,9 +136,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           physics: const BouncingScrollPhysics(),
           slivers: [
             _buildHeader(appTheme),
-            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceLg)),
+            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
             SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
-            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceLg)),
+            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
             _buildStagesSection(appTheme),
             SliverToBoxAdapter(child: const SizedBox(height: 100)),
           ],
@@ -154,7 +154,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   Widget _buildEmptyHeader(AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 16, 24, 0),
+      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
       child: Row(
         children: [
           GestureDetector(
@@ -187,7 +187,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
     return SliverToBoxAdapter(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(24, safeTop + 16, 24, 24),
+        padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
         child: Row(
           children: [
             GestureDetector(

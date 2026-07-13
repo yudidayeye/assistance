@@ -67,7 +67,7 @@ class _MainShellPageState extends State<MainShellPage> {
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(24, safeTop + 18, 24, 16),
+          padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
           child: Row(
             children: [
               Expanded(

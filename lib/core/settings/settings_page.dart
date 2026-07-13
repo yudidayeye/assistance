@@ -190,7 +190,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 16, 24, 24),
+      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 16),
       child: Row(
         children: [
           GestureDetector(

@@ -172,7 +172,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   Widget _buildHeader(AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 16, 24, 16),
+      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
       child: Row(
         children: [
           GestureDetector(

@@ -112,7 +112,7 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          24, MediaQuery.of(context).padding.top + 16, 24, 16),
+          24, MediaQuery.of(context).padding.top + 12, 24, 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
