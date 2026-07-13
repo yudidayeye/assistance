@@ -11,6 +11,7 @@ import '../theme/theme_provider.dart';
 import 'import_export_service.dart';
 import '../../modules/period_book/services/period_book_settings.dart';
 import '../../modules/period_book/services/period_book_service.dart';
+import '../../modules/period_tracker/services/period_service.dart';
 
 /// 全局设置页面 — 简洁扁平风格
 ///
@@ -678,8 +679,9 @@ class _SettingsPageState extends State<SettingsPage> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     if (result.isSuccess) {
-      // 通知周期记账服务数据已变更，刷新首页卡片
+      // 通知各模块服务数据已变更，刷新首页卡片
       PeriodBookService.instance.notifyChanged();
+      PeriodService.instance.notifyChanged();
       _showSnackBar(
           '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录、'
           '${result.bookPeriodsCount}个周期、${result.bookStagesCount}个阶段、'

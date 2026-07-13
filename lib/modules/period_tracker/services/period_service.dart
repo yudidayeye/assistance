@@ -1,14 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/storage/database_service.dart';
 import '../models/period_record.dart';
 
 /// 经期记录服务
-class PeriodService {
+class PeriodService extends ChangeNotifier {
   static final PeriodService instance = PeriodService._();
   PeriodService._();
 
   final DatabaseService _db = DatabaseService.instance;
   static const String _table = 'mod_period_tracker_records';
+
+  void _notifyChanged() => notifyListeners();
+
+  /// 外部通知数据已变更（如导入后刷新 UI）
+  void notifyChanged() => notifyListeners();
 
   /// 获取所有记录（按开始日期倒序）
   Future<List<PeriodRecord>> getAllRecords() async {
@@ -26,6 +32,7 @@ class PeriodService {
   Future<void> insertRecord(PeriodRecord record) async {
     await _db.insert(_table, record.toMap());
     await _updateCycleLengths();
+    _notifyChanged();
   }
 
   /// 插入一条经期范围记录（start→end）
@@ -39,6 +46,7 @@ class PeriodService {
     );
     await _db.insert(_table, record.toMap());
     await _updateCycleLengths();
+    _notifyChanged();
   }
 
   /// 更新记录
@@ -50,18 +58,21 @@ class PeriodService {
       whereArgs: [record.id],
     );
     await _updateCycleLengths();
+    _notifyChanged();
   }
 
   /// 删除记录
   Future<void> deleteRecord(String id) async {
     await _db.delete(_table, where: 'id = ?', whereArgs: [id]);
     await _updateCycleLengths();
+    _notifyChanged();
   }
 
   /// 公开重算所有 cycle_length 值。
   /// 用于批量导入后一次性重算，避免每条记录单独触发。
   Future<void> recalculateCycleLengths() async {
     await _updateCycleLengths();
+    _notifyChanged();
   }
 
   /// 获取单条记录

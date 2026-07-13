@@ -4,6 +4,7 @@ import '../../core/module_system/tool_module.dart';
 import '../../core/module_system/module_summary.dart';
 import '../../core/theme/theme_extension.dart';
 import '../../modules/period_book/services/period_book_service.dart';
+import '../../modules/period_tracker/services/period_service.dart';
 import 'package:go_router/go_router.dart';
 
 /// 特色功能卡片 — 柔和状态容器风格
@@ -29,9 +30,12 @@ class _FeaturedCardState extends State<FeaturedCard> {
   void initState() {
     super.initState();
     _loadSummary();
-    // 监听周期记账数据变更，自动刷新卡片
+    // 监听模块数据变更，自动刷新卡片
     if (widget.module.moduleId == 'period_book') {
       PeriodBookService.instance.addListener(_onDataChanged);
+    }
+    if (widget.module.moduleId == 'period_tracker') {
+      PeriodService.instance.addListener(_onDataChanged);
     }
   }
 
@@ -39,6 +43,9 @@ class _FeaturedCardState extends State<FeaturedCard> {
   void dispose() {
     if (widget.module.moduleId == 'period_book') {
       PeriodBookService.instance.removeListener(_onDataChanged);
+    }
+    if (widget.module.moduleId == 'period_tracker') {
+      PeriodService.instance.removeListener(_onDataChanged);
     }
     super.dispose();
   }
