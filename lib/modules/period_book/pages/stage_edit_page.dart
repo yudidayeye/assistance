@@ -532,7 +532,23 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             )
           else
-            ..._expenses.map((expense) => _buildExpenseItem(appTheme, expense)),
+            ReorderableListView(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final item = _expenses.removeAt(oldIndex);
+                  _expenses.insert(newIndex, item);
+                });
+                _service.updateExpensesOrder(_expenses);
+              },
+              children: [
+                for (int i = 0; i < _expenses.length; i++)
+                  _buildExpenseItem(appTheme, _expenses[i], index: i),
+              ],
+            ),
           const SizedBox(height: 8),
           if (_expenseFormExpanded)
             _buildExpenseForm(appTheme)
@@ -563,7 +579,7 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
-  Widget _buildExpenseItem(AppThemeExtension appTheme, ExpenseRecord expense) {
+  Widget _buildExpenseItem(AppThemeExtension appTheme, ExpenseRecord expense, {int? index}) {
     final icon = expense.category == 'shopping'
         ? Icons.shopping_bag_outlined
         : Icons.category_outlined;
@@ -572,6 +588,7 @@ class _StageEditPageState extends State<StageEditPage> {
         : appTheme.roseLight;
 
     return Container(
+      key: ValueKey(expense.id),
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         border: Border(
@@ -583,6 +600,12 @@ class _StageEditPageState extends State<StageEditPage> {
       ),
       child: Row(
         children: [
+          Icon(
+            Icons.drag_handle_rounded,
+            color: appTheme.earthMedium.withValues(alpha: 0.4),
+            size: 18,
+          ),
+          const SizedBox(width: 8),
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 8),
           Expanded(
@@ -775,7 +798,10 @@ class _StageEditPageState extends State<StageEditPage> {
               fillColor: appTheme.cream,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(
+                  color: appTheme.earthMedium.withValues(alpha: 0.12),
+                  width: 1,
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
@@ -796,7 +822,10 @@ class _StageEditPageState extends State<StageEditPage> {
               fillColor: appTheme.cream,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(
+                  color: appTheme.earthMedium.withValues(alpha: 0.12),
+                  width: 1,
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
@@ -909,7 +938,10 @@ class _StageEditPageState extends State<StageEditPage> {
               fillColor: appTheme.cream,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(
+                  color: appTheme.earthMedium.withValues(alpha: 0.12),
+                  width: 1,
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
@@ -929,7 +961,10 @@ class _StageEditPageState extends State<StageEditPage> {
               fillColor: appTheme.cream,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(
+                  color: appTheme.earthMedium.withValues(alpha: 0.12),
+                  width: 1,
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
