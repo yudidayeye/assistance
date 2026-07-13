@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
-import '../../../shared/widgets/number_keyboard.dart';
 import '../models/period_record.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
@@ -511,150 +510,100 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   void _showEditStageBalanceDialog(StageRecord stage) {
     final appTheme = Theme.of(context).appTheme;
-    String balance = stage.balance?.toStringAsFixed(2) ?? '';
+    final balance = stage.balance?.toStringAsFixed(2) ?? '';
+    final controller = TextEditingController(text: balance);
 
     // 获取当前阶段的本金
     final stageIndex = _stages.indexWhere((s) => s.id == stage.id);
     final stageCalc = stageIndex >= 0 ? _calc!.stages[stageIndex] : null;
     final maxBalance = stageCalc?.baseAmount ?? 0;
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) {
-          return Container(
-            decoration: BoxDecoration(
-              color: appTheme.cream,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(appTheme.radiusXl),
-                topRight: Radius.circular(appTheme.radiusXl),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        title: Text(
+          '编辑余额',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '最大余额: ¥${maxBalance.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.6),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 标题
-                Padding(
-                  padding: const EdgeInsets.only(top: 20, bottom: 12),
-                  child: Text(
-                    '编辑余额',
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                    ),
-                  ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: appTheme.earth,
+              ),
+              decoration: InputDecoration(
+                prefixText: '¥ ',
+                prefixStyle: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earthMedium.withValues(alpha: 0.6),
                 ),
-                // 提示文字
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    '最大余额: ¥${maxBalance.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: appTheme.earthMedium.withValues(alpha: 0.6),
-                    ),
-                  ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 12),
-                // 输入显示
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          '¥',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            color: appTheme.earthMedium.withValues(alpha: 0.6),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            balance.isEmpty ? '0' : balance,
-                            style: TextStyle(
-                              fontFamily: GoogleFonts.dmSans().fontFamily,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w600,
-                              color: _isValidBalance(balance, maxBalance)
-                                  ? appTheme.earth
-                                  : appTheme.rose,
-                            ),
-                          ),
-                        ),
-                        if (balance.isNotEmpty)
-                          GestureDetector(
-                            onTap: () {
-                              setModalState(() => balance = '');
-                            },
-                            child: Icon(Icons.clear_rounded,
-                                color: appTheme.earthMedium.withValues(alpha: 0.4),
-                                size: 22),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // 数字键盘
-                NumberKeyboard(
-                  currentValue: balance,
-                  onValueChanged: (v) {
-                    setModalState(() => balance = v);
-                  },
-                  onDone: () async {
-                    final val = double.tryParse(balance);
-                    // 验证余额不能超过本金
-                    if (val != null && val > maxBalance) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}'),
-                          backgroundColor: appTheme.rose,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                    await _service.updateStageBalance(
-                      stage.id!,
-                      val,
-                    );
-                    await _loadData();
-                    Navigator.pop(ctx);
-                  },
-                  doneColor: _isValidBalance(balance, maxBalance)
-                      ? appTheme.primary
-                      : appTheme.rose,
-                ),
-                SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-              ],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
             ),
-          );
-        },
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final val = double.tryParse(controller.text.trim());
+              // 验证余额不能超过本金
+              if (val != null && val > maxBalance) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}'),
+                    backgroundColor: appTheme.rose,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+                return;
+              }
+              await _service.updateStageBalance(
+                stage.id!,
+                val,
+              );
+              await _loadData();
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+            child: Text('确定', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
       ),
     );
-  }
-
-  /// 验证余额是否有效（不超过本金）
-  bool _isValidBalance(String balance, double maxBalance) {
-    if (balance.isEmpty) return true;
-    final val = double.tryParse(balance);
-    if (val == null) return true;
-    return val <= maxBalance;
   }
 }

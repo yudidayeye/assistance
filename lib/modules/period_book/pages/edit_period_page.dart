@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
-import '../../../shared/widgets/number_keyboard.dart';
 import '../services/period_book_service.dart';
 
 /// 编辑周期页
@@ -424,107 +423,60 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
 
   void _showAmountKeyboard() {
     final appTheme = Theme.of(context).appTheme;
-    final current = _baseAmount;
-    final controller = TextEditingController(text: current);
-    final label = '初始本金';
+    final controller = TextEditingController(text: _baseAmount);
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: appTheme.cream,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(appTheme.radiusXl),
-            topRight: Radius.circular(appTheme.radiusXl),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        title: Text(
+          '初始本金',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 20, bottom: 12),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: appTheme.earth,
-                ),
-              ),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofocus: true,
+          style: TextStyle(
+            fontFamily: GoogleFonts.dmSans().fontFamily,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: appTheme.earth,
+          ),
+          decoration: InputDecoration(
+            prefixText: '¥ ',
+            prefixStyle: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: appTheme.earthMedium.withValues(alpha: 0.6),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: appTheme.creamDark,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      '¥',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: appTheme.earthMedium.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: controller,
-                        readOnly: true,
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.earth,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ),
-                    if (controller.text.isNotEmpty)
-                      GestureDetector(
-                        onTap: () {
-                          controller.clear();
-                          setState(() => _baseAmount = '');
-                        },
-                        child: Icon(Icons.clear_rounded,
-                            color: appTheme.earthMedium.withValues(alpha: 0.4),
-                            size: 22),
-                      ),
-                  ],
-                ),
-              ),
+            hintStyle: TextStyle(
+              color: appTheme.earthMedium.withValues(alpha: 0.4),
             ),
-            const SizedBox(height: 12),
-            NumberKeyboard(
-              currentValue: controller.text,
-              onValueChanged: (v) {
-                controller.text = v;
-                controller.selection = TextSelection.fromPosition(
-                  TextPosition(offset: v.length),
-                );
-                setState(() => _baseAmount = v);
-              },
-              onDone: () {
-                Navigator.pop(ctx);
-              },
-              doneColor: appTheme.primary,
-              doneText: '完成',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-          ],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() => _baseAmount = controller.text.trim());
+              Navigator.pop(ctx);
+            },
+            child: Text('确定', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
       ),
     );
   }

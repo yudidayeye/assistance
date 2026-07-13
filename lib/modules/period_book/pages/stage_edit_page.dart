@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
-import '../../../shared/widgets/number_keyboard.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
 import '../models/expense_record.dart';
@@ -29,7 +28,7 @@ class _StageEditPageState extends State<StageEditPage> {
   bool _additionFormExpanded = false;
   bool _expenseFormExpanded = false;
   final _additionReasonController = TextEditingController();
-  String _additionAmount = '';
+  final _additionAmountController = TextEditingController();
   String _expenseCategory = 'shopping';
   final _expenseAmountController = TextEditingController();
   final _expenseDescriptionController = TextEditingController();
@@ -722,13 +721,13 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   void _submitAddition() {
-    final amount = double.tryParse(_additionAmount);
+    final amount = double.tryParse(_additionAmountController.text);
     final reason = _additionReasonController.text.trim();
     if (amount == null || amount <= 0 || reason.isEmpty) return;
 
     _service.addAddition(widget.stageId, amount, reason).then((_) {
       _additionReasonController.clear();
-      _additionAmount = '';
+      _additionAmountController.clear();
       _loadData();
       // 保持展开状态，不清空
     });
@@ -784,44 +783,24 @@ class _StageEditPageState extends State<StageEditPage> {
           ),
           const SizedBox(height: 10),
           // 金额输入
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: appTheme.cream,
-              borderRadius: BorderRadius.circular(10),
+          TextField(
+            controller: _additionAmountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              hintText: '追加金额',
+              hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              filled: true,
+              fillColor: appTheme.cream,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            child: Row(
-              children: [
-                Text(
-                  '¥',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: appTheme.earthMedium.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _additionAmount.isEmpty ? '0' : _additionAmount,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.earth,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          // 数字键盘
-          NumberKeyboard(
-            currentValue: _additionAmount,
-            onValueChanged: (v) => setState(() => _additionAmount = v),
-            onDone: _submitAddition,
-            doneColor: appTheme.sage,
+            style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
           // 操作按钮行
