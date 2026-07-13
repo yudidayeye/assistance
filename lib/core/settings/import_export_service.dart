@@ -250,15 +250,13 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(period as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_period_book_periods
-           (id, start_date, end_date, in_progress_date, base_amount, balance, is_closed, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+           (id, start_date, end_date, base_amount, is_closed, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['start_date'],
           map['end_date'],
-          map['in_progress_date'],
           map['base_amount'],
-          map['balance'],
           map['is_closed'],
           map['created_at'],
           map['updated_at'],
@@ -273,14 +271,13 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(stage as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_period_book_stages
-           (id, period_id, start_date, end_date, current_date, balance, sort_order, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+           (id, period_id, start_date, end_date, balance, sort_order, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['period_id'],
           map['start_date'],
           map['end_date'],
-          map['current_date'],
           map['balance'],
           map['sort_order'],
           map['created_at'],
@@ -296,11 +293,11 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(addition as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_period_book_additions
-           (id, period_id, amount, reason, created_at)
+           (id, stage_id, amount, reason, created_at)
            VALUES (?, ?, ?, ?, ?)''',
         [
           map['id'],
-          map['period_id'],
+          map['stage_id'],
           map['amount'],
           map['reason'],
           map['created_at'],
@@ -315,14 +312,15 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(expense as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_period_book_expenses
-           (id, period_id, category, amount, description, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)''',
+           (id, stage_id, category, amount, description, sort_order, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
-          map['period_id'],
+          map['stage_id'],
           map['category'],
           map['amount'],
           map['description'],
+          map['sort_order'] ?? 0,
           map['created_at'],
         ],
       );
