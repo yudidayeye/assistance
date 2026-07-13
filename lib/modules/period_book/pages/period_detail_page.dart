@@ -38,6 +38,18 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   void initState() {
     super.initState();
     _loadData();
+    // 监听数据变更，自动刷新
+    _service.addListener(_onDataChanged);
+  }
+
+  @override
+  void dispose() {
+    _service.removeListener(_onDataChanged);
+    super.dispose();
+  }
+
+  void _onDataChanged() {
+    if (mounted) _loadData();
   }
 
   Future<void> _loadData() async {
