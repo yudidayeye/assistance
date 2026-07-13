@@ -32,7 +32,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   List<List<ExpenseRecord>> _stageExpenses = [];
   bool _loading = true;
 
-  bool get _isReadOnly => widget.periodId != null;
+  bool get _isReadOnly => false;
 
   @override
   void initState() {
