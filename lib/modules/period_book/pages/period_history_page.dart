@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/utils/format_utils.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
 import '../models/period_record.dart';
 import '../services/period_book_service.dart';
 
@@ -145,14 +146,10 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _periods.isEmpty
-                      ? Center(
-                          child: Text(
-                            '暂无历史记录',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: appTheme.earthMedium.withValues(alpha: 0.5),
-                            ),
-                          ),
+                      ? const EmptyStateWidget(
+                          icon: Icons.history_rounded,
+                          title: '暂无历史记录',
+                          subtitle: '删除的周期记录不会出现在这里',
                         )
                       : ListView(
                           padding: const EdgeInsets.only(top: 8, bottom: 24),
