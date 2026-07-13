@@ -60,6 +60,9 @@ class PeriodBookService extends ChangeNotifier {
 
   void _notifyChanged() => notifyListeners();
 
+  /// 外部通知数据已变更（如导入后刷新 UI）
+  void notifyChanged() => notifyListeners();
+
   // ══════════════════════════════════════════════════════════
   // 周期 CRUD
   // ══════════════════════════════════════════════════════════
