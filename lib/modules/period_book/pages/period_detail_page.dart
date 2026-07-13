@@ -55,7 +55,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      if (_isReadOnly && widget.periodId != null) {
+      if (widget.periodId != null) {
         _period = await _service.getPeriodById(widget.periodId!);
       } else {
         _period = await _service.getOngoingPeriod();
