@@ -799,7 +799,7 @@ class _StageEditPageState extends State<StageEditPage> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.12),
+                  color: appTheme.earthMedium.withValues(alpha: 0.18),
                   width: 1,
                 ),
               ),
@@ -823,7 +823,7 @@ class _StageEditPageState extends State<StageEditPage> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.12),
+                  color: appTheme.earthMedium.withValues(alpha: 0.18),
                   width: 1,
                 ),
               ),
@@ -939,7 +939,7 @@ class _StageEditPageState extends State<StageEditPage> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.12),
+                  color: appTheme.earthMedium.withValues(alpha: 0.18),
                   width: 1,
                 ),
               ),
@@ -962,7 +962,7 @@ class _StageEditPageState extends State<StageEditPage> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.12),
+                  color: appTheme.earthMedium.withValues(alpha: 0.18),
                   width: 1,
                 ),
               ),
