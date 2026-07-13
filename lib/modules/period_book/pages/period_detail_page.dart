@@ -275,6 +275,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     return PeriodSummaryCard(
       calc: _calc!,
       period: _period!,
+      onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(_stages.last),
       onTapTotalBase: _showTotalBaseDetail,
     );
   }

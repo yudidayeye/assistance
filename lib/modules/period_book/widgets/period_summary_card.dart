@@ -47,8 +47,6 @@ class PeriodSummaryCard extends StatelessWidget {
             ? FormatUtils.formatAmount(calc.balance!)
             : '¥0.00',
         color: appTheme.primaryDark,
-        isEditable: true,
-        onEdit: onEditBalance,
       ),
       _SummaryItem(
         label: '生活',
@@ -70,7 +68,7 @@ class PeriodSummaryCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // 左侧竖线 + 标题
+          // 左侧竖线 + 标题 + 余额编辑按钮
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
@@ -93,6 +91,37 @@ class PeriodSummaryCard extends StatelessWidget {
                     color: appTheme.earthMedium,
                   ),
                 ),
+                const Spacer(),
+                if (onEditBalance != null)
+                  GestureDetector(
+                    onTap: onEditBalance,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: appTheme.primaryDark.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '余额',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: appTheme.primaryDark,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 12,
+                            color: appTheme.primaryDark,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -190,25 +219,6 @@ class PeriodSummaryCard extends StatelessWidget {
                     : appTheme.earth,
               ),
             ),
-          if (item.isEditable && item.onEdit != null) ...[
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: item.onEdit,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: appTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.edit_outlined,
-                  size: 14,
-                  color: appTheme.primary,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -219,8 +229,6 @@ class _SummaryItem {
   final String label;
   final String value;
   final Color color;
-  final bool isEditable;
-  final VoidCallback? onEdit;
   final bool isClickable;
   final VoidCallback? onTap;
 
@@ -228,8 +236,6 @@ class _SummaryItem {
     required this.label,
     required this.value,
     required this.color,
-    this.isEditable = false,
-    this.onEdit,
     this.isClickable = false,
     this.onTap,
   });
