@@ -154,19 +154,16 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                             ),
                           ),
                         )
-                      : SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // 表头
-                              _buildTableHeader(appTheme),
-                              // 数据行
-                              ..._periods.map((period) {
-                                return _buildPeriodRow(appTheme, period);
-                              }),
-                            ],
-                          ),
+                      : ListView(
+                          padding: const EdgeInsets.only(top: 8, bottom: 24),
+                          children: [
+                            // 表头
+                            _buildTableHeader(appTheme),
+                            // 数据行
+                            ..._periods.map((period) {
+                              return _buildPeriodRow(appTheme, period);
+                            }),
+                          ],
                         ),
             ),
           ],
@@ -218,17 +215,15 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     );
 
     return Container(
-      width: 720, // 确保最小宽度，移动端可横向滚动
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: appTheme.creamDark.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusSm),
       ),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('周期', style: headerStyle)),
-          Expanded(flex: 2, child: Text('开始日期', style: headerStyle)),
-          Expanded(flex: 2, child: Text('结束日期', style: headerStyle)),
+          Expanded(flex: 4, child: Text('周期', style: headerStyle)),
           Expanded(flex: 2, child: Text('总支出', style: headerStyle)),
           Expanded(flex: 2, child: Text('总追加', style: headerStyle)),
           Expanded(flex: 2, child: Text('余额', style: headerStyle)),
@@ -250,18 +245,18 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     return GestureDetector(
       onTap: () => context.push('/period_book/detail/${period.id}'),
       child: Container(
-        width: 720,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(appTheme.radiusSm),
           border: Border.all(color: appTheme.cardBorder.withValues(alpha: 0.5), width: 0.5),
         ),
         child: Row(
           children: [
-            // 周期名称
+            // 周期名称（已包含日期范围）
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Row(
                 children: [
                   Icon(
@@ -282,28 +277,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                     ),
                   ),
                 ],
-              ),
-            ),
-            // 开始日期
-            Expanded(
-              flex: 2,
-              child: Text(
-                _fmtDate(period.startDate),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: appTheme.earthMedium,
-                ),
-              ),
-            ),
-            // 结束日期
-            Expanded(
-              flex: 2,
-              child: Text(
-                _fmtDate(period.endDate),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: appTheme.earthMedium,
-                ),
               ),
             ),
             // 总支出
