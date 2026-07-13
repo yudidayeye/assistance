@@ -40,6 +40,7 @@ class ImportExportService {
     // 3. 读取所有周期记账数据
     final bookPeriods = await _db.query('mod_period_book_periods',
         orderBy: 'start_date ASC');
+    final bookStages = await _db.query('mod_period_book_stages');
     final bookAdditions = await _db.query('mod_period_book_additions');
     final bookExpenses = await _db.query('mod_period_book_expenses');
 
@@ -53,6 +54,7 @@ class ImportExportService {
         'app_settings': settings,
         'period_tracker_records': periodRecords,
         'period_book_periods': bookPeriods,
+        'period_book_stages': bookStages,
         'period_book_additions': bookAdditions,
         'period_book_expenses': bookExpenses,
       },
@@ -126,12 +128,21 @@ class ImportExportService {
           (data['period_tracker_records'] as List<dynamic>?) ?? [];
       final bookPeriods =
           (data['period_book_periods'] as List<dynamic>?) ?? [];
+      final bookStages =
+          (data['period_book_stages'] as List<dynamic>?) ?? [];
+      final bookAdditions =
+          (data['period_book_additions'] as List<dynamic>?) ?? [];
+      final bookExpenses =
+          (data['period_book_expenses'] as List<dynamic>?) ?? [];
 
       return ImportPreviewResult.ready(
         filePath: filePath,
         settingsCount: settings.length,
         periodRecordsCount: periodRecords.length,
         bookPeriodsCount: bookPeriods.length,
+        bookStagesCount: bookStages.length,
+        bookAdditionsCount: bookAdditions.length,
+        bookExpensesCount: bookExpenses.length,
       );
     } catch (e) {
       if (e is FormatException) {
@@ -157,6 +168,9 @@ class ImportExportService {
       int settingsCount = 0;
       int periodRecordsCount = 0;
       int bookPeriodsCount = 0;
+      int bookStagesCount = 0;
+      int bookAdditionsCount = 0;
+      int bookExpensesCount = 0;
 
       await _db.transaction((txn) async {
         // Phase 1: 合并 app_settings
@@ -197,7 +211,11 @@ class ImportExportService {
         }
 
         // Phase 4: 合并周期记账数据
-        bookPeriodsCount = await _importPeriodBookData(txn, data);
+        final bookResult = await _importPeriodBookData(txn, data);
+        bookPeriodsCount = bookResult['periods']!;
+        bookStagesCount = bookResult['stages']!;
+        bookAdditionsCount = bookResult['additions']!;
+        bookExpensesCount = bookResult['expenses']!;
       });
 
       // 导入后刷新运行时缓存
@@ -208,6 +226,9 @@ class ImportExportService {
         settingsCount: settingsCount,
         periodRecordsCount: periodRecordsCount,
         bookPeriodsCount: bookPeriodsCount,
+        bookStagesCount: bookStagesCount,
+        bookAdditionsCount: bookAdditionsCount,
+        bookExpensesCount: bookExpensesCount,
       );
     } catch (e, stack) {
       debugPrint('Import error: $e\n$stack');
@@ -216,9 +237,12 @@ class ImportExportService {
   }
 
   /// 导入周期记账数据
-  Future<int> _importPeriodBookData(
+  Future<Map<String, int>> _importPeriodBookData(
       dynamic txn, Map<String, dynamic> data) async {
-    int count = 0;
+    int periodsCount = 0;
+    int stagesCount = 0;
+    int additionsCount = 0;
+    int expensesCount = 0;
 
     // 导入周期
     final periods = (data['period_book_periods'] as List<dynamic>?) ?? [];
@@ -240,7 +264,30 @@ class ImportExportService {
           map['updated_at'],
         ],
       );
-      count++;
+      periodsCount++;
+    }
+
+    // 导入阶段
+    final stages = (data['period_book_stages'] as List<dynamic>?) ?? [];
+    for (final stage in stages) {
+      final map = Map<String, dynamic>.from(stage as Map);
+      await txn.rawInsert(
+        '''INSERT OR REPLACE INTO mod_period_book_stages
+           (id, period_id, start_date, end_date, current_date, balance, sort_order, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        [
+          map['id'],
+          map['period_id'],
+          map['start_date'],
+          map['end_date'],
+          map['current_date'],
+          map['balance'],
+          map['sort_order'],
+          map['created_at'],
+          map['updated_at'],
+        ],
+      );
+      stagesCount++;
     }
 
     // 导入追加记录
@@ -259,6 +306,7 @@ class ImportExportService {
           map['created_at'],
         ],
       );
+      additionsCount++;
     }
 
     // 导入支出明细
@@ -278,9 +326,15 @@ class ImportExportService {
           map['created_at'],
         ],
       );
+      expensesCount++;
     }
 
-    return count;
+    return {
+      'periods': periodsCount,
+      'stages': stagesCount,
+      'additions': additionsCount,
+      'expenses': expensesCount,
+    };
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -336,6 +390,22 @@ class ImportExportService {
         data['period_tracker_records'] is! List) {
       return '生理期记录数据格式不正确';
     }
+    if (data['period_book_periods'] != null &&
+        data['period_book_periods'] is! List) {
+      return '周期记账数据格式不正确';
+    }
+    if (data['period_book_stages'] != null &&
+        data['period_book_stages'] is! List) {
+      return '阶段数据格式不正确';
+    }
+    if (data['period_book_additions'] != null &&
+        data['period_book_additions'] is! List) {
+      return '追加记录数据格式不正确';
+    }
+    if (data['period_book_expenses'] != null &&
+        data['period_book_expenses'] is! List) {
+      return '支出记录数据格式不正确';
+    }
 
     return null;
   }
@@ -388,6 +458,9 @@ class ImportPreviewResult {
   final int settingsCount;
   final int periodRecordsCount;
   final int bookPeriodsCount;
+  final int bookStagesCount;
+  final int bookAdditionsCount;
+  final int bookExpensesCount;
 
   const ImportPreviewResult._({
     this.isReady = false,
@@ -397,6 +470,9 @@ class ImportPreviewResult {
     this.settingsCount = 0,
     this.periodRecordsCount = 0,
     this.bookPeriodsCount = 0,
+    this.bookStagesCount = 0,
+    this.bookAdditionsCount = 0,
+    this.bookExpensesCount = 0,
   });
 
   factory ImportPreviewResult.ready({
@@ -404,6 +480,9 @@ class ImportPreviewResult {
     required int settingsCount,
     required int periodRecordsCount,
     int bookPeriodsCount = 0,
+    int bookStagesCount = 0,
+    int bookAdditionsCount = 0,
+    int bookExpensesCount = 0,
   }) =>
       ImportPreviewResult._(
         isReady: true,
@@ -411,6 +490,9 @@ class ImportPreviewResult {
         settingsCount: settingsCount,
         periodRecordsCount: periodRecordsCount,
         bookPeriodsCount: bookPeriodsCount,
+        bookStagesCount: bookStagesCount,
+        bookAdditionsCount: bookAdditionsCount,
+        bookExpensesCount: bookExpensesCount,
       );
 
   factory ImportPreviewResult.userCancelled() =>
@@ -426,6 +508,9 @@ class ImportResult {
   final int settingsCount;
   final int periodRecordsCount;
   final int bookPeriodsCount;
+  final int bookStagesCount;
+  final int bookAdditionsCount;
+  final int bookExpensesCount;
 
   const ImportResult._({
     this.isSuccess = false,
@@ -433,18 +518,27 @@ class ImportResult {
     this.settingsCount = 0,
     this.periodRecordsCount = 0,
     this.bookPeriodsCount = 0,
+    this.bookStagesCount = 0,
+    this.bookAdditionsCount = 0,
+    this.bookExpensesCount = 0,
   });
 
   factory ImportResult.success({
     required int settingsCount,
     required int periodRecordsCount,
     int bookPeriodsCount = 0,
+    int bookStagesCount = 0,
+    int bookAdditionsCount = 0,
+    int bookExpensesCount = 0,
   }) =>
       ImportResult._(
         isSuccess: true,
         settingsCount: settingsCount,
         periodRecordsCount: periodRecordsCount,
         bookPeriodsCount: bookPeriodsCount,
+        bookStagesCount: bookStagesCount,
+        bookAdditionsCount: bookAdditionsCount,
+        bookExpensesCount: bookExpensesCount,
       );
 
   factory ImportResult.error(String message) =>

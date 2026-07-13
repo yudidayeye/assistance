@@ -664,6 +664,9 @@ class _SettingsPageState extends State<SettingsPage> {
       settingsCount: preview.settingsCount,
       periodRecordsCount: preview.periodRecordsCount,
       bookPeriodsCount: preview.bookPeriodsCount,
+      bookStagesCount: preview.bookStagesCount,
+      bookAdditionsCount: preview.bookAdditionsCount,
+      bookExpensesCount: preview.bookExpensesCount,
     );
     if (!mounted || confirmed != true) return;
 
@@ -675,7 +678,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
     if (result.isSuccess) {
       _showSnackBar(
-          '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录、${result.bookPeriodsCount}个记账周期');
+          '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录、'
+          '${result.bookPeriodsCount}个周期、${result.bookStagesCount}个阶段、'
+          '${result.bookAdditionsCount}条追加、${result.bookExpensesCount}条支出');
       setState(() {});
     } else {
       _showErrorDialog('导入失败', result.error ?? '未知错误');
@@ -686,6 +691,9 @@ class _SettingsPageState extends State<SettingsPage> {
     required int settingsCount,
     required int periodRecordsCount,
     required int bookPeriodsCount,
+    required int bookStagesCount,
+    required int bookAdditionsCount,
+    required int bookExpensesCount,
   }) {
     final appTheme = Theme.of(context).appTheme;
     return showDialog<bool>(
@@ -723,7 +731,8 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 10),
               Text(
                 '将导入 $settingsCount 项设置、$periodRecordsCount 条生理期记录'
-                '${bookPeriodsCount > 0 ? '、$bookPeriodsCount 个记账周期' : ''}。\n'
+                '、$bookPeriodsCount 个周期、$bookStagesCount 个阶段'
+                '、$bookAdditionsCount 条追加、$bookExpensesCount 条支出。\n'
                 '已存在的设置和记录将被覆盖。',
                 style: TextStyle(
                     fontSize: 14, color: appTheme.earthMedium, height: 1.5),
