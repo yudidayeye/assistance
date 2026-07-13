@@ -795,11 +795,11 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Colors.white.withValues(alpha: 0.8),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.18),
+                  color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
                 ),
               ),
@@ -819,11 +819,11 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Colors.white.withValues(alpha: 0.8),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.18),
+                  color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
                 ),
               ),
@@ -935,11 +935,11 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Colors.white.withValues(alpha: 0.8),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.18),
+                  color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
                 ),
               ),
@@ -958,11 +958,11 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Colors.white.withValues(alpha: 0.8),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.18),
+                  color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
                 ),
               ),
