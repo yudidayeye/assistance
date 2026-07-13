@@ -45,7 +45,7 @@ class PeriodSummaryCard extends StatelessWidget {
         label: '余额',
         value: calc.balance != null
             ? FormatUtils.formatAmount(calc.balance!)
-            : '—',
+            : '¥0.00',
         color: appTheme.primaryDark,
         isEditable: true,
         onEdit: onEditBalance,
@@ -54,7 +54,7 @@ class PeriodSummaryCard extends StatelessWidget {
         label: '生活',
         value: calc.livingTotal != null
             ? '-${FormatUtils.formatAmount(calc.livingTotal!)}'
-            : '—',
+            : '¥0.00',
         color: appTheme.earthLight,
       ),
     ];
@@ -164,7 +164,7 @@ class PeriodSummaryCard extends StatelessWidget {
                       fontFamily: GoogleFonts.dmSans().fontFamily,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: item.value == '—'
+                      color: item.value.startsWith('¥0') || item.value == '—'
                           ? appTheme.earthMedium.withValues(alpha: 0.5)
                           : item.color,
                     ),
@@ -185,7 +185,7 @@ class PeriodSummaryCard extends StatelessWidget {
                 fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: item.value == '—'
+                color: item.value.startsWith('¥0') || item.value == '—'
                     ? appTheme.earthMedium.withValues(alpha: 0.5)
                     : appTheme.earth,
               ),

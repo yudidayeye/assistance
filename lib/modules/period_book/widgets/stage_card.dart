@@ -187,7 +187,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   label: '购物',
                   value: calc.shoppingTotal > 0
                       ? '-¥${calc.shoppingTotal.toStringAsFixed(2)}'
-                      : '—',
+                      : '¥0.00',
                   valueColor: calc.shoppingTotal > 0 ? appTheme.sage : appTheme.earthMedium.withValues(alpha: 0.4),
                 ),
                 const SizedBox(height: 8),
@@ -196,7 +196,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   label: '其他',
                   value: calc.otherTotal > 0
                       ? '-¥${calc.otherTotal.toStringAsFixed(2)}'
-                      : '—',
+                      : '¥0.00',
                   valueColor: calc.otherTotal > 0 ? appTheme.roseLight : appTheme.earthMedium.withValues(alpha: 0.4),
                 ),
                 const SizedBox(height: 8),
@@ -205,7 +205,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   label: '余额',
                   value: calc.balance != null
                       ? '¥${calc.balance!.toStringAsFixed(2)}'
-                      : '—',
+                      : '¥0.00',
                   valueColor: calc.balance != null ? appTheme.primary : appTheme.earthMedium.withValues(alpha: 0.4),
                   trailing: widget.onEditBalance != null
                       ? GestureDetector(
@@ -231,7 +231,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   label: '生活',
                   value: calc.livingTotal != null
                       ? '-¥${calc.livingTotal!.abs().toStringAsFixed(2)} / ${stage.totalDays}天 = -¥${calc.livingDailyAvg!.abs().toStringAsFixed(2)}/天'
-                      : '—',
+                      : '¥0.00',
                   valueColor: calc.livingTotal != null ? appTheme.earthMedium : appTheme.earthMedium.withValues(alpha: 0.4),
                   valueFontSize: 12,
                 ),

@@ -426,9 +426,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           ),
           if (isEmpty)
             Text(
-              '—',
+              '¥0.00',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: isTotal ? 16 : 14,
+                fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
                 color: appTheme.earthMedium.withValues(alpha: 0.4),
               ),
             )

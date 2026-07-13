@@ -308,7 +308,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
               child: Text(
                 balance != null
                     ? FormatUtils.formatAmount(balance)
-                    : '—',
+                    : '¥0.00',
                 style: TextStyle(
                   fontSize: 13,
                   color: balance != null

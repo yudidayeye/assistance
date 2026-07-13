@@ -345,7 +345,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
               ),
               Text(
                 value.isEmpty
-                    ? (isOptional ? '—' : '0')
+                    ? '0'
                     : '¥$value',
                 style: TextStyle(
                   fontFamily: GoogleFonts.dmSans().fontFamily,
