@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/module_system/tool_module.dart';
 import '../../core/module_system/module_summary.dart';
 import '../../core/theme/theme_extension.dart';
+import '../../modules/period_book/services/period_book_service.dart';
 import 'package:go_router/go_router.dart';
 
 /// 特色功能卡片 — 柔和状态容器风格
@@ -22,11 +23,28 @@ class FeaturedCard extends StatefulWidget {
 
 class _FeaturedCardState extends State<FeaturedCard> {
   ModuleSummary? _summary;
+  bool _refreshing = false;
 
   @override
   void initState() {
     super.initState();
     _loadSummary();
+    // 监听周期记账数据变更，自动刷新卡片
+    if (widget.module.moduleId == 'period_book') {
+      PeriodBookService.instance.addListener(_onDataChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.module.moduleId == 'period_book') {
+      PeriodBookService.instance.removeListener(_onDataChanged);
+    }
+    super.dispose();
+  }
+
+  void _onDataChanged() {
+    if (mounted) refresh();
   }
 
   Future<void> _loadSummary() async {
@@ -34,6 +52,14 @@ class _FeaturedCardState extends State<FeaturedCard> {
     if (mounted) {
       setState(() => _summary = s);
     }
+  }
+
+  /// 外部触发刷新（如从子页面返回后）
+  Future<void> refresh() async {
+    if (_refreshing) return;
+    _refreshing = true;
+    await _loadSummary();
+    _refreshing = false;
   }
 
   @override

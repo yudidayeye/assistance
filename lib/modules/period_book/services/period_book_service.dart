@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../../core/storage/database_service.dart';
 import '../models/period_record.dart';
 import '../models/stage_record.dart';
@@ -51,11 +52,13 @@ class PeriodCalculations {
 }
 
 /// 周期记账数据服务 — CRUD + 业务计算
-class PeriodBookService {
+class PeriodBookService extends ChangeNotifier {
   static final PeriodBookService instance = PeriodBookService._();
   PeriodBookService._();
 
   final DatabaseService _db = DatabaseService.instance;
+
+  void _notifyChanged() => notifyListeners();
 
   // ══════════════════════════════════════════════════════════
   // 周期 CRUD
@@ -85,6 +88,7 @@ class PeriodBookService {
     // 自动创建阶段
     await _autoCreateStages(id, startDate, endDate);
 
+    _notifyChanged();
     return id;
   }
 
@@ -139,6 +143,7 @@ class PeriodBookService {
       where: 'id = ?',
       whereArgs: [id],
     );
+    _notifyChanged();
   }
 
   /// 标记周期为已结束
@@ -153,6 +158,7 @@ class PeriodBookService {
         where: 'period_id = ?', whereArgs: [id]);
     await _db.delete('mod_period_book_periods',
         where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
   }
 
   /// 检查日期是否与已有周期重叠
@@ -277,7 +283,7 @@ class PeriodBookService {
     required int sortOrder,
   }) async {
     final now = DateTime.now().toIso8601String();
-    return _db.insert('mod_period_book_stages', {
+    final id = await _db.insert('mod_period_book_stages', {
       'period_id': periodId,
       'start_date': startDate,
       'end_date': endDate,
@@ -286,6 +292,8 @@ class PeriodBookService {
       'created_at': now,
       'updated_at': now,
     });
+    _notifyChanged();
+    return id;
   }
 
   /// 更新阶段
@@ -297,6 +305,7 @@ class PeriodBookService {
       where: 'id = ?',
       whereArgs: [id],
     );
+    _notifyChanged();
   }
 
   /// 更新阶段余额
@@ -312,6 +321,7 @@ class PeriodBookService {
         where: 'stage_id = ?', whereArgs: [id]);
     await _db.delete('mod_period_book_stages',
         where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
   }
 
   /// 获取最后一个阶段
@@ -333,12 +343,14 @@ class PeriodBookService {
 
   Future<int> addAddition(int stageId, double amount, String reason) async {
     final now = DateTime.now().toIso8601String();
-    return _db.insert('mod_period_book_additions', {
+    final id = await _db.insert('mod_period_book_additions', {
       'stage_id': stageId,
       'amount': amount,
       'reason': reason,
       'created_at': now,
     });
+    _notifyChanged();
+    return id;
   }
 
   Future<List<AdditionRecord>> getAdditionsByStage(int stageId) async {
@@ -369,6 +381,7 @@ class PeriodBookService {
   Future<void> deleteAddition(int id) async {
     await _db.delete('mod_period_book_additions',
         where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
   }
 
   // ══════════════════════════════════════════════════════════
@@ -395,6 +408,9 @@ class PeriodBookService {
       'description': description,
       'sort_order': sortOrder,
       'created_at': now,
+    }).then((id) {
+      _notifyChanged();
+      return id;
     });
   }
 
@@ -421,6 +437,7 @@ class PeriodBookService {
       });
       sortOrder++;
     }
+    _notifyChanged();
   }
 
   Future<List<ExpenseRecord>> getExpensesByStage(int stageId) async {
@@ -464,6 +481,7 @@ class PeriodBookService {
   Future<void> deleteExpense(int id) async {
     await _db.delete('mod_period_book_expenses',
         where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
   }
 
   /// 批量更新支出排序
@@ -475,6 +493,7 @@ class PeriodBookService {
             where: 'id = ?', whereArgs: [expense.id]);
       }
     }
+    _notifyChanged();
   }
 
   // ══════════════════════════════════════════════════════════

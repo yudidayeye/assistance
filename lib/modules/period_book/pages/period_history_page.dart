@@ -323,18 +323,20 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
             // 操作
             Expanded(
               flex: 1,
-              child: GestureDetector(
-                onTap: () => _confirmDelete(period),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: appTheme.rose.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.delete_outline_rounded,
-                    size: 16,
-                    color: appTheme.rose,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () => _confirmDelete(period),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: appTheme.rose.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 16,
+                      color: appTheme.rose,
+                    ),
                   ),
                 ),
               ),
