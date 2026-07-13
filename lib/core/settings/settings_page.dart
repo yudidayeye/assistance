@@ -923,6 +923,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       await _db.clearAllBusinessData();
                       if (!context.mounted) return;
                       Navigator.pop(ctx);
+                      // 通知各模块刷新首页卡片
+                      PeriodBookService.instance.notifyChanged();
+                      PeriodService.instance.notifyChanged();
                       _showSnackBar('业务数据已清除');
                     },
                     child: Container(
