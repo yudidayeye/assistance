@@ -123,50 +123,56 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   ),
                 ),
                 const SizedBox(width: 12),
-                // 日期范围
+                // 阶段标题 + 时间 + 编辑图标
                 Expanded(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '第${stage.sortOrder}阶段',
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.earth,
-                        ),
-                      ),
-                      Text(
-                        '${start.month}.${start.day.toString().padLeft(2, '0')} ~ ${end.month}.${end.day.toString().padLeft(2, '0')}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: appTheme.earthMedium.withValues(alpha: 0.6),
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            '第${stage.sortOrder}阶段',
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.dmSans().fontFamily,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: appTheme.earth,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${start.month}.${start.day.toString().padLeft(2, '0')} ~ ${end.month}.${end.day.toString().padLeft(2, '0')}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: appTheme.earthMedium.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          const Spacer(),
+                          if (widget.onEdit != null) ...[
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: widget.onEdit,
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: appTheme.primary.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.edit_outlined,
+                                  size: 16,
+                                  color: appTheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
                 ),
-                // 编辑图标
-                if (widget.onEdit != null) ...[
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: widget.onEdit,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: appTheme.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.edit_outlined,
-                        size: 16,
-                        color: appTheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
