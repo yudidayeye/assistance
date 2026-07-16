@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../shared/utils/format_utils.dart';
 import '../models/period_record.dart';
-import '../services/period_book_service.dart';
+import '../services/period_book_service.dart' show PeriodCalculations;
 
 /// 周期汇总卡片 — 展示总本金/总支出/余额/大额
 class PeriodSummaryCard extends StatelessWidget {
@@ -30,35 +30,36 @@ class PeriodSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
     final items = [
-      _SummaryItem(
+      _SummaryRowItem(
         label: '总本金',
         value: FormatUtils.formatAmount(calc.totalBase),
         color: appTheme.primary,
-        isClickable: onTapTotalBase != null,
         onTap: onTapTotalBase,
+        showArrow: onTapTotalBase != null,
       ),
-      _SummaryItem(
+      _SummaryRowItem(
         label: '总支出',
         value: '-${FormatUtils.formatAmount(calc.totalBase - (calc.balance ?? 0))}',
         color: appTheme.roseLight,
-        isClickable: onTapTotalExpense != null,
         onTap: onTapTotalExpense,
+        showArrow: onTapTotalExpense != null,
       ),
-      _SummaryItem(
+      _SummaryRowItem(
         label: '余额',
         value: calc.balance != null
             ? FormatUtils.formatAmount(calc.balance!)
             : '¥0.00',
         color: appTheme.primaryDark,
-        isBalance: true,
+        onTap: onEditBalance,
+        showArrow: onEditBalance != null,
       ),
       if (largeItemsNet != null)
-        _SummaryItem(
+        _SummaryRowItem(
           label: '大额',
           value: _formatLargeItemsValue(largeItemsNet!),
           color: appTheme.earthMedium,
-          isLargeItem: true,
-          onEdit: onEditLargeItems,
+          onTap: onEditLargeItems,
+          showArrow: onEditLargeItems != null,
         ),
     ];
 
@@ -112,7 +113,7 @@ class PeriodSummaryCard extends StatelessWidget {
                       color: appTheme.earthMedium.withValues(alpha: 0.07),
                     ),
                   ),
-                _buildItemRow(appTheme, item),
+                _buildSummaryRow(appTheme, item),
               ],
             );
           }),
@@ -121,105 +122,65 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildItemRow(AppThemeExtension appTheme, _SummaryItem item) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: item.color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(
-              child: Text(
-                item.label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: item.color,
-                ),
+  Widget _buildSummaryRow(AppThemeExtension appTheme, _SummaryRowItem row) {
+    final valueColor = row.value.startsWith('¥0') || row.value == '—'
+        ? appTheme.earthMedium.withValues(alpha: 0.5)
+        : row.color;
+
+    return GestureDetector(
+      onTap: row.onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: row.color.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
               ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  item.label,
+              child: Center(
+                child: Text(
+                  row.label,
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: appTheme.earth,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: row.color,
                   ),
                 ),
-                if (item.isBalance && onEditBalance != null) ...[
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: onEditBalance,
-                    child: Icon(
-                      Icons.create_outlined,
-                      size: 14,
-                      color: appTheme.primaryDark.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-                if (item.isLargeItem && onEditLargeItems != null) ...[
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: onEditLargeItems,
-                    child: Icon(
-                      Icons.edit_outlined,
-                      size: 14,
-                      color: appTheme.earthMedium.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (item.isClickable)
-            GestureDetector(
-              onTap: item.onTap,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    item.value,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: item.value.startsWith('¥0') || item.value == '—'
-                          ? appTheme.earthMedium.withValues(alpha: 0.5)
-                          : item.color,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: item.color.withValues(alpha: 0.6),
-                  ),
-                ],
               ),
-            )
-          else
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                row.label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: appTheme.earth,
+                ),
+              ),
+            ),
             Text(
-              item.value,
+              row.value,
               style: TextStyle(
                 fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: item.value.startsWith('¥0') || item.value == '—'
-                    ? appTheme.earthMedium.withValues(alpha: 0.5)
-                    : appTheme.earth,
+                color: valueColor,
               ),
             ),
-        ],
+            if (row.showArrow) ...[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: appTheme.earthMedium.withValues(alpha: 0.4),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -231,24 +192,18 @@ class PeriodSummaryCard extends StatelessWidget {
   }
 }
 
-class _SummaryItem {
+class _SummaryRowItem {
   final String label;
   final String value;
   final Color color;
-  final bool isClickable;
-  final bool isBalance;
-  final bool isLargeItem;
   final VoidCallback? onTap;
-  final VoidCallback? onEdit;
+  final bool showArrow;
 
-  _SummaryItem({
+  _SummaryRowItem({
     required this.label,
     required this.value,
     required this.color,
-    this.isClickable = false,
-    this.isBalance = false,
-    this.isLargeItem = false,
     this.onTap,
-    this.onEdit,
+    this.showArrow = false,
   });
 }
