@@ -229,7 +229,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   appTheme: appTheme,
                   label: '生活',
                   value: calc.livingTotal != null
-                      ? '-¥${calc.livingTotal!.abs().toStringAsFixed(2)} / ${stage.totalDays}天 = -¥${calc.livingDailyAvg!.abs().toStringAsFixed(2)}/天'
+                      ? '-¥${calc.livingTotal!.abs().toStringAsFixed(2)} / ${stage.livingDays}天 = -¥${calc.livingDailyAvg!.abs().toStringAsFixed(2)}/天'
                       : '¥0.00',
                   valueColor: calc.livingTotal != null ? appTheme.earthMedium : appTheme.earthMedium.withValues(alpha: 0.4),
                   valueFontSize: 12,
