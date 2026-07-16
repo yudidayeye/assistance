@@ -8,7 +8,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 8;
+  static const int _currentVersion = 9;
 
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {
@@ -168,11 +168,17 @@ class DatabaseService {
       await _migrateToV8(db);
     }
 
+    // 如果从 v8 升级到 v9，添加大额记录表
+    if (oldVersion < 9 && newVersion >= 9) {
+      await _migrateToV9(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
       if (v == 7) continue; // 已经在上面处理了
       if (v == 8) continue; // 已经在上面处理了
+      if (v == 9) continue; // 已经在上面处理了
 
       await db.transaction((txn) async {
         if (v == 2) {
@@ -348,6 +354,38 @@ class DatabaseService {
   Future<void> _migrateToV8(Database db) async {
     await db.execute(
       'ALTER TABLE mod_period_book_stages ADD COLUMN current_date TEXT',
+    );
+  }
+
+  /// v9 迁移：添加大额记录表（周期级，不计入总本金和总支出）
+  Future<void> _migrateToV9(Database db) async {
+    await db.execute('''
+      CREATE TABLE mod_period_book_large_additions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        period_id INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        reason TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE mod_period_book_large_expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        period_id INTEGER NOT NULL,
+        category TEXT NOT NULL,
+        amount REAL NOT NULL,
+        description TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_pb_large_additions_period ON mod_period_book_large_additions(period_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_pb_large_expenses_period ON mod_period_book_large_expenses(period_id)',
     );
   }
 

@@ -5,13 +5,15 @@ import '../../../../shared/utils/format_utils.dart';
 import '../models/period_record.dart';
 import '../services/period_book_service.dart';
 
-/// 周期汇总卡片 — 展示总本金/总支出/余额
+/// 周期汇总卡片 — 展示总本金/总支出/余额/大额
 class PeriodSummaryCard extends StatelessWidget {
   final PeriodCalculations calc;
   final PeriodRecord? period;
   final VoidCallback? onEditBalance;
   final VoidCallback? onTapTotalBase;
   final VoidCallback? onTapTotalExpense;
+  final double? largeItemsNet;
+  final VoidCallback? onEditLargeItems;
 
   const PeriodSummaryCard({
     super.key,
@@ -20,6 +22,8 @@ class PeriodSummaryCard extends StatelessWidget {
     this.onEditBalance,
     this.onTapTotalBase,
     this.onTapTotalExpense,
+    this.largeItemsNet,
+    this.onEditLargeItems,
   });
 
   @override
@@ -48,6 +52,14 @@ class PeriodSummaryCard extends StatelessWidget {
         color: appTheme.primaryDark,
         isBalance: true,
       ),
+      if (largeItemsNet != null)
+        _SummaryItem(
+          label: '大额',
+          value: _formatLargeItemsValue(largeItemsNet!),
+          color: appTheme.earthMedium,
+          isLargeItem: true,
+          onEdit: onEditLargeItems,
+        ),
     ];
 
     return Container(
@@ -155,6 +167,17 @@ class PeriodSummaryCard extends StatelessWidget {
                     ),
                   ),
                 ],
+                if (item.isLargeItem && onEditLargeItems != null) ...[
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: onEditLargeItems,
+                    child: Icon(
+                      Icons.edit_outlined,
+                      size: 14,
+                      color: appTheme.earthMedium.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -200,6 +223,12 @@ class PeriodSummaryCard extends StatelessWidget {
       ),
     );
   }
+  String _formatLargeItemsValue(double net) {
+    final abs = FormatUtils.formatAmount(net.abs());
+    if (net > 0) return '+$abs';
+    if (net < 0) return '-$abs';
+    return '¥0.00';
+  }
 }
 
 class _SummaryItem {
@@ -208,7 +237,9 @@ class _SummaryItem {
   final Color color;
   final bool isClickable;
   final bool isBalance;
+  final bool isLargeItem;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
 
   _SummaryItem({
     required this.label,
@@ -216,6 +247,8 @@ class _SummaryItem {
     required this.color,
     this.isClickable = false,
     this.isBalance = false,
+    this.isLargeItem = false,
     this.onTap,
+    this.onEdit,
   });
 }

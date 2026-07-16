@@ -30,6 +30,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   List<StageRecord> _stages = [];
   List<List<AdditionRecord>> _stageAdditions = [];
   List<List<ExpenseRecord>> _stageExpenses = [];
+  double? _largeItemsNet;
   bool _loading = true;
 
   bool get _isReadOnly => false;
@@ -75,6 +76,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         _stageExpenses = _stages.map((stage) {
           return allExpenses.where((e) => e.stageId == stage.id!).toList();
         }).toList();
+
+        // 加载大额记录净额
+        _largeItemsNet = await _service.getLargeItemsNet(_period!.id!);
       }
     } catch (e) {
       debugPrint('PeriodDetailPage load error: $e');
@@ -278,6 +282,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(_stages.last),
       onTapTotalBase: _showTotalBaseDetail,
       onTapTotalExpense: _showTotalExpenseDetail,
+      largeItemsNet: _largeItemsNet,
+      onEditLargeItems: _isReadOnly ? null : () => _navigateToLargeItemsEdit(),
     );
   }
 
@@ -493,6 +499,14 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         ),
       ),
     );
+  }
+
+  void _navigateToLargeItemsEdit() async {
+    if (_period == null) return;
+    await context.push('/period_book/large_items/${_period!.id}');
+    if (mounted) {
+      _loadData();
+    }
   }
 
   Widget _buildDetailRow({

@@ -4,6 +4,8 @@ import '../models/period_record.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
 import '../models/expense_record.dart';
+import '../models/large_addition_record.dart';
+import '../models/large_expense_record.dart';
 
 /// 阶段计算结果
 class StageCalculations {
@@ -158,6 +160,11 @@ class PeriodBookService extends ChangeNotifier {
   Future<void> deletePeriod(int id) async {
     // 先删除阶段（级联删除 additions 和 expenses）
     await _db.delete('mod_period_book_stages',
+        where: 'period_id = ?', whereArgs: [id]);
+    // 删除大额记录
+    await _db.delete('mod_period_book_large_additions',
+        where: 'period_id = ?', whereArgs: [id]);
+    await _db.delete('mod_period_book_large_expenses',
         where: 'period_id = ?', whereArgs: [id]);
     await _db.delete('mod_period_book_periods',
         where: 'id = ?', whereArgs: [id]);
@@ -509,6 +516,113 @@ class PeriodBookService extends ChangeNotifier {
       }
     }
     _notifyChanged();
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // 大额记录 CRUD（周期级，不计入总本金和总支出）
+  // ══════════════════════════════════════════════════════════
+
+  // --- 大额追加 ---
+
+  Future<int> addLargeAddition(int periodId, double amount, String reason) async {
+    final now = DateTime.now().toIso8601String();
+    final id = await _db.insert('mod_period_book_large_additions', {
+      'period_id': periodId,
+      'amount': amount,
+      'reason': reason,
+      'created_at': now,
+    });
+    _notifyChanged();
+    return id;
+  }
+
+  Future<List<LargeAdditionRecord>> getLargeAdditionsByPeriod(int periodId) async {
+    final rows = await _db.query(
+      'mod_period_book_large_additions',
+      where: 'period_id = ?',
+      whereArgs: [periodId],
+      orderBy: 'created_at ASC',
+    );
+    return rows.map(LargeAdditionRecord.fromMap).toList();
+  }
+
+  Future<void> deleteLargeAddition(int id) async {
+    await _db.delete('mod_period_book_large_additions',
+        where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
+  }
+
+  // --- 大额支出 ---
+
+  Future<int> addLargeExpense(
+    int periodId,
+    String category,
+    double amount,
+    String description,
+  ) async {
+    final now = DateTime.now().toIso8601String();
+    final existing = await getLargeExpensesByPeriod(periodId);
+    final sortOrder = existing.isNotEmpty
+        ? existing.map((e) => e.sortOrder).reduce((a, b) => a > b ? a : b) + 1
+        : 0;
+
+    final id = await _db.insert('mod_period_book_large_expenses', {
+      'period_id': periodId,
+      'category': category,
+      'amount': amount,
+      'description': description,
+      'sort_order': sortOrder,
+      'created_at': now,
+    });
+    _notifyChanged();
+    return id;
+  }
+
+  Future<List<LargeExpenseRecord>> getLargeExpensesByPeriod(int periodId) async {
+    final rows = await _db.query(
+      'mod_period_book_large_expenses',
+      where: 'period_id = ?',
+      whereArgs: [periodId],
+      orderBy: 'sort_order ASC, created_at ASC',
+    );
+    return rows.map(LargeExpenseRecord.fromMap).toList();
+  }
+
+  Future<void> deleteLargeExpense(int id) async {
+    await _db.delete('mod_period_book_large_expenses',
+        where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
+  }
+
+  Future<void> updateLargeExpense(int id, {String? category, double? amount, String? description}) async {
+    final data = <String, dynamic>{};
+    if (category != null) data['category'] = category;
+    if (amount != null) data['amount'] = amount;
+    if (description != null) data['description'] = description;
+    if (data.isEmpty) return;
+    await _db.update('mod_period_book_large_expenses', data,
+        where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
+  }
+
+  Future<void> updateLargeExpensesOrder(List<LargeExpenseRecord> expenses) async {
+    for (var i = 0; i < expenses.length; i++) {
+      final expense = expenses[i];
+      if (expense.id != null) {
+        await _db.update('mod_period_book_large_expenses', {'sort_order': i},
+            where: 'id = ?', whereArgs: [expense.id]);
+      }
+    }
+    _notifyChanged();
+  }
+
+  /// 获取大额记录净额（追加总额 - 支出总额）
+  Future<double> getLargeItemsNet(int periodId) async {
+    final additions = await getLargeAdditionsByPeriod(periodId);
+    final expenses = await getLargeExpensesByPeriod(periodId);
+    final additionsTotal = additions.fold<double>(0, (sum, a) => sum + a.amount);
+    final expensesTotal = expenses.fold<double>(0, (sum, e) => sum + e.amount);
+    return additionsTotal - expensesTotal;
   }
 
   // ══════════════════════════════════════════════════════════

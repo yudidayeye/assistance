@@ -10,6 +10,7 @@ import 'pages/new_period_page.dart';
 import 'pages/edit_period_page.dart';
 import 'pages/period_history_page.dart';
 import 'pages/stage_edit_page.dart';
+import 'pages/large_items_edit_page.dart';
 
 /// 周期记账模块注册
 class PeriodBookModule implements ToolModule {
@@ -64,6 +65,13 @@ class PeriodBookModule implements ToolModule {
           builder: (context, state) {
             final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
             return PeriodDetailPage(periodId: id);
+          },
+        ),
+        GoRoute(
+          path: 'large_items/:periodId',
+          builder: (context, state) {
+            final periodId = int.tryParse(state.pathParameters['periodId'] ?? '') ?? 0;
+            return LargeItemsEditPage(periodId: periodId);
           },
         ),
         // 'add-expense' 路由已移除，阶段编辑页已内嵌添加支出/追加表单
