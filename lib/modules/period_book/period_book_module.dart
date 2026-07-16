@@ -98,13 +98,15 @@ class PeriodBookModule implements ToolModule {
     final startFmt = _formatDateShort(period.startDate);
     final endFmt = _formatDateShort(period.endDate);
     final line1 = '$startFmt ~ $endFmt';
-    // 获取最后一个阶段的余额
-    final stages = await PeriodBookService.instance.getStagesByPeriod(period.id!);
-    final lastStage = stages.isNotEmpty ? stages.last : null;
-    final balance = lastStage?.balance;
+
+    // 使用 PeriodCalculations 获取计算后的余额（与详情页一致）
+    final calc = await PeriodBookService.instance.getPeriodCalculations(period.id!);
+    final balance = calc.balance;
+    final totalExpense = calc.totalBase - (balance ?? 0);
     final line2 = balance != null
         ? '余额 ¥${balance.toStringAsFixed(2)}'
-        : '余额 —';
+        : '支出 ¥${totalExpense.toStringAsFixed(2)}';
+
     return ModuleSummary(line1: line1, line2: line2);
   }
 
