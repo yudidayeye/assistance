@@ -552,6 +552,17 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
+  /// 更新大额追加记录
+  Future<void> updateLargeAddition(int id, {double? amount, String? reason}) async {
+    final data = <String, dynamic>{};
+    if (amount != null) data['amount'] = amount;
+    if (reason != null) data['reason'] = reason;
+    if (data.isEmpty) return;
+    await _db.update('mod_period_book_large_additions', data,
+        where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
+  }
+
   // --- 大额支出 ---
 
   Future<int> addLargeExpense(
