@@ -277,6 +277,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       period: _period!,
       onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(_stages.last),
       onTapTotalBase: _showTotalBaseDetail,
+      onTapTotalExpense: _showTotalExpenseDetail,
     );
   }
 
@@ -404,11 +405,102 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 总支出详情浮层
+  // ═══════════════════════════════════════════════════════════
+
+  void _showTotalExpenseDetail() {
+    final appTheme = Theme.of(context).appTheme;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: appTheme.cream,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(appTheme.radiusXl),
+            topRight: Radius.circular(appTheme.radiusXl),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 标题
+            Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 16),
+              child: Text(
+                '总支出构成',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: appTheme.earth,
+                ),
+              ),
+            ),
+            // 内容
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                children: [
+                  // 购物
+                  _buildDetailRow(
+                    appTheme: appTheme,
+                    label: '购物',
+                    amount: _calc!.shoppingTotal,
+                    color: appTheme.sage,
+                    isTotal: false,
+                  ),
+                  const Divider(height: 24),
+                  // 其他
+                  _buildDetailRow(
+                    appTheme: appTheme,
+                    label: '其他',
+                    amount: _calc!.otherTotal,
+                    color: appTheme.roseLight,
+                    isTotal: false,
+                  ),
+                  const Divider(height: 24),
+                  // 生活
+                  if (_calc!.livingTotal != null && _calc!.livingTotal! > 0) ...[
+                    _buildDetailRow(
+                      appTheme: appTheme,
+                      label: '生活',
+                      amount: _calc!.livingTotal!,
+                      color: appTheme.earthLight,
+                      isTotal: false,
+                    ),
+                    const Divider(height: 24),
+                  ],
+                  // 合计
+                  _buildDetailRow(
+                    appTheme: appTheme,
+                    label: '合计',
+                    amount: _calc!.totalBase - (_calc?.balance ?? 0),
+                    color: appTheme.primary,
+                    isTotal: true,
+                  ),
+                  SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDetailRow({
     required AppThemeExtension appTheme,
     required String label,
     required double amount,
     required bool isTotal,
+    Color? color,
     bool isEmpty = false,
   }) {
     return Padding(
@@ -440,7 +532,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               style: TextStyle(
                 fontSize: isTotal ? 16 : 14,
                 fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
-                color: isTotal ? appTheme.primary : appTheme.earth,
+                color: color ?? (isTotal ? appTheme.primary : appTheme.earth),
               ),
             ),
         ],

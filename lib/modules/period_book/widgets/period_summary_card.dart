@@ -5,12 +5,13 @@ import '../../../../shared/utils/format_utils.dart';
 import '../models/period_record.dart';
 import '../services/period_book_service.dart';
 
-/// 周期汇总卡片 — 展示总本金/购物/其他/余额/生活/生活日均
+/// 周期汇总卡片 — 展示总本金/总支出/余额
 class PeriodSummaryCard extends StatelessWidget {
   final PeriodCalculations calc;
   final PeriodRecord? period;
   final VoidCallback? onEditBalance;
   final VoidCallback? onTapTotalBase;
+  final VoidCallback? onTapTotalExpense;
 
   const PeriodSummaryCard({
     super.key,
@@ -18,6 +19,7 @@ class PeriodSummaryCard extends StatelessWidget {
     this.period,
     this.onEditBalance,
     this.onTapTotalBase,
+    this.onTapTotalExpense,
   });
 
   @override
@@ -32,14 +34,11 @@ class PeriodSummaryCard extends StatelessWidget {
         onTap: onTapTotalBase,
       ),
       _SummaryItem(
-        label: '购物',
-        value: '-${FormatUtils.formatAmount(calc.shoppingTotal)}',
-        color: appTheme.sage,
-      ),
-      _SummaryItem(
-        label: '其他',
-        value: '-${FormatUtils.formatAmount(calc.otherTotal)}',
+        label: '总支出',
+        value: '-${FormatUtils.formatAmount(calc.totalBase - (calc.balance ?? 0))}',
         color: appTheme.roseLight,
+        isClickable: onTapTotalExpense != null,
+        onTap: onTapTotalExpense,
       ),
       _SummaryItem(
         label: '余额',
@@ -48,13 +47,6 @@ class PeriodSummaryCard extends StatelessWidget {
             : '¥0.00',
         color: appTheme.primaryDark,
         isBalance: true,
-      ),
-      _SummaryItem(
-        label: '生活',
-        value: calc.livingTotal != null
-            ? '-${FormatUtils.formatAmount(calc.livingTotal!)}'
-            : '¥0.00',
-        color: appTheme.earthLight,
       ),
     ];
 
@@ -111,7 +103,7 @@ class PeriodSummaryCard extends StatelessWidget {
                 _buildItemRow(appTheme, item),
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );

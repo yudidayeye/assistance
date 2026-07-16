@@ -19,7 +19,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   final _service = PeriodBookService.instance;
   List<PeriodRecord> _periods = [];
   Map<int, double?> _balances = {};
-  Map<int, double> _totalBases = {};
   Map<int, PeriodCalculations> _calcMap = {};
   bool _loading = true;
 
@@ -35,11 +34,10 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       final periods = await _service.getAllPeriods();
       _periods = periods;
 
-      // 批量获取余额、总本金和计算数据
+      // 批量获取余额和计算数据
       for (final p in periods) {
         final calc = await _service.getPeriodCalculations(p.id!);
         _balances[p.id!] = calc.balance;
-        _totalBases[p.id!] = calc.totalBase;
         _calcMap[p.id!] = calc;
       }
     } catch (e) {
@@ -103,7 +101,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       setState(() {
         _periods.removeWhere((p) => p.id == period.id);
         _balances.remove(period.id);
-        _totalBases.remove(period.id);
         _calcMap.remove(period.id);
       });
       if (mounted) {
@@ -222,8 +219,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
         children: [
           Expanded(flex: 4, child: Text('周期', style: headerStyle)),
           Expanded(flex: 2, child: Text('总支出', style: headerStyle)),
-          Expanded(flex: 2, child: Text('总追加', style: headerStyle)),
-          Expanded(flex: 2, child: Text('余额', style: headerStyle)),
           Expanded(flex: 1, child: Text('操作', style: headerStyle)),
         ],
       ),
@@ -233,11 +228,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   Widget _buildPeriodRow(AppThemeExtension appTheme, PeriodRecord period) {
     final balance = _balances[period.id];
     final calc = _calcMap[period.id];
-    final shoppingTotal = calc?.shoppingTotal ?? 0;
-    final otherTotal = calc?.otherTotal ?? 0;
-    final totalExpense = shoppingTotal + otherTotal;
-    final totalAddition = calc?.stages.fold<double>(0, (sum, s) => sum + s.additionsTotal) ?? 0;
-    final isClosed = period.isClosed;
+    final totalExpense = (calc?.totalBase ?? 0) - (balance ?? 0);
 
     return GestureDetector(
       onTap: () => context.push('/period_book/detail/${period.id}'),
@@ -256,12 +247,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
               flex: 4,
               child: Row(
                 children: [
-                  Icon(
-                    isClosed ? Icons.lock_outline_rounded : Icons.schedule_rounded,
-                    size: 14,
-                    color: isClosed ? appTheme.earthMedium : appTheme.sage,
-                  ),
-                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       '${_fmtDate(period.startDate)} ~ ${_fmtDate(period.endDate)}',
@@ -286,34 +271,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: appTheme.earth,
-                ),
-              ),
-            ),
-            // 总追加
-            Expanded(
-              flex: 2,
-              child: Text(
-                '+${FormatUtils.formatAmount(totalAddition)}',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.sage,
-                ),
-              ),
-            ),
-            // 余额
-            Expanded(
-              flex: 2,
-              child: Text(
-                balance != null
-                    ? FormatUtils.formatAmount(balance)
-                    : '¥0.00',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: balance != null
-                      ? appTheme.primary
-                      : appTheme.earthMedium.withValues(alpha: 0.4),
                 ),
               ),
             ),

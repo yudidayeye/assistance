@@ -487,6 +487,18 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
+  /// 更新支出记录（分类、金额、描述）
+  Future<void> updateExpense(int id, {String? category, double? amount, String? description}) async {
+    final data = <String, dynamic>{};
+    if (category != null) data['category'] = category;
+    if (amount != null) data['amount'] = amount;
+    if (description != null) data['description'] = description;
+    if (data.isEmpty) return;
+    await _db.update('mod_period_book_expenses', data,
+        where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
+  }
+
   /// 批量更新支出排序
   Future<void> updateExpensesOrder(List<ExpenseRecord> expenses) async {
     for (var i = 0; i < expenses.length; i++) {

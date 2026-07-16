@@ -587,55 +587,224 @@ class _StageEditPageState extends State<StageEditPage> {
         ? appTheme.sage
         : appTheme.roseLight;
 
-    return Container(
+    return InkWell(
       key: ValueKey(expense.id),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: appTheme.earthMedium.withValues(alpha: 0.1),
-            width: 0.5,
+      onTap: () => _showEditExpenseSheet(appTheme, expense),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: appTheme.earthMedium.withValues(alpha: 0.1),
+              width: 0.5,
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.drag_handle_rounded,
-            color: appTheme.earthMedium.withValues(alpha: 0.4),
-            size: 18,
-          ),
-          const SizedBox(width: 8),
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              expense.description,
+        child: Row(
+          children: [
+            Icon(
+              Icons.drag_handle_rounded,
+              color: appTheme.earthMedium.withValues(alpha: 0.4),
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                expense.description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: appTheme.earth,
+                ),
+              ),
+            ),
+            Text(
+              '-¥${expense.amount.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 13,
+                fontWeight: FontWeight.w600,
                 color: appTheme.earth,
               ),
             ),
-          ),
-          Text(
-            '-¥${expense.amount.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earth,
+            const SizedBox(width: 8),
+            Listener(
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: (_) => _deleteExpense(expense),
+              child: Icon(
+                Icons.close,
+                size: 16,
+                color: appTheme.earthMedium.withValues(alpha: 0.4),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => _deleteExpense(expense),
-            child: Icon(
-              Icons.close,
-              size: 16,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Future<void> _showEditExpenseSheet(AppThemeExtension appTheme, ExpenseRecord expense) async {
+    String category = expense.category;
+    final amountController = TextEditingController(text: expense.amount.toStringAsFixed(2));
+    final descController = TextEditingController(text: expense.description);
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final sheetTheme = Theme.of(ctx).appTheme;
+        return StatefulBuilder(
+          builder: (ctx, setLocal) => Container(
+            padding: EdgeInsets.only(
+              left: 20, right: 20, top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            decoration: BoxDecoration(
+              color: sheetTheme.cardBackground,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 标题
+                Row(
+                  children: [
+                    Text(
+                      '编辑支出',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: sheetTheme.earth,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Icon(Icons.close_rounded,
+                          size: 20, color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // 分类选择
+                Text('分类', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: sheetTheme.earthMedium)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildCategoryChip(
+                      appTheme: sheetTheme,
+                      label: '购物',
+                      icon: Icons.shopping_bag_outlined,
+                      isSelected: category == 'shopping',
+                      color: sheetTheme.sage,
+                      onTap: () => setLocal(() => category = 'shopping'),
+                    ),
+                    const SizedBox(width: 10),
+                    _buildCategoryChip(
+                      appTheme: sheetTheme,
+                      label: '其他',
+                      icon: Icons.category_outlined,
+                      isSelected: category == 'other',
+                      color: sheetTheme.roseLight,
+                      onTap: () => setLocal(() => category = 'other'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // 金额
+                TextField(
+                  controller: amountController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: '金额',
+                    hintText: '请输入金额',
+                    hintStyle: TextStyle(
+                      fontSize: 13,
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.5),
+                    ),
+                    filled: true,
+                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                        width: 1,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+                ),
+                const SizedBox(height: 14),
+                // 描述
+                TextField(
+                  controller: descController,
+                  decoration: InputDecoration(
+                    labelText: '描述',
+                    hintText: '请输入描述',
+                    hintStyle: TextStyle(
+                      fontSize: 13,
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.5),
+                    ),
+                    filled: true,
+                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                        width: 1,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+                ),
+                const SizedBox(height: 16),
+                // 保存按钮
+                SizedBox(
+                  width: double.infinity,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final amount = double.tryParse(amountController.text);
+                      final desc = descController.text.trim();
+                      if (amount == null || amount <= 0 || desc.isEmpty) return;
+                      await _service.updateExpense(
+                        expense.id!,
+                        category: category,
+                        amount: amount,
+                        description: desc,
+                      );
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      await _loadData();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: sheetTheme.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '保存修改',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
