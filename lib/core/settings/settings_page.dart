@@ -669,6 +669,8 @@ class _SettingsPageState extends State<SettingsPage> {
       bookStagesCount: preview.bookStagesCount,
       bookAdditionsCount: preview.bookAdditionsCount,
       bookExpensesCount: preview.bookExpensesCount,
+      bookLargeAdditionsCount: preview.bookLargeAdditionsCount,
+      bookLargeExpensesCount: preview.bookLargeExpensesCount,
     );
     if (!mounted || confirmed != true) return;
 
@@ -679,13 +681,11 @@ class _SettingsPageState extends State<SettingsPage> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     if (result.isSuccess) {
-      // 通知各模块服务数据已变更，刷新首页卡片
-      PeriodBookService.instance.notifyChanged();
-      PeriodService.instance.notifyChanged();
       _showSnackBar(
           '导入成功：${result.settingsCount}项设置、${result.periodRecordsCount}条生理期记录、'
           '${result.bookPeriodsCount}个周期、${result.bookStagesCount}个阶段、'
-          '${result.bookAdditionsCount}条追加、${result.bookExpensesCount}条支出');
+          '${result.bookAdditionsCount}条追加、${result.bookExpensesCount}条支出、'
+          '${result.bookLargeAdditionsCount}条大额追加、${result.bookLargeExpensesCount}条大额支出');
       setState(() {});
     } else {
       _showErrorDialog('导入失败', result.error ?? '未知错误');
@@ -699,6 +699,8 @@ class _SettingsPageState extends State<SettingsPage> {
     required int bookStagesCount,
     required int bookAdditionsCount,
     required int bookExpensesCount,
+    required int bookLargeAdditionsCount,
+    required int bookLargeExpensesCount,
   }) {
     final appTheme = Theme.of(context).appTheme;
     return showDialog<bool>(
@@ -737,7 +739,8 @@ class _SettingsPageState extends State<SettingsPage> {
               Text(
                 '将导入 $settingsCount 项设置、$periodRecordsCount 条生理期记录'
                 '、$bookPeriodsCount 个周期、$bookStagesCount 个阶段'
-                '、$bookAdditionsCount 条追加、$bookExpensesCount 条支出。\n'
+                '、$bookAdditionsCount 条追加、$bookExpensesCount 条支出'
+                '、$bookLargeAdditionsCount 条大额追加、$bookLargeExpensesCount 条大额支出。\n'
                 '已存在的设置和记录将被覆盖。',
                 style: TextStyle(
                     fontSize: 14, color: appTheme.earthMedium, height: 1.5),

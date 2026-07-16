@@ -16,7 +16,7 @@ class ImportExportService {
   final DatabaseService _db = DatabaseService.instance;
 
   /// 当前导出格式版本号。格式变更时递增以支持迁移。
-  static const int _schemaVersion = 2; // v2 新增周期记账支持
+  static const int _schemaVersion = 3; // v3 新增大额记录支持
 
   // ═══════════════════════════════════════════════════════════════
   // 导出
@@ -43,6 +43,9 @@ class ImportExportService {
     final bookStages = await _db.query('mod_period_book_stages');
     final bookAdditions = await _db.query('mod_period_book_additions');
     final bookExpenses = await _db.query('mod_period_book_expenses');
+    // 大额记录（周期级，不计入总本金/总支出）
+    final bookLargeAdditions = await _db.query('mod_period_book_large_additions');
+    final bookLargeExpenses = await _db.query('mod_period_book_large_expenses');
 
     // 4. 构建导出 payload
     final payload = {
@@ -57,6 +60,8 @@ class ImportExportService {
         'period_book_stages': bookStages,
         'period_book_additions': bookAdditions,
         'period_book_expenses': bookExpenses,
+        'period_book_large_additions': bookLargeAdditions,
+        'period_book_large_expenses': bookLargeExpenses,
       },
     };
 
@@ -134,6 +139,10 @@ class ImportExportService {
           (data['period_book_additions'] as List<dynamic>?) ?? [];
       final bookExpenses =
           (data['period_book_expenses'] as List<dynamic>?) ?? [];
+      final bookLargeAdditions =
+          (data['period_book_large_additions'] as List<dynamic>?) ?? [];
+      final bookLargeExpenses =
+          (data['period_book_large_expenses'] as List<dynamic>?) ?? [];
 
       return ImportPreviewResult.ready(
         filePath: filePath,
@@ -143,6 +152,8 @@ class ImportExportService {
         bookStagesCount: bookStages.length,
         bookAdditionsCount: bookAdditions.length,
         bookExpensesCount: bookExpenses.length,
+        bookLargeAdditionsCount: bookLargeAdditions.length,
+        bookLargeExpensesCount: bookLargeExpenses.length,
       );
     } catch (e) {
       if (e is FormatException) {
@@ -171,6 +182,8 @@ class ImportExportService {
       int bookStagesCount = 0;
       int bookAdditionsCount = 0;
       int bookExpensesCount = 0;
+      int bookLargeAdditionsCount = 0;
+      int bookLargeExpensesCount = 0;
 
       await _db.transaction((txn) async {
         // Phase 1: 合并 app_settings
@@ -216,6 +229,8 @@ class ImportExportService {
         bookStagesCount = bookResult['stages']!;
         bookAdditionsCount = bookResult['additions']!;
         bookExpensesCount = bookResult['expenses']!;
+        bookLargeAdditionsCount = bookResult['largeAdditions']!;
+        bookLargeExpensesCount = bookResult['largeExpenses']!;
       });
 
       // 导入后刷新运行时缓存
@@ -229,6 +244,8 @@ class ImportExportService {
         bookStagesCount: bookStagesCount,
         bookAdditionsCount: bookAdditionsCount,
         bookExpensesCount: bookExpensesCount,
+        bookLargeAdditionsCount: bookLargeAdditionsCount,
+        bookLargeExpensesCount: bookLargeExpensesCount,
       );
     } catch (e, stack) {
       debugPrint('Import error: $e\n$stack');
@@ -243,6 +260,8 @@ class ImportExportService {
     int stagesCount = 0;
     int additionsCount = 0;
     int expensesCount = 0;
+    int largeAdditionsCount = 0;
+    int largeExpensesCount = 0;
 
     // 导入周期
     final periods = (data['period_book_periods'] as List<dynamic>?) ?? [];
@@ -327,11 +346,55 @@ class ImportExportService {
       expensesCount++;
     }
 
+    // 导入大额追加记录
+    final largeAdditions =
+        (data['period_book_large_additions'] as List<dynamic>?) ?? [];
+    for (final addition in largeAdditions) {
+      final map = Map<String, dynamic>.from(addition as Map);
+      await txn.rawInsert(
+        '''INSERT OR REPLACE INTO mod_period_book_large_additions
+           (id, period_id, amount, reason, created_at)
+           VALUES (?, ?, ?, ?, ?)''',
+        [
+          map['id'],
+          map['period_id'],
+          map['amount'],
+          map['reason'],
+          map['created_at'],
+        ],
+      );
+      largeAdditionsCount++;
+    }
+
+    // 导入大额支出记录
+    final largeExpenses =
+        (data['period_book_large_expenses'] as List<dynamic>?) ?? [];
+    for (final expense in largeExpenses) {
+      final map = Map<String, dynamic>.from(expense as Map);
+      await txn.rawInsert(
+        '''INSERT OR REPLACE INTO mod_period_book_large_expenses
+           (id, period_id, category, amount, description, sort_order, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)''',
+        [
+          map['id'],
+          map['period_id'],
+          map['category'],
+          map['amount'],
+          map['description'],
+          map['sort_order'] ?? 0,
+          map['created_at'],
+        ],
+      );
+      largeExpensesCount++;
+    }
+
     return {
       'periods': periodsCount,
       'stages': stagesCount,
       'additions': additionsCount,
       'expenses': expensesCount,
+      'largeAdditions': largeAdditionsCount,
+      'largeExpenses': largeExpensesCount,
     };
   }
 
@@ -404,6 +467,14 @@ class ImportExportService {
         data['period_book_expenses'] is! List) {
       return '支出记录数据格式不正确';
     }
+    if (data['period_book_large_additions'] != null &&
+        data['period_book_large_additions'] is! List) {
+      return '大额追加数据格式不正确';
+    }
+    if (data['period_book_large_expenses'] != null &&
+        data['period_book_large_expenses'] is! List) {
+      return '大额支出数据格式不正确';
+    }
 
     return null;
   }
@@ -459,6 +530,8 @@ class ImportPreviewResult {
   final int bookStagesCount;
   final int bookAdditionsCount;
   final int bookExpensesCount;
+  final int bookLargeAdditionsCount;
+  final int bookLargeExpensesCount;
 
   const ImportPreviewResult._({
     this.isReady = false,
@@ -471,6 +544,8 @@ class ImportPreviewResult {
     this.bookStagesCount = 0,
     this.bookAdditionsCount = 0,
     this.bookExpensesCount = 0,
+    this.bookLargeAdditionsCount = 0,
+    this.bookLargeExpensesCount = 0,
   });
 
   factory ImportPreviewResult.ready({
@@ -481,6 +556,8 @@ class ImportPreviewResult {
     int bookStagesCount = 0,
     int bookAdditionsCount = 0,
     int bookExpensesCount = 0,
+    int bookLargeAdditionsCount = 0,
+    int bookLargeExpensesCount = 0,
   }) =>
       ImportPreviewResult._(
         isReady: true,
@@ -491,6 +568,8 @@ class ImportPreviewResult {
         bookStagesCount: bookStagesCount,
         bookAdditionsCount: bookAdditionsCount,
         bookExpensesCount: bookExpensesCount,
+        bookLargeAdditionsCount: bookLargeAdditionsCount,
+        bookLargeExpensesCount: bookLargeExpensesCount,
       );
 
   factory ImportPreviewResult.userCancelled() =>
@@ -509,6 +588,8 @@ class ImportResult {
   final int bookStagesCount;
   final int bookAdditionsCount;
   final int bookExpensesCount;
+  final int bookLargeAdditionsCount;
+  final int bookLargeExpensesCount;
 
   const ImportResult._({
     this.isSuccess = false,
@@ -519,6 +600,8 @@ class ImportResult {
     this.bookStagesCount = 0,
     this.bookAdditionsCount = 0,
     this.bookExpensesCount = 0,
+    this.bookLargeAdditionsCount = 0,
+    this.bookLargeExpensesCount = 0,
   });
 
   factory ImportResult.success({
@@ -528,6 +611,8 @@ class ImportResult {
     int bookStagesCount = 0,
     int bookAdditionsCount = 0,
     int bookExpensesCount = 0,
+    int bookLargeAdditionsCount = 0,
+    int bookLargeExpensesCount = 0,
   }) =>
       ImportResult._(
         isSuccess: true,
@@ -537,6 +622,8 @@ class ImportResult {
         bookStagesCount: bookStagesCount,
         bookAdditionsCount: bookAdditionsCount,
         bookExpensesCount: bookExpensesCount,
+        bookLargeAdditionsCount: bookLargeAdditionsCount,
+        bookLargeExpensesCount: bookLargeExpensesCount,
       );
 
   factory ImportResult.error(String message) =>
