@@ -5,9 +5,9 @@ import '../../../../shared/utils/format_utils.dart';
 import '../models/period_record.dart';
 import '../services/period_book_service.dart' show PeriodCalculations;
 
-/// 周期汇总卡片 — 余额焦点式布局
+/// 周期汇总卡片 — 余额/本金一行式布局
 ///
-/// 结构：余额主指标（大数字）+ 本金（小字可点击）+ 使用进度条 + 支出/大额纯文本统计。
+/// 结构：余额/本金合并展示 + 进度条 + 支出/大额纯文本统计。
 class PeriodSummaryCard extends StatelessWidget {
   final PeriodCalculations calc;
   final PeriodRecord? period;
@@ -47,33 +47,15 @@ class PeriodSummaryCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           decoration: BoxDecoration(
-            color: appTheme.cardBackground,
-            gradient: LinearGradient(
-              colors: [
-                Colors.transparent,
-                appTheme.primary.withValues(alpha: 0.06),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white,
+            boxShadow: appTheme.cardShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeroSection(appTheme, balance),
+              _buildBalanceSection(appTheme, balance),
               const SizedBox(height: 16),
               _buildUsageBar(appTheme, usedRatio),
-              const SizedBox(height: 8),
-              Text(
-                '${(usedRatio * 100).toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
-                  color: appTheme.primary,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
               const SizedBox(height: 16),
               _buildStatRow(appTheme, spent),
             ],
@@ -83,55 +65,56 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 焦点区域：余额（大数字）+ 本金（小字灰色）
-  Widget _buildHeroSection(AppThemeExtension appTheme, double? balance) {
+  /// 余额/本金合并展示：¥1859.70 / 2500
+  Widget _buildBalanceSection(AppThemeExtension appTheme, double? balance) {
     final balanceText = FormatUtils.formatAmount(balance ?? 0);
     final muted = balance == null || balance == 0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '余额',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: appTheme.primary,
+    return GestureDetector(
+      onTap: onTapTotalBase,
+      child: Row(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: Text(
+              balanceText,
+              key: ValueKey(balanceText),
+              style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                color: muted
+                    ? appTheme.primary.withValues(alpha: 0.4)
+                    : appTheme.primary,
+                letterSpacing: -0.5,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          child: Text(
-            balanceText,
-            key: ValueKey(balanceText),
+          const SizedBox(width: 8),
+          Text(
+            '/',
             style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: appTheme.earthMedium.withValues(alpha: 0.3),
               fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: muted
-                  ? appTheme.primary.withValues(alpha: 0.4)
-                  : appTheme.primary,
-              letterSpacing: -0.5,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: onTapTotalBase,
-          child: Text(
-            '本金 ${FormatUtils.formatAmount(calc.totalBase)}',
+          const SizedBox(width: 8),
+          Text(
+            FormatUtils.formatAmount(calc.totalBase),
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
               color: appTheme.earthMedium.withValues(alpha: 0.5),
               fontFamily: GoogleFonts.dmSans().fontFamily,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
