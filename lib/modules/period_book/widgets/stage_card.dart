@@ -194,7 +194,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   value: calc.shoppingTotal > 0
                       ? '-¥${calc.shoppingTotal.toStringAsFixed(2)}'
                       : '¥0.00',
-                  valueColor: calc.shoppingTotal > 0 ? appTheme.sage : appTheme.earthMedium.withValues(alpha: 0.4),
+                  valueColor: calc.shoppingTotal > 0 ? appTheme.roseLight : appTheme.earthMedium.withValues(alpha: 0.4),
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
@@ -231,7 +231,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   value: calc.livingTotal != null
                       ? '-¥${calc.livingTotal!.abs().toStringAsFixed(2)} / ${stage.livingDays}天 = -¥${calc.livingDailyAvg!.abs().toStringAsFixed(2)}/天'
                       : '¥0.00',
-                  valueColor: calc.livingTotal != null ? appTheme.earthMedium : appTheme.earthMedium.withValues(alpha: 0.4),
+                  valueColor: calc.livingTotal != null ? appTheme.roseLight : appTheme.earthMedium.withValues(alpha: 0.4),
                   valueFontSize: 12,
                 ),
                 if (widget.additions.isNotEmpty) ...[
@@ -287,6 +287,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
             fontSize: valueFontSize,
             fontWeight: FontWeight.w600,
             color: valueColor,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
         if (trailing != null) ...[
@@ -385,13 +386,12 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
     final icon = expense.category == 'shopping'
         ? Icons.shopping_bag_outlined
         : Icons.category_outlined;
-    final color = expense.category == 'shopping' ? appTheme.sage : appTheme.roseLight;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: color),
+          Icon(icon, size: 16, color: appTheme.roseLight.withValues(alpha: 0.75)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -407,7 +407,8 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: appTheme.earthMedium,
+              color: appTheme.roseLight,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],
@@ -471,6 +472,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: appTheme.sage,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ],
