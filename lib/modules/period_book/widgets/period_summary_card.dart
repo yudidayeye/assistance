@@ -31,8 +31,8 @@ class PeriodSummaryCard extends StatelessWidget {
     final appTheme = Theme.of(context).appTheme;
     final balance = calc.balance;
     final spent = calc.totalBase - (balance ?? 0);
-    final usedRatio = calc.totalBase > 0
-        ? (spent / calc.totalBase).clamp(0.0, 1.0)
+    final balanceRatio = calc.totalBase > 0
+        ? ((balance ?? 0) / calc.totalBase).clamp(0.0, 1.0)
         : 0.0;
 
     return Container(
@@ -55,7 +55,7 @@ class PeriodSummaryCard extends StatelessWidget {
             children: [
               _buildBalanceSection(appTheme, balance),
               const SizedBox(height: 16),
-              _buildUsageBar(appTheme, usedRatio),
+              _buildUsageBar(appTheme, balanceRatio),
               const SizedBox(height: 16),
               _buildStatRow(appTheme, spent),
             ],
@@ -118,14 +118,14 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 已用本金进度条（入场与数据变化时带过渡动画）
-  Widget _buildUsageBar(AppThemeExtension appTheme, double ratio) {
+  /// 余额进度条（余额/本金，入场与数据变化时带过渡动画）
+  Widget _buildUsageBar(AppThemeExtension appTheme, double balanceRatio) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(3),
       child: SizedBox(
         height: 6,
         child: TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0, end: ratio),
+          tween: Tween<double>(begin: 0, end: balanceRatio),
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
           builder: (context, value, _) => LayoutBuilder(
