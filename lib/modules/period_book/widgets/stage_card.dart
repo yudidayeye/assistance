@@ -190,7 +190,7 @@ class StageCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: appTheme.earthMedium.withValues(alpha: 0.7),
+                        color: appTheme.rose,
                       ),
                     ),
                     const Spacer(),
@@ -200,29 +200,13 @@ class StageCard extends StatelessWidget {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           fontFamily: GoogleFonts.dmSans().fontFamily,
+                          color: appTheme.rose,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                         children: [
-                          TextSpan(
-                            text: '-¥${stageCalc.shoppingTotal.toStringAsFixed(2)}',
-                            style: TextStyle(color: appTheme.rose),
-                          ),
-                          TextSpan(
-                            text: '购物',
-                            style: TextStyle(color: appTheme.earthMedium.withValues(alpha: 0.5)),
-                          ),
-                          TextSpan(
-                            text: '-¥${stageCalc.otherTotal.toStringAsFixed(2)}',
-                            style: TextStyle(color: stageCalc.otherTotal > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4)),
-                          ),
-                          TextSpan(
-                            text: '其他',
-                            style: TextStyle(color: appTheme.earthMedium.withValues(alpha: 0.5)),
-                          ),
-                          TextSpan(
-                            text: '=-¥${(stageCalc.shoppingTotal + stageCalc.otherTotal).toStringAsFixed(2)}',
-                            style: TextStyle(color: appTheme.rose),
-                          ),
+                          TextSpan(text: '-¥${stageCalc.shoppingTotal.toStringAsFixed(2)}购物'),
+                          TextSpan(text: '-¥${stageCalc.otherTotal.toStringAsFixed(2)}其他'),
+                          TextSpan(text: '=-¥${(stageCalc.shoppingTotal + stageCalc.otherTotal).toStringAsFixed(2)}'),
                         ],
                       ),
                     ),
@@ -236,41 +220,19 @@ class StageCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: appTheme.earthMedium.withValues(alpha: 0.7),
+                        color: appTheme.rose,
                       ),
                     ),
                     const Spacer(),
                     if (stageCalc.livingTotal != null && stageCalc.livingDailyAvg != null)
-                      RichText(
-                        text: TextSpan(
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: GoogleFonts.dmSans().fontFamily,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                          children: [
-                            TextSpan(
-                              text: '-¥${stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天',
-                              style: TextStyle(color: appTheme.rose),
-                            ),
-                            TextSpan(
-                              text: ' × ',
-                              style: TextStyle(color: appTheme.earthMedium.withValues(alpha: 0.3)),
-                            ),
-                            TextSpan(
-                              text: '${stage.livingDays}天',
-                              style: TextStyle(color: appTheme.earthMedium.withValues(alpha: 0.5)),
-                            ),
-                            TextSpan(
-                              text: ' = ',
-                              style: TextStyle(color: appTheme.earthMedium.withValues(alpha: 0.3)),
-                            ),
-                            TextSpan(
-                              text: '-¥${stageCalc.livingTotal!.abs().toStringAsFixed(2)}',
-                              style: TextStyle(color: appTheme.rose),
-                            ),
-                          ],
+                      Text(
+                        '-¥${stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天 * ${stage.livingDays}天 = -¥${stageCalc.livingTotal!.abs().toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          color: appTheme.rose,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       )
                     else
@@ -280,7 +242,7 @@ class StageCard extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           fontFamily: GoogleFonts.dmSans().fontFamily,
-                          color: appTheme.earthMedium.withValues(alpha: 0.4),
+                          color: appTheme.rose.withValues(alpha: 0.4),
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
