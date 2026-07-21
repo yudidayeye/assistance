@@ -428,7 +428,23 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             )
           else
-            ..._additions.map((addition) => _buildAdditionItem(appTheme, addition)),
+            ReorderableListView(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final item = _additions.removeAt(oldIndex);
+                  _additions.insert(newIndex, item);
+                });
+                _service.updateAdditionsOrder(_additions);
+              },
+              children: [
+                for (final addition in _additions)
+                  _buildAdditionItem(appTheme, addition),
+              ],
+            ),
           const SizedBox(height: 12),
           if (_additionFormExpanded)
             _buildAdditionForm(appTheme)
@@ -459,46 +475,195 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 
   Widget _buildAdditionItem(AppThemeExtension appTheme, AdditionRecord addition) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: appTheme.earthMedium.withValues(alpha: 0.1),
-            width: 0.5,
+    return InkWell(
+      key: ValueKey(addition.id),
+      onTap: () => _showEditAdditionSheet(appTheme, addition),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: appTheme.earthMedium.withValues(alpha: 0.1),
+              width: 0.5,
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              addition.reason,
-              style: TextStyle(
-                fontSize: 13,
-                color: appTheme.earth,
+        child: Row(
+          children: [
+            Icon(
+              Icons.drag_handle_rounded,
+              color: appTheme.earthMedium.withValues(alpha: 0.4),
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                addition.reason,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: appTheme.earth,
+                ),
               ),
             ),
-          ),
-          Text(
-            '+¥${addition.amount.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: appTheme.sage,
+            Text(
+              '+¥${addition.amount.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: appTheme.sage,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => _deleteAddition(addition),
-            child: Icon(
-              Icons.close,
-              size: 16,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
+            const SizedBox(width: 8),
+            Listener(
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: (_) => _deleteAddition(addition),
+              child: Icon(
+                Icons.close,
+                size: 16,
+                color: appTheme.earthMedium.withValues(alpha: 0.4),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Future<void> _showEditAdditionSheet(AppThemeExtension appTheme, AdditionRecord addition) async {
+    final reasonController = TextEditingController(text: addition.reason);
+    final amountController = TextEditingController(text: addition.amount.toStringAsFixed(2));
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final sheetTheme = Theme.of(ctx).appTheme;
+        return StatefulBuilder(
+          builder: (ctx, setLocal) => Container(
+            padding: EdgeInsets.only(
+              left: 20, right: 20, top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            decoration: BoxDecoration(
+              color: sheetTheme.cardBackground,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 标题
+                Row(
+                  children: [
+                    Text(
+                      '编辑追加',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: sheetTheme.earth,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Icon(Icons.close_rounded,
+                          size: 20, color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // 追加原因
+                TextField(
+                  controller: reasonController,
+                  decoration: InputDecoration(
+                    labelText: '追加原因',
+                    hintText: '请输入追加原因',
+                    hintStyle: TextStyle(
+                      fontSize: 13,
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.5),
+                    ),
+                    filled: true,
+                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                        width: 1,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+                ),
+                const SizedBox(height: 14),
+                // 追加金额
+                TextField(
+                  controller: amountController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: '追加金额',
+                    hintText: '请输入金额',
+                    hintStyle: TextStyle(
+                      fontSize: 13,
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.5),
+                    ),
+                    filled: true,
+                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                        width: 1,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+                ),
+                const SizedBox(height: 16),
+                // 保存按钮
+                SizedBox(
+                  width: double.infinity,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final amount = double.tryParse(amountController.text);
+                      final reason = reasonController.text.trim();
+                      if (amount == null || amount <= 0 || reason.isEmpty) return;
+                      await _service.updateAddition(
+                        addition.id!,
+                        amount: amount,
+                        reason: reason,
+                      );
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      await _loadData();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: sheetTheme.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '保存修改',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

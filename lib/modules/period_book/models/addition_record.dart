@@ -4,6 +4,7 @@ class AdditionRecord {
   final int stageId;
   final double amount;
   final String reason;
+  final int sortOrder; // 排序序号
   final String createdAt;
 
   const AdditionRecord({
@@ -11,6 +12,7 @@ class AdditionRecord {
     required this.stageId,
     required this.amount,
     required this.reason,
+    this.sortOrder = 0,
     required this.createdAt,
   });
 
@@ -20,6 +22,7 @@ class AdditionRecord {
       'stage_id': stageId,
       'amount': amount,
       'reason': reason,
+      'sort_order': sortOrder,
       'created_at': createdAt,
     };
   }
@@ -30,6 +33,7 @@ class AdditionRecord {
       stageId: map['stage_id'] as int,
       amount: (map['amount'] as num).toDouble(),
       reason: map['reason'] as String,
+      sortOrder: (map['sort_order'] as int?) ?? 0,
       createdAt: map['created_at'] as String,
     );
   }
@@ -39,6 +43,7 @@ class AdditionRecord {
     int? stageId,
     double? amount,
     String? reason,
+    int? sortOrder,
     String? createdAt,
   }) {
     return AdditionRecord(
@@ -46,6 +51,7 @@ class AdditionRecord {
       stageId: stageId ?? this.stageId,
       amount: amount ?? this.amount,
       reason: reason ?? this.reason,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
     );
   }

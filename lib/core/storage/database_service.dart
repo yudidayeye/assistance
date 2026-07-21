@@ -8,7 +8,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 9;
+  static const int _currentVersion = 10;
 
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {
@@ -98,6 +98,7 @@ class DatabaseService {
         stage_id INTEGER NOT NULL,
         amount REAL NOT NULL,
         reason TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         FOREIGN KEY (stage_id) REFERENCES mod_period_book_stages(id) ON DELETE CASCADE
       )
@@ -173,12 +174,18 @@ class DatabaseService {
       await _migrateToV9(db);
     }
 
+    // 如果从 v9 升级到 v10，添加 sort_order 字段到 additions 表
+    if (oldVersion < 10 && newVersion >= 10) {
+      await _migrateToV10(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
       if (v == 7) continue; // 已经在上面处理了
       if (v == 8) continue; // 已经在上面处理了
       if (v == 9) continue; // 已经在上面处理了
+      if (v == 10) continue; // 已经在上面处理了
 
       await db.transaction((txn) async {
         if (v == 2) {
@@ -354,6 +361,13 @@ class DatabaseService {
   Future<void> _migrateToV8(Database db) async {
     await db.execute(
       'ALTER TABLE mod_period_book_stages ADD COLUMN current_date TEXT',
+    );
+  }
+
+  /// v10 迁移：为 additions 表添加 sort_order 字段（支持手动排序）
+  Future<void> _migrateToV10(Database db) async {
+    await db.execute(
+      'ALTER TABLE mod_period_book_additions ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
     );
   }
 

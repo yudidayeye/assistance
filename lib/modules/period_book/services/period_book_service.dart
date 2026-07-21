@@ -353,10 +353,17 @@ class PeriodBookService extends ChangeNotifier {
 
   Future<int> addAddition(int stageId, double amount, String reason) async {
     final now = DateTime.now().toIso8601String();
+    // 获取当前最大 sort_order
+    final existingAdditions = await getAdditionsByStage(stageId);
+    final sortOrder = existingAdditions.isNotEmpty
+        ? existingAdditions.map((a) => a.sortOrder).reduce((a, b) => a > b ? a : b) + 1
+        : 0;
+
     final id = await _db.insert('mod_period_book_additions', {
       'stage_id': stageId,
       'amount': amount,
       'reason': reason,
+      'sort_order': sortOrder,
       'created_at': now,
     });
     _notifyChanged();
@@ -368,7 +375,7 @@ class PeriodBookService extends ChangeNotifier {
       'mod_period_book_additions',
       where: 'stage_id = ?',
       whereArgs: [stageId],
-      orderBy: 'created_at ASC',
+      orderBy: 'sort_order ASC, created_at ASC',
     );
     return rows.map(AdditionRecord.fromMap).toList();
   }
@@ -382,7 +389,7 @@ class PeriodBookService extends ChangeNotifier {
     final placeholders = stageIds.map((_) => '?').join(',');
 
     final rows = await _db.rawQuery(
-      'SELECT * FROM mod_period_book_additions WHERE stage_id IN ($placeholders) ORDER BY created_at ASC',
+      'SELECT * FROM mod_period_book_additions WHERE stage_id IN ($placeholders) ORDER BY sort_order ASC, created_at ASC',
       stageIds,
     );
     return rows.map(AdditionRecord.fromMap).toList();
@@ -391,6 +398,29 @@ class PeriodBookService extends ChangeNotifier {
   Future<void> deleteAddition(int id) async {
     await _db.delete('mod_period_book_additions',
         where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
+  }
+
+  /// 更新追加记录（金额、原因）
+  Future<void> updateAddition(int id, {double? amount, String? reason}) async {
+    final data = <String, dynamic>{};
+    if (amount != null) data['amount'] = amount;
+    if (reason != null) data['reason'] = reason;
+    if (data.isEmpty) return;
+    await _db.update('mod_period_book_additions', data,
+        where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
+  }
+
+  /// 批量更新追加记录排序
+  Future<void> updateAdditionsOrder(List<AdditionRecord> additions) async {
+    for (var i = 0; i < additions.length; i++) {
+      final addition = additions[i];
+      if (addition.id != null) {
+        await _db.update('mod_period_book_additions', {'sort_order': i},
+            where: 'id = ?', whereArgs: [addition.id]);
+      }
+    }
     _notifyChanged();
   }
 
