@@ -167,15 +167,17 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 底部快捷统计：支出 + 大额（纯文本，无 chip 背景）
+  /// 底部快捷统计：支出 + 大额（对称两栏）
   Widget _buildStatRow(AppThemeExtension appTheme, double spent) {
     return Row(
       children: [
-        // 支出
+        // 支出（左栏）
         Expanded(
           child: GestureDetector(
             onTap: onTapTotalExpense,
-            child: Row(
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '支出',
@@ -185,7 +187,7 @@ class PeriodSummaryCard extends StatelessWidget {
                     color: appTheme.earthMedium.withValues(alpha: 0.7),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 4),
                 Text(
                   '-${FormatUtils.formatAmount(spent)}',
                   style: TextStyle(
@@ -200,22 +202,40 @@ class PeriodSummaryCard extends StatelessWidget {
             ),
           ),
         ),
+        // 分隔线
+        Container(
+          width: 0.5,
+          height: 24,
+          color: appTheme.earthMedium.withValues(alpha: 0.1),
+        ),
         const SizedBox(width: 16),
-        // 大额
+        // 大额（右栏）
         GestureDetector(
           onTap: onEditLargeItems,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '大额',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: appTheme.earthMedium.withValues(alpha: 0.7),
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '大额',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: appTheme.earthMedium.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  if (onEditLargeItems != null)
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 14,
+                      color: appTheme.earthMedium.withValues(alpha: 0.4),
+                    ),
+                ],
               ),
-              const SizedBox(width: 8),
+              const SizedBox(height: 4),
               Text(
                 _formatLargeItemsValue(largeItemsNet ?? 0),
                 style: TextStyle(
@@ -228,14 +248,6 @@ class PeriodSummaryCard extends StatelessWidget {
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-              if (onEditLargeItems != null) ...[
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 14,
-                  color: appTheme.earthMedium.withValues(alpha: 0.4),
-                ),
-              ],
             ],
           ),
         ),
