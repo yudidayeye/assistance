@@ -180,7 +180,9 @@ class _StageEditPageState extends State<StageEditPage> {
                     const SizedBox(height: 16),
                     _buildAdditionsSection(appTheme),
                     const SizedBox(height: 16),
-                    _buildExpensesSection(appTheme),
+                    _buildShoppingSection(appTheme),
+                    const SizedBox(height: 16),
+                    _buildOtherSection(appTheme),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -679,7 +681,14 @@ class _StageEditPageState extends State<StageEditPage> {
     if (mounted) await _loadData();
   }
 
-  Widget _buildExpensesSection(AppThemeExtension appTheme) {
+  // ═══════════════════════════════════════════════════════════
+  // 购物支出卡片
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildShoppingSection(AppThemeExtension appTheme) {
+    final shoppingExpenses = _expenses.where((e) => e.category == 'shopping').toList();
+    final shoppingTotal = shoppingExpenses.fold(0.0, (sum, e) => sum + e.amount);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -693,77 +702,307 @@ class _StageEditPageState extends State<StageEditPage> {
         children: [
           Row(
             children: [
-              Text(
-                '已有支出',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earth,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: appTheme.rose.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.shopping_bag_outlined,
+                        size: 16, color: appTheme.rose),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '购物支出',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: appTheme.earth,
+                    ),
+                  ),
+                ],
               ),
               const Spacer(),
               _buildTotalChip(
                 appTheme: appTheme,
-                amount: _expensesTotal,
+                amount: shoppingTotal,
                 color: appTheme.rose,
                 prefix: '-¥',
               ),
             ],
           ),
           const SizedBox(height: 12),
-          if (_expenses.isEmpty)
+          if (shoppingExpenses.isEmpty)
             Text(
-              '暂无支出记录',
+              '暂无购物支出',
               style: TextStyle(
                 fontSize: 12,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
             )
           else
-            ReorderableListView(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) newIndex -= 1;
-                  final item = _expenses.removeAt(oldIndex);
-                  _expenses.insert(newIndex, item);
-                });
-                _service.updateExpensesOrder(_expenses);
-              },
+            Column(
               children: [
-                for (int i = 0; i < _expenses.length; i++)
-                  _buildExpenseItem(appTheme, _expenses[i], index: i),
+                for (int i = 0; i < shoppingExpenses.length; i++)
+                  _buildExpenseItem(appTheme, shoppingExpenses[i], index: i),
               ],
             ),
           const SizedBox(height: 8),
-          if (_expenseFormExpanded)
-            _buildExpenseForm(appTheme)
-          else
-            GestureDetector(
-              onTap: () => setState(() => _expenseFormExpanded = true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: appTheme.primary.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    '+ 添加支出',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.primary,
-                    ),
+          GestureDetector(
+            onTap: () => _showAddExpenseModal(appTheme, 'shopping'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: appTheme.rose.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  '+ 添加购物支出',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: appTheme.rose,
                   ),
                 ),
               ),
             ),
+          ),
           const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 其他支出卡片
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildOtherSection(AppThemeExtension appTheme) {
+    final otherExpenses = _expenses.where((e) => e.category == 'other').toList();
+    final otherTotal = otherExpenses.fold(0.0, (sum, e) => sum + e.amount);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: appTheme.cardShadow,
+        border: Border.all(color: appTheme.cardBorder, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: appTheme.rose.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.category_outlined,
+                        size: 16, color: appTheme.rose),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '其他支出',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: appTheme.earth,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              _buildTotalChip(
+                appTheme: appTheme,
+                amount: otherTotal,
+                color: appTheme.rose,
+                prefix: '-¥',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (otherExpenses.isEmpty)
+            Text(
+              '暂无其他支出',
+              style: TextStyle(
+                fontSize: 12,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+            )
+          else
+            Column(
+              children: [
+                for (int i = 0; i < otherExpenses.length; i++)
+                  _buildExpenseItem(appTheme, otherExpenses[i], index: i),
+              ],
+            ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => _showAddExpenseModal(appTheme, 'other'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: appTheme.rose.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  '+ 添加其他支出',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: appTheme.rose,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  /// 添加支出弹窗（按分类）
+  Future<void> _showAddExpenseModal(AppThemeExtension appTheme, String category) async {
+    final amountController = TextEditingController();
+    final descController = TextEditingController();
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final sheetTheme = Theme.of(ctx).appTheme;
+        return Container(
+          padding: EdgeInsets.only(
+            left: 20, right: 20, top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          decoration: BoxDecoration(
+            color: sheetTheme.cardBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    category == 'shopping' ? '添加购物支出' : '添加其他支出',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: sheetTheme.earth,
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Icon(Icons.close_rounded,
+                        size: 20, color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: '金额',
+                  hintText: '请输入金额',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: sheetTheme.earthMedium.withValues(alpha: 0.5),
+                  ),
+                  filled: true,
+                  fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: descController,
+                decoration: InputDecoration(
+                  labelText: '描述',
+                  hintText: '请输入描述',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: sheetTheme.earthMedium.withValues(alpha: 0.5),
+                  ),
+                  filled: true,
+                  fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+              ),
+              SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+              GestureDetector(
+                onTap: () {
+                  final amount = double.tryParse(amountController.text);
+                  final desc = descController.text.trim();
+                  if (amount == null || amount <= 0 || desc.isEmpty) return;
+                  _service.addExpense(
+                    widget.stageId,
+                    category,
+                    amount,
+                    desc,
+                  ).then((_) {
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _loadData();
+                  });
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: sheetTheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '确认添加',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -790,12 +1029,6 @@ class _StageEditPageState extends State<StageEditPage> {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.drag_handle_rounded,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
-              size: 18,
-            ),
-            const SizedBox(width: 8),
             Icon(icon, size: 16, color: color),
             const SizedBox(width: 8),
             Expanded(
@@ -805,6 +1038,8 @@ class _StageEditPageState extends State<StageEditPage> {
                   fontSize: 13,
                   color: appTheme.earth,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Text(
@@ -832,9 +1067,9 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 
   Future<void> _showEditExpenseSheet(AppThemeExtension appTheme, ExpenseRecord expense) async {
-    String category = expense.category;
     final amountController = TextEditingController(text: expense.amount.toStringAsFixed(2));
     final descController = TextEditingController(text: expense.description);
+    final isShopping = expense.category == 'shopping';
 
     await showModalBottomSheet(
       context: context,
@@ -842,72 +1077,42 @@ class _StageEditPageState extends State<StageEditPage> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         final sheetTheme = Theme.of(ctx).appTheme;
-        return StatefulBuilder(
-          builder: (ctx, setLocal) => Container(
-            padding: EdgeInsets.only(
-              left: 20, right: 20, top: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            ),
-            decoration: BoxDecoration(
-              color: sheetTheme.cardBackground,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 标题
-                Row(
-                  children: [
-                    Text(
-                      '编辑支出',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: sheetTheme.earth,
-                      ),
+        return Container(
+          padding: EdgeInsets.only(
+            left: 20, right: 20, top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          decoration: BoxDecoration(
+            color: sheetTheme.cardBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 标题
+              Row(
+                children: [
+                  Text(
+                    '编辑${isShopping ? "购物" : "其他"}支出',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: sheetTheme.earth,
                     ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: Icon(Icons.close_rounded,
-                          size: 20, color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // 分类选择
-                Text('分类', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: sheetTheme.earthMedium)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _buildCategoryChip(
-                      appTheme: sheetTheme,
-                      label: '购物',
-                      icon: Icons.shopping_bag_outlined,
-                      isSelected: category == 'shopping',
-                      color: sheetTheme.sage,
-                      onTap: () {
-                        setLocal(() => category = 'shopping');
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                    _buildCategoryChip(
-                      appTheme: sheetTheme,
-                      label: '其他',
-                      icon: Icons.category_outlined,
-                      isSelected: category == 'other',
-                      color: sheetTheme.rose,
-                      onTap: () {
-                        setLocal(() => category = 'other');
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                // 金额
-                TextField(
-                  controller: amountController,
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Icon(Icons.close_rounded,
+                        size: 20, color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // 金额
+              TextField(
+                controller: amountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
                     labelText: '金额',
@@ -957,8 +1162,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 // 确定按钮
                 GestureDetector(
                   onTap: () {
-                    // 先保存一次确保最新数据写入
-                    _saveExpenseEdit(expense, category, amountController, descController);
+                    _saveExpenseEdit(expense, expense.category, amountController, descController);
                     Navigator.pop(ctx);
                   },
                   child: Container(
@@ -982,9 +1186,8 @@ class _StageEditPageState extends State<StageEditPage> {
                 ),
               ],
             ),
-          ),
-        );
-      },
+          );
+        },
     );
     // 编辑已实时保存，关闭弹窗后刷新列表
     if (mounted) await _loadData();
