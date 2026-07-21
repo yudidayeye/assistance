@@ -276,7 +276,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                           : FormatUtils.formatAmount(0),
                       style: TextStyle(
                         fontFamily: GoogleFonts.dmSans().fontFamily,
-                        fontSize: 16,
+                        fontSize: 17.5,
                         fontWeight: FontWeight.w700,
                         color: hasExpense
                             ? appTheme.rose
