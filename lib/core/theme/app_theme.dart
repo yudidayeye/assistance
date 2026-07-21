@@ -18,9 +18,11 @@ class AppTheme {
   static const Color _earthMedium = Color(0xFF9B9B9B);
 
   // ── 通用辅助色（所有主题共用） ──────────────────────
-  static const Color _sage = Color(0xFF8CADA0);
+  // 语义色需保证在浅色背景上的可读性（文字对比度 ≥4.5:1）；
+  // 对应的 *Light 色保持浅淡，仅用于底色/填充（日历格子、chip 背景等）
+  static const Color _sage = Color(0xFF587F71);
   static const Color _sageLight = Color(0xFFCDE0D6);
-  static const Color _rose = Color(0xFFD4879A);
+  static const Color _rose = Color(0xFFA94E69);
   static const Color _roseLight = Color(0xFFEDCDD4);
 
   // ── 通用卡片阴影（所有主题共用） ──────────────────────

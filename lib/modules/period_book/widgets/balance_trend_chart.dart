@@ -125,12 +125,12 @@ class BalanceTrendChart extends StatelessWidget {
                       LineChartBarData(
                         spots: _buildSpots(),
                         isCurved: true,
-                        color: appTheme.primary,
+                        color: appTheme.earth,
                         barWidth: 2.5,
                         dotData: const FlDotData(show: false),
                         belowBarData: BarAreaData(
                           show: true,
-                          color: appTheme.primary.withValues(alpha: 0.08),
+                          color: appTheme.earth.withValues(alpha: 0.08),
                         ),
                       ),
                     ],

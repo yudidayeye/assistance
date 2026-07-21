@@ -194,7 +194,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   value: calc.shoppingTotal > 0
                       ? '-¥${calc.shoppingTotal.toStringAsFixed(2)}'
                       : '¥0.00',
-                  valueColor: calc.shoppingTotal > 0 ? appTheme.roseLight : appTheme.earthMedium.withValues(alpha: 0.4),
+                  valueColor: calc.shoppingTotal > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
@@ -203,7 +203,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   value: calc.otherTotal > 0
                       ? '-¥${calc.otherTotal.toStringAsFixed(2)}'
                       : '¥0.00',
-                  valueColor: calc.otherTotal > 0 ? appTheme.roseLight : appTheme.earthMedium.withValues(alpha: 0.4),
+                  valueColor: calc.otherTotal > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
@@ -222,7 +222,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   value: calc.balance != null
                       ? '¥${calc.balance!.toStringAsFixed(2)}'
                       : '¥0.00',
-                  valueColor: calc.balance != null ? appTheme.primary : appTheme.earthMedium.withValues(alpha: 0.4),
+                  valueColor: calc.balance != null ? appTheme.earth : appTheme.earthMedium.withValues(alpha: 0.4),
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
@@ -231,7 +231,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
                   value: calc.livingTotal != null
                       ? '-¥${calc.livingTotal!.abs().toStringAsFixed(2)} / ${stage.livingDays}天 = -¥${calc.livingDailyAvg!.abs().toStringAsFixed(2)}/天'
                       : '¥0.00',
-                  valueColor: calc.livingTotal != null ? appTheme.roseLight : appTheme.earthMedium.withValues(alpha: 0.4),
+                  valueColor: calc.livingTotal != null ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
                   valueFontSize: 12,
                 ),
                 if (widget.additions.isNotEmpty) ...[
@@ -391,7 +391,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
       padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: appTheme.roseLight.withValues(alpha: 0.75)),
+          Icon(icon, size: 16, color: appTheme.rose.withValues(alpha: 0.75)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -407,7 +407,7 @@ class _StageCardState extends State<StageCard> with SingleTickerProviderStateMix
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: appTheme.roseLight,
+              color: appTheme.rose,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),

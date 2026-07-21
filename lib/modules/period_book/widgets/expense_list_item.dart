@@ -21,7 +21,8 @@ class ExpenseListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
     final isShopping = expense.category == 'shopping';
-    final color = isShopping ? appTheme.sage : appTheme.roseLight;
+    // 支出统一红色语义（购物/其他类别仍由图标形状区分）
+    final color = appTheme.rose;
 
     final child = Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -64,7 +65,7 @@ class ExpenseListItem extends StatelessWidget {
               fontFamily: GoogleFonts.dmSans().fontFamily,
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: appTheme.earth,
+              color: appTheme.rose,
             ),
           ),
         ],

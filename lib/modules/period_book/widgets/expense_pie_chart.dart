@@ -89,7 +89,7 @@ class ExpensePieChart extends StatelessWidget {
                             ),
                             _buildSection(
                               value: data['other']!,
-                              color: appTheme.roseLight,
+                              color: appTheme.rose,
                               title: '其他',
                               pct: otherPct,
                             ),
@@ -118,7 +118,7 @@ class ExpensePieChart extends StatelessWidget {
                         _buildLegend(appTheme, '购物', appTheme.sage,
                             data['shopping']!, shoppingPct),
                         const SizedBox(height: 12),
-                        _buildLegend(appTheme, '其他', appTheme.roseLight,
+                        _buildLegend(appTheme, '其他', appTheme.rose,
                             data['other']!, otherPct),
                         const SizedBox(height: 12),
                         if (data['living']! > 0)

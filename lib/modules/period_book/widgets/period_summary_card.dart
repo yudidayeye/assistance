@@ -40,7 +40,7 @@ class PeriodSummaryCard extends StatelessWidget {
       _SummaryRowItem(
         label: '总支出',
         value: '-${FormatUtils.formatAmount(calc.totalBase - (calc.balance ?? 0))}',
-        color: appTheme.roseLight,
+        color: appTheme.rose,
         onTap: onTapTotalExpense,
         showArrow: onTapTotalExpense != null,
       ),
@@ -49,7 +49,7 @@ class PeriodSummaryCard extends StatelessWidget {
         value: calc.balance != null
             ? FormatUtils.formatAmount(calc.balance!)
             : '¥0.00',
-        color: appTheme.primaryDark,
+        color: appTheme.earth,
         onTap: onEditBalance,
         showArrow: onEditBalance != null,
       ),

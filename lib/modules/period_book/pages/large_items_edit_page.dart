@@ -576,7 +576,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: appTheme.roseLight,
+                  color: appTheme.rose,
                 ),
               ),
             ],
@@ -642,9 +642,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     final icon = expense.category == 'shopping'
         ? Icons.shopping_bag_outlined
         : Icons.category_outlined;
-    final color = expense.category == 'shopping'
-        ? appTheme.sage
-        : appTheme.roseLight;
+    // 支出统一红色语义（购物/其他类别仍由图标形状区分）
+    final color = appTheme.rose;
 
     return InkWell(
       key: ValueKey(expense.id),
@@ -684,7 +683,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: appTheme.earth,
+                color: appTheme.rose,
               ),
             ),
             const SizedBox(width: 8),
@@ -765,7 +764,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                       label: '其他',
                       icon: Icons.category_outlined,
                       isSelected: category == 'other',
-                      color: sheetTheme.roseLight,
+                      color: sheetTheme.rose,
                       onTap: () => setLocal(() => category = 'other'),
                     ),
                   ],
@@ -888,7 +887,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 label: '其他',
                 icon: Icons.category_outlined,
                 isSelected: _expenseCategory == 'other',
-                color: appTheme.roseLight,
+                color: appTheme.rose,
                 onTap: () => setState(() => _expenseCategory = 'other'),
               ),
             ],
