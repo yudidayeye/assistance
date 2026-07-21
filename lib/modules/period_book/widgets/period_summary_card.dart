@@ -169,25 +169,29 @@ class PeriodSummaryCard extends StatelessWidget {
 
   /// 进度条 + 支出金额（右上角）
   Widget _buildProgressRow(AppThemeExtension appTheme, double balanceRatio, double spent) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _buildUsageBar(appTheme, balanceRatio),
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: onTapTotalExpense,
-          child: Text(
-            '-${FormatUtils.formatAmount(spent)}',
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: spent > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
-              fontFeatures: const [FontFeature.tabularFigures()],
+        _buildUsageBar(appTheme, balanceRatio),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const SizedBox(width: 1),
+            GestureDetector(
+              onTap: onTapTotalExpense,
+              child: Text(
+                '支出 -${FormatUtils.formatAmount(spent)}',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: spent > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );
