@@ -63,8 +63,6 @@ class PeriodSummaryCard extends StatelessWidget {
               _buildBalanceSection(appTheme, balance),
               const SizedBox(height: 16),
               _buildProgressRow(appTheme, balanceRatio, spent),
-              const SizedBox(height: 16),
-              _buildLargeItemsRow(appTheme),
             ],
           ),
         ),
@@ -167,7 +165,7 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 进度条 + 支出金额（右上角）
+  /// 进度条 + 支出/大额一行
   Widget _buildProgressRow(AppThemeExtension appTheme, double balanceRatio, double spent) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +175,6 @@ class PeriodSummaryCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const SizedBox(width: 1),
             GestureDetector(
               onTap: onTapTotalExpense,
               child: Text(
@@ -191,50 +188,43 @@ class PeriodSummaryCard extends StatelessWidget {
                 ),
               ),
             ),
+            GestureDetector(
+              onTap: onEditLargeItems,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '大额 ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: appTheme.earthMedium.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  Text(
+                    _formatLargeItemsValue(largeItemsNet ?? 0),
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: largeItemsNet != null
+                          ? (largeItemsNet! >= 0 ? appTheme.sage : appTheme.rose)
+                          : appTheme.earthMedium.withValues(alpha: 0.4),
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  if (onEditLargeItems != null)
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 14,
+                      color: appTheme.earthMedium.withValues(alpha: 0.4),
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       ],
-    );
-  }
-
-  /// 大额行
-  Widget _buildLargeItemsRow(AppThemeExtension appTheme) {
-    return GestureDetector(
-      onTap: onEditLargeItems,
-      behavior: HitTestBehavior.opaque,
-      child: Row(
-        children: [
-          Text(
-            '大额',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: appTheme.earthMedium.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            _formatLargeItemsValue(largeItemsNet ?? 0),
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: largeItemsNet != null
-                  ? (largeItemsNet! >= 0 ? appTheme.sage : appTheme.rose)
-                  : appTheme.earthMedium.withValues(alpha: 0.4),
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          if (onEditLargeItems != null) ...[
-            const SizedBox(width: 4),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 14,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
-            ),
-          ],
-        ],
-      ),
     );
   }
 
