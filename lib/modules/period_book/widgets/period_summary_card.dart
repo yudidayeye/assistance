@@ -176,19 +176,6 @@ class PeriodSummaryCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             GestureDetector(
-              onTap: onTapTotalExpense,
-              child: Text(
-                '支出 -${FormatUtils.formatAmount(spent)}',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: spent > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ),
-            GestureDetector(
               onTap: onEditLargeItems,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -220,6 +207,19 @@ class PeriodSummaryCard extends StatelessWidget {
                       color: appTheme.earthMedium.withValues(alpha: 0.4),
                     ),
                 ],
+              ),
+            ),
+            GestureDetector(
+              onTap: onTapTotalExpense,
+              child: Text(
+                '支出 -${FormatUtils.formatAmount(spent)}',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: spent > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
             ),
           ],
