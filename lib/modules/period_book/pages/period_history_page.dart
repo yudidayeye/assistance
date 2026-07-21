@@ -254,14 +254,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '共$days天',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: appTheme.earthMedium.withValues(alpha: 0.6),
-                        ),
-                      ),
                     ],
                   ),
                 ),
