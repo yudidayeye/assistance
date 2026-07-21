@@ -39,13 +39,13 @@ class AdditionListItem extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: appTheme.primary.withValues(alpha: 0.1),
+              color: appTheme.sage.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               Icons.add_circle_outline_rounded,
               size: 18,
-              color: appTheme.primary,
+              color: appTheme.sage,
             ),
           ),
           const SizedBox(width: 12),
@@ -82,6 +82,7 @@ class AdditionListItem extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: appTheme.sage,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],

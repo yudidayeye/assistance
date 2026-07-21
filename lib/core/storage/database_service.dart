@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io' show Platform;
@@ -9,6 +10,18 @@ class DatabaseService {
 
   Database? _db;
   static const int _currentVersion = 10;
+
+  /// 注入数据库实例（仅测试用，绕过依赖 path_provider 的默认初始化）
+  @visibleForTesting
+  void useDatabaseForTesting(Database db) {
+    _db = db;
+  }
+
+  /// 在指定数据库上创建最新完整表结构（仅测试用）
+  @visibleForTesting
+  Future<void> createSchemaForTesting(Database db) async {
+    await _onCreate(db, _currentVersion);
+  }
 
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {

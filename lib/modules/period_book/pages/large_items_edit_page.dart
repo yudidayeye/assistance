@@ -102,8 +102,6 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     _buildAdditionsSection(appTheme),
                     const SizedBox(height: 16),
                     _buildExpensesSection(appTheme),
-                    const SizedBox(height: 20),
-                    _buildSaveButton(appTheme),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -197,13 +195,11 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 ),
               ),
               const Spacer(),
-              Text(
-                '+${_formatTotal(_additions)}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.sage,
-                ),
+              _buildTotalChip(
+                appTheme: appTheme,
+                amount: _additions.fold(0.0, (sum, a) => sum + a.amount),
+                color: appTheme.sage,
+                prefix: '+¥',
               ),
             ],
           ),
@@ -230,13 +226,13 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   color: appTheme.sage.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     '+ 添加追加',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.green,
+                      color: appTheme.sage,
                     ),
                   ),
                 ),
@@ -275,9 +271,11 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
             Text(
               '+${FormatUtils.formatAmount(addition.amount)}',
               style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: appTheme.sage,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
             const SizedBox(width: 8),
@@ -315,7 +313,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.5),
+              fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -338,7 +336,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.5),
+              fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -571,13 +569,11 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 ),
               ),
               const Spacer(),
-              Text(
-                '-${_formatExpenseTotal(_expenses)}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.rose,
-                ),
+              _buildTotalChip(
+                appTheme: appTheme,
+                amount: _expenses.fold(0.0, (sum, e) => sum + e.amount),
+                color: appTheme.rose,
+                prefix: '-¥',
               ),
             ],
           ),
@@ -620,13 +616,13 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   color: appTheme.primary.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     '+ 添加支出',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.blue,
+                      color: appTheme.primary,
                     ),
                   ),
                 ),
@@ -681,9 +677,11 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
             Text(
               '-${FormatUtils.formatAmount(expense.amount)}',
               style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: appTheme.rose,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
             const SizedBox(width: 8),
@@ -903,7 +901,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.5),
+              fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -925,7 +923,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.5),
+              fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -1032,36 +1030,40 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     );
   }
 
-  Widget _buildSaveButton(AppThemeExtension appTheme) {
-    return GestureDetector(
-      onTap: () => context.pop(),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [appTheme.primary, appTheme.primaryDark],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(appTheme.radiusMd),
-          boxShadow: [
-            BoxShadow(
-              color: appTheme.primary.withValues(alpha: 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+  /// 卡片标题行右上角的合计金额徽章（金额变化时带轻过渡动画）
+  Widget _buildTotalChip({
+    required AppThemeExtension appTheme,
+    required double amount,
+    required Color color,
+    required String prefix,
+  }) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.35),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
         ),
-        child: Center(
-          child: Text(
-            '完成',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
+      ),
+      child: Container(
+        key: ValueKey(amount),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          '$prefix${amount.toStringAsFixed(2)}',
+          style: TextStyle(
+            fontFamily: GoogleFonts.dmSans().fontFamily,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color,
+            letterSpacing: 0.2,
           ),
         ),
       ),
@@ -1116,13 +1118,4 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     });
   }
 
-  String _formatTotal(List<LargeAdditionRecord> additions) {
-    final total = additions.fold<double>(0, (sum, a) => sum + a.amount);
-    return FormatUtils.formatAmount(total);
-  }
-
-  String _formatExpenseTotal(List<LargeExpenseRecord> expenses) {
-    final total = expenses.fold<double>(0, (sum, e) => sum + e.amount);
-    return FormatUtils.formatAmount(total);
-  }
 }

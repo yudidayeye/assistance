@@ -354,6 +354,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
                   color: value.isEmpty && !isOptional
                       ? appTheme.earthMedium.withValues(alpha: 0.4)
                       : appTheme.earth,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
               const SizedBox(width: 8),
@@ -455,6 +456,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
             fontSize: 24,
             fontWeight: FontWeight.w600,
             color: appTheme.earth,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
           decoration: InputDecoration(
             prefixText: '¥ ',

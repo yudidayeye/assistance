@@ -350,28 +350,14 @@ class _StageEditPageState extends State<StageEditPage> {
 
     return Row(
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '当前日期（用于计算日均）',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: appTheme.earthMedium.withValues(alpha: 0.7),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '生活费日均 = 生活支出 ÷ ${_stage!.livingDays}天',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: appTheme.earthMedium.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
+        Text(
+          '当前日期',
+          style: TextStyle(
+            fontSize: 13,
+            color: appTheme.earthMedium,
           ),
         ),
+        const Spacer(),
         GestureDetector(
           onTap: () async {
             final initialDate = currentDateStr != null
@@ -491,13 +477,13 @@ class _StageEditPageState extends State<StageEditPage> {
                   color: appTheme.sage.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     '+ 添加追加',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.green,
+                      color: appTheme.sage,
                     ),
                   ),
                 ),
@@ -611,8 +597,6 @@ class _StageEditPageState extends State<StageEditPage> {
                 // 追加原因
                 TextField(
                   controller: reasonController,
-                  onChanged: (_) => _saveAdditionEdit(
-                      addition, reasonController, amountController),
                   decoration: InputDecoration(
                     labelText: '追加原因',
                     hintText: '请输入追加原因',
@@ -638,8 +622,6 @@ class _StageEditPageState extends State<StageEditPage> {
                 TextField(
                   controller: amountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (_) => _saveAdditionEdit(
-                      addition, reasonController, amountController),
                   decoration: InputDecoration(
                     labelText: '追加金额',
                     hintText: '请输入金额',
@@ -661,6 +643,32 @@ class _StageEditPageState extends State<StageEditPage> {
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
                 SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+                // 确定按钮
+                GestureDetector(
+                  onTap: () {
+                    // 先保存一次确保最新数据写入
+                    _saveAdditionEdit(addition, reasonController, amountController);
+                    Navigator.pop(ctx);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: sheetTheme.sage,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '保存修改',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -741,13 +749,13 @@ class _StageEditPageState extends State<StageEditPage> {
                   color: appTheme.primary.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     '+ 添加支出',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.blue,
+                      color: appTheme.primary,
                     ),
                   ),
                 ),
@@ -881,8 +889,6 @@ class _StageEditPageState extends State<StageEditPage> {
                       color: sheetTheme.sage,
                       onTap: () {
                         setLocal(() => category = 'shopping');
-                        _saveExpenseEdit(
-                            expense, 'shopping', amountController, descController);
                       },
                     ),
                     const SizedBox(width: 10),
@@ -894,8 +900,6 @@ class _StageEditPageState extends State<StageEditPage> {
                       color: sheetTheme.rose,
                       onTap: () {
                         setLocal(() => category = 'other');
-                        _saveExpenseEdit(
-                            expense, 'other', amountController, descController);
                       },
                     ),
                   ],
@@ -905,8 +909,6 @@ class _StageEditPageState extends State<StageEditPage> {
                 TextField(
                   controller: amountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (_) => _saveExpenseEdit(
-                      expense, category, amountController, descController),
                   decoration: InputDecoration(
                     labelText: '金额',
                     hintText: '请输入金额',
@@ -931,8 +933,6 @@ class _StageEditPageState extends State<StageEditPage> {
                 // 描述
                 TextField(
                   controller: descController,
-                  onChanged: (_) => _saveExpenseEdit(
-                      expense, category, amountController, descController),
                   decoration: InputDecoration(
                     labelText: '描述',
                     hintText: '请输入描述',
@@ -954,6 +954,32 @@ class _StageEditPageState extends State<StageEditPage> {
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
                 SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+                // 确定按钮
+                GestureDetector(
+                  onTap: () {
+                    // 先保存一次确保最新数据写入
+                    _saveExpenseEdit(expense, category, amountController, descController);
+                    Navigator.pop(ctx);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: sheetTheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '保存修改',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1108,7 +1134,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.5),
+              fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -1132,7 +1158,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.5),
+              fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -1248,7 +1274,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.5),
+              fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
@@ -1271,7 +1297,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.5),
+              fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(

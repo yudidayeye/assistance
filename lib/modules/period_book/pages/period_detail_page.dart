@@ -6,7 +6,6 @@ import '../../../shared/widgets/empty_state_widget.dart';
 import '../models/period_record.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
-import '../models/expense_record.dart';
 import '../services/period_book_service.dart';
 import '../widgets/stage_card.dart';
 import '../widgets/period_summary_card.dart';
@@ -29,7 +28,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   PeriodCalculations? _calc;
   List<StageRecord> _stages = [];
   List<List<AdditionRecord>> _stageAdditions = [];
-  List<List<ExpenseRecord>> _stageExpenses = [];
   double? _largeItemsNet;
   bool _loading = true;
 
@@ -66,15 +64,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         _calc = await _service.getPeriodCalculations(_period!.id!);
         _stages = await _service.getStagesByPeriod(_period!.id!);
         final allAdditions = await _service.getAdditionsByPeriod(_period!.id!);
-        final allExpenses = await _service.getExpensesByPeriod(_period!.id!);
 
-        // 按阶段分组追加和支出记录
+        // 按阶段分组追加记录
         _stageAdditions = _stages.map((stage) {
           return allAdditions.where((a) => a.stageId == stage.id!).toList();
-        }).toList();
-
-        _stageExpenses = _stages.map((stage) {
-          return allExpenses.where((e) => e.stageId == stage.id!).toList();
         }).toList();
 
         // 加载大额记录净额
@@ -279,7 +272,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     return PeriodSummaryCard(
       calc: _calc!,
       period: _period!,
-      onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(_stages.last),
       onTapTotalBase: _showTotalBaseDetail,
       onTapTotalExpense: _showTotalExpenseDetail,
       largeItemsNet: _largeItemsNet,
@@ -535,18 +527,22 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             Text(
               '¥0.00',
               style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: isTotal ? 16 : 14,
                 fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
                 color: appTheme.earthMedium.withValues(alpha: 0.4),
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             )
           else
             Text(
               '¥${amount.toStringAsFixed(2)}',
               style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: isTotal ? 16 : 14,
                 fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
                 color: color ?? (isTotal ? appTheme.primary : appTheme.earth),
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
         ],
@@ -567,7 +563,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             final stage = _stages[index];
             final stageCalc = _calc!.stages[index];
             final additions = _stageAdditions[index];
-            final expenses = _stageExpenses[index];
 
             // 计算上一阶段余额（用于显示本金来源）
             double previousBalance;
@@ -585,8 +580,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               stageCalc: stageCalc,
               previousBalance: previousBalance,
               additions: additions,
-              expenses: expenses,
-              isReadOnly: _isReadOnly,
               onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(stage),
               onEdit: _isReadOnly ? null : () async {
                 await context.push('/period_book/stage_edit/${stage.id}');
@@ -594,34 +587,12 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   _loadData();
                 }
               },
-              onDeleteAddition: _isReadOnly ? null : (a) => _deleteAddition(a),
-              onDeleteExpense: _isReadOnly ? null : (e) => _deleteExpense(e),
-              onReorderExpenses: _isReadOnly ? null : (reorderedExpenses) => _reorderExpenses(stage.id!, reorderedExpenses),
             );
           },
           childCount: _stages.length,
         ),
       ),
     );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 操作：删除
-  // ═══════════════════════════════════════════════════════════
-
-  Future<void> _deleteExpense(ExpenseRecord e) async {
-    await _service.deleteExpense(e.id!);
-    await _loadData();
-  }
-
-  Future<void> _reorderExpenses(int stageId, List<ExpenseRecord> expenses) async {
-    await _service.updateExpensesOrder(expenses);
-    await _loadData();
-  }
-
-  Future<void> _deleteAddition(AdditionRecord a) async {
-    await _service.deleteAddition(a.id!);
-    await _loadData();
   }
 
   // ═══════════════════════════════════════════════════════════
