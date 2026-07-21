@@ -305,14 +305,14 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                     children: [
                       _buildTag(
                         appTheme: appTheme,
-                        label: '个人',
+                        label: '个人消费',
                         value: personalExpense,
                         color: appTheme.earth,
                       ),
                       const SizedBox(width: 6),
                       _buildTag(
                         appTheme: appTheme,
-                        label: '其他',
+                        label: '其他消费',
                         value: otherExpense,
                         color: appTheme.earthMedium,
                       ),
