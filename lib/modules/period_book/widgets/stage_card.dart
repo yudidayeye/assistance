@@ -190,7 +190,7 @@ class StageCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: appTheme.rose,
+                        color: appTheme.earthMedium.withValues(alpha: 0.7),
                       ),
                     ),
                     const Spacer(),
@@ -220,7 +220,7 @@ class StageCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: appTheme.rose,
+                        color: appTheme.earthMedium.withValues(alpha: 0.7),
                       ),
                     ),
                     const Spacer(),
