@@ -34,7 +34,6 @@ class _StageEditPageState extends State<StageEditPage> {
   final _expenseDescriptionController = TextEditingController();
 
   bool _loading = true;
-  bool _saving = false;
 
   @override
   void initState() {
@@ -68,32 +67,24 @@ class _StageEditPageState extends State<StageEditPage> {
     if (mounted) setState(() => _loading = false);
   }
 
-  Future<void> _save() async {
-    setState(() => _saving = true);
-    try {
-      // 保存阶段日期修改
-      if (_stage != null) {
-        await _service.updateStage(_stage!.id!, {
-          'start_date': _stage!.startDate,
-          'end_date': _stage!.endDate,
-          'current_date': _stage!.currentDate,
-        });
-      }
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('保存成功'),
-            backgroundColor: Theme.of(context).appTheme.sage,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-        context.pop();
-      }
+  /// 实时保存阶段日期修改（选择日期后立即写入数据库）
+  Future<void> _saveStageDates() async {
+    final stage = _stage;
+    if (stage == null) return;
+    final id = stage.id;
+    if (id == null) return;
+    try {
+      await _service.updateStage(id, {
+        'start_date': stage.startDate,
+        'end_date': stage.endDate,
+        'current_date': stage.currentDate,
+      });
     } catch (e) {
+      debugPrint('Save stage dates error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -106,9 +97,39 @@ class _StageEditPageState extends State<StageEditPage> {
           ),
         );
       }
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// 实时保存追加记录编辑（金额与原因均合法时才写入）
+  void _saveAdditionEdit(
+    AdditionRecord addition,
+    TextEditingController reasonController,
+    TextEditingController amountController,
+  ) {
+    if (addition.id == null) return;
+    final amount = double.tryParse(amountController.text);
+    final reason = reasonController.text.trim();
+    if (amount == null || amount <= 0 || reason.isEmpty) return;
+    _service.updateAddition(addition.id!, amount: amount, reason: reason);
+  }
+
+  /// 实时保存支出记录编辑（金额与描述均合法时才写入）
+  void _saveExpenseEdit(
+    ExpenseRecord expense,
+    String category,
+    TextEditingController amountController,
+    TextEditingController descController,
+  ) {
+    if (expense.id == null) return;
+    final amount = double.tryParse(amountController.text);
+    final desc = descController.text.trim();
+    if (amount == null || amount <= 0 || desc.isEmpty) return;
+    _service.updateExpense(
+      expense.id!,
+      category: category,
+      amount: amount,
+      description: desc,
+    );
   }
 
   @override
@@ -152,8 +173,6 @@ class _StageEditPageState extends State<StageEditPage> {
                     _buildAdditionsSection(appTheme),
                     const SizedBox(height: 16),
                     _buildExpensesSection(appTheme),
-                    const SizedBox(height: 20),
-                    _buildSaveButton(appTheme),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -230,10 +249,9 @@ class _StageEditPageState extends State<StageEditPage> {
             date: start,
             onDateChanged: (date) {
               setState(() {
-                _stage = _stage!.copyWith(
-                  startDate: '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-                );
+                _stage = _stage!.copyWith(startDate: _formatDate(date));
               });
+              _saveStageDates();
             },
           ),
           const SizedBox(height: 12),
@@ -243,10 +261,9 @@ class _StageEditPageState extends State<StageEditPage> {
             date: end,
             onDateChanged: (date) {
               setState(() {
-                _stage = _stage!.copyWith(
-                  endDate: '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-                );
+                _stage = _stage!.copyWith(endDate: _formatDate(date));
               });
+              _saveStageDates();
             },
           ),
           const SizedBox(height: 12),
@@ -360,11 +377,9 @@ class _StageEditPageState extends State<StageEditPage> {
             );
             if (picked != null) {
               setState(() {
-                _stage = _stage!.copyWith(
-                  currentDate:
-                      '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}',
-                );
+                _stage = _stage!.copyWith(currentDate: _formatDate(picked));
               });
+              _saveStageDates();
             }
           },
           child: Container(
@@ -577,6 +592,8 @@ class _StageEditPageState extends State<StageEditPage> {
                 // 追加原因
                 TextField(
                   controller: reasonController,
+                  onChanged: (_) => _saveAdditionEdit(
+                      addition, reasonController, amountController),
                   decoration: InputDecoration(
                     labelText: '追加原因',
                     hintText: '请输入追加原因',
@@ -602,6 +619,8 @@ class _StageEditPageState extends State<StageEditPage> {
                 TextField(
                   controller: amountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (_) => _saveAdditionEdit(
+                      addition, reasonController, amountController),
                   decoration: InputDecoration(
                     labelText: '追加金额',
                     hintText: '请输入金额',
@@ -622,42 +641,6 @@ class _StageEditPageState extends State<StageEditPage> {
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
-                const SizedBox(height: 16),
-                // 保存按钮
-                SizedBox(
-                  width: double.infinity,
-                  child: GestureDetector(
-                    onTap: () async {
-                      final amount = double.tryParse(amountController.text);
-                      final reason = reasonController.text.trim();
-                      if (amount == null || amount <= 0 || reason.isEmpty) return;
-                      await _service.updateAddition(
-                        addition.id!,
-                        amount: amount,
-                        reason: reason,
-                      );
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      await _loadData();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: sheetTheme.primary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '保存修改',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
                 SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
               ],
             ),
@@ -665,6 +648,8 @@ class _StageEditPageState extends State<StageEditPage> {
         );
       },
     );
+    // 编辑已实时保存，关闭弹窗后刷新列表
+    if (mounted) await _loadData();
   }
 
   Widget _buildExpensesSection(AppThemeExtension appTheme) {
@@ -865,7 +850,11 @@ class _StageEditPageState extends State<StageEditPage> {
                       icon: Icons.shopping_bag_outlined,
                       isSelected: category == 'shopping',
                       color: sheetTheme.sage,
-                      onTap: () => setLocal(() => category = 'shopping'),
+                      onTap: () {
+                        setLocal(() => category = 'shopping');
+                        _saveExpenseEdit(
+                            expense, 'shopping', amountController, descController);
+                      },
                     ),
                     const SizedBox(width: 10),
                     _buildCategoryChip(
@@ -874,7 +863,11 @@ class _StageEditPageState extends State<StageEditPage> {
                       icon: Icons.category_outlined,
                       isSelected: category == 'other',
                       color: sheetTheme.roseLight,
-                      onTap: () => setLocal(() => category = 'other'),
+                      onTap: () {
+                        setLocal(() => category = 'other');
+                        _saveExpenseEdit(
+                            expense, 'other', amountController, descController);
+                      },
                     ),
                   ],
                 ),
@@ -883,6 +876,8 @@ class _StageEditPageState extends State<StageEditPage> {
                 TextField(
                   controller: amountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (_) => _saveExpenseEdit(
+                      expense, category, amountController, descController),
                   decoration: InputDecoration(
                     labelText: '金额',
                     hintText: '请输入金额',
@@ -907,6 +902,8 @@ class _StageEditPageState extends State<StageEditPage> {
                 // 描述
                 TextField(
                   controller: descController,
+                  onChanged: (_) => _saveExpenseEdit(
+                      expense, category, amountController, descController),
                   decoration: InputDecoration(
                     labelText: '描述',
                     hintText: '请输入描述',
@@ -927,43 +924,6 @@ class _StageEditPageState extends State<StageEditPage> {
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
-                const SizedBox(height: 16),
-                // 保存按钮
-                SizedBox(
-                  width: double.infinity,
-                  child: GestureDetector(
-                    onTap: () async {
-                      final amount = double.tryParse(amountController.text);
-                      final desc = descController.text.trim();
-                      if (amount == null || amount <= 0 || desc.isEmpty) return;
-                      await _service.updateExpense(
-                        expense.id!,
-                        category: category,
-                        amount: amount,
-                        description: desc,
-                      );
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      await _loadData();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: sheetTheme.primary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '保存修改',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
                 SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
               ],
             ),
@@ -971,6 +931,8 @@ class _StageEditPageState extends State<StageEditPage> {
         );
       },
     );
+    // 编辑已实时保存，关闭弹窗后刷新列表
+    if (mounted) await _loadData();
   }
 
   Widget _buildCategoryChip({
@@ -1006,58 +968,6 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSaveButton(AppThemeExtension appTheme) {
-    final canSave = !_saving;
-
-    return GestureDetector(
-      onTap: canSave ? _save : null,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: canSave
-              ? LinearGradient(
-                  colors: [appTheme.primary, appTheme.primaryDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: canSave ? null : appTheme.creamDark,
-          borderRadius: BorderRadius.circular(appTheme.radiusMd),
-          boxShadow: canSave
-              ? [
-                  BoxShadow(
-                    color: appTheme.primary.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
-        child: Center(
-          child: _saving
-              ? SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Text(
-                  '保存修改',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: canSave ? Colors.white : appTheme.earthMedium.withValues(alpha: 0.4),
-                    letterSpacing: 0.5,
-                  ),
-                ),
         ),
       ),
     );
