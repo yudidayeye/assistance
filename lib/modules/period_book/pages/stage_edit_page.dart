@@ -35,6 +35,14 @@ class _StageEditPageState extends State<StageEditPage> {
 
   bool _loading = true;
 
+  /// 所有追加记录合计金额
+  double get _additionsTotal =>
+      _additions.fold(0.0, (sum, addition) => sum + addition.amount);
+
+  /// 所有支出记录合计金额
+  double get _expensesTotal =>
+      _expenses.fold(0.0, (sum, expense) => sum + expense.amount);
+
   @override
   void initState() {
     super.initState();
@@ -425,13 +433,24 @@ class _StageEditPageState extends State<StageEditPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '追加记录',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earth,
-            ),
+          Row(
+            children: [
+              Text(
+                '追加记录',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earth,
+                ),
+              ),
+              const Spacer(),
+              _buildTotalChip(
+                appTheme: appTheme,
+                amount: _additionsTotal,
+                color: appTheme.sage,
+                prefix: '+¥',
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           if (_additions.isEmpty)
@@ -664,13 +683,24 @@ class _StageEditPageState extends State<StageEditPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '已有支出',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earth,
-            ),
+          Row(
+            children: [
+              Text(
+                '已有支出',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earth,
+                ),
+              ),
+              const Spacer(),
+              _buildTotalChip(
+                appTheme: appTheme,
+                amount: _expensesTotal,
+                color: appTheme.roseLight,
+                prefix: '-¥',
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           if (_expenses.isEmpty)
@@ -968,6 +998,46 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// 卡片标题行右上角的合计金额徽章（金额变化时带轻过渡动画）
+  Widget _buildTotalChip({
+    required AppThemeExtension appTheme,
+    required double amount,
+    required Color color,
+    required String prefix,
+  }) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.35),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+      ),
+      child: Container(
+        key: ValueKey(amount),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          '$prefix${amount.toStringAsFixed(2)}',
+          style: TextStyle(
+            fontFamily: GoogleFonts.dmSans().fontFamily,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color,
+            letterSpacing: 0.2,
+          ),
         ),
       ),
     );
