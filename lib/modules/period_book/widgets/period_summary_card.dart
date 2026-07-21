@@ -138,7 +138,7 @@ class PeriodSummaryCard extends StatelessWidget {
               children: [
                 Positioned.fill(
                   child: ColoredBox(
-                    color: appTheme.earthMedium.withValues(alpha: 0.12),
+                    color: appTheme.roseLight.withValues(alpha: 0.35),
                   ),
                 ),
                 Positioned(
@@ -211,15 +211,26 @@ class PeriodSummaryCard extends StatelessWidget {
             ),
             GestureDetector(
               onTap: onTapTotalExpense,
-              child: Text(
-                '支出 -${FormatUtils.formatAmount(spent)}',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: spent > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.trending_down_rounded,
+                    size: 14,
+                    color: appTheme.rose.withValues(alpha: 0.6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '支出 -${FormatUtils.formatAmount(spent)}',
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: spent > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
