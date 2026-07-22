@@ -593,6 +593,7 @@ class _StageEditPageState extends State<StageEditPage> {
 
   Widget _buildAdditionItem(AppThemeExtension appTheme, AdditionRecord addition) {
     return InkWell(
+      key: ValueKey('addition_${addition.id}'),
       onTap: () => _showEditAdditionSheet(appTheme, addition),
       borderRadius: BorderRadius.circular(14),
       child: Container(
