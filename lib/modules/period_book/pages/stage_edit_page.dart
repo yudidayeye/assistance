@@ -767,7 +767,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 ),
                 child: Center(
                   child: Text(
-                    '+ 添加购物支出',
+                    '+ 添加支出',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -868,7 +868,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 ),
                 child: Center(
                   child: Text(
-                    '+ 添加其他支出',
+                    '+ 添加支出',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
