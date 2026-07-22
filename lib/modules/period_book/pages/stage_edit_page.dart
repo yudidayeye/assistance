@@ -897,9 +897,10 @@ class _StageEditPageState extends State<StageEditPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
-            controller: _shoppingDescController,
+            controller: _shoppingAmountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              hintText: '描述（如：超市采购）',
+              hintText: '金额',
               hintStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
@@ -919,10 +920,9 @@ class _StageEditPageState extends State<StageEditPage> {
           ),
           const SizedBox(height: 10),
           TextField(
-            controller: _shoppingAmountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            controller: _shoppingDescController,
             decoration: InputDecoration(
-              hintText: '金额',
+              hintText: '描述',
               hintStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
@@ -1020,9 +1020,10 @@ class _StageEditPageState extends State<StageEditPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
-            controller: _otherDescController,
+            controller: _otherAmountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              hintText: '描述（如：水电费）',
+              hintText: '金额',
               hintStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
@@ -1042,10 +1043,9 @@ class _StageEditPageState extends State<StageEditPage> {
           ),
           const SizedBox(height: 10),
           TextField(
-            controller: _otherAmountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            controller: _otherDescController,
             decoration: InputDecoration(
-              hintText: '金额',
+              hintText: '描述',
               hintStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
@@ -1315,44 +1315,6 @@ class _StageEditPageState extends State<StageEditPage> {
     if (mounted) await _loadData();
   }
 
-  Widget _buildCategoryChip({
-    required AppThemeExtension appTheme,
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.15) : appTheme.creamDark,
-          borderRadius: BorderRadius.circular(10),
-          border: isSelected
-              ? Border.all(color: color.withValues(alpha: 0.3), width: 1)
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: isSelected ? color : appTheme.earthMedium),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? color : appTheme.earthMedium,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// 卡片标题行右上角的合计金额徽章（金额变化时带轻过渡动画）
   Widget _buildTotalChip({
     required AppThemeExtension appTheme,
@@ -1430,11 +1392,12 @@ class _StageEditPageState extends State<StageEditPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 原因输入
+          // 金额输入
           TextField(
-            controller: _additionReasonController,
+            controller: _additionAmountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              hintText: '追加原因（必填）',
+              hintText: '追加金额',
               hintStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
@@ -1453,12 +1416,11 @@ class _StageEditPageState extends State<StageEditPage> {
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
-          // 金额输入
+          // 原因输入
           TextField(
-            controller: _additionAmountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            controller: _additionReasonController,
             decoration: InputDecoration(
-              hintText: '追加金额',
+              hintText: '追加原因',
               hintStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
