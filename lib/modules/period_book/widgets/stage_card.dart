@@ -182,11 +182,11 @@ class StageCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                // 消费行：购物+其他=合计，加法格式
+                // 购物支出
                 Row(
                   children: [
                     Text(
-                      '消费',
+                      '购物',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -194,20 +194,39 @@ class StageCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          color: appTheme.rose,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                        children: [
-                          TextSpan(text: '-¥${stageCalc.shoppingTotal.toStringAsFixed(2)}购物'),
-                          TextSpan(text: '-¥${stageCalc.otherTotal.toStringAsFixed(2)}其他'),
-                          TextSpan(text: '=-¥${(stageCalc.shoppingTotal + stageCalc.otherTotal).toStringAsFixed(2)}'),
-                        ],
+                    Text(
+                      '-¥${stageCalc.shoppingTotal.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: GoogleFonts.dmSans().fontFamily,
+                        color: appTheme.rose,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // 其他支出
+                Row(
+                  children: [
+                    Text(
+                      '其他',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: appTheme.earthMedium.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '-¥${stageCalc.otherTotal.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: GoogleFonts.dmSans().fontFamily,
+                        color: appTheme.rose,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ],
