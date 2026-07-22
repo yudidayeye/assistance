@@ -24,6 +24,7 @@ class PeriodDetailPage extends StatefulWidget {
 class _PeriodDetailPageState extends State<PeriodDetailPage> {
   final _service = PeriodBookService.instance;
   final ScrollController _scrollController = ScrollController();
+  double? _savedScrollOffset;
 
   PeriodRecord? _period;
   PeriodCalculations? _calc;
@@ -689,7 +690,20 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 stage.id!,
                 val,
               );
+              // 保存当前滚动位置，_loadData() 重建后会恢复
+              _savedScrollOffset = _scrollController.hasClients
+                  ? _scrollController.offset
+                  : null;
               await _loadData();
+              // 等待重建完成后恢复滚动位置
+              if (mounted) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_savedScrollOffset != null &&
+                      _scrollController.hasClients) {
+                    _scrollController.jumpTo(_savedScrollOffset!);
+                  }
+                });
+              }
               if (mounted) {
                 Navigator.of(context).pop();
               }
