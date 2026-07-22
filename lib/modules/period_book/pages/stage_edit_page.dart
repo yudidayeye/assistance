@@ -730,7 +730,24 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             )
           else
-            Column(
+            ReorderableListView(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final item = shoppingExpenses.removeAt(oldIndex);
+                  shoppingExpenses.insert(newIndex, item);
+                  _expenses = [
+                    ..._expenses.where((e) => e.category == 'shopping')
+                        .toList()..clear()
+                      ..addAll(shoppingExpenses),
+                    ..._expenses.where((e) => e.category == 'other'),
+                  ];
+                });
+                _service.updateExpensesOrder(_expenses);
+              },
               children: [
                 for (int i = 0; i < shoppingExpenses.length; i++)
                   _buildExpenseItem(appTheme, shoppingExpenses[i], index: i),
@@ -814,7 +831,24 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             )
           else
-            Column(
+            ReorderableListView(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final item = otherExpenses.removeAt(oldIndex);
+                  otherExpenses.insert(newIndex, item);
+                  _expenses = [
+                    ..._expenses.where((e) => e.category == 'shopping'),
+                    ..._expenses.where((e) => e.category == 'other')
+                        .toList()..clear()
+                      ..addAll(otherExpenses),
+                  ];
+                });
+                _service.updateExpensesOrder(_expenses);
+              },
               children: [
                 for (int i = 0; i < otherExpenses.length; i++)
                   _buildExpenseItem(appTheme, otherExpenses[i], index: i),
@@ -1104,7 +1138,7 @@ class _StageEditPageState extends State<StageEditPage> {
     final color = appTheme.rose;
 
     return InkWell(
-      key: ValueKey(expense.id),
+      key: ValueKey('expense_${expense.id}'),
       onTap: () => _showEditExpenseSheet(appTheme, expense),
       borderRadius: BorderRadius.circular(14),
       child: Container(
@@ -1119,6 +1153,12 @@ class _StageEditPageState extends State<StageEditPage> {
         ),
         child: Row(
           children: [
+            Icon(
+              Icons.drag_handle_rounded,
+              color: appTheme.earthMedium.withValues(alpha: 0.4),
+              size: 18,
+            ),
+            const SizedBox(width: 8),
             Icon(icon, size: 16, color: color),
             const SizedBox(width: 8),
             Expanded(
