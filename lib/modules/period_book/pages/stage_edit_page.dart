@@ -632,9 +632,8 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             ),
             const SizedBox(width: 8),
-            Listener(
-              behavior: HitTestBehavior.opaque,
-              onPointerDown: (_) => _deleteAddition(addition),
+            GestureDetector(
+              onTap: () => _deleteAddition(addition),
               child: Icon(
                 Icons.close,
                 size: 16,
@@ -1263,9 +1262,8 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             ),
             const SizedBox(width: 8),
-            Listener(
-              behavior: HitTestBehavior.opaque,
-              onPointerDown: (_) => _deleteExpense(expense),
+            GestureDetector(
+              onTap: () => _deleteExpense(expense),
               child: Icon(
                 Icons.close,
                 size: 16,
