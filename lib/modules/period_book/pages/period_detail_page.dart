@@ -23,6 +23,7 @@ class PeriodDetailPage extends StatefulWidget {
 
 class _PeriodDetailPageState extends State<PeriodDetailPage> {
   final _service = PeriodBookService.instance;
+  final ScrollController _scrollController = ScrollController();
 
   PeriodRecord? _period;
   PeriodCalculations? _calc;
@@ -44,6 +45,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   @override
   void dispose() {
     _service.removeListener(_onDataChanged);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -130,6 +132,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       body: Container(
         decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
         child: CustomScrollView(
+          controller: _scrollController,
           physics: const BouncingScrollPhysics(),
           slivers: [
             _buildHeader(appTheme),
