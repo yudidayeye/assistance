@@ -256,7 +256,7 @@ class StageCard extends StatelessWidget {
                       )
                     else
                       Text(
-                        '¥0.00',
+                        '-¥0.00',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
