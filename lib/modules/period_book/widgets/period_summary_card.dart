@@ -38,33 +38,20 @@ class PeriodSummaryCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
+        color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(20),
         boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          decoration: BoxDecoration(
-            color: appTheme.cardBackground,
-            gradient: LinearGradient(
-              colors: [
-                Colors.transparent,
-                appTheme.primary.withValues(alpha: 0.06),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildBalanceSection(appTheme, balance),
-              const SizedBox(height: 16),
-              _buildProgressRow(appTheme, balanceRatio, spent),
-            ],
-          ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildBalanceSection(appTheme, balance),
+            const SizedBox(height: 16),
+            _buildProgressRow(appTheme, balanceRatio, spent),
+          ],
         ),
       ),
     );
