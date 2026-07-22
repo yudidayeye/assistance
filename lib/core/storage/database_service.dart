@@ -9,7 +9,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 10;
+  static const int _currentVersion = 11;
 
   /// 注入数据库实例（仅测试用，绕过依赖 path_provider 的默认初始化）
   @visibleForTesting
@@ -148,6 +148,7 @@ class DatabaseService {
         period_id INTEGER NOT NULL,
         amount REAL NOT NULL,
         reason TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
       )
@@ -221,6 +222,11 @@ class DatabaseService {
       await _migrateToV10(db);
     }
 
+    // 如果从 v10 升级到 v11，添加 sort_order 字段到大额追加表
+    if (oldVersion < 11 && newVersion >= 11) {
+      await _migrateToV11(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
@@ -228,6 +234,7 @@ class DatabaseService {
       if (v == 8) continue; // 已经在上面处理了
       if (v == 9) continue; // 已经在上面处理了
       if (v == 10) continue; // 已经在上面处理了
+      if (v == 11) continue; // 已经在上面处理了
 
       await db.transaction((txn) async {
         if (v == 2) {
@@ -410,6 +417,12 @@ class DatabaseService {
   Future<void> _migrateToV10(Database db) async {
     await db.execute(
       'ALTER TABLE mod_period_book_additions ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
+    );
+  }
+
+  Future<void> _migrateToV11(Database db) async {
+    await db.execute(
+      'ALTER TABLE mod_period_book_large_additions ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
     );
   }
 

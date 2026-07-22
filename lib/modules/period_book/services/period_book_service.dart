@@ -571,7 +571,7 @@ class PeriodBookService extends ChangeNotifier {
       'mod_period_book_large_additions',
       where: 'period_id = ?',
       whereArgs: [periodId],
-      orderBy: 'created_at ASC',
+      orderBy: 'sort_order ASC, created_at ASC',
     );
     return rows.map(LargeAdditionRecord.fromMap).toList();
   }
@@ -583,13 +583,25 @@ class PeriodBookService extends ChangeNotifier {
   }
 
   /// 更新大额追加记录
-  Future<void> updateLargeAddition(int id, {double? amount, String? reason}) async {
+  Future<void> updateLargeAddition(int id, {double? amount, String? reason, int? sortOrder}) async {
     final data = <String, dynamic>{};
     if (amount != null) data['amount'] = amount;
     if (reason != null) data['reason'] = reason;
+    if (sortOrder != null) data['sort_order'] = sortOrder;
     if (data.isEmpty) return;
     await _db.update('mod_period_book_large_additions', data,
         where: 'id = ?', whereArgs: [id]);
+    _notifyChanged();
+  }
+
+  Future<void> updateLargeAdditionsOrder(List<LargeAdditionRecord> additions) async {
+    for (var i = 0; i < additions.length; i++) {
+      final addition = additions[i];
+      if (addition.id != null) {
+        await _db.update('mod_period_book_large_additions', {'sort_order': i},
+            where: 'id = ?', whereArgs: [addition.id]);
+      }
+    }
     _notifyChanged();
   }
 
@@ -635,11 +647,12 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
-  Future<void> updateLargeExpense(int id, {String? category, double? amount, String? description}) async {
+  Future<void> updateLargeExpense(int id, {String? category, double? amount, String? description, int? sortOrder}) async {
     final data = <String, dynamic>{};
     if (category != null) data['category'] = category;
     if (amount != null) data['amount'] = amount;
     if (description != null) data['description'] = description;
+    if (sortOrder != null) data['sort_order'] = sortOrder;
     if (data.isEmpty) return;
     await _db.update('mod_period_book_large_expenses', data,
         where: 'id = ?', whereArgs: [id]);

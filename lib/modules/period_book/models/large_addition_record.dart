@@ -4,6 +4,7 @@ class LargeAdditionRecord {
   final int periodId;
   final double amount;
   final String reason;
+  final int sortOrder;
   final String createdAt;
 
   const LargeAdditionRecord({
@@ -11,6 +12,7 @@ class LargeAdditionRecord {
     required this.periodId,
     required this.amount,
     required this.reason,
+    this.sortOrder = 0,
     required this.createdAt,
   });
 
@@ -20,6 +22,7 @@ class LargeAdditionRecord {
       'period_id': periodId,
       'amount': amount,
       'reason': reason,
+      'sort_order': sortOrder,
       'created_at': createdAt,
     };
   }
@@ -30,6 +33,7 @@ class LargeAdditionRecord {
       periodId: map['period_id'] as int,
       amount: (map['amount'] as num).toDouble(),
       reason: map['reason'] as String,
+      sortOrder: (map['sort_order'] as int?) ?? 0,
       createdAt: map['created_at'] as String,
     );
   }
@@ -39,6 +43,7 @@ class LargeAdditionRecord {
     int? periodId,
     double? amount,
     String? reason,
+    int? sortOrder,
     String? createdAt,
   }) {
     return LargeAdditionRecord(
@@ -46,6 +51,7 @@ class LargeAdditionRecord {
       periodId: periodId ?? this.periodId,
       amount: amount ?? this.amount,
       reason: reason ?? this.reason,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
     );
   }
