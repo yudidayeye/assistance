@@ -692,12 +692,13 @@ class _StageEditPageState extends State<StageEditPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                // 追加原因
+                // 追加金额
                 TextField(
-                  controller: reasonController,
+                  controller: amountController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
-                    labelText: '追加原因',
-                    hintText: '请输入追加原因',
+                    labelText: '追加金额',
+                    hintText: '请输入金额',
                     hintStyle: TextStyle(
                       fontSize: 13,
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),
@@ -716,13 +717,12 @@ class _StageEditPageState extends State<StageEditPage> {
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
                 const SizedBox(height: 14),
-                // 追加金额
+                // 追加原因
                 TextField(
-                  controller: amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  controller: reasonController,
                   decoration: InputDecoration(
-                    labelText: '追加金额',
-                    hintText: '请输入金额',
+                    labelText: '追加原因',
+                    hintText: '请输入追加原因',
                     hintStyle: TextStyle(
                       fontSize: 13,
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),

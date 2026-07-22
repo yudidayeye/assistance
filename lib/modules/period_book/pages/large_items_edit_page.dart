@@ -429,9 +429,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
-            controller: _additionReasonController,
+            controller: _additionAmountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              hintText: '追加原因（必填）',
+              hintText: '追加金额',
               hintStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
@@ -451,10 +452,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
           ),
           const SizedBox(height: 10),
           TextField(
-            controller: _additionAmountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            controller: _additionReasonController,
             decoration: InputDecoration(
-              hintText: '追加金额',
+              hintText: '追加原因（必填）',
               hintStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
@@ -1072,10 +1072,11 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: reasonController,
+                  controller: amountController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
-                    labelText: '原因',
-                    hintText: '请输入追加原因',
+                    labelText: '金额',
+                    hintText: '请输入金额',
                     hintStyle: TextStyle(
                       fontSize: 13,
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),
@@ -1095,11 +1096,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 ),
                 const SizedBox(height: 14),
                 TextField(
-                  controller: amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  controller: reasonController,
                   decoration: InputDecoration(
-                    labelText: '金额',
-                    hintText: '请输入金额',
+                    labelText: '原因',
+                    hintText: '请输入追加原因',
                     hintStyle: TextStyle(
                       fontSize: 13,
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),
