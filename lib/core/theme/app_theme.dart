@@ -22,8 +22,8 @@ class AppTheme {
   // 对应的 *Light 色保持浅淡，仅用于底色/填充（日历格子、chip 背景等）
   static const Color _sage = Color(0xFF587F71);
   static const Color _sageLight = Color(0xFFCDE0D6);
-  static const Color _rose = Color(0xFFA94E69);
-  static const Color _roseLight = Color(0xFFEDCDD4);
+  static const Color _rose = Color(0xFFCF7A8E);
+  static const Color _roseLight = Color(0xFFF2D8DE);
 
   // ── 通用卡片阴影（所有主题共用） ──────────────────────
   static final List<BoxShadow> _cardShadow = [

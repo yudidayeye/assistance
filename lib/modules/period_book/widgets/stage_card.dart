@@ -242,7 +242,7 @@ class StageCard extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           fontFamily: GoogleFonts.dmSans().fontFamily,
-                          color: appTheme.rose.withValues(alpha: 0.4),
+                          color: appTheme.rose,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),

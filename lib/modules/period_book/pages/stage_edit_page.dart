@@ -28,6 +28,9 @@ class _StageEditPageState extends State<StageEditPage> {
   bool _additionFormExpanded = false;
   bool _shoppingFormExpanded = false;
   bool _otherFormExpanded = false;
+
+  // Tab 切换（0=追加记录, 1=购物支出, 2=其他支出）
+  int _currentTabIndex = 0;
   final _additionReasonController = TextEditingController();
   final _additionAmountController = TextEditingController();
   final _shoppingDescController = TextEditingController();
@@ -179,11 +182,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     const SizedBox(height: 16),
                     _buildDateSection(appTheme),
                     const SizedBox(height: 16),
-                    _buildAdditionsSection(appTheme),
-                    const SizedBox(height: 16),
-                    _buildShoppingSection(appTheme),
-                    const SizedBox(height: 16),
-                    _buildOtherSection(appTheme),
+                    _buildUnifiedCard(appTheme),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -497,9 +496,104 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 统一记录卡片（Tab 切换集成在卡片内）
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildUnifiedCard(AppThemeExtension appTheme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: appTheme.cardShadow,
+        border: Border.all(color: appTheme.cardBorder, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tab 头部（集成在卡片内）
+          _buildCardTabBar(appTheme),
+          // 内容区域
+          _buildTabContent(appTheme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardTabBar(AppThemeExtension appTheme) {
+    const tabs = [
+      {'label': '追加记录', 'colorKey': 'sage'},
+      {'label': '购物支出', 'colorKey': 'rose'},
+      {'label': '其他支出', 'colorKey': 'rose'},
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        decoration: BoxDecoration(
+          color: appTheme.creamDark.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            final isSelected = _currentTabIndex == index;
+            final tab = tabs[index];
+            final color = tab['colorKey'] == 'sage' ? appTheme.sage : appTheme.rose;
+
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _currentTabIndex = index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? appTheme.cardBackground
+                        : appTheme.creamDark.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 180),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: isSelected ? color : appTheme.earthMedium.withValues(alpha: 0.45),
+                    ),
+                    child: Text(
+                      tab['label'] as String,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Tab 内容
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildTabContent(AppThemeExtension appTheme) {
+    switch (_currentTabIndex) {
+      case 0:
+        return _buildAdditionsSection(appTheme);
+      case 1:
+        return _buildShoppingSection(appTheme);
+      case 2:
+        return _buildOtherSection(appTheme);
+      default:
+        return _buildAdditionsSection(appTheme);
+    }
+  }
+
   Widget _buildAdditionItem(AppThemeExtension appTheme, AdditionRecord addition) {
     return InkWell(
-      key: ValueKey(addition.id),
       onTap: () => _showEditAdditionSheet(appTheme, addition),
       borderRadius: BorderRadius.circular(14),
       child: Container(
@@ -1323,26 +1417,14 @@ class _StageEditPageState extends State<StageEditPage> {
     if (mounted) await _loadData();
   }
 
-  /// 卡片标题行右上角的合计金额徽章（金额变化时带轻过渡动画）
+  /// 卡片标题行右上角的合计金额徽章
   Widget _buildTotalChip({
     required AppThemeExtension appTheme,
     required double amount,
     required Color color,
     required String prefix,
   }) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
-      transitionBuilder: (child, animation) => FadeTransition(
-        opacity: animation,
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, 0.35),
-            end: Offset.zero,
-          ).animate(animation),
-          child: child,
-        ),
-      ),
-      child: Container(
+    return Container(
         key: ValueKey(amount),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
@@ -1359,8 +1441,7 @@ class _StageEditPageState extends State<StageEditPage> {
             letterSpacing: 0.2,
           ),
         ),
-      ),
-    );
+        );
   }
 
   Future<void> _deleteAddition(AdditionRecord addition) async {
