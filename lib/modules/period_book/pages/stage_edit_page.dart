@@ -703,29 +703,13 @@ class _StageEditPageState extends State<StageEditPage> {
         children: [
           Row(
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: appTheme.rose.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.shopping_bag_outlined,
-                        size: 16, color: appTheme.rose),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '购物支出',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.earth,
-                    ),
-                  ),
-                ],
+              Text(
+                '购物支出',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earth,
+                ),
               ),
               const Spacer(),
               _buildTotalChip(
@@ -803,29 +787,13 @@ class _StageEditPageState extends State<StageEditPage> {
         children: [
           Row(
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: appTheme.rose.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.category_outlined,
-                        size: 16, color: appTheme.rose),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '其他支出',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.earth,
-                    ),
-                  ),
-                ],
+              Text(
+                '其他支出',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earth,
+                ),
               ),
               const Spacer(),
               _buildTotalChip(
