@@ -559,7 +559,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isSelected ? color : appTheme.earthMedium.withValues(alpha: 0.65),
+                      color: isSelected ? color : appTheme.earthMedium.withValues(alpha: 0.8),
                     ),
                     child: Text(
                       tab['label'] as String,
