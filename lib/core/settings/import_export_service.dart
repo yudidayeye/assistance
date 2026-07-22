@@ -274,6 +274,36 @@ class ImportExportService {
     int largeAdditionsCount = 0;
     int largeExpensesCount = 0;
 
+    // 确保大额记录表存在（兼容旧数据库未创建该表的场景）
+    await txn.execute('''
+      CREATE TABLE IF NOT EXISTS mod_period_book_large_additions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        period_id INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        reason TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
+      )
+    ''');
+    await txn.execute('''
+      CREATE TABLE IF NOT EXISTS mod_period_book_large_expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        period_id INTEGER NOT NULL,
+        category TEXT NOT NULL,
+        amount REAL NOT NULL,
+        description TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
+      )
+    ''');
+    await txn.execute(
+      'CREATE INDEX IF NOT EXISTS idx_pb_large_additions_period ON mod_period_book_large_additions(period_id)',
+    );
+    await txn.execute(
+      'CREATE INDEX IF NOT EXISTS idx_pb_large_expenses_period ON mod_period_book_large_expenses(period_id)',
+    );
+
     // 导入周期
     final periods = (data['period_book_periods'] as List<dynamic>?) ?? [];
     for (final period in periods) {
