@@ -499,7 +499,6 @@ class _StageEditPageState extends State<StageEditPage> {
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
       child: Column(
