@@ -529,7 +529,7 @@ class _StageEditPageState extends State<StageEditPage> {
           borderRadius: BorderRadius.circular(12),
           border: Border(
             bottom: BorderSide(
-              color: appTheme.earthMedium.withValues(alpha: 0.12),
+              color: appTheme.earthMedium.withValues(alpha: 0.06),
               width: 0.5,
             ),
           ),
