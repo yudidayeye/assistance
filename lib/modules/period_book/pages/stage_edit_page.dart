@@ -436,11 +436,13 @@ class _StageEditPageState extends State<StageEditPage> {
           ),
           const SizedBox(height: 12),
           if (_additions.isEmpty)
-            Text(
-              '暂无追加记录',
-              style: TextStyle(
-                fontSize: 12,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
+            Center(
+              child: Text(
+                '暂无追加记录',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: appTheme.earthMedium.withValues(alpha: 0.5),
+                ),
               ),
             )
           else
@@ -809,11 +811,13 @@ class _StageEditPageState extends State<StageEditPage> {
           ),
           const SizedBox(height: 12),
           if (shoppingExpenses.isEmpty)
-            Text(
-              '暂无购物支出',
-              style: TextStyle(
-                fontSize: 12,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
+            Center(
+              child: Text(
+                '暂无购物支出',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: appTheme.earthMedium.withValues(alpha: 0.5),
+                ),
               ),
             )
           else
@@ -904,11 +908,13 @@ class _StageEditPageState extends State<StageEditPage> {
           ),
           const SizedBox(height: 12),
           if (otherExpenses.isEmpty)
-            Text(
-              '暂无其他支出',
-              style: TextStyle(
-                fontSize: 12,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
+            Center(
+              child: Text(
+                '暂无其他支出',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: appTheme.earthMedium.withValues(alpha: 0.5),
+                ),
               ),
             )
           else
