@@ -534,6 +534,12 @@ class _StageEditPageState extends State<StageEditPage> {
         decoration: BoxDecoration(
           color: appTheme.creamDark.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(12),
+          border: Border(
+            bottom: BorderSide(
+              color: appTheme.earthMedium.withValues(alpha: 0.12),
+              width: 0.5,
+            ),
+          ),
         ),
         child: Row(
           children: List.generate(tabs.length, (index) {
