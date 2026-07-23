@@ -142,22 +142,9 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
         margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
         padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              appTheme.cardBackground,
-              appTheme.primaryLight.withValues(alpha: 0.15),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: appTheme.cardBackground,
           borderRadius: BorderRadius.circular(appTheme.radiusXl),
-          boxShadow: [
-            BoxShadow(
-              color: appTheme.earth.withValues(alpha: 0.025),
-              blurRadius: 20,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          boxShadow: appTheme.cardShadow,
         ),
         child: Column(
           children: [
@@ -238,13 +225,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
           borderRadius: BorderRadius.circular(appTheme.radiusXl),
-          boxShadow: [
-            BoxShadow(
-              color: appTheme.earth.withValues(alpha: 0.025),
-              blurRadius: 16,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: appTheme.cardShadow,
         ),
         child: Row(
           children: [

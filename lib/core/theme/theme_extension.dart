@@ -2,6 +2,15 @@ import 'package:flutter/material.dart';
 
 double _lerpD(double a, double b, double t) => a + (b - a) * t;
 
+// ── 通用卡片阴影（所有主题共用） ──────────────────────
+const List<BoxShadow> cardShadow = [
+  BoxShadow(
+    color: Color(0x2a999999),
+    blurRadius: 4,
+    offset: Offset(0, 0),
+  ),
+];
+
 /// 应用主题扩展 — 通用色彩系统 + 卡片/背景/圆角/间距 token
 class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   // ── 色彩（保留） ──
@@ -215,15 +224,9 @@ extension AppThemeGetter on ThemeData {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          cardBackground: Color(0xFFFAF8F5),
+          cardBackground: Color(0xFFFEFEFE),
           cardBorder: Color(0xFFEBE8E4),
-          cardShadow: [
-            BoxShadow(
-              color: Color(0x0A3D3D3D),
-              blurRadius: 20,
-              offset: Offset(0, 2),
-            ),
-          ],
+          cardShadow: cardShadow,
           scaffoldGradient: LinearGradient(
             colors: [Color(0xFFF5F3F0), Color(0xFFEBE8E4)],
             begin: Alignment.topLeft,

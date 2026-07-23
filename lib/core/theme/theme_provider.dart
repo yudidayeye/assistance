@@ -4,7 +4,7 @@ import 'app_theme.dart';
 
 /// 主题类型枚举 — 4 套柔和配色
 enum AppThemeType {
-  softNight('柔夜', Color(0xFF7B8BAA)),
+  softNight('柔夜', Color(0xFF0A82FD)),
   morningMist('晨雾', Color(0xFF8AADB8)),
   leafWhisper('叶语', Color(0xFF9CAD8A)),
   flowerMist('花雾', Color(0xFFC9A0AA));

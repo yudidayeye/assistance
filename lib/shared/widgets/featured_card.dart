@@ -79,14 +79,7 @@ class _FeaturedCardState extends State<FeaturedCard> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              appTheme.cardBackground,
-              appTheme.cardBackground.withValues(alpha: 0.6),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: appTheme.cardBackground,
           borderRadius: BorderRadius.circular(appTheme.radiusLg),
           boxShadow: appTheme.cardShadow,
         ),

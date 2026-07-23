@@ -9,7 +9,7 @@ class AppTheme {
 
   // ── 通用属性 ──────────────────────────────────────
   static const Color _white = Colors.white;
-  static const Color _cardWhite = Color(0xFFFAF8F5); // 柔和卡片白，非纯白
+  static const Color _cardWhite = Color(0xFFFEFEFE); // 卡片背景，近纯白
   static const Color _error = Color(0xFFCF6679);
 
   // ── 通用文字色系（所有主题共用） ──────────────────────
@@ -26,24 +26,18 @@ class AppTheme {
   static const Color _roseLight = Color(0xFFF2D8DE);
 
   // ── 通用卡片阴影（所有主题共用） ──────────────────────
-  static final List<BoxShadow> _cardShadow = [
-    BoxShadow(
-      color: _earth.withValues(alpha: 0.04),
-      blurRadius: 20,
-      offset: const Offset(0, 2),
-    ),
-  ];
+  static final List<BoxShadow> _cardShadow = cardShadow;
 
   static const Color _surfaceOverlay = Color(0x4D000000); // 30% 黑
 
   // ══════════════════════════════════════════════════════
   // 主题 1: 柔夜 (Soft Night) — 默认主题
   // ══════════════════════════════════════════════════════
-  static const Color _softNightPrimary = Color(0xFF7B8BAA);
-  static const Color _softNightPrimaryLight = Color(0xFFD8DFE8);
-  static const Color _softNightPrimaryDark = Color(0xFF5A6B8A);
-  static const Color _softNightCream = Color(0xFFF5F3F0);
-  static const Color _softNightCreamDark = Color(0xFFEBE8E4);
+  static const Color _softNightPrimary = Color(0xFF0A82FD);
+  static const Color _softNightPrimaryLight = Color(0xFFB3D7FF);
+  static const Color _softNightPrimaryDark = Color(0xFF0860D0);
+  static const Color _softNightCream = Color(0xFFFEFEFE);
+  static const Color _softNightCreamDark = Color(0xFFF5F5F5);
 
   // ══════════════════════════════════════════════════════
   // 主题 2: 晨雾 (Morning Mist)
