@@ -24,6 +24,7 @@ class PeriodDetailPage extends StatefulWidget {
 class _PeriodDetailPageState extends State<PeriodDetailPage> {
   final _service = PeriodBookService.instance;
   final ScrollController _scrollController = ScrollController();
+  double? _savedScrollOffset;
 
   PeriodRecord? _period;
   PeriodCalculations? _calc;
@@ -38,6 +39,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   void initState() {
     super.initState();
     _loadData();
+    // 监听数据变更，自动刷新
     _service.addListener(_onDataChanged);
   }
 
@@ -61,14 +63,17 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         _period = await _service.getOngoingPeriod();
       }
       if (_period != null) {
+        // 一次性获取所有数据（性能优化）
         _calc = await _service.getPeriodCalculations(_period!.id!);
         _stages = await _service.getStagesByPeriod(_period!.id!);
         final allAdditions = await _service.getAdditionsByPeriod(_period!.id!);
 
+        // 按阶段分组追加记录
         _stageAdditions = _stages.map((stage) {
           return allAdditions.where((a) => a.stageId == stage.id!).toList();
         }).toList();
 
+        // 加载大额记录净额
         _largeItemsNet = await _service.getLargeItemsNet(_period!.id!);
       }
     } catch (e) {
@@ -77,94 +82,66 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     if (mounted) setState(() => _loading = false);
   }
 
-  // 设计稿颜色
-  static const Color _bgColor = Color(0xFFF5F5F5);
-  static const Color _darkText = Color(0xFF333333);
-  static const Color _subText = Color(0xFF999999);
-  static const Color _btnBg = Color(0xFFE8E8E8);
+  // ═══════════════════════════════════════════════════════════
+  // 构建
+  // ═══════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
+
     if (_loading) {
       return Scaffold(
-        backgroundColor: _bgColor,
-        body: const Center(child: CircularProgressIndicator()),
+        body: Container(
+          decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
+          child: const Center(child: CircularProgressIndicator()),
+        ),
       );
     }
 
     if (_period == null) {
       return Scaffold(
-        backgroundColor: _bgColor,
-        body: Column(
-          children: [
-            _buildEmptyHeader(),
-            Expanded(
-              child: EmptyStateWidget(
-                icon: Icons.account_balance_wallet_outlined,
-                title: '还没有记账周期',
-                subtitle: '创建第一个周期，开始记录你的收支',
-                actionLabel: '新建周期',
-                onAction: () async {
-                  await context.push('/period_book/new');
-                  if (mounted) _loadData();
-                },
+        body: Container(
+          decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
+          child: Column(
+            children: [
+              // 返回导航
+              _buildEmptyHeader(appTheme),
+              // 空状态内容
+              Expanded(
+                child: EmptyStateWidget(
+                  icon: Icons.account_balance_wallet_outlined,
+                  title: '还没有记账周期',
+                  subtitle: '创建第一个周期，开始记录你的收支',
+                  actionLabel: '新建周期',
+                  onAction: () async {
+                    await context.push('/period_book/new');
+                    // 从新建页返回后刷新数据
+                    if (mounted) {
+                      _loadData();
+                    }
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: _bgColor,
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(child: const SizedBox(height: 8)),
-                SliverToBoxAdapter(child: _buildSummarySection()),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(child: _buildSectionTitle('阶段明细')),
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                _buildStagesSection(),
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 空状态头部
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildEmptyHeader() {
-    final safeTop = MediaQuery.of(context).padding.top;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, safeTop + 10, 16, 12),
-      child: SizedBox(
-        height: 44,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => context.pop(),
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: _darkText, size: 22),
-              ),
-            ),
-            const SizedBox.shrink(),
+      body: Container(
+        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            _buildHeader(appTheme),
+            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
+            SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
+            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
+            _buildStagesSection(appTheme),
+            SliverToBoxAdapter(child: const SizedBox(height: 100)),
           ],
         ),
       ),
@@ -172,101 +149,27 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 头部 — 无居中大标题，仅日期行
+  // 空状态头部（返回导航）
   // ═══════════════════════════════════════════════════════════
 
-  Widget _buildHeader() {
+  Widget _buildEmptyHeader(AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
-    final start = DateTime.parse(_period!.startDate);
-    final end = DateTime.parse(_period!.endDate);
-    final days = _period!.totalDays;
-    final dateLabel =
-        '${start.month}月${start.day}日 – ${end.month}月${end.day}日';
-
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, safeTop + 10, 16, 12),
+      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 筛选 + 标题行
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {},
-                child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Icon(Icons.tune_rounded,
-                      color: _darkText, size: 22),
-                ),
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: appTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        dateLabel,
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: _darkText,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.keyboard_arrow_down_rounded,
-                          size: 16, color: _subText),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '共 $days 天',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _subText,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () => context.push('/period_book/history'),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: _btnBg,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.calendar_today_rounded,
-                          color: _darkText, size: 20),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () =>
-                        context.push('/period_book/edit/${_period!.id}'),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: _btnBg,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.more_horiz,
-                          color: _darkText, size: 22),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              child: Icon(Icons.arrow_back_ios_new_rounded,
+                  color: appTheme.earthMedium, size: 18),
+            ),
           ),
         ],
       ),
@@ -274,18 +177,92 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 区域标题
+  // 头部
   // ═══════════════════════════════════════════════════════════
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: _darkText,
+  Widget _buildHeader(AppThemeExtension appTheme) {
+    final safeTop = MediaQuery.of(context).padding.top;
+    final start = DateTime.parse(_period!.startDate);
+    final end = DateTime.parse(_period!.endDate);
+    final title = '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日';
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => context.pop(),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                ),
+                child: Icon(Icons.arrow_back_ios_new_rounded,
+                    color: appTheme.earthMedium, size: 18),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '共${_period!.totalDays}天 · ${_stages.length}个阶段',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: appTheme.earthMedium.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!_isReadOnly) ...[
+              // 历史记录按钮
+              GestureDetector(
+                onTap: () => context.push('/period_book/history'),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: appTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                  ),
+                  child: Icon(Icons.history_rounded,
+                      color: appTheme.primary, size: 20),
+                ),
+              ),
+              // 编辑按钮
+              GestureDetector(
+                onTap: () => context.push('/period_book/edit/${_period!.id}'),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: appTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                  ),
+                  child: Icon(Icons.edit_outlined,
+                      color: appTheme.earthMedium, size: 20),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -293,9 +270,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   // ═══════════════════════════════════════════════════════════
   // 汇总卡片
-  // ═════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════
 
-  Widget _buildSummarySection() {
+  Widget _buildSummarySection(AppThemeExtension appTheme) {
     return PeriodSummaryCard(
       calc: _calc!,
       period: _period!,
@@ -330,6 +307,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 标题
             Padding(
               padding: const EdgeInsets.only(top: 20, bottom: 16),
               child: Text(
@@ -342,11 +320,13 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 ),
               ),
             ),
+            // 内容
             Flexible(
               child: ListView(
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 children: [
+                  // 初始本金
                   _buildDetailRow(
                     appTheme: appTheme,
                     label: '初始本金',
@@ -354,12 +334,12 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     isTotal: false,
                   ),
                   const Divider(height: 24),
+                  // 各阶段追加
                   ..._stages.asMap().entries.map((entry) {
                     final index = entry.key;
                     final stage = entry.value;
                     final additions = _stageAdditions[index];
-                    final total = additions.fold<double>(
-                        0, (sum, a) => sum + a.amount);
+                    final total = additions.fold<double>(0, (sum, a) => sum + a.amount);
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,16 +354,14 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                         if (additions.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           ...additions.map((a) => Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 16, bottom: 4),
+                                padding: const EdgeInsets.only(left: 16, bottom: 4),
                                 child: Row(
                                   children: [
                                     Text(
                                       '└',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: appTheme.earthMedium
-                                            .withValues(alpha: 0.3),
+                                        color: appTheme.earthMedium.withValues(alpha: 0.3),
                                       ),
                                     ),
                                     const SizedBox(width: 4),
@@ -392,8 +370,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                                         a.reason,
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: appTheme.earthMedium
-                                              .withValues(alpha: 0.6),
+                                          color: appTheme.earthMedium.withValues(alpha: 0.6),
                                         ),
                                       ),
                                     ),
@@ -413,6 +390,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     );
                   }),
                   const Divider(height: 24),
+                  // 合计
                   _buildDetailRow(
                     appTheme: appTheme,
                     label: '合计',
@@ -453,6 +431,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 标题
             Padding(
               padding: const EdgeInsets.only(top: 20, bottom: 16),
               child: Text(
@@ -465,11 +444,13 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 ),
               ),
             ),
+            // 内容
             Flexible(
               child: ListView(
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 children: [
+                  // 购物
                   _buildDetailRow(
                     appTheme: appTheme,
                     label: '购物',
@@ -478,6 +459,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     isTotal: false,
                   ),
                   const Divider(height: 24),
+                  // 其他
                   _buildDetailRow(
                     appTheme: appTheme,
                     label: '其他',
@@ -486,17 +468,18 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     isTotal: false,
                   ),
                   const Divider(height: 24),
-                  if (_calc!.livingTotal != null &&
-                      _calc!.livingTotal! > 0) ...[
+                  // 生活
+                  if (_calc!.livingTotal != null && _calc!.livingTotal! > 0) ...[
                     _buildDetailRow(
                       appTheme: appTheme,
                       label: '生活',
                       amount: _calc!.livingTotal!,
                       color: appTheme.rose,
                       isTotal: false,
-                    ),
+                  ),
                     const Divider(height: 24),
                   ],
+                  // 合计
                   _buildDetailRow(
                     appTheme: appTheme,
                     label: '合计',
@@ -562,8 +545,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: isTotal ? 16 : 14,
                 fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
-                color: color ??
-                    (isTotal ? appTheme.primary : appTheme.earth),
+                color: color ?? (isTotal ? appTheme.primary : appTheme.earth),
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
@@ -574,9 +556,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   // ═══════════════════════════════════════════════════════════
   // 阶段列表
-  // ══════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
 
-  Widget _buildStagesSection() {
+  Widget _buildStagesSection(AppThemeExtension appTheme) {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverList(
@@ -584,12 +566,26 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           (context, index) {
             final stage = _stages[index];
             final stageCalc = _calc!.stages[index];
+            final additions = _stageAdditions[index];
+
+            // 计算上一阶段余额（用于显示本金来源）
+            double previousBalance;
+            if (index == 0) {
+              previousBalance = _period!.baseAmount;
+            } else {
+              previousBalance = _calc!.stages[index - 1].balance ??
+                  (_calc!.stages[index - 1].baseAmount -
+                      _calc!.stages[index - 1].shoppingTotal -
+                      _calc!.stages[index - 1].otherTotal);
+            }
 
             return StageCard(
               stage: stage,
               stageCalc: stageCalc,
-              service: _service,
-              onTap: _isReadOnly ? null : () async {
+              previousBalance: previousBalance,
+              additions: additions,
+              onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(stage),
+              onEdit: _isReadOnly ? null : () async {
                 await context.push('/period_book/stage_edit/${stage.id}');
                 if (mounted) {
                   _loadData();
@@ -599,6 +595,122 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           },
           childCount: _stages.length,
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 弹窗：编辑阶段余额
+  // ═══════════════════════════════════════════════════════════
+
+  void _showEditStageBalanceDialog(StageRecord stage) {
+    final appTheme = Theme.of(context).appTheme;
+    final balance = stage.balance?.toStringAsFixed(2) ?? '';
+    final controller = TextEditingController(text: balance);
+
+    // 获取当前阶段的本金
+    final stageIndex = _stages.indexWhere((s) => s.id == stage.id);
+    final stageCalc = stageIndex >= 0 ? _calc!.stages[stageIndex] : null;
+    final maxBalance = stageCalc?.baseAmount ?? 0;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        title: Text(
+          '编辑余额',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '最大余额: ¥${maxBalance.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: appTheme.earth,
+              ),
+              decoration: InputDecoration(
+                prefixText: '¥ ',
+                prefixStyle: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earthMedium.withValues(alpha: 0.6),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final val = double.tryParse(controller.text.trim());
+              // 验证余额不能超过本金
+              if (val != null && val > maxBalance) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}'),
+                    backgroundColor: appTheme.rose,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+                return;
+              }
+              await _service.updateStageBalance(
+                stage.id!,
+                val,
+              );
+              // 保存当前滚动位置，_loadData() 重建后会恢复
+              _savedScrollOffset = _scrollController.hasClients
+                  ? _scrollController.offset
+                  : null;
+              await _loadData();
+              // 等待重建完成后恢复滚动位置
+              if (mounted) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_savedScrollOffset != null &&
+                      _scrollController.hasClients) {
+                    _scrollController.jumpTo(_savedScrollOffset!);
+                  }
+                });
+              }
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+            child: Text('确定', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
       ),
     );
   }
