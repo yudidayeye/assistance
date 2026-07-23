@@ -197,7 +197,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: appTheme.primary.withValues(alpha: 0.08),
+                  color: appTheme.cardBackground,
                   borderRadius: BorderRadius.circular(appTheme.radiusMd),
                 ),
                 child: Icon(Icons.arrow_back_ios_new_rounded,
@@ -206,29 +206,15 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '共${_period!.totalDays}天 · ${_stages.length}个阶段',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: appTheme.earthMedium.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: appTheme.earth,
+                  letterSpacing: -0.3,
+                ),
               ),
             ),
             if (!_isReadOnly) ...[
@@ -238,15 +224,15 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 child: Container(
                   width: 40,
                   height: 40,
-                  margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
-                    color: appTheme.primary.withValues(alpha: 0.08),
+                    color: appTheme.cardBackground,
                     borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Icon(Icons.history_rounded,
                       color: appTheme.primary, size: 20),
                 ),
               ),
+              const SizedBox(width: 10),
               // 编辑按钮
               GestureDetector(
                 onTap: () => context.push('/period_book/edit/${_period!.id}'),
@@ -254,7 +240,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: appTheme.primary.withValues(alpha: 0.08),
+                    color: appTheme.cardBackground,
                     borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Icon(Icons.edit_outlined,
