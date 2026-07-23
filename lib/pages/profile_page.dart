@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../core/module_system/module_registry.dart';
-import '../core/module_system/module_summary.dart';
-import '../core/module_system/tool_module.dart';
 import '../core/storage/database_service.dart';
 import '../core/theme/theme_extension.dart';
 import '../core/settings/settings_service.dart';
 
-/// 我的页面 — 用户中心 + 模块概览（简洁扁平风格）
+/// 我的页面 — 用户中心
 class ProfilePageContent extends StatefulWidget {
   const ProfilePageContent({super.key});
 
@@ -18,7 +15,6 @@ class ProfilePageContent extends StatefulWidget {
 
 class _ProfilePageContentState extends State<ProfilePageContent> {
   String _userName = '用户';
-  List<_ModuleSnapshot> _moduleSnapshots = [];
 
   @override
   void initState() {
@@ -27,31 +23,10 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
   }
 
   Future<void> _loadData() async {
-    // 加载用户名
     final rows = await DatabaseService.instance
         .rawQuery("SELECT value FROM app_settings WHERE key = 'user_name'");
     if (rows.isNotEmpty && mounted) {
       setState(() => _userName = rows.first['value'] as String);
-    }
-
-    // 加载已启用模块的摘要
-    final snapshots = <_ModuleSnapshot>[];
-    for (final mod in ModuleRegistry.instance.allModules) {
-      if (SettingsService.instance.isModuleEnabled(mod.moduleId)) {
-        try {
-          final summary = await mod.getSummary();
-          snapshots.add(_ModuleSnapshot(
-            moduleId: mod.moduleId,
-            displayName: mod.displayName,
-            icon: mod.icon,
-            themeColor: mod.themeColor,
-            summary: summary,
-          ));
-        } catch (_) {}
-      }
-    }
-    if (mounted) {
-      setState(() => _moduleSnapshots = snapshots);
     }
   }
 
@@ -74,13 +49,6 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
             SliverToBoxAdapter(
               child: _buildUserCard(appTheme),
             ),
-
-            // ── 模块摘要卡片 ──
-            ..._moduleSnapshots.map((snap) {
-              return SliverToBoxAdapter(
-                child: _buildModuleSnapshotCard(appTheme, snap),
-              );
-            }),
 
             // ── 底部信息 ──
             SliverToBoxAdapter(
@@ -206,84 +174,6 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // 模块摘要卡片 — 可点击跳转到模块入口
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildModuleSnapshotCard(
-      AppThemeExtension appTheme, _ModuleSnapshot snap) {
-    return GestureDetector(
-      onTap: () => context.push('/${snap.moduleId}'),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(appTheme.radiusXl),
-          boxShadow: appTheme.cardShadow,
-        ),
-        child: Row(
-          children: [
-            // 模块图标
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: snap.themeColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Center(
-                child: snap.icon.build(size: 24, color: snap.themeColor),
-              ),
-            ),
-            const SizedBox(width: 16),
-            // 摘要文本
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    snap.displayName,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.earth,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    snap.summary.line1,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: appTheme.earthMedium,
-                      height: 1.3,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (snap.summary.line2 != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      snap.summary.line2!,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: appTheme.earthMedium.withValues(alpha: 0.7),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Icon(Icons.chevron_right_rounded,
-                color: appTheme.earthMedium.withValues(alpha: 0.25), size: 20),
           ],
         ),
       ),
@@ -432,24 +322,4 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
       ),
     );
   }
-}
-
-// ═════════════════════════════════════════════════════════════════
-// 内部数据类
-// ═════════════════════════════════════════════════════════════════
-
-class _ModuleSnapshot {
-  final String moduleId;
-  final String displayName;
-  final ModuleIcon icon;
-  final Color themeColor;
-  final ModuleSummary summary;
-
-  const _ModuleSnapshot({
-    required this.moduleId,
-    required this.displayName,
-    required this.icon,
-    required this.themeColor,
-    required this.summary,
-  });
 }
