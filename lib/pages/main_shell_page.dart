@@ -18,7 +18,6 @@ class MainShellPage extends StatefulWidget {
 
 class _MainShellPageState extends State<MainShellPage> {
   int _currentIndex = 0;
-  bool _isGrid = true;
   final SettingsController _settingsController = SettingsController.instance;
 
   @override
@@ -100,7 +99,7 @@ class _MainShellPageState extends State<MainShellPage> {
                 ),
               ),
               GestureDetector(
-                onTap: () => setState(() => _isGrid = !_isGrid),
+                onTap: () => context.push('/settings'),
                 child: Container(
                   width: 40,
                   height: 40,
@@ -109,9 +108,7 @@ class _MainShellPageState extends State<MainShellPage> {
                     borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Icon(
-                    _isGrid
-                        ? Icons.view_agenda_outlined
-                        : Icons.apps_outlined,
+                    Icons.settings_outlined,
                     color: appTheme.primaryDark,
                     size: 20,
                   ),
@@ -121,25 +118,16 @@ class _MainShellPageState extends State<MainShellPage> {
           ),
         ),
         Expanded(
-          child: _isGrid
-              ? GridView.count(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 20,
-                  crossAxisSpacing: 20,
-                  childAspectRatio: 0.88,
-                  children: enabledModules
-                      .map((module) => FeaturedCard(module: module))
-                      .toList(),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                  itemCount: enabledModules.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: 12),
-                  itemBuilder: (context, index) =>
-                      FeaturedCard(module: enabledModules[index], isList: true),
-                ),
+          child: GridView.count(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            crossAxisCount: 2,
+            mainAxisSpacing: 20,
+            crossAxisSpacing: 20,
+            childAspectRatio: 0.88,
+            children: enabledModules
+                .map((module) => FeaturedCard(module: module))
+                .toList(),
+          ),
         ),
       ],
     );

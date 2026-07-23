@@ -11,13 +11,11 @@ import 'package:go_router/go_router.dart';
 class FeaturedCard extends StatefulWidget {
   final ToolModule module;
   final VoidCallback? onTap;
-  final bool isList;
 
   const FeaturedCard({
     super.key,
     required this.module,
     this.onTap,
-    this.isList = false,
   });
 
   @override
@@ -79,146 +77,74 @@ class _FeaturedCardState extends State<FeaturedCard> {
     return GestureDetector(
       onTap: widget.onTap ?? () => context.push('/${widget.module.moduleId}'),
       child: Container(
-        padding: widget.isList
-            ? const EdgeInsets.all(20)
-            : const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(
-            widget.isList ? appTheme.radiusXl : appTheme.radiusLg,
-          ),
+          borderRadius: BorderRadius.circular(appTheme.radiusLg),
           boxShadow: appTheme.cardShadow,
         ),
-        child: widget.isList
-            ? _buildListContent(color, appTheme)
-            : _buildGridContent(color, appTheme),
-      ),
-    );
-  }
-
-  Widget _buildGridContent(Color color, AppThemeExtension appTheme) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // 模块图标
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(appTheme.radiusMd),
-          ),
-          child: Center(
-            child: widget.module.icon.build(size: 24, color: color),
-          ),
-        ),
-        const SizedBox(height: 10),
-        // 标题
-        Text(
-          widget.module.displayName,
-          style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: appTheme.earth,
-            letterSpacing: -0.2,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (_summary?.line1 != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            _summary!.line1,
-            style: TextStyle(
-              fontSize: 11,
-              color: appTheme.earthMedium,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-        if (_summary?.line2 != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            _summary!.line2!,
-            style: TextStyle(
-              fontSize: 11,
-              color: appTheme.earthMedium.withValues(alpha: 0.7),
-              fontWeight: FontWeight.w400,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildListContent(Color color, AppThemeExtension appTheme) {
-    return Row(
-      children: [
-        // 模块图标
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Center(
-            child: widget.module.icon.build(size: 24, color: color),
-          ),
-        ),
-        const SizedBox(width: 16),
-        // 摘要文本
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.module.displayName,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earth,
-                ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 模块图标
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
+              child: Center(
+                child: widget.module.icon.build(size: 24, color: color),
+              ),
+            ),
+            const SizedBox(height: 10),
+            // 标题
+            Text(
+              widget.module.displayName,
+              style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: appTheme.earth,
+                letterSpacing: -0.2,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (_summary?.line1 != null) ...[
               const SizedBox(height: 4),
               Text(
-                _summary?.line1 ?? '',
+                _summary!.line1,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 11,
                   color: appTheme.earthMedium,
-                  height: 1.3,
+                  fontWeight: FontWeight.w500,
                 ),
+                textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (_summary?.line2 != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  _summary!.line2!,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: appTheme.earthMedium.withValues(alpha: 0.7),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
             ],
-          ),
+            if (_summary?.line2 != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                _summary!.line2!,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: appTheme.earthMedium.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w400,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
         ),
-        const SizedBox(width: 12),
-        Icon(Icons.chevron_right_rounded,
-            color: appTheme.earthMedium.withValues(alpha: 0.25), size: 20),
-      ],
+      ),
     );
   }
 }
