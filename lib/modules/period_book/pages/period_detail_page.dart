@@ -199,6 +199,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 decoration: BoxDecoration(
                   color: appTheme.cardBackground,
                   borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                  border: Border.all(
+                    color: appTheme.cardBorder,
+                    width: 0.5,
+                  ),
                 ),
                 child: Icon(Icons.arrow_back_ios_new_rounded,
                     color: appTheme.earthMedium, size: 18),
@@ -227,6 +231,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   decoration: BoxDecoration(
                     color: appTheme.cardBackground,
                     borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                    border: Border.all(
+                      color: appTheme.cardBorder,
+                      width: 0.5,
+                    ),
                   ),
                   child: Icon(Icons.history_rounded,
                       color: appTheme.primary, size: 20),
@@ -242,6 +250,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   decoration: BoxDecoration(
                     color: appTheme.cardBackground,
                     borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                    border: Border.all(
+                      color: appTheme.cardBorder,
+                      width: 0.5,
+                    ),
                   ),
                   child: Icon(Icons.edit_outlined,
                       color: appTheme.earthMedium, size: 20),
