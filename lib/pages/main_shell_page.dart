@@ -111,7 +111,7 @@ class _MainShellPageState extends State<MainShellPage> {
                   child: Icon(
                     _isGrid
                         ? Icons.view_agenda_outlined
-                        : Icons.grid_view_outlined,
+                        : Icons.apps_outlined,
                     color: appTheme.primaryDark,
                     size: 20,
                   ),
