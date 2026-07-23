@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/theme_extension.dart';
 import '../../../../shared/utils/format_utils.dart';
 import '../models/period_record.dart';
 import '../services/period_book_service.dart' show PeriodCalculations;
 
-/// 周期汇总卡片 — 余额/本金一行式布局
-///
-/// 结构：余额/本金合并展示 + 进度条 + 支出/大额纯文本统计。
+/// 周期汇总卡片 — 严格按设计稿配色
 class PeriodSummaryCard extends StatelessWidget {
   final PeriodCalculations calc;
   final PeriodRecord? period;
@@ -26,98 +23,144 @@ class PeriodSummaryCard extends StatelessWidget {
     this.onEditLargeItems,
   });
 
+  // 设计稿颜色
+  static const Color _blue = Color(0xFF5B8FF9);
+  static const Color _grayText = Color(0xFF999999);
+  static const Color _labelGray = Color(0xFF666666);
+  static const Color _lightGrayBg = Color(0xFFF5F5F5);
+
   @override
   Widget build(BuildContext context) {
-    final appTheme = Theme.of(context).appTheme;
-    final balance = calc.balance;
-    final spent = calc.totalBase - (balance ?? 0);
-    final balanceRatio = calc.totalBase > 0
-        ? ((balance ?? 0) / calc.totalBase).clamp(0.0, 1.0)
+    final balance = calc.balance ?? 0;
+    final totalBase = calc.totalBase;
+    final spent = totalBase - balance;
+    final largeNet = largeItemsNet ?? 0;
+    final percent = totalBase > 0
+        ? (balance / totalBase).clamp(0.0, 1.0)
         : 0.0;
+    final percentText = '${(percent * 100).round()}%';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: appTheme.cardBackground,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: appTheme.cardShadow,
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: _blue.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildBalanceSection(appTheme, balance),
+            // "剩余金额" 标签
+            Text(
+              '剩余金额',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: _labelGray,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // 余额大数字行：¥1734.03 / ¥2500   69%
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onTapTotalBase,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: Text(
+                            FormatUtils.formatAmount(balance),
+                            key: ValueKey(balance),
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.dmSans().fontFamily,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: _blue,
+                              letterSpacing: -0.5,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '/ ${FormatUtils.formatAmount(totalBase)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: _grayText,
+                            fontFamily: GoogleFonts.dmSans().fontFamily,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  percentText,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: _blue.withValues(alpha: 0.8),
+                    fontFamily: GoogleFonts.dmSans().fontFamily,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
-            _buildProgressRow(appTheme, balanceRatio, spent),
+            // 进度条
+            _buildUsageBar(percent),
+            const SizedBox(height: 20),
+            // 大额 / 支出 双卡
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInfoCard(
+                    label: '大额',
+                    value: largeNet,
+                    isPositive: true,
+                    onTap: onEditLargeItems,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInfoCard(
+                    label: '支出',
+                    value: spent,
+                    isPositive: false,
+                    onTap: onTapTotalExpense,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// 余额/本金合并展示：¥1859.70 / 2500
-  Widget _buildBalanceSection(AppThemeExtension appTheme, double? balance) {
-    final balanceText = FormatUtils.formatAmount(balance ?? 0);
-    final muted = balance == null || balance == 0;
-
-    return GestureDetector(
-      onTap: onTapTotalBase,
-      child: Row(
-        children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: Text(
-              balanceText,
-              key: ValueKey(balanceText),
-              style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: muted
-                    ? appTheme.primary.withValues(alpha: 0.4)
-                    : appTheme.primary,
-                letterSpacing: -0.5,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '/',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: appTheme.earthMedium.withValues(alpha: 0.3),
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            FormatUtils.formatAmount(calc.totalBase),
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earthMedium.withValues(alpha: 0.5),
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 余额进度条（余额/本金，入场与数据变化时带过渡动画）
-  Widget _buildUsageBar(AppThemeExtension appTheme, double balanceRatio) {
+  /// 余额进度条
+  Widget _buildUsageBar(double ratio) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(3),
       child: SizedBox(
-        height: 6,
+        height: 8,
         child: TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0, end: balanceRatio),
+          tween: Tween<double>(begin: 0, end: ratio),
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
           builder: (context, value, _) => LayoutBuilder(
@@ -125,7 +168,7 @@ class PeriodSummaryCard extends StatelessWidget {
               children: [
                 Positioned.fill(
                   child: ColoredBox(
-                    color: appTheme.roseLight.withValues(alpha: 0.35),
+                    color: const Color(0xFFEEEEEE),
                   ),
                 ),
                 Positioned(
@@ -134,11 +177,11 @@ class PeriodSummaryCard extends StatelessWidget {
                   bottom: 0,
                   width: constraints.maxWidth * value,
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          appTheme.primary.withValues(alpha: 0.55),
-                          appTheme.primary,
+                          Color(0xFF5B8FF9),
+                          Color(0xFF4A80E8),
                         ],
                       ),
                     ),
@@ -152,84 +195,62 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 进度条 + 支出/大额一行
-  Widget _buildProgressRow(AppThemeExtension appTheme, double balanceRatio, double spent) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildUsageBar(appTheme, balanceRatio),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  /// 大额 / 支出 信息卡
+  Widget _buildInfoCard({
+    required String label,
+    required double value,
+    required bool isPositive,
+    VoidCallback? onTap,
+  }) {
+    final displayValue = value.abs();
+    final prefix = isPositive ? '' : '-';
+    final textColor = _blue;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        decoration: BoxDecoration(
+          color: _lightGrayBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
           children: [
-            GestureDetector(
-              onTap: onEditLargeItems,
-              child: Row(
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '大额 ',
+                    label,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: appTheme.earthMedium.withValues(alpha: 0.7),
+                      color: _labelGray,
                     ),
                   ),
+                  const SizedBox(height: 6),
                   Text(
-                    _formatLargeItemsValue(largeItemsNet ?? 0),
+                    '$prefix${FormatUtils.formatAmount(displayValue)}',
                     style: TextStyle(
                       fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: largeItemsNet != null
-                          ? (largeItemsNet! >= 0 ? appTheme.sage : appTheme.rose)
-                          : appTheme.earthMedium.withValues(alpha: 0.4),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
-                  if (onEditLargeItems != null)
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 14,
-                      color: appTheme.earthMedium.withValues(alpha: 0.4),
-                    ),
                 ],
               ),
             ),
-            GestureDetector(
-              onTap: onTapTotalExpense,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.trending_down_rounded,
-                    size: 14,
-                    color: appTheme.rose.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '支出 -${FormatUtils.formatAmount(spent)}',
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: spent > 0 ? appTheme.rose : appTheme.earthMedium.withValues(alpha: 0.4),
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ],
-              ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: const Color(0xFFCCCCCC),
             ),
           ],
         ),
-      ],
+      ),
     );
-  }
-
-  String _formatLargeItemsValue(double net) {
-    final abs = FormatUtils.formatAmount(net.abs());
-    if (net > 0) return '+$abs';
-    if (net < 0) return '-$abs';
-    return '¥0.00';
   }
 }

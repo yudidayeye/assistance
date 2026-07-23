@@ -126,55 +126,48 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
 
   Widget _buildHeader(AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
-    final start = DateTime.parse(_period!.startDate);
-    final end = DateTime.parse(_period!.endDate);
-    final title = '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日';
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(Icons.arrow_back_ios_new_rounded,
-                  color: appTheme.earthMedium, size: 18),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
+      padding: EdgeInsets.fromLTRB(16, safeTop + 10, 16, 12),
+      child: SizedBox(
+        height: 44,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(
+              child: Center(
+                child: Text(
                   '大额记录',
                   style: TextStyle(
                     fontFamily: GoogleFonts.dmSans().fontFamily,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
                     color: appTheme.earth,
-                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: appTheme.earthMedium.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+            Positioned.fill(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => context.pop(),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: appTheme.earth, size: 22),
+                    ),
+                  ),
+                  const SizedBox.shrink(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

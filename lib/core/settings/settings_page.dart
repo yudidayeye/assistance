@@ -55,14 +55,15 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── 头部 ──
-              _buildHeader(context, appTheme),
-
+        child: Column(
+          children: [
+            _buildHeader(context, appTheme),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
               // ── 模块管理 ──
               _SectionLabel(
                 appTheme: appTheme,
@@ -179,8 +180,11 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
 
               const SizedBox(height: 80),
-            ],
-          ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -192,34 +196,46 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
+      padding: EdgeInsets.fromLTRB(16, safeTop + 10, 16, 12),
+      child: SizedBox(
+        height: 44,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(
+              child: Center(
+                child: Text(
+                  '设置',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.dmSans().fontFamily,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: appTheme.earth,
+                  ),
+                ),
               ),
-              child: Icon(Icons.arrow_back_ios_new_rounded,
-                  color: appTheme.earthMedium, size: 18),
             ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            '设置',
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: -0.3,
+            Positioned.fill(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => context.pop(),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: appTheme.earth, size: 22),
+                    ),
+                  ),
+                  const SizedBox.shrink(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

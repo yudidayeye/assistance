@@ -83,15 +83,17 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
 
     return Scaffold(
       backgroundColor: appTheme.cream,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: _buildHeader(context, appTheme),
-          ),
-          SliverToBoxAdapter(
-            child: _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
-          ),
+      body: Column(
+        children: [
+          _buildHeader(context, appTheme),
+          Expanded(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child:
+                      _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
+                ),
           SliverToBoxAdapter(
             child: _buildSectionHeader(appTheme, '历史记录'),
           ),
@@ -108,46 +110,58 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
             SliverToBoxAdapter(
               child: _buildRecordsList(appTheme),
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
-    return Container(
+    return Padding(
       padding: EdgeInsets.fromLTRB(
-          24, MediaQuery.of(context).padding.top + 16, 24, 16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: appTheme.earthMedium,
-                size: 18,
+          16, MediaQuery.of(context).padding.top + 10, 16, 12),
+      child: SizedBox(
+        height: 44,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(
+              child: Center(
+                child: Text(
+                  '周期统计',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.dmSans().fontFamily,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: appTheme.earth,
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            '周期统计',
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: -0.3,
+            Positioned.fill(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => context.pop(),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: appTheme.earth, size: 22),
+                    ),
+                  ),
+                  const SizedBox.shrink(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
