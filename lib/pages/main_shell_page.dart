@@ -138,7 +138,7 @@ class _MainShellPageState extends State<MainShellPage> {
                   separatorBuilder: (_, __) =>
                       const SizedBox(height: 12),
                   itemBuilder: (context, index) =>
-                      FeaturedCard(module: enabledModules[index]),
+                      FeaturedCard(module: enabledModules[index], isList: true),
                 ),
         ),
       ],
