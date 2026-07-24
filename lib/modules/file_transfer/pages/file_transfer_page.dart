@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:open_filex/open_filex.dart';
 import 'dart:io';
 import '../../../core/theme/theme_extension.dart';
 import '../services/file_server_service.dart';
@@ -434,25 +435,35 @@ class _FileTransferPageState extends State<FileTransferPage> {
   }
 
   Widget _buildReceivedFileItem(SharedFile file, AppThemeExtension appTheme) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Icon(_fileIcon(file.name), size: 22, color: appTheme.sage.withValues(alpha: 0.7)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(file.name,
-                    style: TextStyle(fontSize: 14, color: appTheme.earth, fontWeight: FontWeight.w500),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(FormatUtils.formatFileSize(file.size),
-                    style: TextStyle(fontSize: 12, color: appTheme.earthLight)),
-              ],
+    return GestureDetector(
+      onTap: () => _openFile(file),
+      onLongPress: () => _copyPath(file.path),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          children: [
+            Icon(_fileIcon(file.name), size: 22, color: appTheme.sage.withValues(alpha: 0.7)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(file.name,
+                      style: TextStyle(fontSize: 14, color: appTheme.earth, fontWeight: FontWeight.w500),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(file.path,
+                      style: TextStyle(fontSize: 11, color: appTheme.earthLight.withValues(alpha: 0.7)),
+                      maxLines: 2, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(FormatUtils.formatFileSize(file.size),
+                      style: TextStyle(fontSize: 12, color: appTheme.earthLight)),
+                ],
+              ),
             ),
-          ),
-        ],
+            Icon(Icons.open_in_new_rounded, size: 18, color: appTheme.primary.withValues(alpha: 0.6)),
+          ],
+        ),
       ),
     );
   }
@@ -618,5 +629,32 @@ class _FileTransferPageState extends State<FileTransferPage> {
 
   void _removeSharedFile(SharedFile file) {
     _server.removeSharedFile(file.name);
+  }
+
+  Future<void> _openFile(SharedFile file) async {
+    try {
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done && mounted) {
+        // 如果打开失败，复制路径让用户手动查找
+        _copyPath(file.path);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('无法打开文件，已复制路径到剪贴板'), duration: const Duration(seconds: 2)),
+        );
+      }
+    } catch (e) {
+      _copyPath(file.path);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('打开失败，已复制路径: $e'), duration: const Duration(seconds: 2)),
+        );
+      }
+    }
+  }
+
+  void _copyPath(String path) {
+    Clipboard.setData(ClipboardData(text: path));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('路径已复制'), duration: const Duration(seconds: 1)),
+    );
   }
 }
