@@ -211,6 +211,9 @@ class _StageEditPageState extends State<StageEditPage> {
   Widget _buildHeader(AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
     final headerHeight = safeTop + 58;
+    final start = DateTime.parse(_stage!.startDate);
+    final end = DateTime.parse(_stage!.endDate);
+    final dateRange = '${start.month}/${start.day} ~ ${end.month}/${end.day}';
 
     return SliverPersistentHeader(
       pinned: true,
@@ -233,17 +236,27 @@ class _StageEditPageState extends State<StageEditPage> {
                 ),
                 const SizedBox(width: 2),
                 Expanded(
-                  child: Text(
-                    '第${_stage!.sortOrder}阶段',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                      letterSpacing: -0.1,
-                    ),
+                  child: Row(
+                    children: [
+                      Text(
+                        '第${_stage!.sortOrder}阶段',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: appTheme.earth,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        dateRange,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: appTheme.earthMedium.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

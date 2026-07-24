@@ -64,7 +64,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       _period = await _service.getPeriodById(widget.periodId);
       if (_period != null) {
         _additions = await _service.getLargeAdditionsByPeriod(widget.periodId);
-        final allExpenses = await _service.getLargeExpensesByPeriod(widget.periodId);
+        final allExpenses =
+            await _service.getLargeExpensesByPeriod(widget.periodId);
         _shoppingExpenses =
             allExpenses.where((e) => e.category == 'shopping').toList();
         _otherExpenses =
@@ -101,12 +102,12 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: Column(
-          children: [
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
             _buildHeader(appTheme),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,53 +129,57 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     final safeTop = MediaQuery.of(context).padding.top;
     final start = DateTime.parse(_period!.startDate);
     final end = DateTime.parse(_period!.endDate);
-    final title = '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日';
+    final dateRange = '${start.month}/${start.day} ~ ${end.month}/${end.day}';
+    final headerHeight = safeTop + 58;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(Icons.arrow_back_ios_new_rounded,
-                  color: appTheme.earthMedium, size: 18),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
               children: [
-                Text(
-                  '大额记录',
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.dmSans().fontFamily,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: appTheme.earth,
-                    letterSpacing: -0.3,
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: SizedBox(
+                    width: 28,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: appTheme.earth, size: 20),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: appTheme.earthMedium.withValues(alpha: 0.6),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        '大额记录',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: appTheme.earth,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        dateRange,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: appTheme.earthMedium.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -225,7 +230,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
           children: List.generate(tabs.length, (index) {
             final isSelected = _currentTabIndex == index;
             final tab = tabs[index];
-            final color = tab['colorKey'] == 'sage' ? appTheme.sage : appTheme.rose;
+            final color =
+                tab['colorKey'] == 'sage' ? appTheme.sage : appTheme.rose;
 
             return Expanded(
               child: GestureDetector(
@@ -244,7 +250,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     duration: const Duration(milliseconds: 180),
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
                       color: isSelected ? color : appTheme.earthMedium,
                     ),
                     child: Text(
@@ -361,7 +368,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     );
   }
 
-  Widget _buildAdditionItem(AppThemeExtension appTheme, LargeAdditionRecord addition) {
+  Widget _buildAdditionItem(
+      AppThemeExtension appTheme, LargeAdditionRecord addition) {
     return InkWell(
       key: ValueKey('large_addition_${addition.id}'),
       onTap: () => _showEditAdditionSheet(appTheme, addition),
@@ -446,7 +454,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -468,7 +477,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -711,7 +721,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
   // 支出项（购物/其他共用）
   // ═══════════════════════════════════════════════════════════
 
-  Widget _buildExpenseItem(AppThemeExtension appTheme, LargeExpenseRecord expense, {required Color color}) {
+  Widget _buildExpenseItem(
+      AppThemeExtension appTheme, LargeExpenseRecord expense,
+      {required Color color}) {
     final icon = expense.category == 'shopping'
         ? Icons.shopping_bag_outlined
         : Icons.category_outlined;
@@ -808,7 +820,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -830,7 +843,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -864,10 +878,14 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 flex: 2,
                 child: GestureDetector(
                   onTap: () {
-                    final amount = double.tryParse(_shoppingAmountController.text);
+                    final amount =
+                        double.tryParse(_shoppingAmountController.text);
                     final desc = _shoppingDescController.text.trim();
                     if (amount == null || amount <= 0 || desc.isEmpty) return;
-                    _service.addLargeExpense(widget.periodId, 'shopping', amount, desc).then((_) {
+                    _service
+                        .addLargeExpense(
+                            widget.periodId, 'shopping', amount, desc)
+                        .then((_) {
                       _shoppingAmountController.clear();
                       _shoppingDescController.clear();
                       _loadData();
@@ -932,7 +950,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -954,7 +973,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -991,7 +1011,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     final amount = double.tryParse(_otherAmountController.text);
                     final desc = _otherDescController.text.trim();
                     if (amount == null || amount <= 0 || desc.isEmpty) return;
-                    _service.addLargeExpense(widget.periodId, 'other', amount, desc).then((_) {
+                    _service
+                        .addLargeExpense(widget.periodId, 'other', amount, desc)
+                        .then((_) {
                       _otherAmountController.clear();
                       _otherDescController.clear();
                       _loadData();
@@ -1028,8 +1050,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
   // 编辑弹窗
   // ═══════════════════════════════════════════════════════════
 
-  Future<void> _showEditAdditionSheet(AppThemeExtension appTheme, LargeAdditionRecord addition) async {
-    final amountController = TextEditingController(text: addition.amount.toStringAsFixed(2));
+  Future<void> _showEditAdditionSheet(
+      AppThemeExtension appTheme, LargeAdditionRecord addition) async {
+    final amountController =
+        TextEditingController(text: addition.amount.toStringAsFixed(2));
     final reasonController = TextEditingController(text: addition.reason);
 
     await showModalBottomSheet(
@@ -1041,12 +1065,15 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         return StatefulBuilder(
           builder: (ctx, setLocal) => Container(
             padding: EdgeInsets.only(
-              left: 20, right: 20, top: 20,
+              left: 20,
+              right: 20,
+              top: 20,
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
             decoration: BoxDecoration(
               color: sheetTheme.cardBackground,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1066,14 +1093,16 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     GestureDetector(
                       onTap: () => Navigator.pop(ctx),
                       child: Icon(Icons.close_rounded,
-                          size: 20, color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                          size: 20,
+                          color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
                     labelText: '金额',
                     hintText: '请输入金额',
@@ -1090,7 +1119,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                         width: 1,
                       ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
@@ -1113,7 +1143,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                         width: 1,
                       ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
@@ -1124,7 +1155,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     onTap: () async {
                       final amount = double.tryParse(amountController.text);
                       final reason = reasonController.text.trim();
-                      if (amount == null || amount <= 0 || reason.isEmpty) return;
+                      if (amount == null || amount <= 0 || reason.isEmpty)
+                        return;
                       await _service.updateLargeAddition(
                         addition.id!,
                         amount: amount,
@@ -1152,7 +1184,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+                SizedBox(
+                    height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
               ],
             ),
           ),
@@ -1161,9 +1194,11 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     );
   }
 
-  Future<void> _showEditExpenseSheet(AppThemeExtension appTheme, LargeExpenseRecord expense) async {
+  Future<void> _showEditExpenseSheet(
+      AppThemeExtension appTheme, LargeExpenseRecord expense) async {
     String category = expense.category;
-    final amountController = TextEditingController(text: expense.amount.toStringAsFixed(2));
+    final amountController =
+        TextEditingController(text: expense.amount.toStringAsFixed(2));
     final descController = TextEditingController(text: expense.description);
 
     await showModalBottomSheet(
@@ -1175,12 +1210,15 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         return StatefulBuilder(
           builder: (ctx, setLocal) => Container(
             padding: EdgeInsets.only(
-              left: 20, right: 20, top: 20,
+              left: 20,
+              right: 20,
+              top: 20,
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
             decoration: BoxDecoration(
               color: sheetTheme.cardBackground,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1200,12 +1238,17 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     GestureDetector(
                       onTap: () => Navigator.pop(ctx),
                       child: Icon(Icons.close_rounded,
-                          size: 20, color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                          size: 20,
+                          color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text('分类', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: sheetTheme.earthMedium)),
+                Text('分类',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: sheetTheme.earthMedium)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -1231,7 +1274,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 const SizedBox(height: 14),
                 TextField(
                   controller: amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
                     labelText: '金额',
                     hintText: '请输入金额',
@@ -1248,7 +1292,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                         width: 1,
                       ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
@@ -1271,7 +1316,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                         width: 1,
                       ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
@@ -1311,7 +1357,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+                SizedBox(
+                    height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
               ],
             ),
           ),
@@ -1331,23 +1378,23 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     required String prefix,
   }) {
     return Container(
-        key: ValueKey(amount),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(999),
+      key: ValueKey(amount),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$prefix${amount.toStringAsFixed(2)}',
+        style: TextStyle(
+          fontFamily: GoogleFonts.dmSans().fontFamily,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: color,
+          letterSpacing: 0.2,
         ),
-        child: Text(
-          '$prefix${amount.toStringAsFixed(2)}',
-          style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: color,
-            letterSpacing: 0.2,
-          ),
-        ),
-        );
+      ),
+    );
   }
 
   Widget _buildCategoryChip({
@@ -1363,7 +1410,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.15) : appTheme.creamDark,
+          color:
+              isSelected ? color.withValues(alpha: 0.15) : appTheme.creamDark,
           borderRadius: BorderRadius.circular(10),
           border: isSelected
               ? Border.all(color: color.withValues(alpha: 0.3), width: 1)
@@ -1372,7 +1420,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: isSelected ? color : appTheme.earthMedium),
+            Icon(icon,
+                size: 14, color: isSelected ? color : appTheme.earthMedium),
             const SizedBox(width: 6),
             Text(
               label,
@@ -1410,13 +1459,23 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     // 重新合并所有支出以保持全局 sort_order 一致
     final allExpenses = [
       ..._shoppingExpenses.map((e) => LargeExpenseRecord(
-        id: e.id, periodId: e.periodId, category: e.category,
-        amount: e.amount, description: e.description, sortOrder: 0, createdAt: e.createdAt,
-      )),
+            id: e.id,
+            periodId: e.periodId,
+            category: e.category,
+            amount: e.amount,
+            description: e.description,
+            sortOrder: 0,
+            createdAt: e.createdAt,
+          )),
       ..._otherExpenses.map((e) => LargeExpenseRecord(
-        id: e.id, periodId: e.periodId, category: e.category,
-        amount: e.amount, description: e.description, sortOrder: 0, createdAt: e.createdAt,
-      )),
+            id: e.id,
+            periodId: e.periodId,
+            category: e.category,
+            amount: e.amount,
+            description: e.description,
+            sortOrder: 0,
+            createdAt: e.createdAt,
+          )),
     ];
     for (var i = 0; i < allExpenses.length; i++) {
       await _service.updateLargeExpense(allExpenses[i].id!, sortOrder: i);
@@ -1426,13 +1485,23 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
   Future<void> _updateOtherExpensesOrder() async {
     final allExpenses = [
       ..._shoppingExpenses.map((e) => LargeExpenseRecord(
-        id: e.id, periodId: e.periodId, category: e.category,
-        amount: e.amount, description: e.description, sortOrder: 0, createdAt: e.createdAt,
-      )),
+            id: e.id,
+            periodId: e.periodId,
+            category: e.category,
+            amount: e.amount,
+            description: e.description,
+            sortOrder: 0,
+            createdAt: e.createdAt,
+          )),
       ..._otherExpenses.map((e) => LargeExpenseRecord(
-        id: e.id, periodId: e.periodId, category: e.category,
-        amount: e.amount, description: e.description, sortOrder: 0, createdAt: e.createdAt,
-      )),
+            id: e.id,
+            periodId: e.periodId,
+            category: e.category,
+            amount: e.amount,
+            description: e.description,
+            sortOrder: 0,
+            createdAt: e.createdAt,
+          )),
     ];
     for (var i = 0; i < allExpenses.length; i++) {
       await _service.updateLargeExpense(allExpenses[i].id!, sortOrder: i);
@@ -1460,7 +1529,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     final desc = _shoppingDescController.text.trim();
     if (amount == null || amount <= 0 || desc.isEmpty) return;
 
-    _service.addLargeExpense(widget.periodId, 'shopping', amount, desc).then((_) {
+    _service
+        .addLargeExpense(widget.periodId, 'shopping', amount, desc)
+        .then((_) {
       _shoppingAmountController.clear();
       _shoppingDescController.clear();
       _loadData();
@@ -1478,5 +1549,31 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       _loadData();
     });
   }
+}
 
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
+  }
 }
