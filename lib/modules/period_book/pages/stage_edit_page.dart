@@ -38,6 +38,12 @@ class _StageEditPageState extends State<StageEditPage> {
   final _otherDescController = TextEditingController();
   final _otherAmountController = TextEditingController();
 
+  // 焦点节点：金额 → 描述
+  final _shoppingAmountFocusNode = FocusNode();
+  final _shoppingDescFocusNode = FocusNode();
+  final _otherAmountFocusNode = FocusNode();
+  final _otherDescFocusNode = FocusNode();
+
   bool _loading = true;
 
   /// 所有追加记录合计金额
@@ -58,6 +64,10 @@ class _StageEditPageState extends State<StageEditPage> {
     _shoppingAmountController.dispose();
     _otherDescController.dispose();
     _otherAmountController.dispose();
+    _shoppingAmountFocusNode.dispose();
+    _shoppingDescFocusNode.dispose();
+    _otherAmountFocusNode.dispose();
+    _otherDescFocusNode.dispose();
     super.dispose();
   }
 
@@ -169,12 +179,12 @@ class _StageEditPageState extends State<StageEditPage> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: Column(
-          children: [
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
             _buildHeader(appTheme),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,35 +206,46 @@ class _StageEditPageState extends State<StageEditPage> {
 
   Widget _buildHeader(AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(Icons.arrow_back_ios_new_rounded,
-                  color: appTheme.earthMedium, size: 18),
+    final headerHeight = safeTop + 58;
+
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: SizedBox(
+                    width: 28,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: appTheme.earth, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    '第${_stage!.sortOrder}阶段',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            '第${_stage!.sortOrder}阶段',
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -346,9 +367,8 @@ class _StageEditPageState extends State<StageEditPage> {
     final currentDateStr = _stage?.currentDate;
     final start = DateTime.parse(_stage!.startDate);
     final end = DateTime.parse(_stage!.endDate);
-    final displayDate = currentDateStr != null
-        ? DateTime.parse(currentDateStr)
-        : end;
+    final displayDate =
+        currentDateStr != null ? DateTime.parse(currentDateStr) : end;
 
     return Row(
       children: [
@@ -362,9 +382,8 @@ class _StageEditPageState extends State<StageEditPage> {
         const Spacer(),
         GestureDetector(
           onTap: () async {
-            final initialDate = currentDateStr != null
-                ? DateTime.parse(currentDateStr)
-                : end;
+            final initialDate =
+                currentDateStr != null ? DateTime.parse(currentDateStr) : end;
             final picked = await showDatePicker(
               context: context,
               initialDate: initialDate,
@@ -540,7 +559,8 @@ class _StageEditPageState extends State<StageEditPage> {
           children: List.generate(tabs.length, (index) {
             final isSelected = _currentTabIndex == index;
             final tab = tabs[index];
-            final color = tab['colorKey'] == 'sage' ? appTheme.sage : appTheme.rose;
+            final color =
+                tab['colorKey'] == 'sage' ? appTheme.sage : appTheme.rose;
 
             return Expanded(
               child: GestureDetector(
@@ -559,7 +579,8 @@ class _StageEditPageState extends State<StageEditPage> {
                     duration: const Duration(milliseconds: 180),
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
                       color: isSelected ? color : appTheme.earthMedium,
                     ),
                     child: Text(
@@ -593,7 +614,8 @@ class _StageEditPageState extends State<StageEditPage> {
     }
   }
 
-  Widget _buildAdditionItem(AppThemeExtension appTheme, AdditionRecord addition) {
+  Widget _buildAdditionItem(
+      AppThemeExtension appTheme, AdditionRecord addition) {
     return InkWell(
       key: ValueKey('addition_${addition.id}'),
       onTap: () => _showEditAdditionSheet(appTheme, addition),
@@ -648,9 +670,11 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
-  Future<void> _showEditAdditionSheet(AppThemeExtension appTheme, AdditionRecord addition) async {
+  Future<void> _showEditAdditionSheet(
+      AppThemeExtension appTheme, AdditionRecord addition) async {
     final reasonController = TextEditingController(text: addition.reason);
-    final amountController = TextEditingController(text: addition.amount.toStringAsFixed(2));
+    final amountController =
+        TextEditingController(text: addition.amount.toStringAsFixed(2));
 
     await showModalBottomSheet(
       context: context,
@@ -661,12 +685,15 @@ class _StageEditPageState extends State<StageEditPage> {
         return StatefulBuilder(
           builder: (ctx, setLocal) => Container(
             padding: EdgeInsets.only(
-              left: 20, right: 20, top: 20,
+              left: 20,
+              right: 20,
+              top: 20,
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
             decoration: BoxDecoration(
               color: sheetTheme.cardBackground,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -687,7 +714,8 @@ class _StageEditPageState extends State<StageEditPage> {
                     GestureDetector(
                       onTap: () => Navigator.pop(ctx),
                       child: Icon(Icons.close_rounded,
-                          size: 20, color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                          size: 20,
+                          color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
@@ -695,7 +723,8 @@ class _StageEditPageState extends State<StageEditPage> {
                 // 追加金额
                 TextField(
                   controller: amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
                     labelText: '追加金额',
                     hintText: '请输入金额',
@@ -712,7 +741,8 @@ class _StageEditPageState extends State<StageEditPage> {
                         width: 1,
                       ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
@@ -736,16 +766,19 @@ class _StageEditPageState extends State<StageEditPage> {
                         width: 1,
                       ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+                SizedBox(
+                    height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
                 // 确定按钮
                 GestureDetector(
                   onTap: () {
                     // 先保存一次确保最新数据写入
-                    _saveAdditionEdit(addition, reasonController, amountController);
+                    _saveAdditionEdit(
+                        addition, reasonController, amountController);
                     Navigator.pop(ctx);
                   },
                   child: Container(
@@ -782,8 +815,10 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildShoppingSection(AppThemeExtension appTheme) {
-    final shoppingExpenses = _expenses.where((e) => e.category == 'shopping').toList();
-    final shoppingTotal = shoppingExpenses.fold(0.0, (sum, e) => sum + e.amount);
+    final shoppingExpenses =
+        _expenses.where((e) => e.category == 'shopping').toList();
+    final shoppingTotal =
+        shoppingExpenses.fold(0.0, (sum, e) => sum + e.amount);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -831,8 +866,8 @@ class _StageEditPageState extends State<StageEditPage> {
                   final item = shoppingExpenses.removeAt(oldIndex);
                   shoppingExpenses.insert(newIndex, item);
                   _expenses = [
-                    ..._expenses.where((e) => e.category == 'shopping')
-                        .toList()..clear()
+                    ..._expenses.where((e) => e.category == 'shopping').toList()
+                      ..clear()
                       ..addAll(shoppingExpenses),
                     ..._expenses.where((e) => e.category == 'other'),
                   ];
@@ -879,7 +914,8 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildOtherSection(AppThemeExtension appTheme) {
-    final otherExpenses = _expenses.where((e) => e.category == 'other').toList();
+    final otherExpenses =
+        _expenses.where((e) => e.category == 'other').toList();
     final otherTotal = otherExpenses.fold(0.0, (sum, e) => sum + e.amount);
 
     return Container(
@@ -929,8 +965,8 @@ class _StageEditPageState extends State<StageEditPage> {
                   otherExpenses.insert(newIndex, item);
                   _expenses = [
                     ..._expenses.where((e) => e.category == 'shopping'),
-                    ..._expenses.where((e) => e.category == 'other')
-                        .toList()..clear()
+                    ..._expenses.where((e) => e.category == 'other').toList()
+                      ..clear()
                       ..addAll(otherExpenses),
                   ];
                 });
@@ -987,7 +1023,12 @@ class _StageEditPageState extends State<StageEditPage> {
         children: [
           TextField(
             controller: _shoppingAmountController,
+            focusNode: _shoppingAmountFocusNode,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.next,
+            onEditingComplete: () {
+              FocusScope.of(context).requestFocus(_shoppingDescFocusNode);
+            },
             decoration: InputDecoration(
               hintText: '金额',
               hintStyle: TextStyle(
@@ -1003,13 +1044,15 @@ class _StageEditPageState extends State<StageEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _shoppingDescController,
+            focusNode: _shoppingDescFocusNode,
             decoration: InputDecoration(
               hintText: '描述',
               hintStyle: TextStyle(
@@ -1025,7 +1068,8 @@ class _StageEditPageState extends State<StageEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -1059,10 +1103,13 @@ class _StageEditPageState extends State<StageEditPage> {
                 flex: 2,
                 child: GestureDetector(
                   onTap: () {
-                    final amount = double.tryParse(_shoppingAmountController.text);
+                    final amount =
+                        double.tryParse(_shoppingAmountController.text);
                     final desc = _shoppingDescController.text.trim();
                     if (amount == null || amount <= 0 || desc.isEmpty) return;
-                    _service.addExpense(widget.stageId, 'shopping', amount, desc).then((_) {
+                    _service
+                        .addExpense(widget.stageId, 'shopping', amount, desc)
+                        .then((_) {
                       _shoppingAmountController.clear();
                       _shoppingDescController.clear();
                       _loadData();
@@ -1110,7 +1157,12 @@ class _StageEditPageState extends State<StageEditPage> {
         children: [
           TextField(
             controller: _otherAmountController,
+            focusNode: _otherAmountFocusNode,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.next,
+            onEditingComplete: () {
+              FocusScope.of(context).requestFocus(_otherDescFocusNode);
+            },
             decoration: InputDecoration(
               hintText: '金额',
               hintStyle: TextStyle(
@@ -1126,13 +1178,15 @@ class _StageEditPageState extends State<StageEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _otherDescController,
+            focusNode: _otherDescFocusNode,
             decoration: InputDecoration(
               hintText: '描述',
               hintStyle: TextStyle(
@@ -1148,7 +1202,8 @@ class _StageEditPageState extends State<StageEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -1185,7 +1240,9 @@ class _StageEditPageState extends State<StageEditPage> {
                     final amount = double.tryParse(_otherAmountController.text);
                     final desc = _otherDescController.text.trim();
                     if (amount == null || amount <= 0 || desc.isEmpty) return;
-                    _service.addExpense(widget.stageId, 'other', amount, desc).then((_) {
+                    _service
+                        .addExpense(widget.stageId, 'other', amount, desc)
+                        .then((_) {
                       _otherAmountController.clear();
                       _otherDescController.clear();
                       _loadData();
@@ -1217,7 +1274,8 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
-  Widget _buildExpenseItem(AppThemeExtension appTheme, ExpenseRecord expense, {int? index}) {
+  Widget _buildExpenseItem(AppThemeExtension appTheme, ExpenseRecord expense,
+      {int? index}) {
     final icon = expense.category == 'shopping'
         ? Icons.shopping_bag_outlined
         : Icons.category_outlined;
@@ -1282,8 +1340,10 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
-  Future<void> _showEditExpenseSheet(AppThemeExtension appTheme, ExpenseRecord expense) async {
-    final amountController = TextEditingController(text: expense.amount.toStringAsFixed(2));
+  Future<void> _showEditExpenseSheet(
+      AppThemeExtension appTheme, ExpenseRecord expense) async {
+    final amountController =
+        TextEditingController(text: expense.amount.toStringAsFixed(2));
     final descController = TextEditingController(text: expense.description);
     final isShopping = expense.category == 'shopping';
 
@@ -1295,7 +1355,9 @@ class _StageEditPageState extends State<StageEditPage> {
         final sheetTheme = Theme.of(ctx).appTheme;
         return Container(
           padding: EdgeInsets.only(
-            left: 20, right: 20, top: 20,
+            left: 20,
+            right: 20,
+            top: 20,
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
           decoration: BoxDecoration(
@@ -1321,7 +1383,8 @@ class _StageEditPageState extends State<StageEditPage> {
                   GestureDetector(
                     onTap: () => Navigator.pop(ctx),
                     child: Icon(Icons.close_rounded,
-                        size: 20, color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                        size: 20,
+                        color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
                   ),
                 ],
               ),
@@ -1329,81 +1392,86 @@ class _StageEditPageState extends State<StageEditPage> {
               // 金额
               TextField(
                 controller: amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText: '金额',
-                    hintText: '请输入金额',
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: sheetTheme.earthMedium.withValues(alpha: 0.5),
-                    ),
-                    filled: true,
-                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: sheetTheme.earthMedium.withValues(alpha: 0.25),
-                        width: 1,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: '金额',
+                  hintText: '请输入金额',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: sheetTheme.earthMedium.withValues(alpha: 0.5),
                   ),
-                  style: TextStyle(fontSize: 14, color: sheetTheme.earth),
-                ),
-                const SizedBox(height: 14),
-                // 描述
-                TextField(
-                  controller: descController,
-                  decoration: InputDecoration(
-                    labelText: '描述',
-                    hintText: '请输入描述',
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: sheetTheme.earthMedium.withValues(alpha: 0.5),
-                    ),
-                    filled: true,
-                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: sheetTheme.earthMedium.withValues(alpha: 0.25),
-                        width: 1,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  ),
-                  style: TextStyle(fontSize: 14, color: sheetTheme.earth),
-                ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
-                // 确定按钮
-                GestureDetector(
-                  onTap: () {
-                    _saveExpenseEdit(expense, expense.category, amountController, descController);
-                    Navigator.pop(ctx);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: sheetTheme.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '保存修改',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                  filled: true,
+                  fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                      width: 1,
                     ),
                   ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
-              ],
-            ),
-          );
-        },
+                style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+              ),
+              const SizedBox(height: 14),
+              // 描述
+              TextField(
+                controller: descController,
+                decoration: InputDecoration(
+                  labelText: '描述',
+                  hintText: '请输入描述',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: sheetTheme.earthMedium.withValues(alpha: 0.5),
+                  ),
+                  filled: true,
+                  fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+              ),
+              SizedBox(
+                  height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+              // 确定按钮
+              GestureDetector(
+                onTap: () {
+                  _saveExpenseEdit(expense, expense.category, amountController,
+                      descController);
+                  Navigator.pop(ctx);
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: sheetTheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '保存修改',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
     // 编辑已实时保存，关闭弹窗后刷新列表
     if (mounted) await _loadData();
@@ -1417,23 +1485,23 @@ class _StageEditPageState extends State<StageEditPage> {
     required String prefix,
   }) {
     return Container(
-        key: ValueKey(amount),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(999),
+      key: ValueKey(amount),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$prefix${amount.toStringAsFixed(2)}',
+        style: TextStyle(
+          fontFamily: GoogleFonts.dmSans().fontFamily,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: color,
+          letterSpacing: 0.2,
         ),
-        child: Text(
-          '$prefix${amount.toStringAsFixed(2)}',
-          style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: color,
-            letterSpacing: 0.2,
-          ),
-        ),
-        );
+      ),
+    );
   }
 
   Future<void> _deleteAddition(AdditionRecord addition) async {
@@ -1492,7 +1560,8 @@ class _StageEditPageState extends State<StageEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -1515,7 +1584,8 @@ class _StageEditPageState extends State<StageEditPage> {
                   width: 1,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 13, color: appTheme.earth),
           ),
@@ -1577,5 +1647,35 @@ class _StageEditPageState extends State<StageEditPage> {
         ],
       ),
     );
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }
