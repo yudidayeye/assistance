@@ -28,12 +28,14 @@ class FileServerService extends ChangeNotifier {
   String? _connectionCode;
   final Set<String> _validTokens = {};
   final List<SharedFile> _sharedFiles = [];
+  final List<SharedFile> _receivedFiles = [];
 
   bool get isRunning => _server != null;
   String? get localIp => _localIp;
   int get port => _port;
   String? get connectionCode => _connectionCode;
   List<SharedFile> get sharedFiles => List.unmodifiable(_sharedFiles);
+  List<SharedFile> get receivedFiles => List.unmodifiable(_receivedFiles);
 
   /// 添加共享文件
   void addSharedFile(String name, String path, int size) {
@@ -164,7 +166,15 @@ class FileServerService extends ChangeNotifier {
         final filePath = p.join(downloadDir, file['filename']!);
         await File(filePath).writeAsBytes(file['data'] as List<int>);
         saved.add(file['filename']!);
+        // 记录收到的文件
+        _receivedFiles.removeWhere((f) => f.name == file['filename']);
+        _receivedFiles.insert(0, SharedFile(
+          name: file['filename']!,
+          path: filePath,
+          size: (file['data'] as List<int>).length,
+        ));
       }
+      notifyListeners();
 
       return shelf.Response.ok(
         jsonEncode({'message': '上传成功', 'files': saved}),

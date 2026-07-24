@@ -68,6 +68,10 @@ class _FileTransferPageState extends State<FileTransferPage> {
               const SizedBox(height: 16),
               _buildSharedFilesCard(appTheme),
             ],
+            if (_server.receivedFiles.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildReceivedFilesCard(appTheme),
+            ],
             const SizedBox(height: 16),
             _buildHistoryCard(appTheme),
           ],
@@ -395,6 +399,62 @@ class _FileTransferPageState extends State<FileTransferPage> {
     if (['doc', 'docx', 'txt', 'md'].contains(ext)) return Icons.description_rounded;
     if (['zip', 'rar', '7z', 'tar'].contains(ext)) return Icons.archive_rounded;
     return Icons.insert_drive_file_rounded;
+  }
+
+  // ==================== 收到的文件卡片 ====================
+
+  Widget _buildReceivedFilesCard(AppThemeExtension appTheme) {
+    final files = _server.receivedFiles;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(appTheme),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.downloading_rounded, color: appTheme.sage, size: 22),
+              const SizedBox(width: 8),
+              Text('收到的文件',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: appTheme.earth)),
+              const Spacer(),
+              Text('${files.length} 个',
+                  style: TextStyle(fontSize: 13, color: appTheme.earthLight)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('来自电脑上传，保存在 Download 目录',
+              style: TextStyle(fontSize: 12, color: appTheme.earthLight.withValues(alpha: 0.7))),
+          const SizedBox(height: 12),
+          ...files.take(10).map((f) => _buildReceivedFileItem(f, appTheme)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReceivedFileItem(SharedFile file, AppThemeExtension appTheme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Icon(_fileIcon(file.name), size: 22, color: appTheme.sage.withValues(alpha: 0.7)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(file.name,
+                    style: TextStyle(fontSize: 14, color: appTheme.earth, fontWeight: FontWeight.w500),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(FormatUtils.formatFileSize(file.size),
+                    style: TextStyle(fontSize: 12, color: appTheme.earthLight)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ==================== 传输历史卡片 ====================
