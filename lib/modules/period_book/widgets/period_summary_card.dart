@@ -65,11 +65,11 @@ class PeriodSummaryCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 _buildExpenseDonut(
                     appTheme, shopping, other, living, expenseTotal),
+                const SizedBox(width: 10),
+                _buildExpenseLegend(
+                    appTheme, shopping, other, living, expenseTotal),
               ],
             ),
-            const SizedBox(height: 10),
-            _buildExpenseLegend(
-                appTheme, shopping, other, living, expenseTotal),
             const SizedBox(height: 14),
             _buildProgressRow(appTheme, balanceRatio, spent),
           ],
