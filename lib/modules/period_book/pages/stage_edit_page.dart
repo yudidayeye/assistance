@@ -775,8 +775,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
-                SizedBox(
-                    height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+                const SizedBox(height: 16),
                 // 确定按钮
                 GestureDetector(
                   onTap: () {
@@ -1444,8 +1443,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 ),
                 style: TextStyle(fontSize: 14, color: sheetTheme.earth),
               ),
-              SizedBox(
-                  height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
+              const SizedBox(height: 16),
               // 确定按钮
               GestureDetector(
                 onTap: () {
