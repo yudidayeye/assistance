@@ -4,6 +4,7 @@ import '../../core/module_system/tool_module.dart';
 import '../../core/module_system/module_context.dart';
 import '../../core/module_system/module_summary.dart';
 import 'services/transfer_service.dart';
+import 'services/file_server_service.dart';
 import 'pages/file_transfer_page.dart';
 
 /// 文件互传模块注册
@@ -43,15 +44,26 @@ class FileTransferModule implements ToolModule {
 
   @override
   Future<ModuleSummary> getSummary() async {
+    final serverRunning = FileServerService.instance.isRunning;
     final records = await TransferService.instance.getRecords(limit: 1);
+
     if (records.isNotEmpty) {
       final last = records.first;
       final direction = last.direction.name == 'upload' ? '手机→电脑' : '电脑→手机';
+      final serverStatus = serverRunning ? ' · 服务器运行中' : '';
       return ModuleSummary(
         line1: '最近: ${last.fileName}',
-        line2: '$direction · ${_formatStatus(last.status.name)}',
+        line2: '$direction · ${_formatStatus(last.status.name)}$serverStatus',
       );
     }
+
+    if (serverRunning) {
+      return ModuleSummary(
+        line1: '服务器运行中',
+        line2: 'IP: ${FileServerService.instance.localIp ?? "获取中..."}',
+      );
+    }
+
     return const ModuleSummary(line1: '点击开始传文件');
   }
 
