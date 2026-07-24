@@ -12,30 +12,30 @@ import 'modules/file_transfer/file_transfer_module.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // 1. 初始化数据库工厂
+  debugPrint('[Boot] 1/6 数据库工厂...');
   await DatabaseService.initializeFactory();
 
-  // 2. 打开数据库
+  debugPrint('[Boot] 2/6 打开数据库...');
   await DatabaseService.instance.database;
 
-  // 3. 注册并 await 所有模块（确保 onRegister 完成后再继续）
+  debugPrint('[Boot] 3/6 注册模块...');
   await ModuleRegistry.instance.registerAll([
     PeriodTrackerModule(),
     PeriodBookModule(),
     FileTransferModule(),
   ]);
 
-  // 4. 初始化设置默认值（基于已注册模块动态 seed）
+  debugPrint('[Boot] 4/6 初始化设置...');
   await SettingsService.instance.seedDefaultsForModules();
 
-  // 5. 加载设置和主题
+  debugPrint('[Boot] 5/6 加载主题...');
   await SettingsService.instance.loadSettings();
   await ThemeProvider.instance.loadTheme();
 
-  // 6. 初始化路由
+  debugPrint('[Boot] 6/6 初始化路由...');
   final router = AppRouter.instance.initRouter();
 
+  debugPrint('[Boot] 启动完成');
   runApp(ToolboxApp(router: router));
 }
 

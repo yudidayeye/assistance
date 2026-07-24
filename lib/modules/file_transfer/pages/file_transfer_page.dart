@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:open_filex/open_filex.dart';
 import 'dart:io';
 import '../../../core/theme/theme_extension.dart';
 import '../services/file_server_service.dart';
@@ -437,7 +436,6 @@ class _FileTransferPageState extends State<FileTransferPage> {
   Widget _buildReceivedFileItem(SharedFile file, AppThemeExtension appTheme) {
     return GestureDetector(
       onTap: () => _openFile(file),
-      onLongPress: () => _copyPath(file.path),
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(
@@ -461,7 +459,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
                 ],
               ),
             ),
-            Icon(Icons.open_in_new_rounded, size: 18, color: appTheme.primary.withValues(alpha: 0.6)),
+            Icon(Icons.copy_rounded, size: 18, color: appTheme.primary.withValues(alpha: 0.5)),
           ],
         ),
       ),
@@ -631,23 +629,16 @@ class _FileTransferPageState extends State<FileTransferPage> {
     _server.removeSharedFile(file.name);
   }
 
-  Future<void> _openFile(SharedFile file) async {
-    try {
-      final result = await OpenFilex.open(file.path);
-      if (result.type != ResultType.done && mounted) {
-        // 如果打开失败，复制路径让用户手动查找
-        _copyPath(file.path);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('无法打开文件，已复制路径到剪贴板'), duration: const Duration(seconds: 2)),
-        );
-      }
-    } catch (e) {
-      _copyPath(file.path);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('打开失败，已复制路径: $e'), duration: const Duration(seconds: 2)),
-        );
-      }
+  void _openFile(SharedFile file) {
+    _copyPath(file.path);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('已复制路径，请在文件管理器中粘贴查找'),
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(label: '知道了', onPressed: () {}),
+        ),
+      );
     }
   }
 
