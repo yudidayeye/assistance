@@ -186,81 +186,79 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     final end = DateTime.parse(_period!.endDate);
     final title = '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日';
 
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () => context.pop(),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: appTheme.cardBackground,
-                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                  border: Border.all(
-                    color: appTheme.cardBorder,
-                    width: 0.5,
+    final headerHeight = safeTop + 58;
+    final iconBackground = appTheme.earthMedium.withValues(alpha: 0.08);
+
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: SizedBox(
+                    width: 28,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: appTheme.earth, size: 20),
                   ),
                 ),
-                child: Icon(Icons.arrow_back_ios_new_rounded,
-                    color: appTheme.earthMedium, size: 18),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: appTheme.earth,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ),
-            if (!_isReadOnly) ...[
-              // 历史记录按钮
-              GestureDetector(
-                onTap: () => context.push('/period_book/history'),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: appTheme.cardBackground,
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                    border: Border.all(
-                      color: appTheme.cardBorder,
-                      width: 0.5,
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.1,
                     ),
                   ),
-                  child: Icon(Icons.history_rounded,
-                      color: appTheme.primary, size: 20),
                 ),
-              ),
-              const SizedBox(width: 10),
-              // 编辑按钮
-              GestureDetector(
-                onTap: () => context.push('/period_book/edit/${_period!.id}'),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: appTheme.cardBackground,
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                    border: Border.all(
-                      color: appTheme.cardBorder,
-                      width: 0.5,
+                if (!_isReadOnly) ...[
+                  const SizedBox(width: 8),
+                  // 历史记录按钮
+                  GestureDetector(
+                    onTap: () => context.push('/period_book/history'),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: iconBackground,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.history_rounded,
+                          color: appTheme.earth, size: 20),
                     ),
                   ),
-                  child: Icon(Icons.edit_outlined,
-                      color: appTheme.earthMedium, size: 20),
-                ),
-              ),
-            ],
-          ],
+                  const SizedBox(width: 8),
+                  // 编辑按钮
+                  GestureDetector(
+                    onTap: () =>
+                        context.push('/period_book/edit/${_period!.id}'),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: iconBackground,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.edit_outlined,
+                          color: appTheme.earth, size: 20),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -337,7 +335,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     final index = entry.key;
                     final stage = entry.value;
                     final additions = _stageAdditions[index];
-                    final total = additions.fold<double>(0, (sum, a) => sum + a.amount);
+                    final total =
+                        additions.fold<double>(0, (sum, a) => sum + a.amount);
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,14 +351,16 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                         if (additions.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           ...additions.map((a) => Padding(
-                                padding: const EdgeInsets.only(left: 16, bottom: 4),
+                                padding:
+                                    const EdgeInsets.only(left: 16, bottom: 4),
                                 child: Row(
                                   children: [
                                     Text(
                                       '└',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: appTheme.earthMedium.withValues(alpha: 0.3),
+                                        color: appTheme.earthMedium
+                                            .withValues(alpha: 0.3),
                                       ),
                                     ),
                                     const SizedBox(width: 4),
@@ -368,7 +369,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                                         a.reason,
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: appTheme.earthMedium.withValues(alpha: 0.6),
+                                          color: appTheme.earthMedium
+                                              .withValues(alpha: 0.6),
                                         ),
                                       ),
                                     ),
@@ -467,14 +469,15 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   ),
                   const Divider(height: 24),
                   // 生活
-                  if (_calc!.livingTotal != null && _calc!.livingTotal! > 0) ...[
+                  if (_calc!.livingTotal != null &&
+                      _calc!.livingTotal! > 0) ...[
                     _buildDetailRow(
                       appTheme: appTheme,
                       label: '生活',
                       amount: _calc!.livingTotal!,
                       color: appTheme.rose,
                       isTotal: false,
-                  ),
+                    ),
                     const Divider(height: 24),
                   ],
                   // 合计
@@ -582,13 +585,16 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               stageCalc: stageCalc,
               previousBalance: previousBalance,
               additions: additions,
-              onEditBalance: _isReadOnly ? null : () => _showEditStageBalanceDialog(stage),
-              onEdit: _isReadOnly ? null : () async {
-                await context.push('/period_book/stage_edit/${stage.id}');
-                if (mounted) {
-                  _loadData();
-                }
-              },
+              onEditBalance:
+                  _isReadOnly ? null : () => _showEditStageBalanceDialog(stage),
+              onEdit: _isReadOnly
+                  ? null
+                  : () async {
+                      await context.push('/period_book/stage_edit/${stage.id}');
+                      if (mounted) {
+                        _loadData();
+                      }
+                    },
             );
           },
           childCount: _stages.length,
@@ -603,8 +609,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   void _showEditStageBalanceDialog(StageRecord stage) {
     final appTheme = Theme.of(context).appTheme;
-    final balance = stage.balance?.toStringAsFixed(2) ?? '';
-    final controller = TextEditingController(text: balance);
+    final currentBalanceText = stage.balance?.toStringAsFixed(2);
+    final controller = TextEditingController(); // 默认不填充，方便直接输入
 
     // 获取当前阶段的本金
     final stageIndex = _stages.indexWhere((s) => s.id == stage.id);
@@ -638,7 +644,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             const SizedBox(height: 12),
             TextField(
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               autofocus: true,
               style: TextStyle(
                 fontFamily: GoogleFonts.dmSans().fontFamily,
@@ -653,10 +660,19 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   fontWeight: FontWeight.w600,
                   color: appTheme.earthMedium.withValues(alpha: 0.6),
                 ),
+                hintText: currentBalanceText != null
+                    ? currentBalanceText
+                    : '未设置',
+                hintStyle: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.earthMedium.withValues(alpha: 0.4),
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
           ],
@@ -711,5 +727,35 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         ],
       ),
     );
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }
