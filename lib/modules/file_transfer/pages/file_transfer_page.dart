@@ -145,12 +145,12 @@ class _FileTransferPageState extends State<FileTransferPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _formatCode(_server.connectionCode ?? '------'),
+                        _server.connectionCode ?? '------',
                         style: TextStyle(
-                            fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: 8,
-                            color: appTheme.earth, fontFamily: 'monospace'),
+                            fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: 10,
+                            color: appTheme.earth),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
                       GestureDetector(
                         onTap: _copyCode,
                         child: Container(
@@ -492,23 +492,20 @@ class _FileTransferPageState extends State<FileTransferPage> {
   Widget _infoRow(String label, String value, AppThemeExtension appTheme) => Row(
     children: [
       Text(label, style: TextStyle(fontSize: 13, color: appTheme.earthLight)),
-      const Spacer(),
-      Flexible(
+      const SizedBox(width: 12),
+      Expanded(
         child: Text(value,
             textAlign: TextAlign.end,
-            style: TextStyle(fontSize: 13, color: appTheme.earth, fontWeight: FontWeight.w600, fontFamily: 'monospace')),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 13, color: appTheme.earth, fontWeight: FontWeight.w600)),
       ),
     ],
   );
 
-  String _formatCode(String code) {
-    if (code.length == 6) {
-      return '${code[0]} ${code[1]} ${code[2]} ${code[3]} ${code[4]} ${code[5]}';
-    }
-    return code;
-  }
-
   // ==================== 操作方法 ====================
+
+
 
   Future<void> _startServer() async {
     try {
