@@ -59,6 +59,7 @@ class PeriodSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(child: _buildBalanceSection(appTheme, balance)),
                 const SizedBox(width: 12),
