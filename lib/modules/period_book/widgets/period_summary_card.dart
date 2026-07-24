@@ -63,18 +63,13 @@ class PeriodSummaryCard extends StatelessWidget {
               children: [
                 Expanded(child: _buildBalanceSection(appTheme, balance)),
                 const SizedBox(width: 12),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildExpenseDonut(
-                        appTheme, shopping, other, living, expenseTotal),
-                    const SizedBox(width: 10),
-                    _buildExpenseLegend(
-                        appTheme, shopping, other, living, expenseTotal),
-                  ],
-                ),
+                _buildExpenseDonut(
+                    appTheme, shopping, other, living, expenseTotal),
               ],
             ),
+            const SizedBox(height: 10),
+            _buildExpenseLegend(
+                appTheme, shopping, other, living, expenseTotal),
             const SizedBox(height: 14),
             _buildProgressRow(appTheme, balanceRatio, spent),
           ],
@@ -212,7 +207,7 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 支出构成图例（环形图右侧竖排）：购物 45% / 其他 20% / 生活 35%
+  /// 支出构成图例行：●购物 45%  ●其他 20%  ●生活 35%
   Widget _buildExpenseLegend(
     AppThemeExtension appTheme,
     double shopping,
@@ -221,36 +216,26 @@ class PeriodSummaryCard extends StatelessWidget {
     double total,
   ) {
     if (total <= 0) {
-      return SizedBox(
-        height: 52,
-        child: Center(
-          child: Text(
-            '暂无支出构成',
-            style: TextStyle(
-              fontSize: 11,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
-            ),
-          ),
+      return Text(
+        '暂无支出构成',
+        style: TextStyle(
+          fontSize: 11,
+          color: appTheme.earthMedium.withValues(alpha: 0.4),
         ),
       );
     }
 
-    return SizedBox(
-      height: 52,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _legendItem(appTheme, '购物', appTheme.sage, shopping / total),
-          const SizedBox(height: 4),
-          _legendItem(appTheme, '其他', appTheme.rose, other / total),
-          if (living > 0) ...[
-            const SizedBox(height: 4),
-            _legendItem(appTheme, '生活',
-                appTheme.primary.withValues(alpha: 0.6), living / total),
-          ],
+    return Row(
+      children: [
+        _legendItem(appTheme, '购物', appTheme.sage, shopping / total),
+        const SizedBox(width: 14),
+        _legendItem(appTheme, '其他', appTheme.rose, other / total),
+        if (living > 0) ...[
+          const SizedBox(width: 14),
+          _legendItem(appTheme, '生活',
+              appTheme.primary.withValues(alpha: 0.6), living / total),
         ],
-      ),
+      ],
     );
   }
 
