@@ -41,9 +41,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
           physics: const BouncingScrollPhysics(),
           slivers: [
             // ── 头部 ──
-            SliverToBoxAdapter(
-              child: _buildHeader(appTheme),
-            ),
+            _buildHeader(appTheme),
 
             // ── 用户卡片（页面焦点） ──
             SliverToBoxAdapter(
@@ -66,36 +64,50 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
   // 头部
   // ═══════════════════════════════════════════════════════════════
   Widget _buildHeader(AppThemeExtension appTheme) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          24, MediaQuery.of(context).padding.top + 16, 24, 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '我的',
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: -0.3,
+    final safeTop = MediaQuery.of(context).padding.top;
+    final headerHeight = safeTop + 58;
+
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '我的',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => context.push('/settings'),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: appTheme.earthMedium.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.settings_outlined,
+                        color: appTheme.earth, size: 20),
+                  ),
+                ),
+              ],
             ),
           ),
-          GestureDetector(
-            onTap: () => context.push('/settings'),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(Icons.settings_outlined,
-                  color: appTheme.earthMedium, size: 22),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -321,5 +333,35 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
         ),
       ),
     );
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }

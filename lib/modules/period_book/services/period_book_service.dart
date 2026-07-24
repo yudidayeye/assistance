@@ -166,13 +166,14 @@ class PeriodBookService extends ChangeNotifier {
         where: 'period_id = ?', whereArgs: [id]);
     await _db.delete('mod_period_book_large_expenses',
         where: 'period_id = ?', whereArgs: [id]);
-    await _db.delete('mod_period_book_periods',
-        where: 'id = ?', whereArgs: [id]);
+    await _db
+        .delete('mod_period_book_periods', where: 'id = ?', whereArgs: [id]);
     _notifyChanged();
   }
 
   /// 检查日期是否与已有周期重叠
-  Future<bool> hasDateOverlap(String startDate, String endDate, {int? excludeId}) async {
+  Future<bool> hasDateOverlap(String startDate, String endDate,
+      {int? excludeId}) async {
     final rows = await _db.query(
       'mod_period_book_periods',
       where: 'start_date <= ? AND end_date >= ?',
@@ -192,7 +193,8 @@ class PeriodBookService extends ChangeNotifier {
   // ══════════════════════════════════════════════════════════
 
   /// 自动创建阶段（按周拆分）
-  Future<void> _autoCreateStages(int periodId, String startDate, String endDate) async {
+  Future<void> _autoCreateStages(
+      int periodId, String startDate, String endDate) async {
     final stages = _generateStages(periodId, startDate, endDate);
     for (final stage in stages) {
       await _db.insert('mod_period_book_stages', stage.toMap());
@@ -200,7 +202,8 @@ class PeriodBookService extends ChangeNotifier {
   }
 
   /// 生成阶段列表（按自然周划分：周一到周日）
-  List<StageRecord> _generateStages(int periodId, String startDate, String endDate) {
+  List<StageRecord> _generateStages(
+      int periodId, String startDate, String endDate) {
     final stages = <StageRecord>[];
     final start = DateTime.parse(startDate);
     final end = DateTime.parse(endDate);
@@ -229,7 +232,8 @@ class PeriodBookService extends ChangeNotifier {
         // 后续阶段：从周一开始
         // 计算本周一
         final daysFromMonday = current.weekday - 1;
-        final mondayOfThisWeek = current.subtract(Duration(days: daysFromMonday));
+        final mondayOfThisWeek =
+            current.subtract(Duration(days: daysFromMonday));
 
         // 本阶段从周一开始，到周日结束
         final sundayOfThisWeek = mondayOfThisWeek.add(const Duration(days: 6));
@@ -329,8 +333,8 @@ class PeriodBookService extends ChangeNotifier {
         where: 'stage_id = ?', whereArgs: [id]);
     await _db.delete('mod_period_book_additions',
         where: 'stage_id = ?', whereArgs: [id]);
-    await _db.delete('mod_period_book_stages',
-        where: 'id = ?', whereArgs: [id]);
+    await _db
+        .delete('mod_period_book_stages', where: 'id = ?', whereArgs: [id]);
     _notifyChanged();
   }
 
@@ -356,7 +360,10 @@ class PeriodBookService extends ChangeNotifier {
     // 获取当前最大 sort_order
     final existingAdditions = await getAdditionsByStage(stageId);
     final sortOrder = existingAdditions.isNotEmpty
-        ? existingAdditions.map((a) => a.sortOrder).reduce((a, b) => a > b ? a : b) + 1
+        ? existingAdditions
+                .map((a) => a.sortOrder)
+                .reduce((a, b) => a > b ? a : b) +
+            1
         : 0;
 
     final id = await _db.insert('mod_period_book_additions', {
@@ -396,8 +403,8 @@ class PeriodBookService extends ChangeNotifier {
   }
 
   Future<void> deleteAddition(int id) async {
-    await _db.delete('mod_period_book_additions',
-        where: 'id = ?', whereArgs: [id]);
+    await _db
+        .delete('mod_period_book_additions', where: 'id = ?', whereArgs: [id]);
     _notifyChanged();
   }
 
@@ -438,7 +445,10 @@ class PeriodBookService extends ChangeNotifier {
     // 获取当前最大 sort_order
     final existingExpenses = await getExpensesByStage(stageId);
     final sortOrder = existingExpenses.isNotEmpty
-        ? existingExpenses.map((e) => e.sortOrder).reduce((a, b) => a > b ? a : b) + 1
+        ? existingExpenses
+                .map((e) => e.sortOrder)
+                .reduce((a, b) => a > b ? a : b) +
+            1
         : 0;
 
     return _db.insert('mod_period_book_expenses', {
@@ -463,7 +473,10 @@ class PeriodBookService extends ChangeNotifier {
     // 获取当前最大 sort_order
     final existingExpenses = await getExpensesByStage(stageId);
     var sortOrder = existingExpenses.isNotEmpty
-        ? existingExpenses.map((e) => e.sortOrder).reduce((a, b) => a > b ? a : b) + 1
+        ? existingExpenses
+                .map((e) => e.sortOrder)
+                .reduce((a, b) => a > b ? a : b) +
+            1
         : 0;
 
     for (final expense in expenses) {
@@ -519,13 +532,14 @@ class PeriodBookService extends ChangeNotifier {
   }
 
   Future<void> deleteExpense(int id) async {
-    await _db.delete('mod_period_book_expenses',
-        where: 'id = ?', whereArgs: [id]);
+    await _db
+        .delete('mod_period_book_expenses', where: 'id = ?', whereArgs: [id]);
     _notifyChanged();
   }
 
   /// 更新支出记录（分类、金额、描述）
-  Future<void> updateExpense(int id, {String? category, double? amount, String? description}) async {
+  Future<void> updateExpense(int id,
+      {String? category, double? amount, String? description}) async {
     final data = <String, dynamic>{};
     if (category != null) data['category'] = category;
     if (amount != null) data['amount'] = amount;
@@ -554,7 +568,8 @@ class PeriodBookService extends ChangeNotifier {
 
   // --- 大额追加 ---
 
-  Future<int> addLargeAddition(int periodId, double amount, String reason) async {
+  Future<int> addLargeAddition(
+      int periodId, double amount, String reason) async {
     final now = DateTime.now().toIso8601String();
     final id = await _db.insert('mod_period_book_large_additions', {
       'period_id': periodId,
@@ -566,7 +581,8 @@ class PeriodBookService extends ChangeNotifier {
     return id;
   }
 
-  Future<List<LargeAdditionRecord>> getLargeAdditionsByPeriod(int periodId) async {
+  Future<List<LargeAdditionRecord>> getLargeAdditionsByPeriod(
+      int periodId) async {
     final rows = await _db.query(
       'mod_period_book_large_additions',
       where: 'period_id = ?',
@@ -583,7 +599,8 @@ class PeriodBookService extends ChangeNotifier {
   }
 
   /// 更新大额追加记录
-  Future<void> updateLargeAddition(int id, {double? amount, String? reason, int? sortOrder}) async {
+  Future<void> updateLargeAddition(int id,
+      {double? amount, String? reason, int? sortOrder}) async {
     final data = <String, dynamic>{};
     if (amount != null) data['amount'] = amount;
     if (reason != null) data['reason'] = reason;
@@ -594,7 +611,8 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
-  Future<void> updateLargeAdditionsOrder(List<LargeAdditionRecord> additions) async {
+  Future<void> updateLargeAdditionsOrder(
+      List<LargeAdditionRecord> additions) async {
     for (var i = 0; i < additions.length; i++) {
       final addition = additions[i];
       if (addition.id != null) {
@@ -631,7 +649,8 @@ class PeriodBookService extends ChangeNotifier {
     return id;
   }
 
-  Future<List<LargeExpenseRecord>> getLargeExpensesByPeriod(int periodId) async {
+  Future<List<LargeExpenseRecord>> getLargeExpensesByPeriod(
+      int periodId) async {
     final rows = await _db.query(
       'mod_period_book_large_expenses',
       where: 'period_id = ?',
@@ -647,7 +666,11 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
-  Future<void> updateLargeExpense(int id, {String? category, double? amount, String? description, int? sortOrder}) async {
+  Future<void> updateLargeExpense(int id,
+      {String? category,
+      double? amount,
+      String? description,
+      int? sortOrder}) async {
     final data = <String, dynamic>{};
     if (category != null) data['category'] = category;
     if (amount != null) data['amount'] = amount;
@@ -659,7 +682,8 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
-  Future<void> updateLargeExpensesOrder(List<LargeExpenseRecord> expenses) async {
+  Future<void> updateLargeExpensesOrder(
+      List<LargeExpenseRecord> expenses) async {
     for (var i = 0; i < expenses.length; i++) {
       final expense = expenses[i];
       if (expense.id != null) {
@@ -674,7 +698,8 @@ class PeriodBookService extends ChangeNotifier {
   Future<double> getLargeItemsNet(int periodId) async {
     final additions = await getLargeAdditionsByPeriod(periodId);
     final expenses = await getLargeExpensesByPeriod(periodId);
-    final additionsTotal = additions.fold<double>(0, (sum, a) => sum + a.amount);
+    final additionsTotal =
+        additions.fold<double>(0, (sum, a) => sum + a.amount);
     final expensesTotal = expenses.fold<double>(0, (sum, e) => sum + e.amount);
     return additionsTotal - expensesTotal;
   }
@@ -684,7 +709,8 @@ class PeriodBookService extends ChangeNotifier {
   // ══════════════════════════════════════════════════════════
 
   /// 获取阶段的计算数据
-  Future<StageCalculations> getStageCalculations(int stageId, double previousBalance) async {
+  Future<StageCalculations> getStageCalculations(
+      int stageId, double previousBalance) async {
     final stage = await getStageById(stageId);
     if (stage == null) {
       throw Exception('阶段不存在: $stageId');
@@ -692,7 +718,8 @@ class PeriodBookService extends ChangeNotifier {
 
     // 本阶段追加
     final additions = await getAdditionsByStage(stageId);
-    final additionsTotal = additions.fold<double>(0, (sum, a) => sum + a.amount);
+    final additionsTotal =
+        additions.fold<double>(0, (sum, a) => sum + a.amount);
 
     // 阶段本金 = 上阶段余额 + 本阶段追加（第一阶段 = 初始本金）
     final baseAmount = previousBalance + additionsTotal;
@@ -769,7 +796,8 @@ class PeriodBookService extends ChangeNotifier {
       final stageAdditions = additionsByStage[stage.id!] ?? [];
       final stageExpenses = expensesByStage[stage.id!] ?? [];
 
-      final additionsTotal = stageAdditions.fold<double>(0, (sum, a) => sum + a.amount);
+      final additionsTotal =
+          stageAdditions.fold<double>(0, (sum, a) => sum + a.amount);
       final baseAmount = previousBalance + additionsTotal;
 
       double stageShoppingTotal = 0;
@@ -788,7 +816,8 @@ class PeriodBookService extends ChangeNotifier {
       double? livingTotal;
       double? livingDailyAvg;
       if (balance != null) {
-        livingTotal = baseAmount - stageShoppingTotal - stageOtherTotal - balance;
+        livingTotal =
+            baseAmount - stageShoppingTotal - stageOtherTotal - balance;
         livingDailyAvg = livingDays > 0 ? livingTotal / livingDays : 0;
       }
 

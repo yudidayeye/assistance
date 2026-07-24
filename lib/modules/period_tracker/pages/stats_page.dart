@@ -86,9 +86,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverToBoxAdapter(
-            child: _buildHeader(context, appTheme),
-          ),
+          _buildHeader(context, appTheme),
           SliverToBoxAdapter(
             child: _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
           ),
@@ -115,39 +113,47 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
   }
 
   Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          24, MediaQuery.of(context).padding.top + 16, 24, 16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: appTheme.earthMedium,
-                size: 18,
-              ),
+    final safeTop = MediaQuery.of(context).padding.top;
+    final headerHeight = safeTop + 58;
+
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: SizedBox(
+                    width: 28,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: appTheme.earth, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    '周期统计',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            '周期统计',
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -475,5 +481,35 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
         ),
       ),
     );
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }

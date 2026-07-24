@@ -95,7 +95,8 @@ class BalanceTrendChart extends StatelessWidget {
                                 '${dt.month}/${dt.day}',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: appTheme.earthMedium.withValues(alpha: 0.5),
+                                  color: appTheme.earthMedium
+                                      .withValues(alpha: 0.5),
                                 ),
                               ),
                             );

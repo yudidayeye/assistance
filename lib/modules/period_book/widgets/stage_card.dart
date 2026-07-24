@@ -6,7 +6,7 @@ import '../models/addition_record.dart';
 import '../services/period_book_service.dart';
 
 /// 阶段卡片组件 — 纯汇总展示，当前阶段（今日所在区间）边框强调
-class StageCard extends StatelessWidget {
+class StageCard extends StatefulWidget {
   final StageRecord stage;
   final StageCalculations stageCalc;
   final double previousBalance;
@@ -25,296 +25,679 @@ class StageCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final appTheme = Theme.of(context).appTheme;
-    final start = DateTime.parse(stage.startDate);
-    final end = DateTime.parse(stage.endDate);
+  State<StageCard> createState() => _StageCardState();
+}
 
-    // 判断是否为当前阶段（今天落在 [start, end] 区间内）
+class _StageCardState extends State<StageCard> {
+  late bool _expenseExpanded;
+  late bool _baseExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expenseExpanded = _isCurrentStage;
+    _baseExpanded = false;
+  }
+
+  @override
+  void didUpdateWidget(covariant StageCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stage.id != widget.stage.id) {
+      _expenseExpanded = _isCurrentStage;
+      _baseExpanded = false;
+    }
+  }
+
+  // 未开始阶段：开始日期晚于今天
+  bool get _isFutureStage {
+    final start = DateTime.parse(widget.stage.startDate);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final startDate = DateTime(start.year, start.month, start.day);
+    return startDate.difference(today).inDays > 0;
+  }
+
+  bool get _isCurrentStage {
+    final start = DateTime.parse(widget.stage.startDate);
+    final end = DateTime.parse(widget.stage.endDate);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final startDate = DateTime(start.year, start.month, start.day);
     final endDate = DateTime(end.year, end.month, end.day);
-    final isCurrentStage =
-        today.difference(startDate).inDays >= 0 &&
+    return today.difference(startDate).inDays >= 0 &&
         endDate.difference(today).inDays >= 0;
+  }
+
+  double get _totalExpense =>
+      widget.stageCalc.shoppingTotal +
+      widget.stageCalc.otherTotal +
+      (widget.stageCalc.livingTotal ?? 0);
+
+  @override
+  Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
+    final isCurrentStage = _isCurrentStage;
+    final canExpandBase = widget.stageCalc.additionsTotal > 0;
+
+    // 未开始阶段：紧凑单行展示（参考设计图第四阶段）
+    if (_isFutureStage) {
+      return _buildFutureCard(appTheme);
+    }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: appTheme.cardShadow,
         border: Border.all(
-          color: isCurrentStage ? appTheme.primary : appTheme.cardBorder,
-          width: isCurrentStage ? 1.5 : 0.5,
+          color: isCurrentStage
+              ? appTheme.primary.withValues(alpha: 0.55)
+              : appTheme.cardBorder.withValues(alpha: 0.7),
+          width: isCurrentStage ? 1.2 : 0.5,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 头部：阶段序号 + 标题 + 进行中徽章 + 右边箭头（整行可点）
           GestureDetector(
-            onTap: onEdit,
+            onTap: widget.onEdit,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Row(
-                children: [
-                  // 阶段序号
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          appTheme.primary.withValues(alpha: 0.15),
-                          appTheme.primary.withValues(alpha: 0.05),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${stage.sortOrder}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: appTheme.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // 阶段标题 + 时间
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Text(
-                          '第${stage.sortOrder}阶段',
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.dmSans().fontFamily,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: appTheme.earth,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${start.month}.${start.day.toString().padLeft(2, '0')} ~ ${end.month}.${end.day.toString().padLeft(2, '0')}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: appTheme.earthMedium.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // 进行中徽章
-                  if (isCurrentStage) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: appTheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '进行中',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.primary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  // 右边箭头
-                  if (onEdit != null)
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 20,
-                      color: appTheme.earthMedium.withValues(alpha: 0.4),
-                    ),
-                ],
-              ),
+              padding: const EdgeInsets.fromLTRB(18, 16, 16, 12),
+              child: _buildHeaderRow(appTheme),
             ),
           ),
-          // 简要信息
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            padding: const EdgeInsets.fromLTRB(18, 0, 16, 16),
             child: Column(
               children: [
-                // 本金行：上阶段余额（+追加金额=真实本金）
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      '本金',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: appTheme.earthMedium.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const Spacer(),
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                          color: appTheme.earth,
-                        ),
-                        children: [
-                          if (stageCalc.additionsTotal > 0) ...[
-                            TextSpan(text: '¥${previousBalance.toStringAsFixed(2)}'),
-                            TextSpan(
-                              text: '+¥${stageCalc.additionsTotal.toStringAsFixed(2)}',
-                              style: TextStyle(color: appTheme.sage),
-                            ),
-                            TextSpan(text: '=¥${(previousBalance + stageCalc.additionsTotal).toStringAsFixed(2)}'),
-                          ] else
-                            TextSpan(text: '¥${previousBalance.toStringAsFixed(2)}'),
-                        ],
-                      ),
-                    ),
+                    Expanded(child: _buildBaseMetric(appTheme)),
+                    Expanded(child: _buildExpenseMetric(appTheme)),
+                    Expanded(child: _buildBalanceMetric(appTheme)),
                   ],
                 ),
-                const SizedBox(height: 10),
-                // 购物支出
-                Row(
-                  children: [
-                    Text(
-                      '购物',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: appTheme.earthMedium.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '-¥${stageCalc.shoppingTotal.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: GoogleFonts.dmSans().fontFamily,
-                        color: appTheme.rose,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                // 其他支出
-                Row(
-                  children: [
-                    Text(
-                      '其他',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: appTheme.earthMedium.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '-¥${stageCalc.otherTotal.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: GoogleFonts.dmSans().fontFamily,
-                        color: appTheme.rose,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Text(
-                      '生活',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: appTheme.earthMedium.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (stageCalc.livingTotal != null && stageCalc.livingDailyAvg != null)
-                      Text(
-                        '-¥${stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天 * ${stage.livingDays}天 = -¥${stageCalc.livingTotal!.abs().toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          color: appTheme.rose,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      )
-                    else
-                      Text(
-                        '-¥0.00',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          color: appTheme.rose,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Divider(
-                  height: 10,
-                  color: appTheme.earthMedium.withValues(alpha: 0.08),
-                ),
-                const SizedBox(height: 14),
-                // 余额行：编辑按钮放在金额前面，点击金额和编辑按钮都触发编辑
-                GestureDetector(
-                  onTap: onEditBalance,
-                  child: Row(
-                    children: [
-                      Text(
-                        '余额',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: appTheme.earthMedium.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const Spacer(),
-                      if (onEditBalance != null) ...[
-                        Icon(
-                          Icons.create_outlined,
-                          size: 16,
-                          color: appTheme.primary.withValues(alpha: 0.6),
-                        ),
-                        const SizedBox(width: 6),
-                      ],
-                      Text(
-                        stageCalc.balance != null
-                            ? '¥${stageCalc.balance!.toStringAsFixed(2)}'
-                            : '¥0.00',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          color: stageCalc.balance != null ? appTheme.primary : appTheme.earthMedium.withValues(alpha: 0.4),
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ],
+                AnimatedCrossFade(
+                  firstChild: const SizedBox.shrink(),
+                  secondChild: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildBaseBreakdown(appTheme),
                   ),
+                  crossFadeState: _baseExpanded && canExpandBase
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  duration: const Duration(milliseconds: 180),
+                  reverseDuration: const Duration(milliseconds: 140),
+                  firstCurve: Curves.easeOutCubic,
+                  secondCurve: Curves.easeOutCubic,
+                  sizeCurve: Curves.easeOutCubic,
+                ),
+                AnimatedCrossFade(
+                  firstChild: const SizedBox.shrink(),
+                  secondChild: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildExpenseBreakdown(appTheme),
+                  ),
+                  crossFadeState: _expenseExpanded
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  duration: const Duration(milliseconds: 180),
+                  reverseDuration: const Duration(milliseconds: 140),
+                  firstCurve: Curves.easeOutCubic,
+                  secondCurve: Curves.easeOutCubic,
+                  sizeCurve: Curves.easeOutCubic,
                 ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // 本金列：水平三列之一，左对齐，显示本阶段真实本金（上阶段余额 + 追加）
+  Widget _buildBaseMetric(AppThemeExtension appTheme) {
+    final canExpand = widget.stageCalc.additionsTotal > 0;
+    return _buildMetric(
+      appTheme: appTheme,
+      label: '本金',
+      align: CrossAxisAlignment.center,
+      onTap: canExpand
+          ? () => setState(() {
+                _baseExpanded = !_baseExpanded;
+                if (_baseExpanded) _expenseExpanded = false;
+              })
+          : null,
+      labelTrailing: canExpand
+          ? AnimatedRotation(
+              turns: _baseExpanded ? 0.25 : 0,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 16,
+                color: appTheme.earthMedium.withValues(alpha: 0.42),
+              ),
+            )
+          : null,
+      value: Text(
+        '¥${widget.stageCalc.baseAmount.toStringAsFixed(2)}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: _amountStyle(appTheme, color: appTheme.earth, fontSize: 14),
+      ),
+    );
+  }
+
+  // 支行列：水平三列之一，居中，金额右侧带展开/收起箭头
+  Widget _buildExpenseMetric(AppThemeExtension appTheme) {
+    return _buildMetric(
+      appTheme: appTheme,
+      label: '支出',
+      align: CrossAxisAlignment.center,
+      onTap: () => setState(() {
+        _expenseExpanded = !_expenseExpanded;
+        if (_expenseExpanded) _baseExpanded = false;
+      }),
+      labelTrailing: AnimatedRotation(
+        turns: _expenseExpanded ? 0.25 : 0,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        child: Icon(
+          Icons.chevron_right_rounded,
+          size: 16,
+          color: appTheme.earthMedium.withValues(alpha: 0.42),
+        ),
+      ),
+      value: Text(
+        '-¥${_totalExpense.abs().toStringAsFixed(2)}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 14),
+      ),
+    );
+  }
+
+  // 水平指标通用骨架：标签在上、值在下，按列对齐，可选整体点击；
+  // labelTrailing 为标题行尾的小图标（展开箭头 / 编辑图标）
+  Widget _buildMetric({
+    required AppThemeExtension appTheme,
+    required String label,
+    required Widget value,
+    Widget? labelTrailing,
+    CrossAxisAlignment align = CrossAxisAlignment.start,
+    VoidCallback? onTap,
+  }) {
+    final labelStyle = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: appTheme.earthMedium.withValues(alpha: 0.55),
+    );
+    final content = ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 52),
+      child: Column(
+        crossAxisAlignment: align,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            height: 18,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 左侧占位与右侧[间距+图标盒]等宽，保证标题居中而不被图标顶偏
+                if (labelTrailing != null) const SizedBox(width: 20),
+                Text(label, style: labelStyle),
+                if (labelTrailing != null) ...[
+                  const SizedBox(width: 2),
+                  SizedBox(
+                    width: 18,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: labelTrailing,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(height: 22, child: value),
+        ],
+      ),
+    );
+    if (onTap == null) return content;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: content,
+    );
+  }
+
+  Widget _buildExpenseBreakdown(AppThemeExtension appTheme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildCategoryRow(
+            appTheme: appTheme,
+            icon: Icons.shopping_bag_outlined,
+            label: '购物',
+            amountText:
+                '-¥${widget.stageCalc.shoppingTotal.toStringAsFixed(2)}',
+          ),
+          _buildSoftDivider(appTheme),
+          _buildCategoryRow(
+            appTheme: appTheme,
+            icon: Icons.more_horiz_rounded,
+            label: '其他',
+            amountText: '-¥${widget.stageCalc.otherTotal.toStringAsFixed(2)}',
+          ),
+          _buildSoftDivider(appTheme),
+          _buildCategoryRow(
+            appTheme: appTheme,
+            icon: Icons.restaurant_outlined,
+            label: '生活',
+            subtitle: widget.stageCalc.livingTotal != null &&
+                    widget.stageCalc.livingDailyAvg != null
+                ? '¥${widget.stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天 · ${widget.stage.livingDays}天'
+                : null,
+            amountText: widget.stageCalc.livingTotal != null &&
+                    widget.stageCalc.livingDailyAvg != null
+                ? '-¥${widget.stageCalc.livingTotal!.abs().toStringAsFixed(2)}'
+                : '-¥0.00',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 余额列：水平三列之一，右对齐，金额右侧带编辑图标，整列可点编辑
+  Widget _buildBalanceMetric(AppThemeExtension appTheme) {
+    return _buildMetric(
+      appTheme: appTheme,
+      label: '余额',
+      align: CrossAxisAlignment.center,
+      onTap: widget.onEditBalance,
+      labelTrailing: widget.onEditBalance != null
+          ? Icon(
+              Icons.edit_outlined,
+              size: 13,
+              color: appTheme.primary.withValues(alpha: 0.6),
+            )
+          : null,
+      value: Text(
+        widget.stageCalc.balance != null
+            ? '¥${widget.stageCalc.balance!.toStringAsFixed(2)}'
+            : '¥0.00',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: _amountStyle(
+          appTheme,
+          color: widget.stageCalc.balance != null
+              ? appTheme.primary
+              : appTheme.earthMedium.withValues(alpha: 0.42),
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  // 本金展开：初始本金 + 追加金额（含追加明细）
+  Widget _buildBaseBreakdown(AppThemeExtension appTheme) {
+    final additionsTotal = widget.stageCalc.additionsTotal;
+    return Container(
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildBreakdownRow(
+            appTheme: appTheme,
+            label: '初始本金',
+            amountText: '¥${widget.previousBalance.toStringAsFixed(2)}',
+            color: appTheme.earth,
+          ),
+          _buildSoftDivider(appTheme, indent: 12),
+          _buildBreakdownRow(
+            appTheme: appTheme,
+            label: '追加',
+            amountText: additionsTotal > 0
+                ? '+¥${additionsTotal.toStringAsFixed(2)}'
+                : '¥0.00',
+            color: additionsTotal > 0
+                ? appTheme.sage
+                : appTheme.earthMedium.withValues(alpha: 0.42),
+          ),
+          if (widget.additions.isNotEmpty)
+            ...widget.additions.map(
+              (a) => _buildBreakdownRow(
+                appTheme: appTheme,
+                label: a.reason,
+                amountText: '¥${a.amount.toStringAsFixed(2)}',
+                color: appTheme.sage,
+                sub: true,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // 展开明细通用行：左标签 + 右金额，sub 为缩进子项
+  Widget _buildBreakdownRow({
+    required AppThemeExtension appTheme,
+    required String label,
+    required String amountText,
+    required Color color,
+    bool sub = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: sub ? 16 : 12, vertical: 7),
+      child: Row(
+        children: [
+          if (sub)
+            Text(
+              '└ ',
+              style: TextStyle(
+                fontSize: 12,
+                color: appTheme.earthMedium.withValues(alpha: 0.3),
+              ),
+            ),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: sub ? 12 : 13,
+                fontWeight: FontWeight.w600,
+                color: sub
+                    ? appTheme.earthMedium.withValues(alpha: 0.6)
+                    : appTheme.earth,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            amountText,
+            style:
+                _amountStyle(appTheme, color: color, fontSize: sub ? 12 : 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 未开始阶段：紧凑单行卡片（参考设计图第四阶段）
+  Widget _buildFutureCard(AppThemeExtension appTheme) {
+    return GestureDetector(
+      onTap: widget.onEdit,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.fromLTRB(18, 14, 16, 14),
+        decoration: BoxDecoration(
+          color: appTheme.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: appTheme.cardShadow,
+          border: Border.all(
+            color: appTheme.cardBorder.withValues(alpha: 0.7),
+            width: 0.5,
+          ),
+        ),
+        child: _buildHeaderRow(appTheme),
+      ),
+    );
+  }
+
+  // 头部行：序号圆（三态）+ 标题 + 日期 + 状态徽章（单行），右侧箭头进编辑
+  Widget _buildHeaderRow(AppThemeExtension appTheme) {
+    final start = DateTime.parse(widget.stage.startDate);
+    final end = DateTime.parse(widget.stage.endDate);
+    final dateText =
+        '${start.month}.${start.day.toString().padLeft(2, '0')} ~ ${end.month}.${end.day.toString().padLeft(2, '0')}';
+    final badge = _statusBadge(appTheme);
+    return Row(
+      children: [
+        _buildIndexBadge(appTheme),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                '第${widget.stage.sortOrder}阶段',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: appTheme.earth,
+                  letterSpacing: -0.1,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  dateText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: appTheme.earthMedium.withValues(alpha: 0.52),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (badge != null) ...[const SizedBox(width: 8), badge],
+        if (widget.onEdit != null) ...[
+          const SizedBox(width: 8),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 22,
+            color: appTheme.earthMedium.withValues(alpha: 0.36),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // 序号圆三态：未开始灰圆 / 进行中蓝实心圆 / 已完成对勾圆
+  Widget _buildIndexBadge(AppThemeExtension appTheme) {
+    if (_isFutureStage) {
+      return _badgeCircle(
+        background: appTheme.earthMedium.withValues(alpha: 0.08),
+        borderColor: appTheme.earthMedium.withValues(alpha: 0.12),
+        child: Text(
+          '${widget.stage.sortOrder}',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+            fontFamily: GoogleFonts.dmSans().fontFamily,
+          ),
+        ),
+      );
+    }
+    if (_isCurrentStage) {
+      return _badgeCircle(
+        background: appTheme.primary,
+        child: Text(
+          '${widget.stage.sortOrder}',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            fontFamily: GoogleFonts.dmSans().fontFamily,
+          ),
+        ),
+      );
+    }
+    return _badgeCircle(
+      background: appTheme.primary.withValues(alpha: 0.12),
+      child: Icon(Icons.check_rounded, size: 15, color: appTheme.primary),
+    );
+  }
+
+  // 状态徽章：进行中 / 未开始，已完成无徽章
+  Widget? _statusBadge(AppThemeExtension appTheme) {
+    if (_isFutureStage) {
+      return _statusPill(
+        appTheme,
+        '未开始',
+        background: appTheme.earthMedium.withValues(alpha: 0.10),
+        foreground: appTheme.earthMedium.withValues(alpha: 0.6),
+      );
+    }
+    if (_isCurrentStage) {
+      return _statusPill(
+        appTheme,
+        '进行中',
+        background: appTheme.primary.withValues(alpha: 0.10),
+        foreground: appTheme.primary,
+      );
+    }
+    return null;
+  }
+
+  Widget _statusPill(
+    AppThemeExtension appTheme,
+    String text, {
+    required Color background,
+    required Color foreground,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: foreground,
+        ),
+      ),
+    );
+  }
+
+  Widget _badgeCircle({
+    required Color background,
+    Color? borderColor,
+    required Widget child,
+  }) {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+        border: borderColor == null
+            ? null
+            : Border.all(color: borderColor, width: 0.5),
+      ),
+      child: Center(child: child),
+    );
+  }
+
+  Widget _buildCategoryRow({
+    required AppThemeExtension appTheme,
+    required IconData icon,
+    required String label,
+    required String amountText,
+    String? subtitle,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: appTheme.earthMedium.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Icon(
+              icon,
+              size: 15,
+              color: appTheme.earth.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Row(
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: appTheme.earth,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: appTheme.earthMedium.withValues(alpha: 0.48),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            amountText,
+            style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSoftDivider(AppThemeExtension appTheme, {double indent = 52}) {
+    return Padding(
+      padding: EdgeInsets.only(left: indent),
+      child: Divider(
+        height: 1,
+        thickness: 0.5,
+        color: appTheme.earthMedium.withValues(alpha: 0.10),
+      ),
+    );
+  }
+
+  TextStyle _amountStyle(
+    AppThemeExtension appTheme, {
+    required Color color,
+    double fontSize = 14,
+  }) {
+    return TextStyle(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w700,
+      fontFamily: GoogleFonts.dmSans().fontFamily,
+      color: color,
+      fontFeatures: const [FontFeature.tabularFigures()],
     );
   }
 }

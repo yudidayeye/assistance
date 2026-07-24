@@ -64,72 +64,105 @@ class _MainShellPageState extends State<MainShellPage> {
     final enabledModules = ModuleRegistry.instance.getEnabledModules();
     final safeTop = MediaQuery.of(context).padding.top;
 
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _PinnedHeaderDelegate(
+            height: safeTop + 58,
+            child: Container(
+              color: appTheme.cream,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+                child: Row(
                   children: [
-                    Text(
-                      '工具箱',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.dmSans().fontFamily,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: appTheme.earth,
-                        letterSpacing: -0.3,
+                    Expanded(
+                      child: Text(
+                        '工具箱',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: appTheme.earth,
+                          letterSpacing: -0.1,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '安静管理你的日常工具',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: appTheme.earthMedium,
-                        letterSpacing: 0.2,
+                    GestureDetector(
+                      onTap: () => context.push('/settings'),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: appTheme.earthMedium.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.settings_outlined,
+                          color: appTheme.earth,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () => context.push('/settings'),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: appTheme.primary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                  ),
-                  child: Icon(
-                    Icons.settings_outlined,
-                    color: appTheme.primaryDark,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-        Expanded(
-          child: GridView.count(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            crossAxisCount: 2,
-            mainAxisSpacing: 20,
-            crossAxisSpacing: 20,
-            childAspectRatio: 0.88,
-            children: enabledModules
-                .map((module) => FeaturedCard(module: module))
-                .toList(),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 20,
+              crossAxisSpacing: 20,
+              childAspectRatio: 0.88,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final module = enabledModules[index];
+                return FeaturedCard(module: module);
+              },
+              childCount: enabledModules.length,
+            ),
           ),
         ),
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
     );
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }

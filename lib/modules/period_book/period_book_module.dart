@@ -52,7 +52,8 @@ class PeriodBookModule implements ToolModule {
         GoRoute(
           path: 'stage_edit/:stageId',
           builder: (context, state) {
-            final stageId = int.tryParse(state.pathParameters['stageId'] ?? '') ?? 0;
+            final stageId =
+                int.tryParse(state.pathParameters['stageId'] ?? '') ?? 0;
             return StageEditPage(stageId: stageId);
           },
         ),
@@ -70,7 +71,8 @@ class PeriodBookModule implements ToolModule {
         GoRoute(
           path: 'large_items/:periodId',
           builder: (context, state) {
-            final periodId = int.tryParse(state.pathParameters['periodId'] ?? '') ?? 0;
+            final periodId =
+                int.tryParse(state.pathParameters['periodId'] ?? '') ?? 0;
             return LargeItemsEditPage(periodId: periodId);
           },
         ),
@@ -100,7 +102,8 @@ class PeriodBookModule implements ToolModule {
     final line1 = '$startFmt ~ $endFmt';
 
     // 使用 PeriodCalculations 获取计算后的余额（与详情页一致）
-    final calc = await PeriodBookService.instance.getPeriodCalculations(period.id!);
+    final calc =
+        await PeriodBookService.instance.getPeriodCalculations(period.id!);
     final balance = calc.balance;
     final totalExpense = calc.totalBase - (balance ?? 0);
     final line2 = balance != null

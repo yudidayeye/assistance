@@ -104,8 +104,8 @@ class AdditionListItem extends StatelessWidget {
           color: appTheme.rose.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: Icon(Icons.delete_outline_rounded,
-            color: appTheme.rose, size: 20),
+        child:
+            Icon(Icons.delete_outline_rounded, color: appTheme.rose, size: 20),
       ),
       onDismissed: (_) => onDelete(),
       child: child,

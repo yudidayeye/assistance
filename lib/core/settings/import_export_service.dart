@@ -40,8 +40,8 @@ class ImportExportService {
         periodRows.map((r) => Map<String, dynamic>.from(r)).toList();
 
     // 3. 读取所有周期记账数据（按显示顺序导出，保证导出文件可读且确定）
-    final bookPeriods = await _db.query('mod_period_book_periods',
-        orderBy: 'start_date ASC');
+    final bookPeriods =
+        await _db.query('mod_period_book_periods', orderBy: 'start_date ASC');
     final bookStages = await _db.query('mod_period_book_stages',
         orderBy: 'period_id ASC, sort_order ASC');
     final bookAdditions = await _db.query('mod_period_book_additions',
@@ -49,7 +49,8 @@ class ImportExportService {
     final bookExpenses = await _db.query('mod_period_book_expenses',
         orderBy: 'stage_id ASC, sort_order ASC, created_at ASC');
     // 大额记录（周期级，不计入总本金/总支出）
-    final bookLargeAdditions = await _db.query('mod_period_book_large_additions',
+    final bookLargeAdditions = await _db.query(
+        'mod_period_book_large_additions',
         orderBy: 'period_id ASC, created_at ASC');
     final bookLargeExpenses = await _db.query('mod_period_book_large_expenses',
         orderBy: 'period_id ASC, sort_order ASC, created_at ASC');
@@ -138,10 +139,8 @@ class ImportExportService {
       final settings = data['app_settings'] as Map<String, dynamic>? ?? {};
       final periodRecords =
           (data['period_tracker_records'] as List<dynamic>?) ?? [];
-      final bookPeriods =
-          (data['period_book_periods'] as List<dynamic>?) ?? [];
-      final bookStages =
-          (data['period_book_stages'] as List<dynamic>?) ?? [];
+      final bookPeriods = (data['period_book_periods'] as List<dynamic>?) ?? [];
+      final bookStages = (data['period_book_stages'] as List<dynamic>?) ?? [];
       final bookAdditions =
           (data['period_book_additions'] as List<dynamic>?) ?? [];
       final bookExpenses =

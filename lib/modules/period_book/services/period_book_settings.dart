@@ -15,13 +15,15 @@ class PeriodBookSettings {
   /// 获取发薪日（1~31）
   Future<int> getPayday() async {
     if (_cachedPayday != null) return _cachedPayday!;
-    final rows = await _db.query('app_settings', where: "key = ?", whereArgs: [_keyPayday]);
+    final rows = await _db
+        .query('app_settings', where: "key = ?", whereArgs: [_keyPayday]);
     if (rows.isEmpty) {
       _cachedPayday = _defaultPayday;
       return _defaultPayday;
     }
     final val = int.tryParse(rows.first['value'] as String);
-    _cachedPayday = (val != null && val >= 1 && val <= 31) ? val : _defaultPayday;
+    _cachedPayday =
+        (val != null && val >= 1 && val <= 31) ? val : _defaultPayday;
     return _cachedPayday!;
   }
 

@@ -49,8 +49,10 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   String _fmtDateRange(String startDate, String endDate) {
     final start = DateTime.parse(startDate);
     final end = DateTime.parse(endDate);
-    final startStr = '${start.year}.${start.month.toString().padLeft(2, '0')}.${start.day.toString().padLeft(2, '0')}';
-    final endStr = '${end.year}.${end.month.toString().padLeft(2, '0')}.${end.day.toString().padLeft(2, '0')}';
+    final startStr =
+        '${start.year}.${start.month.toString().padLeft(2, '0')}.${start.day.toString().padLeft(2, '0')}';
+    final endStr =
+        '${end.year}.${end.month.toString().padLeft(2, '0')}.${end.day.toString().padLeft(2, '0')}';
     return '$startStr ~ $endStr';
   }
 
@@ -137,73 +139,84 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: Column(
-          children: [
-            // 头部
-            _buildHeader(appTheme),
-            // 列表
-            Expanded(
-              child: _loading && _periods.isEmpty
-                  ? Center(
-                      child: CircularProgressIndicator(color: appTheme.primary))
-                  : _periods.isEmpty
-                      ? const EmptyStateWidget(
+        child: _loading && _periods.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: _loadData,
+                color: appTheme.primary,
+                backgroundColor: appTheme.cardBackground,
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    _buildHeader(appTheme),
+                    if (_periods.isEmpty)
+                      const SliverToBoxAdapter(
+                        child: EmptyStateWidget(
                           icon: Icons.history_rounded,
                           title: '暂无历史记录',
                           subtitle: '删除的周期记录不会出现在这里',
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadData,
-                          color: appTheme.primary,
-                          backgroundColor: appTheme.cardBackground,
-                          child: ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.only(top: 8, bottom: 24),
-                            children: [
-                              ..._periods.map((period) {
-                                return _buildPeriodCard(appTheme, period);
-                              }),
-                            ],
-                          ),
                         ),
-            ),
-          ],
-        ),
+                      )
+                    else
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final period = _periods[index];
+                            return _buildPeriodCard(appTheme, period);
+                          },
+                          childCount: _periods.length,
+                        ),
+                      ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  ],
+                ),
+              ),
       ),
     );
   }
 
   Widget _buildHeader(AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(Icons.arrow_back_ios_new_rounded,
-                  color: appTheme.earthMedium, size: 18),
+    final headerHeight = safeTop + 58;
+
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: SizedBox(
+                    width: 28,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: appTheme.earth, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    '历史记录',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            '历史记录',
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -213,7 +226,8 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     final balance = _balances[period.id];
     final calc = _calcMap[period.id];
     final totalExpense = (calc?.totalBase ?? 0) - (balance ?? 0);
-    final personalExpense = (calc?.shoppingTotal ?? 0) + (calc?.livingTotal ?? 0);
+    final personalExpense =
+        (calc?.shoppingTotal ?? 0) + (calc?.livingTotal ?? 0);
     final otherExpense = calc?.otherTotal ?? 0;
     final days = DateTime.parse(period.endDate)
             .difference(DateTime.parse(period.startDate))
@@ -384,5 +398,35 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     final confirmed = await _showDeleteConfirmDialog(period);
     if (!confirmed) return;
     await _deletePeriod(period);
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }

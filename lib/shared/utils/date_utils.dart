@@ -6,7 +6,8 @@ class AppDateUtils {
   }
 
   /// 判断 date 是否在 [start, end] 闭区间内（使用 date-only 比较）
-  static bool isDateInRangeInclusive(DateTime date, DateTime start, DateTime end) {
+  static bool isDateInRangeInclusive(
+      DateTime date, DateTime start, DateTime end) {
     final d = dateOnly(date);
     final s = dateOnly(start);
     final e = dateOnly(end);

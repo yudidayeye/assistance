@@ -99,8 +99,8 @@ class PredictionService {
       nextStartDate = nextStartDate.add(Duration(days: avgCycle));
     }
 
-    final ovulationDay =
-        nextStartDate.subtract(const Duration(days: PredictionConfig.ovulationOffset));
+    final ovulationDay = nextStartDate
+        .subtract(const Duration(days: PredictionConfig.ovulationOffset));
     final fertileWindow = DateRange(
       start: ovulationDay
           .subtract(const Duration(days: PredictionConfig.fertileWindowBefore)),
@@ -109,8 +109,9 @@ class PredictionService {
     );
 
     final currentDay = AppDateUtils.dateOnly(now)
-        .difference(AppDateUtils.dateOnly(lastRecord.startDate))
-        .inDays + 1;
+            .difference(AppDateUtils.dateOnly(lastRecord.startDate))
+            .inDays +
+        1;
 
     return PredictionResult(
       nextStartDate: nextStartDate,

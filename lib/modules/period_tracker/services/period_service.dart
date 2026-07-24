@@ -117,16 +117,12 @@ class PeriodService extends ChangeNotifier {
       final rows = await txn.rawQuery(
         'SELECT * FROM $_table ORDER BY start_date ASC',
       );
-      final records = rows
-          .map((r) => PeriodRecord.fromMap(r))
-          .toList();
+      final records = rows.map((r) => PeriodRecord.fromMap(r)).toList();
 
       // 从第二条开始写入与上一条的间隔
       for (int i = 1; i < records.length; i++) {
-        final cycleLength = records[i]
-            .startDate
-            .difference(records[i - 1].startDate)
-            .inDays;
+        final cycleLength =
+            records[i].startDate.difference(records[i - 1].startDate).inDays;
         await txn.rawUpdate(
           'UPDATE $_table SET cycle_length = ? WHERE id = ?',
           [cycleLength, records[i].id],

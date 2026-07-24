@@ -54,9 +54,11 @@ class ThemeProvider extends ChangeNotifier {
 
     // 持久化到数据库
     final db = DatabaseService.instance;
-    final existing = await db.query('app_settings', where: "key = 'theme_type'");
+    final existing =
+        await db.query('app_settings', where: "key = 'theme_type'");
     if (existing.isEmpty) {
-      await db.insert('app_settings', {'key': 'theme_type', 'value': type.name});
+      await db
+          .insert('app_settings', {'key': 'theme_type', 'value': type.name});
     } else {
       await db.update(
         'app_settings',

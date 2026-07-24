@@ -11,7 +11,8 @@ class SettingsService {
 
   /// 基于已注册模块动态 seed 默认启用状态（仅首次启动）
   Future<void> seedDefaultsForModules() async {
-    final existing = await _db.query('app_settings', where: "key LIKE 'module_enabled_%'");
+    final existing =
+        await _db.query('app_settings', where: "key LIKE 'module_enabled_%'");
     if (existing.isNotEmpty) return; // 已有设置，跳过
 
     for (final module in ModuleRegistry.instance.allModules) {
@@ -31,7 +32,8 @@ class SettingsService {
 
   /// 从数据库加载设置到缓存
   Future<void> loadSettings() async {
-    final rows = await _db.query('app_settings', where: "key LIKE 'module_enabled_%'");
+    final rows =
+        await _db.query('app_settings', where: "key LIKE 'module_enabled_%'");
     for (final row in rows) {
       final key = row['key'] as String;
       final moduleId = key.replaceFirst('module_enabled_', '');
@@ -60,11 +62,13 @@ class SettingsService {
 
   Future<void> setPrivacyDisclaimerAccepted() async {
     _privacyAccepted = true;
-    await _db.insert('app_settings', {'key': 'privacy_disclaimer_accepted', 'value': '1'});
+    await _db.insert(
+        'app_settings', {'key': 'privacy_disclaimer_accepted', 'value': '1'});
   }
 
   Future<void> loadPrivacyDisclaimer() async {
-    final rows = await _db.query('app_settings', where: "key = 'privacy_disclaimer_accepted'");
+    final rows = await _db.query('app_settings',
+        where: "key = 'privacy_disclaimer_accepted'");
     _privacyAccepted = rows.isNotEmpty && rows.first['value'] == '1';
   }
 }

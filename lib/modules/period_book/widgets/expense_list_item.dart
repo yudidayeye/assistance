@@ -41,7 +41,9 @@ class ExpenseListItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              isShopping ? Icons.shopping_bag_outlined : Icons.category_outlined,
+              isShopping
+                  ? Icons.shopping_bag_outlined
+                  : Icons.category_outlined,
               size: 18,
               color: color,
             ),
@@ -87,8 +89,8 @@ class ExpenseListItem extends StatelessWidget {
           color: appTheme.rose.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: Icon(Icons.delete_outline_rounded,
-            color: appTheme.rose, size: 20),
+        child:
+            Icon(Icons.delete_outline_rounded, color: appTheme.rose, size: 20),
       ),
       onDismissed: (_) => onDelete(),
       child: child,

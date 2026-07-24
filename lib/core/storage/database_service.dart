@@ -503,7 +503,7 @@ class DatabaseService {
 
   /// 原生 SQL 查询
   Future<List<Map<String, dynamic>>> rawQuery(String sql,
-          [List<Object?>? arguments]) async {
+      [List<Object?>? arguments]) async {
     final db = await database;
     return db.rawQuery(sql, arguments);
   }
@@ -527,7 +527,8 @@ class DatabaseService {
   }
 
   /// 批处理
-  Future<void> batch(List<Future<void> Function(Batch batch)> operations) async {
+  Future<void> batch(
+      List<Future<void> Function(Batch batch)> operations) async {
     final db = await database;
     final b = db.batch();
     for (final op in operations) {

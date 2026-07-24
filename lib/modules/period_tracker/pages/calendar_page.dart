@@ -58,115 +58,108 @@ class _CalendarPageState extends State<CalendarPage> {
                 color: appTheme.primary,
               ),
             )
-          : Column(
-              children: [
-                // 头部区域
+          : CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
                 _buildHeader(context, appTheme),
-
-                // 可滚动内容区
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        // 预测信息（日历上方）
-                        if (_prediction != null)
-                          _buildPredictionCard(appTheme)
-                        else if (!_loading)
-                          _buildEmptyPrediction(appTheme),
-
-                        // 日历 card（内含月份切换）
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                          child: PeriodCalendar(
-                            displayedMonth: _displayedMonth,
-                            records: _records,
-                            prediction: _prediction,
-                            onMonthChanged: (month) {
-                              setState(() => _displayedMonth = month);
-                            },
-                            selectedDate: _selectedDate,
-                            onDateSelected: (date) {
-                              setState(() => _selectedDate = date);
-                            },
-                          ),
-                        ),
-
-                        // 日期详情面板
-                        if (_selectedDate != null)
-                          DateDetailPanel(
-                            selectedDate: _selectedDate!,
-                            records: _records,
-                            prediction: _prediction,
-                            onChanged: _loadData,
-                          ),
-                      ],
+                if (_prediction != null)
+                  SliverToBoxAdapter(
+                    child: _buildPredictionCard(appTheme),
+                  )
+                else if (!_loading)
+                  SliverToBoxAdapter(
+                    child: _buildEmptyPrediction(appTheme),
+                  ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: PeriodCalendar(
+                      displayedMonth: _displayedMonth,
+                      records: _records,
+                      prediction: _prediction,
+                      onMonthChanged: (month) {
+                        setState(() => _displayedMonth = month);
+                      },
+                      selectedDate: _selectedDate,
+                      onDateSelected: (date) {
+                        setState(() => _selectedDate = date);
+                      },
                     ),
                   ),
                 ),
+                if (_selectedDate != null)
+                  SliverToBoxAdapter(
+                    child: DateDetailPanel(
+                      selectedDate: _selectedDate!,
+                      records: _records,
+                      prediction: _prediction,
+                      onChanged: _loadData,
+                    ),
+                  ),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
     );
   }
 
   Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          24, MediaQuery.of(context).padding.top + 12, 24, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // 返回按钮和标题
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: appTheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: appTheme.earthMedium,
-                    size: 18,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Text(
-                '生理期记录',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: appTheme.earth,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ],
-          ),
+    final safeTop = MediaQuery.of(context).padding.top;
+    final headerHeight = safeTop + 58;
 
-          // 统计按钮
-          GestureDetector(
-            onTap: () => context.push('/period_tracker/stats'),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(
-                Icons.bar_chart_rounded,
-                color: appTheme.earthMedium,
-                size: 20,
-              ),
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: SizedBox(
+                    width: 28,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: appTheme.earth, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    '生理期记录',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => context.push('/period_tracker/stats'),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: appTheme.earthMedium.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.bar_chart_rounded,
+                      color: appTheme.earth,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -290,5 +283,35 @@ class _CalendarPageState extends State<CalendarPage> {
         ],
       ),
     );
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }

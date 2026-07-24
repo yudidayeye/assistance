@@ -208,8 +208,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                   : Switch(
                       value: _isInActualPeriod,
                       onChanged: _togglePeriod,
-                      activeTrackColor:
-                          appTheme.rose.withValues(alpha: 0.2),
+                      activeTrackColor: appTheme.rose.withValues(alpha: 0.2),
                       activeThumbColor: appTheme.rose,
                       inactiveThumbColor:
                           appTheme.earthMedium.withValues(alpha: 0.4),

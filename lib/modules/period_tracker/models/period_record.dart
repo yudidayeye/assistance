@@ -31,10 +31,12 @@ class PeriodRecord {
       id: id ?? this.id,
       startDate: startDate ?? this.startDate,
       endDate: endDate == _sentinel ? this.endDate : endDate as DateTime?,
-      cycleLength: cycleLength == _sentinel ? this.cycleLength : cycleLength as int?,
+      cycleLength:
+          cycleLength == _sentinel ? this.cycleLength : cycleLength as int?,
       note: note == _sentinel ? this.note : note as String?,
       createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt == _sentinel ? this.updatedAt : updatedAt as DateTime?,
+      updatedAt:
+          updatedAt == _sentinel ? this.updatedAt : updatedAt as DateTime?,
     );
   }
 
@@ -54,11 +56,15 @@ class PeriodRecord {
     return PeriodRecord(
       id: map['id'] as String,
       startDate: DateTime.parse(map['start_date'] as String),
-      endDate: map['end_date'] != null ? DateTime.parse(map['end_date'] as String) : null,
+      endDate: map['end_date'] != null
+          ? DateTime.parse(map['end_date'] as String)
+          : null,
       cycleLength: map['cycle_length'] as int?,
       note: map['note'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : null,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'] as String)
+          : null,
     );
   }
 

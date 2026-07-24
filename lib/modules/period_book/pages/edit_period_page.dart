@@ -76,17 +76,16 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: Column(
-          children: [
-            // 头部
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
             _buildHeader(appTheme),
-
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
+                    const SizedBox(height: 16),
                     // 日期选择
                     _buildDateCard(appTheme),
                     const SizedBox(height: 16),
@@ -118,35 +117,46 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
 
   Widget _buildHeader(AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(Icons.arrow_back_ios_new_rounded,
-                  color: appTheme.earthMedium, size: 18),
+    final headerHeight = safeTop + 58;
+
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: SizedBox(
+                    width: 28,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: appTheme.earth, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    '编辑周期',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            '编辑周期',
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -183,7 +193,8 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
                 setState(() => _startDate = picked);
                 // 如果结束日期早于开始日期，自动调整
                 if (_endDate != null && _endDate!.isBefore(picked)) {
-                  setState(() => _endDate = picked.add(const Duration(days: 29)));
+                  setState(
+                      () => _endDate = picked.add(const Duration(days: 29)));
                 }
               }
             },
@@ -274,7 +285,9 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
                 fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: date != null ? appTheme.earth : appTheme.earthMedium.withValues(alpha: 0.5),
+                color: date != null
+                    ? appTheme.earth
+                    : appTheme.earthMedium.withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(width: 8),
@@ -409,7 +422,9 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: canSave ? Colors.white : appTheme.earthMedium.withValues(alpha: 0.4),
+                    color: canSave
+                        ? Colors.white
+                        : appTheme.earthMedium.withValues(alpha: 0.4),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -463,7 +478,8 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
         actions: [
@@ -545,5 +561,35 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }

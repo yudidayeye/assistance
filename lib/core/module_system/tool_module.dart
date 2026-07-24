@@ -8,8 +8,12 @@ class ModuleIcon {
   final IconData? iconData;
   final String? assetPath;
 
-  const ModuleIcon.icon(IconData data) : iconData = data, assetPath = null;
-  const ModuleIcon.asset(String path) : iconData = null, assetPath = path;
+  const ModuleIcon.icon(IconData data)
+      : iconData = data,
+        assetPath = null;
+  const ModuleIcon.asset(String path)
+      : iconData = null,
+        assetPath = path;
 
   Widget build({double size = 32, Color? color}) {
     if (iconData != null) {

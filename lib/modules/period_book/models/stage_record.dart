@@ -43,7 +43,8 @@ class StageRecord {
       startDate: map['start_date'] as String,
       endDate: map['end_date'] as String,
       currentDate: map['current_date'] as String?,
-      balance: map['balance'] != null ? (map['balance'] as num).toDouble() : null,
+      balance:
+          map['balance'] != null ? (map['balance'] as num).toDouble() : null,
       sortOrder: map['sort_order'] as int,
       createdAt: map['created_at'] as String,
       updatedAt: map['updated_at'] as String,

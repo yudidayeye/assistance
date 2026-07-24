@@ -55,132 +55,134 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── 头部 ──
-              _buildHeader(context, appTheme),
+          slivers: [
+            _buildHeader(context, appTheme),
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── 模块管理 ──
+                  _SectionLabel(
+                    appTheme: appTheme,
+                    title: '模块管理',
+                  ),
+                  _SectionCard(
+                    appTheme: appTheme,
+                    child: Column(
+                      children: modules.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final module = entry.value;
+                        final isLast = index == modules.length - 1;
+                        return Column(children: [
+                          _buildModuleItem(appTheme, module),
+                          if (!isLast) _buildSeparator(appTheme),
+                        ]);
+                      }).toList(),
+                    ),
+                  ),
 
-              // ── 模块管理 ──
-              _SectionLabel(
-                appTheme: appTheme,
-                title: '模块管理',
-              ),
-              _SectionCard(
-                appTheme: appTheme,
-                child: Column(
-                  children: modules.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final module = entry.value;
-                    final isLast = index == modules.length - 1;
-                    return Column(children: [
-                      _buildModuleItem(appTheme, module),
-                      if (!isLast) _buildSeparator(appTheme),
-                    ]);
-                  }).toList(),
-                ),
-              ),
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                  // ── 周期记账 ──
+                  _SectionLabel(
+                    appTheme: appTheme,
+                    title: '周期记账',
+                  ),
+                  _SectionCard(
+                    appTheme: appTheme,
+                    child: _buildPeriodSettings(appTheme),
+                  ),
 
-              // ── 周期记账 ──
-              _SectionLabel(
-                appTheme: appTheme,
-                title: '周期记账',
-              ),
-              _SectionCard(
-                appTheme: appTheme,
-                child: _buildPeriodSettings(appTheme),
-              ),
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                  // ── 主题设置 ──
+                  _SectionLabel(
+                    appTheme: appTheme,
+                    title: '主题设置',
+                  ),
+                  _SectionCard(
+                    appTheme: appTheme,
+                    child: _buildThemeSelector(appTheme),
+                  ),
 
-              // ── 主题设置 ──
-              _SectionLabel(
-                appTheme: appTheme,
-                title: '主题设置',
-              ),
-              _SectionCard(
-                appTheme: appTheme,
-                child: _buildThemeSelector(appTheme),
-              ),
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                  // ── 数据 ──
+                  _SectionLabel(
+                    appTheme: appTheme,
+                    title: '数据',
+                  ),
+                  _SectionCard(
+                    appTheme: appTheme,
+                    child: Column(children: [
+                      _buildFunctionItem(appTheme,
+                          icon: Icons.download_outlined,
+                          label: '导入数据',
+                          onTap: _handleImport),
+                      _buildSeparator(appTheme),
+                      _buildFunctionItem(appTheme,
+                          icon: Icons.upload_outlined,
+                          label: '导出数据',
+                          onTap: _handleExport),
+                      _buildSeparator(appTheme),
+                      _buildFunctionItem(appTheme,
+                          icon: Icons.delete_outline_rounded,
+                          label: '清除业务数据',
+                          onTap: _confirmClearBusinessData,
+                          isDestructive: true),
+                    ]),
+                  ),
 
-              // ── 数据 ──
-              _SectionLabel(
-                appTheme: appTheme,
-                title: '数据',
-              ),
-              _SectionCard(
-                appTheme: appTheme,
-                child: Column(children: [
-                  _buildFunctionItem(appTheme,
-                      icon: Icons.download_outlined,
-                      label: '导入数据',
-                      onTap: _handleImport),
-                  _buildSeparator(appTheme),
-                  _buildFunctionItem(appTheme,
-                      icon: Icons.upload_outlined,
-                      label: '导出数据',
-                      onTap: _handleExport),
-                  _buildSeparator(appTheme),
-                  _buildFunctionItem(appTheme,
-                      icon: Icons.delete_outline_rounded,
-                      label: '清除业务数据',
-                      onTap: _confirmClearBusinessData,
-                      isDestructive: true),
-                ]),
-              ),
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                  // ── 功能 ──
+                  _SectionLabel(
+                    appTheme: appTheme,
+                    title: '功能',
+                  ),
+                  _SectionCard(
+                    appTheme: appTheme,
+                    child: Column(children: [
+                      _buildFunctionItem(appTheme,
+                          icon: Icons.notifications_outlined,
+                          label: '通知管理',
+                          onTap: () {}),
+                      _buildSeparator(appTheme),
+                      _buildFunctionItem(appTheme,
+                          icon: Icons.help_outline_rounded,
+                          label: '帮助与反馈',
+                          onTap: () {}),
+                    ]),
+                  ),
 
-              // ── 功能 ──
-              _SectionLabel(
-                appTheme: appTheme,
-                title: '功能',
-              ),
-              _SectionCard(
-                appTheme: appTheme,
-                child: Column(children: [
-                  _buildFunctionItem(appTheme,
-                      icon: Icons.notifications_outlined,
-                      label: '通知管理',
-                      onTap: () {}),
-                  _buildSeparator(appTheme),
-                  _buildFunctionItem(appTheme,
-                      icon: Icons.help_outline_rounded,
-                      label: '帮助与反馈',
-                      onTap: () {}),
-                ]),
-              ),
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                  // ── 关于 ──
+                  _SectionLabel(
+                    appTheme: appTheme,
+                    title: '关于',
+                  ),
+                  _SectionCard(
+                    appTheme: appTheme,
+                    child: Column(children: [
+                      _buildAboutItem(appTheme, '版本', 'V1.0.0',
+                          icon: Icons.info_outline_rounded),
+                      _buildSeparator(appTheme),
+                      _buildAboutItem(appTheme, '隐私声明', '所有数据仅存储在本地',
+                          icon: Icons.lock_outline_rounded),
+                      _buildSeparator(appTheme),
+                      _buildAboutItem(appTheme, '免责声明', '生理期预测仅供参考',
+                          icon: Icons.shield_outlined),
+                    ]),
+                  ),
 
-              // ── 关于 ──
-              _SectionLabel(
-                appTheme: appTheme,
-                title: '关于',
+                  const SizedBox(height: 80),
+                ],
               ),
-              _SectionCard(
-                appTheme: appTheme,
-                child: Column(children: [
-                  _buildAboutItem(appTheme, '版本', 'V1.0.0',
-                      icon: Icons.info_outline_rounded),
-                  _buildSeparator(appTheme),
-                  _buildAboutItem(appTheme, '隐私声明', '所有数据仅存储在本地',
-                      icon: Icons.lock_outline_rounded),
-                  _buildSeparator(appTheme),
-                  _buildAboutItem(appTheme, '免责声明', '生理期预测仅供参考',
-                      icon: Icons.shield_outlined),
-                ]),
-              ),
-
-              const SizedBox(height: 80),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -191,35 +193,46 @@ class _SettingsPageState extends State<SettingsPage> {
   // ═══════════════════════════════════════════════════════════════
   Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(Icons.arrow_back_ios_new_rounded,
-                  color: appTheme.earthMedium, size: 18),
+    final headerHeight = safeTop + 58;
+
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: SizedBox(
+                    width: 28,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: appTheme.earth, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    '设置',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            '设置',
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -274,12 +287,9 @@ class _SettingsPageState extends State<SettingsPage> {
             },
             activeTrackColor: module.themeColor.withValues(alpha: 0.12),
             activeThumbColor: module.themeColor,
-            inactiveThumbColor:
-                appTheme.earthMedium.withValues(alpha: 0.25),
-            inactiveTrackColor:
-                appTheme.creamDark.withValues(alpha: 0.35),
-            trackOutlineColor:
-                const WidgetStatePropertyAll(Colors.transparent),
+            inactiveThumbColor: appTheme.earthMedium.withValues(alpha: 0.25),
+            inactiveTrackColor: appTheme.creamDark.withValues(alpha: 0.35),
+            trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
           ),
         ],
       ),
@@ -470,7 +480,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   shape: BoxShape.circle,
                   border: isSelected
                       ? Border.all(color: Colors.white, width: 2.5)
-                      : Border.all(color: type.color.withValues(alpha: 0), width: 0),
+                      : Border.all(
+                          color: type.color.withValues(alpha: 0), width: 0),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
@@ -504,9 +515,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       fontSize: 12,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected
-                          ? appTheme.earth
-                          : appTheme.earthMedium)),
+                      color:
+                          isSelected ? appTheme.earth : appTheme.earthMedium)),
             ]),
           );
         }).toList(),
@@ -602,8 +612,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Padding(
       padding: const EdgeInsets.only(left: 78),
       child: Divider(
-          height: 1,
-          color: appTheme.earthMedium.withValues(alpha: 0.07)),
+          height: 1, color: appTheme.earthMedium.withValues(alpha: 0.07)),
     );
   }
 
@@ -614,7 +623,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _handleExport() async {
     // 生成默认文件名
     final now = DateTime.now();
-    final stamp = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+    final stamp =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
     final defaultFileName = 'my_assistant_backup_$stamp.json';
 
     _showSnackBar('正在准备导出数据...');
@@ -755,8 +765,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
                         color: appTheme.creamDark,
-                        borderRadius:
-                            BorderRadius.circular(appTheme.radiusMd),
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
                       ),
                       child: Center(
                           child: Text('取消',
@@ -775,8 +784,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
                         color: appTheme.primary,
-                        borderRadius:
-                            BorderRadius.circular(appTheme.radiusMd),
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
                       ),
                       child: const Center(
                           child: Text('确认导入',
@@ -907,8 +915,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
                         color: appTheme.creamDark,
-                        borderRadius:
-                            BorderRadius.circular(appTheme.radiusMd),
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
                       ),
                       child: Center(
                           child: Text('取消',
@@ -935,8 +942,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
                         color: appTheme.rose,
-                        borderRadius:
-                            BorderRadius.circular(appTheme.radiusMd),
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
                       ),
                       child: const Center(
                           child: Text('确认清除',
@@ -959,12 +965,10 @@ class _SettingsPageState extends State<SettingsPage> {
     final appTheme = Theme.of(context).appTheme;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message,
-          style: TextStyle(
-              color: appTheme.earth, fontWeight: FontWeight.w500)),
+          style: TextStyle(color: appTheme.earth, fontWeight: FontWeight.w500)),
       backgroundColor: appTheme.primaryLight,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.all(16),
     ));
   }
@@ -1017,7 +1021,9 @@ class _PaydayPickerState extends State<_PaydayPicker> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(Icons.remove_rounded,
-                color: _value > 1 ? appTheme.earth : appTheme.earthMedium.withValues(alpha: 0.3),
+                color: _value > 1
+                    ? appTheme.earth
+                    : appTheme.earthMedium.withValues(alpha: 0.3),
                 size: 22),
           ),
         ),
@@ -1049,7 +1055,9 @@ class _PaydayPickerState extends State<_PaydayPicker> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(Icons.add_rounded,
-                color: _value < 31 ? appTheme.earth : appTheme.earthMedium.withValues(alpha: 0.3),
+                color: _value < 31
+                    ? appTheme.earth
+                    : appTheme.earthMedium.withValues(alpha: 0.3),
                 size: 22),
           ),
         ),
@@ -1121,5 +1129,35 @@ class _SectionCard extends StatelessWidget {
       ),
       child: child,
     );
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }
