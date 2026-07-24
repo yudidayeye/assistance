@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/theme_extension.dart';
+import '../services/file_server_service.dart';
 
 /// 文件互传主页面
 class FileTransferPage extends StatefulWidget {
@@ -11,12 +12,25 @@ class FileTransferPage extends StatefulWidget {
 }
 
 class _FileTransferPageState extends State<FileTransferPage> {
-  bool _serverRunning = false;
-  String? _localIp;
-  int _port = 8080;
-  String? _connectionCode;
+  final _server = FileServerService.instance;
   bool _smbConnected = false;
   String? _connectedHost;
+
+  @override
+  void initState() {
+    super.initState();
+    _server.addListener(_onServerChanged);
+  }
+
+  @override
+  void dispose() {
+    _server.removeListener(_onServerChanged);
+    super.dispose();
+  }
+
+  void _onServerChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +62,8 @@ class _FileTransferPageState extends State<FileTransferPage> {
 
   /// 手机服务器卡片
   Widget _buildServerCard(AppThemeExtension appTheme) {
+    final running = _server.isRunning;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -66,11 +82,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.dns_rounded,
-                color: appTheme.primary,
-                size: 24,
-              ),
+              Icon(Icons.dns_rounded, color: appTheme.primary, size: 24),
               const SizedBox(width: 10),
               Text(
                 '手机服务器',
@@ -84,27 +96,27 @@ class _FileTransferPageState extends State<FileTransferPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _serverRunning
+                  color: running
                       ? appTheme.sage.withValues(alpha: 0.15)
                       : appTheme.earthLight.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _serverRunning ? '运行中' : '已停止',
+                  running ? '运行中' : '已停止',
                   style: TextStyle(
                     fontSize: 13,
-                    color: _serverRunning ? appTheme.sage : appTheme.earthLight,
+                    color: running ? appTheme.sage : appTheme.earthLight,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
             ],
           ),
-          if (_serverRunning) ...[
+          if (running) ...[
             const SizedBox(height: 16),
-            _buildInfoRow('IP 地址', _localIp ?? '获取中...', appTheme),
+            _buildInfoRow('IP 地址', _server.localIp ?? '获取中...', appTheme),
             const SizedBox(height: 8),
-            _buildInfoRow('端口', '$_port', appTheme),
+            _buildInfoRow('端口', '${_server.port}', appTheme),
             const SizedBox(height: 16),
             // 连接码区域
             Container(
@@ -140,7 +152,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _formatCode(_connectionCode ?? '------'),
+                        _formatCode(_server.connectionCode ?? '------'),
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
@@ -226,11 +238,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.computer_rounded,
-                color: appTheme.primary,
-                size: 24,
-              ),
+              Icon(Icons.computer_rounded, color: appTheme.primary, size: 24),
               const SizedBox(width: 10),
               Text(
                 '访问电脑文件',
@@ -327,11 +335,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.history_rounded,
-                color: appTheme.primary,
-                size: 24,
-              ),
+              Icon(Icons.history_rounded, color: appTheme.primary, size: 24),
               const SizedBox(width: 10),
               Text(
                 '最近传输',
@@ -382,18 +386,11 @@ class _FileTransferPageState extends State<FileTransferPage> {
   Widget _buildInfoRow(String label, String value, AppThemeExtension appTheme) {
     return Row(
       children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, color: appTheme.earthLight),
-        ),
+        Text(label, style: TextStyle(fontSize: 14, color: appTheme.earthLight)),
         const Spacer(),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 14,
-            color: appTheme.earth,
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(fontSize: 14, color: appTheme.earth, fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -406,34 +403,30 @@ class _FileTransferPageState extends State<FileTransferPage> {
     return code;
   }
 
-  void _startServer() {
-    // TODO: 实现启动服务器
-    setState(() {
-      _serverRunning = true;
-      _localIp = '192.168.1.100';
-      _connectionCode = '382916';
-    });
+  Future<void> _startServer() async {
+    try {
+      await _server.start();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('启动失败: $e')),
+        );
+      }
+    }
   }
 
-  void _stopServer() {
-    // TODO: 实现停止服务器
-    setState(() {
-      _serverRunning = false;
-      _localIp = null;
-      _connectionCode = null;
-    });
+  Future<void> _stopServer() async {
+    await _server.stop();
   }
 
   void _refreshCode() {
-    // TODO: 实现刷新连接码
-    setState(() {
-      _connectionCode = '847291';
-    });
+    _server.refreshCode();
   }
 
   void _copyCode() {
-    if (_connectionCode != null) {
-      Clipboard.setData(ClipboardData(text: _connectionCode!));
+    final code = _server.connectionCode;
+    if (code != null) {
+      Clipboard.setData(ClipboardData(text: code));
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('连接码已复制'), duration: Duration(seconds: 1)),
       );
@@ -441,7 +434,6 @@ class _FileTransferPageState extends State<FileTransferPage> {
   }
 
   void _connectSmb() {
-    // TODO: 弹出连接配置对话框
     _showConnectDialog();
   }
 
@@ -490,22 +482,18 @@ class _FileTransferPageState extends State<FileTransferPage> {
               controller: shareController,
               decoration: const InputDecoration(
                 labelText: '共享文件夹名',
-                hintText: 'PhoneShare$',
+                hintText: r'PhoneShare$',
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: userController,
-              decoration: const InputDecoration(
-                labelText: '用户名',
-              ),
+              decoration: const InputDecoration(labelText: '用户名'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: passController,
-              decoration: const InputDecoration(
-                labelText: '密码',
-              ),
+              decoration: const InputDecoration(labelText: '密码'),
               obscureText: true,
             ),
           ],
