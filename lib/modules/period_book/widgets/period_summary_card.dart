@@ -59,14 +59,21 @@ class PeriodSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(child: _buildBalanceSection(appTheme, balance)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBalanceSection(appTheme, balance),
+                      const SizedBox(height: 10),
+                      _buildExpenseLegend(
+                          appTheme, shopping, other, living, expenseTotal),
+                    ],
+                  ),
+                ),
                 const SizedBox(width: 12),
                 _buildExpenseDonut(
-                    appTheme, shopping, other, living, expenseTotal),
-                const SizedBox(width: 10),
-                _buildExpenseLegend(
                     appTheme, shopping, other, living, expenseTotal),
               ],
             ),
