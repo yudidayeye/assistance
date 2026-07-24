@@ -508,7 +508,7 @@ class _StageEditPageState extends State<StageEditPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: appTheme.sage.withValues(alpha: 0.1),
+                  color: appTheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
@@ -517,7 +517,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: appTheme.sage,
+                      color: appTheme.primary,
                     ),
                   ),
                 ),
@@ -552,11 +552,7 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 
   Widget _buildCardTabBar(AppThemeExtension appTheme) {
-    const tabs = [
-      {'label': '追加记录', 'colorKey': 'sage'},
-      {'label': '购物支出', 'colorKey': 'rose'},
-      {'label': '其他支出', 'colorKey': 'rose'},
-    ];
+    const tabs = ['追加记录', '购物支出', '其他支出'];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -575,9 +571,6 @@ class _StageEditPageState extends State<StageEditPage> {
         child: Row(
           children: List.generate(tabs.length, (index) {
             final isSelected = _currentTabIndex == index;
-            final tab = tabs[index];
-            final color =
-                tab['colorKey'] == 'sage' ? appTheme.sage : appTheme.rose;
 
             return Expanded(
               child: GestureDetector(
@@ -598,10 +591,10 @@ class _StageEditPageState extends State<StageEditPage> {
                       fontSize: 13,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isSelected ? color : appTheme.earthMedium,
+                      color: isSelected ? appTheme.primary : appTheme.earthMedium,
                     ),
                     child: Text(
-                      tab['label'] as String,
+                      tabs[index],
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -801,7 +794,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
-                      color: sheetTheme.sage,
+                      color: sheetTheme.primary,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -904,7 +897,7 @@ class _StageEditPageState extends State<StageEditPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: appTheme.rose.withValues(alpha: 0.06),
+                  color: appTheme.primary.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
@@ -913,7 +906,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: appTheme.rose,
+                      color: appTheme.primary,
                     ),
                   ),
                 ),
@@ -1002,7 +995,7 @@ class _StageEditPageState extends State<StageEditPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: appTheme.rose.withValues(alpha: 0.06),
+                  color: appTheme.primary.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
@@ -1011,7 +1004,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: appTheme.rose,
+                      color: appTheme.primary,
                     ),
                   ),
                 ),
@@ -1134,7 +1127,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: appTheme.rose,
+                      color: appTheme.primary,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
@@ -1267,7 +1260,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: appTheme.rose,
+                      color: appTheme.primary,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
@@ -1295,8 +1288,8 @@ class _StageEditPageState extends State<StageEditPage> {
     final icon = expense.category == 'shopping'
         ? Icons.shopping_bag_outlined
         : Icons.category_outlined;
-    // 支出统一红色语义（购物/其他类别仍由图标形状区分）
-    final color = appTheme.rose;
+    // 支出类别图标用灰色（购物/其他类别由图标形状区分）
+    final color = appTheme.earthMedium.withValues(alpha: 0.5);
 
     return InkWell(
       key: ValueKey('expense_${expense.id}'),
