@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import '../../../core/theme/theme_extension.dart';
 import '../services/file_server_service.dart';
 import '../services/transfer_service.dart';
-import '../services/connection_service.dart';
 import '../models/transfer_record.dart';
-import '../models/connection_config.dart';
-import '../services/setup_script_service.dart';
 import '../../../shared/utils/format_utils.dart';
 
 /// 文件互传主页面
@@ -19,7 +18,6 @@ class FileTransferPage extends StatefulWidget {
 
 class _FileTransferPageState extends State<FileTransferPage> {
   final _server = FileServerService.instance;
-  ConnectionConfig? _activeConfig;
   List<TransferRecord> _recentRecords = [];
 
   @override
@@ -27,7 +25,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
     super.initState();
     _server.addListener(_onChanged);
     TransferService.instance.addListener(_onChanged);
-    _loadData();
+    _loadRecords();
   }
 
   @override
@@ -41,8 +39,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _loadData() async {
-    _activeConfig = await ConnectionService.instance.getDefault();
+  Future<void> _loadRecords() async {
     _recentRecords = await TransferService.instance.getRecords(limit: 5);
     if (mounted) setState(() {});
   }
@@ -65,8 +62,12 @@ class _FileTransferPageState extends State<FileTransferPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildServerCard(appTheme),
-            const SizedBox(height: 16),
-            _buildRemoteCard(appTheme),
+            if (_server.isRunning) ...[
+              const SizedBox(height: 16),
+              _buildGuideCard(appTheme),
+              const SizedBox(height: 16),
+              _buildSharedFilesCard(appTheme),
+            ],
             const SizedBox(height: 16),
             _buildHistoryCard(appTheme),
           ],
@@ -75,7 +76,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
     );
   }
 
-  // ==================== 手机服务器卡片 ====================
+  // ==================== 服务器卡片 ====================
 
   Widget _buildServerCard(AppThemeExtension appTheme) {
     final running = _server.isRunning;
@@ -86,6 +87,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 标题行
           Row(
             children: [
               Icon(Icons.dns_rounded, color: appTheme.primary, size: 24),
@@ -96,79 +98,232 @@ class _FileTransferPageState extends State<FileTransferPage> {
               _statusBadge(running ? '运行中' : '已停止', running, appTheme),
             ],
           ),
+
           if (running) ...[
             const SizedBox(height: 16),
-            _infoRow('IP 地址', _server.localIp ?? '获取中...', appTheme),
-            const SizedBox(height: 8),
-            _infoRow('端口', '${_server.port}', appTheme),
+            // IP 和端口
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: appTheme.cream,
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
+              ),
+              child: Column(
+                children: [
+                  _infoRow('访问地址', 'http://${_server.localIp}:${_server.port}', appTheme),
+                  const SizedBox(height: 8),
+                  _infoRow('端口', '${_server.port}', appTheme),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            // 连接码
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: appTheme.primary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.lock_outline, size: 16, color: appTheme.primary),
+                      const SizedBox(width: 6),
+                      Text('连接码',
+                          style: TextStyle(fontSize: 13, color: appTheme.earthLight, fontWeight: FontWeight.w500)),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: _refreshCode,
+                        child: Icon(Icons.refresh_rounded, size: 18, color: appTheme.primary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _formatCode(_server.connectionCode ?? '------'),
+                        style: TextStyle(
+                            fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: 8,
+                            color: appTheme.earth, fontFamily: 'monospace'),
+                      ),
+                      const SizedBox(width: 14),
+                      GestureDetector(
+                        onTap: _copyCode,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: appTheme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.copy_rounded, size: 18, color: appTheme.primary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text('电脑浏览器输入此码才能访问',
+                      style: TextStyle(fontSize: 12, color: appTheme.earthLight)),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
-            _buildCodeSection(appTheme),
-            const SizedBox(height: 16),
-            _actionButton('停止服务器', appTheme.rose, appTheme.rose.withValues(alpha: 0.3), _stopServer),
+            // 选择文件分享
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _pickAndShareFiles,
+                icon: const Icon(Icons.add_rounded, size: 20),
+                label: const Text('选择文件分享到电脑'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: appTheme.primary, foregroundColor: Colors.white, elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusMd)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: _stopServer,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: appTheme.rose,
+                  side: BorderSide(color: appTheme.rose.withValues(alpha: 0.3)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusMd)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('停止服务器'),
+              ),
+            ),
           ] else ...[
             const SizedBox(height: 16),
-            _primaryButton('启动服务器', _startServer, appTheme),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _startServer,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: appTheme.primary, foregroundColor: Colors.white, elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusMd)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text('启动服务器'),
+              ),
+            ),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildCodeSection(AppThemeExtension appTheme) {
-    final code = _server.connectionCode ?? '------';
+  // ==================== 操作引导卡片 ====================
+
+  Widget _buildGuideCard(AppThemeExtension appTheme) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: appTheme.primary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-      ),
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(appTheme),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.lock_outline, size: 16, color: appTheme.primary),
-              const SizedBox(width: 6),
-              Text('连接码',
-                  style: TextStyle(fontSize: 13, color: appTheme.earthLight, fontWeight: FontWeight.w500)),
-              const Spacer(),
-              GestureDetector(
-                onTap: _refreshCode,
-                child: Icon(Icons.refresh_rounded, size: 18, color: appTheme.primary),
-              ),
+              Icon(Icons.help_outline_rounded, color: appTheme.primary, size: 22),
+              const SizedBox(width: 8),
+              Text('如何使用',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: appTheme.earth)),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                _formatCode(code),
-                style: TextStyle(
-                    fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: 6,
-                    color: appTheme.earth, fontFamily: 'monospace'),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: _copyCode,
-                child: Icon(Icons.copy_rounded, size: 18, color: appTheme.primary),
-              ),
+          const SizedBox(height: 16),
+          _buildGuideItem(
+            icon: Icons.phone_android_rounded,
+            title: '手机传文件到电脑',
+            steps: [
+              '点击上方「选择文件分享到电脑」',
+              '在电脑浏览器打开 http://${_server.localIp}:${_server.port}',
+              '输入连接码 ${_server.connectionCode ?? '???'}',
+              '在网页上点击文件旁的「下载」按钮',
             ],
+            appTheme: appTheme,
           ),
-          const SizedBox(height: 6),
-          Center(
-            child: Text('电脑浏览器输入此码才能访问',
-                style: TextStyle(fontSize: 12, color: appTheme.earthLight)),
+          const Divider(height: 28),
+          _buildGuideItem(
+            icon: Icons.computer_rounded,
+            title: '电脑传文件到手机',
+            steps: [
+              '在电脑浏览器打开 http://${_server.localIp}:${_server.port}',
+              '输入连接码 ${_server.connectionCode ?? '???'}',
+              '在网页上拖拽文件或点击上传区域选择文件',
+              '文件会自动保存到手机',
+            ],
+            appTheme: appTheme,
           ),
         ],
       ),
     );
   }
 
-  // ==================== 访问电脑文件卡片 ====================
+  Widget _buildGuideItem({
+    required IconData icon,
+    required String title,
+    required List<String> steps,
+    required AppThemeExtension appTheme,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 40, height: 40,
+          decoration: BoxDecoration(
+            color: appTheme.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: appTheme.primary, size: 22),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: appTheme.earth)),
+              const SizedBox(height: 8),
+              ...steps.asMap().entries.map((e) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 20, height: 20,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: appTheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text('${e.key + 1}',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: appTheme.primary)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(e.value,
+                          style: TextStyle(fontSize: 13, color: appTheme.earthLight, height: 1.4)),
+                    ),
+                  ],
+                ),
+              )),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-  Widget _buildRemoteCard(AppThemeExtension appTheme) {
-    final connected = _activeConfig != null;
+  // ==================== 共享文件列表卡片 ====================
+
+  Widget _buildSharedFilesCard(AppThemeExtension appTheme) {
+    final sharedFiles = _server.sharedFiles;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -178,58 +333,68 @@ class _FileTransferPageState extends State<FileTransferPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.computer_rounded, color: appTheme.primary, size: 24),
-              const SizedBox(width: 10),
-              Text('访问电脑文件',
+              Icon(Icons.folder_shared_rounded, color: appTheme.primary, size: 22),
+              const SizedBox(width: 8),
+              Text('已分享的文件',
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: appTheme.earth)),
+              const Spacer(),
+              Text('${sharedFiles.length} 个文件',
+                  style: TextStyle(fontSize: 13, color: appTheme.earthLight)),
             ],
           ),
-          const SizedBox(height: 16),
-          if (connected) ...[
-            _infoRow('已连接', _activeConfig!.name, appTheme),
-            const SizedBox(height: 4),
-            _infoRow('地址', _activeConfig!.host, appTheme),
-            const SizedBox(height: 4),
-            _infoRow('共享', _activeConfig!.shareName, appTheme),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _browseRemote,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: appTheme.primary,
-                      side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusMd)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text('浏览文件'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _disconnectRemote,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: appTheme.rose,
-                      side: BorderSide(color: appTheme.rose.withValues(alpha: 0.3)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusMd)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text('断开连接'),
-                  ),
-                ),
-              ],
-            ),
-          ] else ...[
-            Text('连接到电脑共享文件夹，浏览和传输文件',
-                style: TextStyle(fontSize: 14, color: appTheme.earthLight)),
-            const SizedBox(height: 16),
-            _primaryButton('连接电脑', _showConnectDialog, appTheme),
-          ],
+          const SizedBox(height: 12),
+          if (sharedFiles.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text('点击「选择文件分享到电脑」添加文件',
+                    style: TextStyle(fontSize: 14, color: appTheme.earthLight.withValues(alpha: 0.6))),
+              ),
+            )
+          else
+            ...sharedFiles.map((f) => _buildFileItem(f, appTheme)),
         ],
       ),
     );
+  }
+
+  Widget _buildFileItem(SharedFile file, AppThemeExtension appTheme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Icon(_fileIcon(file.name), size: 22, color: appTheme.primary.withValues(alpha: 0.7)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(file.name,
+                    style: TextStyle(fontSize: 14, color: appTheme.earth, fontWeight: FontWeight.w500),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(FormatUtils.formatFileSize(file.size),
+                    style: TextStyle(fontSize: 12, color: appTheme.earthLight)),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _removeSharedFile(file),
+            child: Icon(Icons.close_rounded, size: 18, color: appTheme.earthLight),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _fileIcon(String name) {
+    final ext = name.split('.').last.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].contains(ext)) return Icons.image_rounded;
+    if (['mp4', 'avi', 'mov', 'mkv'].contains(ext)) return Icons.video_file_rounded;
+    if (['mp3', 'wav', 'flac', 'aac'].contains(ext)) return Icons.audio_file_rounded;
+    if (['pdf'].contains(ext)) return Icons.picture_as_pdf_rounded;
+    if (['doc', 'docx', 'txt', 'md'].contains(ext)) return Icons.description_rounded;
+    if (['zip', 'rar', '7z', 'tar'].contains(ext)) return Icons.archive_rounded;
+    return Icons.insert_drive_file_rounded;
   }
 
   // ==================== 传输历史卡片 ====================
@@ -243,32 +408,19 @@ class _FileTransferPageState extends State<FileTransferPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.history_rounded, color: appTheme.primary, size: 24),
-              const SizedBox(width: 10),
+              Icon(Icons.history_rounded, color: appTheme.primary, size: 22),
+              const SizedBox(width: 8),
               Text('最近传输',
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: appTheme.earth)),
-              const Spacer(),
-              if (_recentRecords.isNotEmpty)
-                GestureDetector(
-                  onTap: _viewAllHistory,
-                  child: Text('查看全部', style: TextStyle(fontSize: 14, color: appTheme.primary)),
-                ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (_recentRecords.isEmpty)
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Column(
-                  children: [
-                    Icon(Icons.swap_horiz_rounded, size: 40,
-                        color: appTheme.earthLight.withValues(alpha: 0.3)),
-                    const SizedBox(height: 8),
-                    Text('暂无传输记录',
-                        style: TextStyle(fontSize: 14, color: appTheme.earthLight.withValues(alpha: 0.6))),
-                  ],
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text('暂无传输记录',
+                    style: TextStyle(fontSize: 14, color: appTheme.earthLight.withValues(alpha: 0.5))),
               ),
             )
           else
@@ -282,17 +434,17 @@ class _FileTransferPageState extends State<FileTransferPage> {
     final isUpload = record.direction == TransferDirection.upload;
     final icon = isUpload ? Icons.upload_rounded : Icons.download_rounded;
     final dirText = isUpload ? '手机→电脑' : '电脑→手机';
+    final statusIcon = switch (record.status) {
+      TransferStatus.completed => Icons.check_circle_rounded,
+      TransferStatus.failed => Icons.error_rounded,
+      TransferStatus.transferring => Icons.sync_rounded,
+      _ => Icons.schedule_rounded,
+    };
     final statusColor = switch (record.status) {
       TransferStatus.completed => appTheme.sage,
       TransferStatus.failed => appTheme.rose,
       TransferStatus.transferring => appTheme.primary,
       _ => appTheme.earthLight,
-    };
-    final statusText = switch (record.status) {
-      TransferStatus.completed => '✓',
-      TransferStatus.failed => '✗',
-      TransferStatus.transferring => '…',
-      _ => '⏳',
     };
 
     return Padding(
@@ -313,7 +465,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
               ],
             ),
           ),
-          Text(statusText, style: TextStyle(fontSize: 16, color: statusColor)),
+          Icon(statusIcon, size: 18, color: statusColor),
         ],
       ),
     );
@@ -339,36 +491,14 @@ class _FileTransferPageState extends State<FileTransferPage> {
 
   Widget _infoRow(String label, String value, AppThemeExtension appTheme) => Row(
     children: [
-      Text(label, style: TextStyle(fontSize: 14, color: appTheme.earthLight)),
+      Text(label, style: TextStyle(fontSize: 13, color: appTheme.earthLight)),
       const Spacer(),
-      Text(value, style: TextStyle(fontSize: 14, color: appTheme.earth, fontWeight: FontWeight.w500)),
+      Flexible(
+        child: Text(value,
+            textAlign: TextAlign.end,
+            style: TextStyle(fontSize: 13, color: appTheme.earth, fontWeight: FontWeight.w600, fontFamily: 'monospace')),
+      ),
     ],
-  );
-
-  Widget _primaryButton(String text, VoidCallback onPressed, AppThemeExtension appTheme) => SizedBox(
-    width: double.infinity,
-    child: ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: appTheme.primary, foregroundColor: Colors.white, elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusMd)),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-      ),
-      child: Text(text),
-    ),
-  );
-
-  Widget _actionButton(String text, Color fg, Color border, VoidCallback onPressed) => SizedBox(
-    width: double.infinity,
-    child: OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: fg, side: BorderSide(color: border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-      ),
-      child: Text(text),
-    ),
   );
 
   String _formatCode(String code) {
@@ -404,167 +534,32 @@ class _FileTransferPageState extends State<FileTransferPage> {
     }
   }
 
-  void _disconnectRemote() async {
-    if (_activeConfig != null) {
-      await ConnectionService.instance.setDefault(_activeConfig!.id!);
+  Future<void> _pickAndShareFiles() async {
+    try {
+      final result = await FilePicker.pickFiles(allowMultiple: true);
+      if (result == null || result.files.isEmpty) return;
+
+      int added = 0;
+      for (final file in result.files) {
+        if (file.path != null) {
+          _server.addSharedFile(file.name, file.path!, file.size);
+          added++;
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('已添加 $added 个文件到分享列表'), duration: const Duration(seconds: 1)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('选择文件失败: $e')));
+      }
     }
-    setState(() => _activeConfig = null);
   }
 
-  void _browseRemote() {
-    // TODO: 跳转到远程浏览页面（Phase 3 SMB）
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('SMB 远程浏览功能开发中...')),
-    );
-  }
-
-  void _viewAllHistory() {
-    // TODO: 跳转到传输历史页面
-  }
-
-  void _showConnectDialog() {
-    final appTheme = Theme.of(context).appTheme;
-    final nameController = TextEditingController(text: '家里电脑');
-    final hostController = TextEditingController();
-    final shareController = TextEditingController(text: r'PhoneShare$');
-    final userController = TextEditingController(text: 'phone');
-    final passController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusLg)),
-        title: const Text('连接电脑'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nameController,
-                decoration: const InputDecoration(labelText: '配置名称', hintText: '家里电脑')),
-              const SizedBox(height: 12),
-              TextField(controller: hostController,
-                decoration: const InputDecoration(labelText: '电脑 IP 地址', hintText: '192.168.1.100'),
-                keyboardType: TextInputType.url),
-              const SizedBox(height: 12),
-              TextField(controller: shareController,
-                decoration: InputDecoration(labelText: '共享文件夹名', hintText: r'PhoneShare$')),
-              const SizedBox(height: 12),
-              TextField(controller: userController,
-                decoration: const InputDecoration(labelText: '用户名')),
-              const SizedBox(height: 12),
-              TextField(controller: passController,
-                decoration: const InputDecoration(labelText: '密码'), obscureText: true),
-              const SizedBox(height: 8),
-              // 生成配置脚本按钮
-              TextButton.icon(
-                onPressed: () {
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _showSetupScriptDialog(
-                    username: userController.text.isEmpty ? 'phone' : userController.text,
-                    password: passController.text.isEmpty ? '123456' : passController.text,
-                    shareName: shareController.text.replaceAll(r'$', '').isEmpty
-                        ? 'PhoneShare'
-                        : shareController.text.replaceAll(r'$', ''),
-                  );
-                },
-                icon: Icon(Icons.description_outlined, size: 18, color: appTheme.primary),
-                label: Text('生成电脑配置脚本', style: TextStyle(color: appTheme.primary, fontSize: 13)),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-          ElevatedButton(
-            onPressed: () async {
-              final config = ConnectionConfig(
-                name: nameController.text.isEmpty ? '电脑' : nameController.text,
-                host: hostController.text,
-                shareName: shareController.text.isEmpty ? r'PhoneShare$' : shareController.text,
-                username: userController.text.isEmpty ? null : userController.text,
-                password: passController.text.isEmpty ? null : passController.text,
-                isDefault: true,
-                createdAt: DateTime.now(),
-              );
-              await ConnectionService.instance.addConfig(config);
-              if (ctx.mounted) Navigator.pop(ctx);
-              _loadData();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: appTheme.primary, foregroundColor: Colors.white),
-            child: const Text('保存并连接'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSetupScriptDialog({
-    required String username,
-    required String password,
-    required String shareName,
-  }) {
-    final appTheme = Theme.of(context).appTheme;
-    final script = SetupScriptService.generateBatScript(
-      username: username,
-      password: password,
-      shareName: shareName,
-    );
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusLg)),
-        title: const Text('电脑配置脚本'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '将以下内容保存为 .bat 文件，在电脑上以管理员身份运行：',
-                style: TextStyle(fontSize: 13, color: appTheme.earthLight),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SelectableText(
-                    script,
-                    style: const TextStyle(
-                      fontFamily: 'monospace', fontSize: 11, color: Color(0xFFD4D4D4),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('关闭'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: script));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('脚本已复制到剪贴板'), duration: Duration(seconds: 2)),
-              );
-            },
-            icon: const Icon(Icons.copy, size: 16),
-            label: const Text('复制脚本'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: appTheme.primary, foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
+  void _removeSharedFile(SharedFile file) {
+    _server.removeSharedFile(file.name);
   }
 }
