@@ -59,6 +59,7 @@ class PeriodSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(child: _buildBalanceSection(appTheme, balance)),
                 const SizedBox(width: 12),
@@ -85,7 +86,10 @@ class PeriodSummaryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTapTotalBase,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        // 基线对齐：让 26px 余额与 14px 本金的数字底部真正落在同一水平线
+        // （CrossAxisAlignment.end 只对齐文本盒底边，大小字号的下沉区不同会视觉错位）
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
           Flexible(
             child: AnimatedSwitcher(
@@ -97,7 +101,7 @@ class PeriodSummaryCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: GoogleFonts.dmSans().fontFamily,
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: muted
                       ? appTheme.primary.withValues(alpha: 0.4)
