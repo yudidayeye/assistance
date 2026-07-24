@@ -38,7 +38,9 @@ class _StageEditPageState extends State<StageEditPage> {
   final _otherDescController = TextEditingController();
   final _otherAmountController = TextEditingController();
 
-  // 焦点节点：金额 → 描述
+  // 焦点节点：金额 → 描述/原因
+  final _additionAmountFocusNode = FocusNode();
+  final _additionReasonFocusNode = FocusNode();
   final _shoppingAmountFocusNode = FocusNode();
   final _shoppingDescFocusNode = FocusNode();
   final _otherAmountFocusNode = FocusNode();
@@ -64,6 +66,8 @@ class _StageEditPageState extends State<StageEditPage> {
     _shoppingAmountController.dispose();
     _otherDescController.dispose();
     _otherAmountController.dispose();
+    _additionAmountFocusNode.dispose();
+    _additionReasonFocusNode.dispose();
     _shoppingAmountFocusNode.dispose();
     _shoppingDescFocusNode.dispose();
     _otherAmountFocusNode.dispose();
@@ -1544,7 +1548,12 @@ class _StageEditPageState extends State<StageEditPage> {
           // 金额输入
           TextField(
             controller: _additionAmountController,
+            focusNode: _additionAmountFocusNode,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.next,
+            onEditingComplete: () {
+              FocusScope.of(context).requestFocus(_additionReasonFocusNode);
+            },
             decoration: InputDecoration(
               hintText: '追加金额',
               hintStyle: TextStyle(
@@ -1569,6 +1578,7 @@ class _StageEditPageState extends State<StageEditPage> {
           // 原因输入
           TextField(
             controller: _additionReasonController,
+            focusNode: _additionReasonFocusNode,
             decoration: InputDecoration(
               hintText: '追加原因',
               hintStyle: TextStyle(
