@@ -182,7 +182,7 @@ class DatabaseService {
   static Future<void> _createV12Schema(Database db) async {
     // 文件互传模块 - 传输记录表
     await db.execute('''
-      CREATE TABLE mod_file_transfer_records (
+      CREATE TABLE IF NOT EXISTS mod_file_transfer_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         file_name TEXT NOT NULL,
         file_size INTEGER NOT NULL,
@@ -197,7 +197,7 @@ class DatabaseService {
     ''');
     // 文件互传模块 - 连接配置表
     await db.execute('''
-      CREATE TABLE mod_file_transfer_configs (
+      CREATE TABLE IF NOT EXISTS mod_file_transfer_configs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         host TEXT NOT NULL,
