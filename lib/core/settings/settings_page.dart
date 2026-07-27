@@ -642,8 +642,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
-        Icon(Icons.chevron_right_rounded,
-            size: 18, color: appTheme.earthMedium.withValues(alpha: 0.4)),
         // 更新按钮或状态
         if (_isCheckingUpdate)
           SizedBox(
