@@ -13,7 +13,7 @@ class SyncPage extends StatefulWidget {
   State<SyncPage> createState() => _SyncPageState();
 }
 
-class _SyncPageState extends State<SyncPage> {
+class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
   final SyncService _sync = SyncService.instance;
 
   // 0 = 接收, 1 = 发送
@@ -23,8 +23,7 @@ class _SyncPageState extends State<SyncPage> {
   String? _localIp;
   int _port = 0;
   bool _serverStarting = false;
-  // idle / waiting / received / importing / done / failed
-  String _rxStatus = 'idle';
+  String _rxStatus = 'idle'; // idle / waiting / received / importing / done / failed
   String _rxMessage = '';
   StreamSubscription<SyncRequest>? _requestSub;
 
@@ -32,14 +31,25 @@ class _SyncPageState extends State<SyncPage> {
   List<DiscoveredDevice> _devices = [];
   StreamSubscription<List<DiscoveredDevice>>? _deviceSub;
   DiscoveredDevice? _sendingTo;
-  // idle / sending / success / error
-  String _txStatus = 'idle';
+  String _txStatus = 'idle'; // idle / sending / success / error
   String _txMessage = '';
+
+  // ── 动画 ──
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
-    // 如果服务已在运行（从接收页面进来），恢复状态
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     if (_sync.isRunning) {
       _localIp = null;
       _port = 0;
@@ -58,10 +68,10 @@ class _SyncPageState extends State<SyncPage> {
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _requestSub?.cancel();
     _deviceSub?.cancel();
     _sync.stopDiscovery();
-    // 不在这里 stopServer，由用户手动停止或离开时停止
     super.dispose();
   }
 
@@ -240,7 +250,6 @@ class _SyncPageState extends State<SyncPage> {
           _rxStatus = 'done';
           _rxMessage = '数据同步完成';
         });
-        // 2 秒后自动停止服务
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) _stopServer();
         });
@@ -297,7 +306,6 @@ class _SyncPageState extends State<SyncPage> {
       }
     });
 
-    // 3 秒后自动清除状态
     if (result.isSuccess) {
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted && _txStatus == 'success') {
@@ -317,7 +325,6 @@ class _SyncPageState extends State<SyncPage> {
   void _onTabChanged(int index) {
     if (index == _tabIndex) return;
     setState(() => _tabIndex = index);
-
     if (index == 1) {
       _startDiscovery();
     } else {
@@ -340,41 +347,7 @@ class _SyncPageState extends State<SyncPage> {
         child: Column(
           children: [
             // ── 顶部栏 ──
-            Container(
-              color: appTheme.cream,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16, safeTop + 10, 16, 4),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        _stopDiscovery();
-                        context.pop();
-                      },
-                      child: SizedBox(
-                        width: 28,
-                        height: 40,
-                        child: Icon(Icons.arrow_back_ios_new_rounded,
-                            color: appTheme.earth, size: 20),
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Expanded(
-                      child: Text(
-                        '数据同步',
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: appTheme.earth,
-                          letterSpacing: -0.1,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildHeader(appTheme, safeTop),
 
             // ── Tab 切换 ──
             Padding(
@@ -384,9 +357,50 @@ class _SyncPageState extends State<SyncPage> {
 
             // ── 内容区 ──
             Expanded(
-              child: _tabIndex == 0
-                  ? _buildReceiveTab(appTheme)
-                  : _buildSendTab(appTheme),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _tabIndex == 0
+                    ? _buildReceiveTab(appTheme)
+                    : _buildSendTab(appTheme),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(AppThemeExtension appTheme, double safeTop) {
+    return Container(
+      color: appTheme.cream,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, safeTop + 10, 16, 4),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                _stopDiscovery();
+                context.pop();
+              },
+              child: SizedBox(
+                width: 28,
+                height: 40,
+                child: Icon(Icons.arrow_back_ios_new_rounded,
+                    color: appTheme.earth, size: 20),
+              ),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: Text(
+                '数据同步',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.dmSans().fontFamily,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: appTheme.earth,
+                  letterSpacing: -0.1,
+                ),
+              ),
             ),
           ],
         ),
@@ -403,18 +417,20 @@ class _SyncPageState extends State<SyncPage> {
       ),
       child: Row(
         children: [
-          _buildTabItem(appTheme, '接收', 0),
-          _buildTabItem(appTheme, '发送', 1),
+          _buildTabItem(appTheme, '接收', 0, Icons.download_rounded),
+          _buildTabItem(appTheme, '发送', 1, Icons.upload_rounded),
         ],
       ),
     );
   }
 
-  Widget _buildTabItem(AppThemeExtension appTheme, String label, int index) {
+  Widget _buildTabItem(
+      AppThemeExtension appTheme, String label, int index, IconData icon) {
     final isSelected = _tabIndex == index;
     return Expanded(
       child: GestureDetector(
         onTap: () => _onTabChanged(index),
+        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.all(3),
@@ -431,41 +447,115 @@ class _SyncPageState extends State<SyncPage> {
                   ]
                 : [],
           ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? appTheme.earth : appTheme.earthMedium,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  size: 15,
+                  color: isSelected
+                      ? appTheme.primary
+                      : appTheme.earthMedium.withValues(alpha: 0.5)),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? appTheme.earth : appTheme.earthMedium,
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ── 接收 Tab ──
+  // ═══════════════════════════════════════════════════════════
+  // 接收 Tab
+  // ═══════════════════════════════════════════════════════════
 
   Widget _buildReceiveTab(AppThemeExtension appTheme) {
-    // 完成状态：居中展示成功
+    // 完成状态
     if (_rxStatus == 'done') {
-      return Center(
+      return _buildDoneState(appTheme);
+    }
+
+    return SingleChildScrollView(
+      key: const ValueKey('receive'),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          const SizedBox(height: 32),
+
+          // ── 状态指示 ──
+          _buildRxStatusIndicator(appTheme),
+
+          const SizedBox(height: 28),
+
+          // ── 本机地址卡片 ──
+          if (_rxStatus == 'waiting' ||
+              _rxStatus == 'received' ||
+              _rxStatus == 'importing')
+            _buildAddressCard(appTheme),
+
+          // ── 开启按钮 ──
+          if (_rxStatus == 'idle' || _rxStatus == 'failed')
+            _buildStartCard(appTheme),
+
+          // ── 停止按钮 ──
+          if (_sync.isRunning && _rxStatus != 'importing') ...[
+            const SizedBox(height: 16),
+            _buildStopButton(appTheme),
+          ],
+
+          const SizedBox(height: 28),
+
+          // ── 提示 ──
+          _buildHintCard(
+            appTheme,
+            icon: Icons.info_outline_rounded,
+            text: (_rxStatus == 'waiting' || _rxStatus == 'received')
+                ? '请在另一台设备的「数据同步」页面中选择本机发送数据'
+                : '开启后，其他设备可在局域网内发现并发送数据到本机',
+          ),
+
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoneState(AppThemeExtension appTheme) {
+    return Center(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Opacity(
+            opacity: value,
+            child: Transform.scale(
+              scale: 0.85 + 0.15 * value,
+              child: child,
+            ),
+          );
+        },
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 color: appTheme.sage.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.check_circle_rounded,
-                  size: 36, color: appTheme.sage),
+                  size: 40, color: appTheme.sage),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               '同步完成',
               style: TextStyle(
@@ -484,65 +574,6 @@ class _SyncPageState extends State<SyncPage> {
             ),
           ],
         ),
-      );
-    }
-
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          const SizedBox(height: 24),
-
-          // 状态指示
-          _buildRxStatusIndicator(appTheme),
-
-          const SizedBox(height: 24),
-
-          // 本机地址卡片
-          if (_rxStatus == 'waiting' || _rxStatus == 'received' || _rxStatus == 'importing')
-            _buildAddressCard(appTheme),
-
-          // 开启按钮
-          if (_rxStatus == 'idle' || _rxStatus == 'failed')
-            _buildStartCard(appTheme),
-
-          // 停止按钮
-          if (_sync.isRunning && _rxStatus != 'importing') ...[
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _stopServer,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: appTheme.creamDark,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Text('停止接收',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: appTheme.earthLight)),
-                ),
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 24),
-
-          // 提示文字
-          _buildHintCard(
-            appTheme,
-            icon: Icons.info_outline_rounded,
-            text: (_rxStatus == 'waiting' || _rxStatus == 'received')
-                ? '请在另一台设备的「数据同步」页面中选择本机发送数据'
-                : '开启后，其他设备可在局域网内发现并发送数据到本机',
-          ),
-
-          const SizedBox(height: 40),
-        ],
       ),
     );
   }
@@ -566,10 +597,6 @@ class _SyncPageState extends State<SyncPage> {
         icon = Icons.downloading_rounded;
         showLoading = true;
         break;
-      case 'done':
-        dotColor = appTheme.sage;
-        icon = Icons.check_circle_rounded;
-        break;
       case 'failed':
         dotColor = appTheme.rose;
         icon = Icons.error_outline_rounded;
@@ -581,31 +608,46 @@ class _SyncPageState extends State<SyncPage> {
 
     return Column(
       children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: dotColor.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: showLoading
-              ? Padding(
-                  padding: const EdgeInsets.all(13),
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: dotColor,
-                  ),
-                )
-              : Icon(icon, size: 26, color: dotColor),
+        AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            final scale =
+                _rxStatus == 'waiting' ? _pulseAnimation.value : 1.0;
+            return Transform.scale(
+              scale: 0.95 + 0.05 * scale,
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: dotColor.withValues(
+                      alpha: _rxStatus == 'waiting' ? 0.08 * scale : 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: showLoading
+                    ? Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: dotColor,
+                        ),
+                      )
+                    : Icon(icon, size: 30, color: dotColor),
+              ),
+            );
+          },
         ),
         if (_rxMessage.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Text(
-            _rxMessage,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: appTheme.earth,
+          const SizedBox(height: 14),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+              _rxMessage,
+              key: ValueKey(_rxMessage),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: appTheme.earth,
+              ),
             ),
           ),
         ],
@@ -615,46 +657,82 @@ class _SyncPageState extends State<SyncPage> {
 
   Widget _buildAddressCard(AppThemeExtension appTheme) {
     final address = '$_localIp:$_port';
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: _rxStatus == 'waiting'
+              ? appTheme.sage.withValues(alpha: 0.2)
+              : appTheme.cardBorder,
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: appTheme.earth.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: appTheme.sage,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '本机地址',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: appTheme.earthMedium,
-                ),
-              ),
-            ],
+          // 在线指示
+          AnimatedBuilder(
+            animation: _pulseAnimation,
+            builder: (context, _) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: appTheme.sage.withValues(
+                          alpha: 0.5 + 0.5 * _pulseAnimation.value),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: appTheme.sage.withValues(
+                              alpha: 0.3 * _pulseAnimation.value),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '本机地址',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: appTheme.earthMedium,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 10),
-          Text(
-            address,
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: appTheme.earth,
-              letterSpacing: 0.5,
+          const SizedBox(height: 14),
+          // 地址
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: appTheme.creamDark.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              address,
+              style: TextStyle(
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: appTheme.earth,
+                letterSpacing: 1.0,
+              ),
             ),
           ),
         ],
@@ -672,7 +750,14 @@ class _SyncPageState extends State<SyncPage> {
           color: _serverStarting
               ? appTheme.primary.withValues(alpha: 0.5)
               : appTheme.primary,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: appTheme.primary.withValues(alpha: 0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Center(
           child: _serverStarting
@@ -684,75 +769,94 @@ class _SyncPageState extends State<SyncPage> {
                     color: Colors.white,
                   ),
                 )
-              : const Text('开启接收',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white)),
+              : const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.wifi_tethering_rounded,
+                        size: 18, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('开启接收',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white)),
+                  ],
+                ),
         ),
       ),
     );
   }
 
-  // ── 发送 Tab ──
+  Widget _buildStopButton(AppThemeExtension appTheme) {
+    return GestureDetector(
+      onTap: _stopServer,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: appTheme.creamDark,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Text('停止接收',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: appTheme.earthLight)),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 发送 Tab
+  // ═══════════════════════════════════════════════════════════
 
   Widget _buildSendTab(AppThemeExtension appTheme) {
     return SingleChildScrollView(
+      key: const ValueKey('send'),
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
           const SizedBox(height: 20),
 
-          // 状态提示
-          if (_txStatus != 'idle') _buildTxStatusBar(appTheme),
-          if (_txStatus != 'idle') const SizedBox(height: 16),
+          // ── 状态提示 ──
+          if (_txStatus != 'idle') ...[
+            _buildTxStatusBar(appTheme),
+            const SizedBox(height: 16),
+          ],
 
-          // 设备列表标题
-          Row(
-            children: [
-              Icon(Icons.wifi_find_rounded,
-                  size: 18, color: appTheme.primary.withValues(alpha: 0.7)),
-              const SizedBox(width: 8),
-              Text(
-                '附近的设备',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earthMedium,
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                  color: appTheme.earthMedium.withValues(alpha: 0.4),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '扫描中',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: appTheme.earthMedium.withValues(alpha: 0.4),
-                ),
-              ),
-            ],
-          ),
+          // ── 设备列表标题 ──
+          _buildSectionHeader(appTheme),
 
           const SizedBox(height: 12),
 
-          // 设备列表
+          // ── 设备列表 ──
           if (_devices.isEmpty)
             _buildEmptyDevices(appTheme)
           else
-            ..._devices.map((d) => _buildDeviceItem(appTheme, d)),
+            ...List.generate(_devices.length, (i) {
+              return TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: Duration(milliseconds: 300 + i * 60),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 12 * (1 - value)),
+                      child: child,
+                    ),
+                  );
+                },
+                child: _buildDeviceItem(appTheme, _devices[i]),
+              );
+            }),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
-          // 提示
+          // ── 提示 ──
           _buildHintCard(
             appTheme,
             icon: Icons.info_outline_rounded,
@@ -765,16 +869,60 @@ class _SyncPageState extends State<SyncPage> {
     );
   }
 
+  Widget _buildSectionHeader(AppThemeExtension appTheme) {
+    return Row(
+      children: [
+        Icon(Icons.wifi_find_rounded,
+            size: 17, color: appTheme.primary.withValues(alpha: 0.6)),
+        const SizedBox(width: 8),
+        Text(
+          '附近的设备',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: appTheme.earthMedium.withValues(alpha: 0.7),
+            letterSpacing: 0.3,
+          ),
+        ),
+        const Spacer(),
+        // 扫描指示
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: appTheme.earthMedium.withValues(alpha: 0.3),
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '扫描中',
+              style: TextStyle(
+                fontSize: 10,
+                color: appTheme.earthMedium.withValues(alpha: 0.35),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildTxStatusBar(AppThemeExtension appTheme) {
     Color bgColor;
     Color textColor;
     IconData icon;
+    bool isLoading = false;
 
     switch (_txStatus) {
       case 'sending':
         bgColor = appTheme.primary.withValues(alpha: 0.06);
         textColor = appTheme.primary;
         icon = Icons.sync_rounded;
+        isLoading = true;
         break;
       case 'success':
         bgColor = appTheme.sage.withValues(alpha: 0.08);
@@ -790,15 +938,16 @@ class _SyncPageState extends State<SyncPage> {
         return const SizedBox.shrink();
     }
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
-          if (_txStatus == 'sending')
+          if (isLoading)
             SizedBox(
               width: 18,
               height: 18,
@@ -820,15 +969,24 @@ class _SyncPageState extends State<SyncPage> {
   Widget _buildEmptyDevices(AppThemeExtension appTheme) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 36),
+      padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          Icon(Icons.devices_other_rounded,
-              size: 36, color: appTheme.earthMedium.withValues(alpha: 0.2)),
-          const SizedBox(height: 10),
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: appTheme.earthMedium.withValues(alpha: 0.04),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.devices_other_rounded,
+                size: 28, color: appTheme.earthMedium.withValues(alpha: 0.2)),
+          ),
+          const SizedBox(height: 14),
           Text('暂未发现设备',
               style: TextStyle(
                   fontSize: 13,
+                  fontWeight: FontWeight.w500,
                   color: appTheme.earthMedium.withValues(alpha: 0.4))),
           const SizedBox(height: 4),
           Text('请确认对方已开启接收',
@@ -847,65 +1005,91 @@ class _SyncPageState extends State<SyncPage> {
       padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
         onTap: isSending ? null : () => _sendToDevice(device),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: appTheme.cardBackground,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: appTheme.cardBorder, width: 0.5),
+            color: isSending
+                ? appTheme.primary.withValues(alpha: 0.04)
+                : appTheme.cardBackground,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSending
+                  ? appTheme.primary.withValues(alpha: 0.15)
+                  : appTheme.cardBorder,
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: appTheme.earth.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [
+              // 设备图标
               Container(
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: appTheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
+                  color: appTheme.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(_getDeviceIcon(device.name),
-                    size: 18, color: appTheme.primary),
+                    size: 20, color: appTheme.primary.withValues(alpha: 0.7)),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
+              // 设备信息
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(device.name,
                         style: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: appTheme.earth)),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(device.address,
                         style: TextStyle(
                             fontFamily: GoogleFonts.dmSans().fontFamily,
                             fontSize: 11,
                             color:
-                                appTheme.earthMedium.withValues(alpha: 0.5))),
+                                appTheme.earthMedium.withValues(alpha: 0.45))),
                   ],
                 ),
               ),
+              // 发送按钮
               if (isSending)
                 SizedBox(
-                  width: 18,
-                  height: 18,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: appTheme.primary),
                 )
               else
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
                     color: appTheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text('发送',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.primary)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.file_upload_outlined,
+                          size: 13, color: appTheme.primary),
+                      const SizedBox(width: 4),
+                      Text('发送',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: appTheme.primary)),
+                    ],
+                  ),
                 ),
             ],
           ),
@@ -918,23 +1102,25 @@ class _SyncPageState extends State<SyncPage> {
       {required IconData icon, required String text}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        color: appTheme.cardBackground.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 15, color: appTheme.earthMedium.withValues(alpha: 0.4)),
+          Icon(icon,
+              size: 15,
+              color: appTheme.earthMedium.withValues(alpha: 0.35)),
           const SizedBox(width: 10),
           Expanded(
             child: Text(text,
                 style: TextStyle(
                     fontSize: 12,
                     color: appTheme.earthMedium.withValues(alpha: 0.5),
-                    height: 1.5)),
+                    height: 1.6)),
           ),
         ],
       ),
