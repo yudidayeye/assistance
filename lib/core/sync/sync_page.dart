@@ -760,7 +760,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
         decoration: BoxDecoration(
           color: appTheme.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
         ),
         child: Center(
           child: _serverStarting
@@ -790,7 +790,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: appTheme.rose.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
         ),
         child: Center(
           child: Text('停止接收',
