@@ -32,7 +32,8 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
-/windows/
+/windows/*
+!/windows/setup_sqlite3.bat
 
 # Symbolication related
 app.*.symbols

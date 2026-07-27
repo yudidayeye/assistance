@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, Directory;
 
 /// SQLite 全局数据库服务（原生平台：Windows/Android/iOS）
 class DatabaseService {
@@ -26,8 +26,15 @@ class DatabaseService {
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {
     if (Platform.isWindows || Platform.isLinux) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
+      try {
+        sqfliteFfiInit();
+        databaseFactory = databaseFactoryFfi;
+      } catch (e) {
+        print('SQLite FFI 初始化失败: $e');
+        print('请确保 sqlite3.dll 文件已放置在正确位置');
+        print('运行 windows/setup_sqlite3.bat 或手动下载 SQLite DLL');
+        rethrow;
+      }
     }
   }
 
