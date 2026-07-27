@@ -759,7 +759,10 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: appTheme.primary.withValues(alpha: 0.12),
+          border: Border.all(
+            color: appTheme.primary.withValues(alpha: 0.2),
+            width: 1,
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
@@ -772,19 +775,11 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                     color: appTheme.primary,
                   ),
                 )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.wifi_tethering_rounded,
-                        size: 16, color: appTheme.primary),
-                    const SizedBox(width: 6),
-                    Text('开启接收',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: appTheme.primary)),
-                  ],
-                ),
+              : Text('开启接收',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: appTheme.primary)),
         ),
       ),
     );
