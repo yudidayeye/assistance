@@ -414,7 +414,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
-          color: appTheme.creamDark.withValues(alpha: 0.4),
+          color: appTheme.creamDark.withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -440,7 +440,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             color: isSelected
                 ? appTheme.cardBackground
-                : appTheme.creamDark.withValues(alpha: 0.15),
+                : appTheme.creamDark.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(9),
           ),
           child: Row(
@@ -627,6 +627,15 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                   color: dotColor.withValues(
                       alpha: _rxStatus == 'waiting' ? 0.08 * scale : 0.1),
                   shape: BoxShape.circle,
+                  boxShadow: _rxStatus == 'waiting'
+                      ? [
+                          BoxShadow(
+                            color: dotColor.withValues(alpha: 0.15),
+                            blurRadius: 20,
+                            spreadRadius: 4,
+                          ),
+                        ]
+                      : null,
                 ),
                 child: showLoading
                     ? Padding(
@@ -636,7 +645,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                           color: dotColor,
                         ),
                       )
-                    : Icon(icon, size: 28, color: dotColor),
+                    : Icon(icon, size: 32, color: dotColor),
               ),
             );
           },
@@ -752,7 +761,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: appTheme.primary.withValues(alpha: 0.08),
+          color: appTheme.primary.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
@@ -963,30 +972,30 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
   Widget _buildEmptyDevices(AppThemeExtension appTheme) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40),
+      padding: const EdgeInsets.symmetric(vertical: 48),
       child: Column(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
-              color: appTheme.earthMedium.withValues(alpha: 0.04),
+              color: appTheme.earthMedium.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.devices_other_rounded,
-                size: 28, color: appTheme.earthMedium.withValues(alpha: 0.2)),
+                size: 36, color: appTheme.earthMedium.withValues(alpha: 0.25)),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Text('暂未发现设备',
               style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: appTheme.earthMedium.withValues(alpha: 0.4))),
+                  color: appTheme.earthMedium.withValues(alpha: 0.5))),
           const SizedBox(height: 4),
           Text('请确认对方已开启接收',
               style: TextStyle(
-                  fontSize: 11,
-                  color: appTheme.earthMedium.withValues(alpha: 0.3))),
+                  fontSize: 12,
+                  color: appTheme.earthMedium.withValues(alpha: 0.4))),
         ],
       ),
     );
@@ -1098,7 +1107,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: appTheme.cardBackground.withValues(alpha: 0.6),
+        color: appTheme.cardBackground.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
