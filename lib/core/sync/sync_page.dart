@@ -587,6 +587,10 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
     bool showLoading = false;
 
     switch (_rxStatus) {
+      case 'idle':
+        dotColor = appTheme.primary.withValues(alpha: 0.5);
+        icon = Icons.wifi_tethering_rounded;
+        break;
       case 'waiting':
         dotColor = appTheme.sage;
         icon = Icons.access_time_rounded;
@@ -606,7 +610,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         break;
       default:
         dotColor = appTheme.earthMedium.withValues(alpha: 0.4);
-        icon = Icons.radio_button_unchecked;
+        icon = Icons.wifi_tethering_rounded;
     }
 
     return Column(
@@ -634,7 +638,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                           color: dotColor,
                         ),
                       )
-                    : Icon(icon, size: 30, color: dotColor),
+                    : Icon(icon, size: 28, color: dotColor),
               ),
             );
           },
@@ -748,41 +752,32 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       onTap: _serverStarting ? null : _startServer,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: _serverStarting
-              ? appTheme.primary.withValues(alpha: 0.5)
-              : appTheme.primary,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: appTheme.primary.withValues(alpha: 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: appTheme.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
           child: _serverStarting
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
+              ? SizedBox(
+                  width: 18,
+                  height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: appTheme.primary,
                   ),
                 )
-              : const Row(
+              : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.wifi_tethering_rounded,
-                        size: 18, color: Colors.white),
-                    SizedBox(width: 8),
+                        size: 16, color: appTheme.primary),
+                    const SizedBox(width: 6),
                     Text('开启接收',
                         style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white)),
+                            color: appTheme.primary)),
                   ],
                 ),
         ),
