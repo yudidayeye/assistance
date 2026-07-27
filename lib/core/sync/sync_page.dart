@@ -356,13 +356,11 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
             ),
 
             // ── 内容区 ──
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: _tabIndex == 0
-                    ? _buildReceiveTab(appTheme)
-                    : _buildSendTab(appTheme),
-              ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: _tabIndex == 0
+                  ? _buildReceiveTab(appTheme)
+                  : _buildSendTab(appTheme),
             ),
           ],
         ),
