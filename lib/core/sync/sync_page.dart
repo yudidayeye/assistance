@@ -762,6 +762,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
           color: appTheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
+        child: Center(
         child: _serverStarting
             ? SizedBox(
                 width: 14,
