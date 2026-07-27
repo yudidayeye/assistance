@@ -9,6 +9,7 @@ import '../storage/database_service.dart';
 import '../theme/theme_extension.dart';
 import '../theme/theme_provider.dart';
 import 'import_export_service.dart';
+import 'update_service.dart';
 import '../../modules/period_book/services/period_book_settings.dart';
 import '../../modules/period_book/services/period_book_service.dart';
 import '../../modules/period_tracker/services/period_service.dart';
@@ -31,13 +32,46 @@ class _SettingsPageState extends State<SettingsPage> {
   final DatabaseService _db = DatabaseService.instance;
   final ImportExportService _importExport = ImportExportService.instance;
   final PeriodBookSettings _periodSettings = PeriodBookSettings.instance;
+  final UpdateService _updateService = UpdateService.instance;
 
   int _payday = 10;
+  String _currentVersion = '';
+  bool _isCheckingUpdate = false;
+  UpdateInfo? _updateInfo;
 
   @override
   void initState() {
     super.initState();
     _loadPayday();
+    _loadVersion();
+    _checkUpdate();
+  }
+
+  /// 加载当前版本号
+  Future<void> _loadVersion() async {
+    final info = await _updateService.checkForUpdate();
+    if (mounted) {
+      setState(() {
+        _currentVersion = info.currentVersion;
+      });
+    }
+  }
+
+  /// 检查更新
+  Future<void> _checkUpdate() async {
+    if (mounted) {
+      setState(() => _isCheckingUpdate = true);
+    }
+
+    final info = await _updateService.checkForUpdate();
+
+    if (mounted) {
+      setState(() {
+        _isCheckingUpdate = false;
+        _updateInfo = info;
+        _currentVersion = info.currentVersion;
+      });
+    }
   }
 
   Future<void> _loadPayday() async {
@@ -173,8 +207,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   _SectionCard(
                     appTheme: appTheme,
                     child: Column(children: [
-                      _buildAboutItem(appTheme, '版本', 'V1.0.0',
-                          icon: Icons.info_outline_rounded),
+                      _buildVersionItem(appTheme),
                       _buildSeparator(appTheme),
                       _buildAboutItem(appTheme, '隐私声明', '所有数据仅存储在本地',
                           icon: Icons.lock_outline_rounded),
@@ -564,6 +597,218 @@ class _SettingsPageState extends State<SettingsPage> {
                     color: isDestructive ? appTheme.rose : appTheme.earth)),
           ),
         ]),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 版本信息项 — 带检查更新功能
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildVersionItem(AppThemeExtension appTheme) {
+    final hasUpdate = _updateInfo?.hasUpdate ?? false;
+    final latestVersion = _updateInfo?.latestVersion;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: appTheme.primary.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(Icons.info_outline_rounded,
+              color: appTheme.earthMedium.withValues(alpha: 0.45), size: 18),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('版本',
+                  style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: appTheme.earth)),
+              const SizedBox(height: 2),
+              Text('V$_currentVersion',
+                  style: TextStyle(
+                      fontSize: 11.5,
+                      color: appTheme.earthMedium.withValues(alpha: 0.6))),
+            ],
+          ),
+        ),
+        // 更新按钮或状态
+        if (_isCheckingUpdate)
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: appTheme.earthMedium.withValues(alpha: 0.4),
+            ),
+          )
+        else if (hasUpdate)
+          GestureDetector(
+            onTap: () => _showUpdateDialog(appTheme),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: appTheme.sage.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.system_update_rounded,
+                      color: appTheme.sage, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    '更新 V$latestVersion',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: appTheme.sage,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          GestureDetector(
+            onTap: _checkUpdate,
+            child: Text(
+              '检查更新',
+              style: TextStyle(
+                fontSize: 11,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+      ]),
+    );
+  }
+
+  /// 显示更新详情弹窗
+  void _showUpdateDialog(AppThemeExtension appTheme) {
+    final info = _updateInfo;
+    if (info == null || !info.hasUpdate) return;
+
+    showDialog(
+      context: context,
+      barrierColor: appTheme.surfaceOverlay,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: appTheme.cream,
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: appTheme.sage.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                ),
+                child: Icon(Icons.system_update_rounded,
+                    color: appTheme.sage, size: 26),
+              ),
+              const SizedBox(height: 20),
+              Text('发现新版本',
+                  style: TextStyle(
+                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 8),
+              Text(
+                'V${info.currentVersion} → V${info.latestVersion}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.sage,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              if (info.releaseNotes != null &&
+                  info.releaseNotes!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: appTheme.creamDark,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    info.releaseNotes!.length > 200
+                        ? '${info.releaseNotes!.substring(0, 200)}...'
+                        : info.releaseNotes!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: appTheme.earthMedium,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              Row(children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: appTheme.creamDark,
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                      ),
+                      child: Center(
+                          child: Text('稍后再说',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: appTheme.earthLight))),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      if (info.releaseUrl != null) {
+                        await _updateService.openReleasePage(info.releaseUrl!);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: appTheme.sage,
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                      ),
+                      child: const Center(
+                          child: Text('前往更新',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white))),
+                    ),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
       ),
     );
   }
