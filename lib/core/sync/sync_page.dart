@@ -763,21 +763,21 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(20),
         ),
         child: Center(
-        child: _serverStarting
-            ? SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                  color: appTheme.primary,
-                ),
-              )
-            : Text('开启接收',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: appTheme.primary)),
-      ),
+          child: _serverStarting
+              ? SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    color: appTheme.primary,
+                  ),
+                )
+              : Text('开启接收',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: appTheme.primary)),
+        ),
     );
   }
 
