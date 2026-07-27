@@ -253,8 +253,9 @@ class FileServerService extends ChangeNotifier {
 
   Future<String> _getDownloadDir() async {
     if (Platform.isAndroid) {
-      final dirs = await getExternalStorageDirectories(type: StorageDirectory.downloads);
-      if (dirs != null && dirs.isNotEmpty) return dirs.first.path;
+      const customPath = '/storage/emulated/0/我的文件';
+      await Directory(customPath).create(recursive: true);
+      return customPath;
     }
     final appDir = await getApplicationDocumentsDirectory();
     final dir = p.join(appDir.path, 'file_transfer');
