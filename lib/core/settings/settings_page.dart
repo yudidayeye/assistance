@@ -84,7 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // ── 周期记账 ──
                   _SectionLabel(
@@ -96,7 +96,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: _buildPeriodSettings(appTheme),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // ── 主题设置 ──
                   _SectionLabel(
@@ -108,7 +108,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: _buildThemeSelector(appTheme),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // ── 数据 ──
                   _SectionLabel(
@@ -136,7 +136,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ]),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // ── 功能 ──
                   _SectionLabel(
@@ -158,7 +158,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ]),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // ── 关于 ──
                   _SectionLabel(
@@ -179,7 +179,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ]),
                   ),
 
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 60),
                 ],
               ),
             ),
@@ -194,7 +194,7 @@ class _SettingsPageState extends State<SettingsPage> {
   // ═══════════════════════════════════════════════════════════════
   Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
     final safeTop = MediaQuery.of(context).padding.top;
-    final headerHeight = safeTop + 58;
+    final headerHeight = safeTop + 52;
 
     return SliverPersistentHeader(
       pinned: true,
@@ -203,7 +203,7 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Container(
           color: appTheme.cream,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            padding: EdgeInsets.fromLTRB(16, safeTop + 10, 16, 4),
             child: Row(
               children: [
                 GestureDetector(
@@ -244,21 +244,21 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildModuleItem(AppThemeExtension appTheme, ToolModule module) {
     final enabled = _settings.isModuleEnabled(module.moduleId);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               color: module.themeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
-              child: module.icon.build(size: 22, color: module.themeColor),
+              child: module.icon.build(size: 18, color: module.themeColor),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,14 +266,14 @@ class _SettingsPageState extends State<SettingsPage> {
               children: [
                 Text(module.displayName,
                     style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w600,
                         color: appTheme.earth,
                         height: 1.2)),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(enabled ? '已启用' : '已禁用',
                     style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 11.5,
                         color: enabled
                             ? appTheme.sage.withValues(alpha: 0.8)
                             : appTheme.earthMedium.withValues(alpha: 0.5))),
@@ -302,22 +302,22 @@ class _SettingsPageState extends State<SettingsPage> {
   // ═══════════════════════════════════════════════════════════════
   Widget _buildPeriodSettings(AppThemeExtension appTheme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: GestureDetector(
         onTap: _showPaydayPicker,
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(Icons.calendar_month_rounded,
-                  color: appTheme.primary, size: 20),
+                  color: appTheme.primary, size: 18),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,7 +326,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   Text(
                     '发薪日',
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w600,
                       color: appTheme.earth,
                     ),
@@ -335,7 +335,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   Text(
                     '每月$_payday号（新建周期默认使用）',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: appTheme.earthMedium.withValues(alpha: 0.6),
                     ),
                   ),
@@ -460,7 +460,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildThemeSelector(AppThemeExtension appTheme) {
     final currentTheme = ThemeProvider.instance.currentTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: AppThemeType.values.map((type) {
@@ -474,13 +474,13 @@ class _SettingsPageState extends State<SettingsPage> {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOutCubic,
-                width: 44,
-                height: 44,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: type.color,
                   shape: BoxShape.circle,
                   border: isSelected
-                      ? Border.all(color: Colors.white, width: 2.5)
+                      ? Border.all(color: Colors.white, width: 2)
                       : Border.all(
                           color: type.color.withValues(alpha: 0), width: 0),
                   boxShadow: isSelected
@@ -496,8 +496,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: isSelected
                     ? Center(
                         child: Container(
-                          width: 14,
-                          height: 14,
+                          width: 12,
+                          height: 12,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
@@ -510,7 +510,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       )
                     : null,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(type.label,
                   style: TextStyle(
                       fontSize: 12,
@@ -539,22 +539,22 @@ class _SettingsPageState extends State<SettingsPage> {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Row(children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: 20),
+            child: Icon(icon, color: iconColor, size: 18),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(label,
                 style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w500,
                     color: isDestructive ? appTheme.rose : appTheme.earth)),
           ),
@@ -573,32 +573,32 @@ class _SettingsPageState extends State<SettingsPage> {
     required IconData icon,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 34,
+          height: 34,
           decoration: BoxDecoration(
             color: appTheme.primary.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon,
-              color: appTheme.earthMedium.withValues(alpha: 0.45), size: 20),
+              color: appTheme.earthMedium.withValues(alpha: 0.45), size: 18),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(title,
                 style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w500,
                     color: appTheme.earth)),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(subtitle,
                 style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 11.5,
                     color: appTheme.earthMedium.withValues(alpha: 0.6))),
           ],
         ),
@@ -611,7 +611,7 @@ class _SettingsPageState extends State<SettingsPage> {
   // ═══════════════════════════════════════════════════════════════
   Widget _buildSeparator(AppThemeExtension appTheme) {
     return Padding(
-      padding: const EdgeInsets.only(left: 78),
+      padding: const EdgeInsets.only(left: 66),
       child: Divider(
           height: 1, color: appTheme.earthMedium.withValues(alpha: 0.07)),
     );
@@ -1084,7 +1084,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1092,7 +1092,7 @@ class _SectionLabel extends StatelessWidget {
             title,
             style: TextStyle(
               fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: appTheme.earthMedium,
               letterSpacing: 0.2,
@@ -1118,10 +1118,10 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: appTheme.cardShadow,
         border: Border.all(
           color: appTheme.cardBorder,
