@@ -158,18 +158,31 @@ class _FileTransferPageState extends State<FileTransferPage> {
 
           if (running) ...[
             const SizedBox(height: 16),
-            // IP 和端口
+            // 访问地址
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: appTheme.cream,
                 borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  _infoRow('访问地址', 'http://${_server.localIp}:${_server.port}', appTheme),
-                  const SizedBox(height: 8),
-                  _infoRow('端口', '${_server.port}', appTheme),
+                  Text('访问地址', style: TextStyle(fontSize: 13, color: appTheme.earthLight)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'http://${_server.localIp}:${_server.port}',
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, color: appTheme.earth, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _copyAddress,
+                    child: Icon(Icons.copy_rounded, size: 18, color: appTheme.primary.withValues(alpha: 0.6)),
+                  ),
                 ],
               ),
             ),
@@ -611,20 +624,6 @@ class _FileTransferPageState extends State<FileTransferPage> {
         style: TextStyle(fontSize: 13, color: active ? appTheme.sage : appTheme.earthLight, fontWeight: FontWeight.w500)),
   );
 
-  Widget _infoRow(String label, String value, AppThemeExtension appTheme) => Row(
-    children: [
-      Text(label, style: TextStyle(fontSize: 13, color: appTheme.earthLight)),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Text(value,
-            textAlign: TextAlign.end,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: appTheme.earth, fontWeight: FontWeight.w600)),
-      ),
-    ],
-  );
-
   // ==================== 操作方法 ====================
 
 
@@ -651,6 +650,14 @@ class _FileTransferPageState extends State<FileTransferPage> {
         const SnackBar(content: Text('连接码已复制'), duration: Duration(seconds: 1)),
       );
     }
+  }
+
+  void _copyAddress() {
+    final address = 'http://${_server.localIp}:${_server.port}';
+    Clipboard.setData(ClipboardData(text: address));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('访问地址已复制'), duration: Duration(seconds: 1)),
+    );
   }
 
   Future<void> _pickAndShareFiles() async {
