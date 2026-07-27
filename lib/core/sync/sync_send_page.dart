@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/theme_extension.dart';
 import 'sync_service.dart';
 
-/// 发送数据页面 — 输入目标 IP，发送备份数据
+/// 发送数据页面 — 自动发现局域网设备，点击即发
 class SyncSendPage extends StatefulWidget {
   const SyncSendPage({super.key});
 
@@ -13,58 +14,59 @@ class SyncSendPage extends StatefulWidget {
 }
 
 class _SyncSendPageState extends State<SyncSendPage> {
-  final TextEditingController _ipController = TextEditingController();
-  final TextEditingController _portController = TextEditingController(text: '8080');
   final SyncService _sync = SyncService.instance;
+  StreamSubscription<List<DiscoveredDevice>>? _sub;
 
-  bool _sending = false;
+  List<DiscoveredDevice> _devices = [];
+  DiscoveredDevice? _sendingTo;
   // idle / sending / success / error
   String _status = 'idle';
   String _statusMessage = '';
 
   @override
+  void initState() {
+    super.initState();
+    _startDiscovery();
+  }
+
+  Future<void> _startDiscovery() async {
+    await _sync.startDiscovery();
+    _sub = _sync.discoveredDevices.listen((devices) {
+      if (mounted) {
+        setState(() {
+          _devices = devices;
+        });
+      }
+    });
+    // 加载已有设备
+    setState(() {
+      _devices = _sync.devices;
+    });
+  }
+
+  @override
   void dispose() {
-    _ipController.dispose();
-    _portController.dispose();
+    _sub?.cancel();
+    _sync.stopDiscovery();
     super.dispose();
   }
 
-  Future<void> _handleSend() async {
-    final ip = _ipController.text.trim();
-    final portStr = _portController.text.trim();
-
-    if (ip.isEmpty) {
-      setState(() {
-        _status = 'error';
-        _statusMessage = '请输入目标 IP 地址';
-      });
-      return;
-    }
-
-    final port = int.tryParse(portStr);
-    if (port == null || port < 1 || port > 65535) {
-      setState(() {
-        _status = 'error';
-        _statusMessage = '端口号无效（1-65535）';
-      });
-      return;
-    }
-
+  Future<void> _sendToDevice(DiscoveredDevice device) async {
     setState(() {
-      _sending = true;
+      _sendingTo = device;
       _status = 'sending';
-      _statusMessage = '正在发送数据...';
+      _statusMessage = '正在发送到 ${device.name}...';
     });
 
-    final result = await _sync.sendData(ip, port);
+    final result = await _sync.sendData(device.ip, device.port);
 
     if (!mounted) return;
 
     setState(() {
-      _sending = false;
+      _sendingTo = null;
       if (result.isSuccess) {
         _status = 'success';
-        _statusMessage = '数据同步成功！';
+        _statusMessage = '数据已成功发送到 ${device.name}';
       } else {
         _status = 'error';
         _statusMessage = result.error ?? '发送失败';
@@ -123,126 +125,92 @@ class _SyncSendPageState extends State<SyncSendPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
-                    // ── 图标 ──
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: appTheme.primary.withValues(alpha: 0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.cloud_upload_rounded,
-                          size: 32, color: appTheme.primary),
-                    ),
+                    // ── 状态提示 ──
+                    if (_status != 'idle') _buildStatusBar(appTheme),
 
-                    const SizedBox(height: 16),
+                    if (_status != 'idle') const SizedBox(height: 20),
 
-                    Text(
-                      '将本机数据发送到另一台设备',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: appTheme.earthMedium,
-                      ),
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // ── IP 输入 ──
-                    _buildInputLabel(appTheme, '目标 IP 地址'),
-                    const SizedBox(height: 8),
-                    _buildTextField(
-                      appTheme,
-                      controller: _ipController,
-                      hint: '例如 192.168.1.100',
-                      keyboardType: TextInputType.url,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ── 端口输入 ──
-                    _buildInputLabel(appTheme, '端口号'),
-                    const SizedBox(height: 8),
-                    _buildTextField(
-                      appTheme,
-                      controller: _portController,
-                      hint: '8080',
-                      keyboardType: TextInputType.number,
+                    // ── 设备列表标题 ──
+                    Row(
+                      children: [
+                        Icon(Icons.wifi_find_rounded,
+                            size: 18,
+                            color: appTheme.primary.withValues(alpha: 0.7)),
+                        const SizedBox(width: 8),
+                        Text(
+                          '附近的设备',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: appTheme.earthMedium,
+                          ),
+                        ),
+                        const Spacer(),
+                        // 扫描动画
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: appTheme.earthMedium.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '扫描中',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: appTheme.earthMedium.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 12),
 
-                    Text(
-                      '请先在目标设备上点击「接收数据」获取地址和端口',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: appTheme.earthMedium.withValues(alpha: 0.5),
-                      ),
-                    ),
+                    // ── 设备列表 ──
+                    if (_devices.isEmpty)
+                      _buildEmptyState(appTheme)
+                    else
+                      ..._devices.map((device) =>
+                          _buildDeviceItem(appTheme, device)),
 
                     const SizedBox(height: 32),
 
-                    // ── 状态指示 ──
-                    if (_status != 'idle') _buildStatusBar(appTheme),
-
-                    if (_status != 'idle') const SizedBox(height: 24),
-
-                    // ── 发送按钮 ──
-                    GestureDetector(
-                      onTap: _sending ? null : _handleSend,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: _sending
-                              ? appTheme.primary.withValues(alpha: 0.5)
-                              : appTheme.primary,
-                          borderRadius:
-                              BorderRadius.circular(appTheme.radiusMd),
-                        ),
-                        child: Center(
-                          child: _sending
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('发送',
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white)),
-                        ),
+                    // ── 提示 ──
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: appTheme.cardBackground,
+                        borderRadius: BorderRadius.circular(14),
+                        border:
+                            Border.all(color: appTheme.cardBorder, width: 0.5),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.info_outline_rounded,
+                              size: 16,
+                              color:
+                                  appTheme.earthMedium.withValues(alpha: 0.5)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '需要对方在「接收数据」页面等待连接。\n'
+                              '两台设备需连接同一 WiFi 网络。',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color:
+                                    appTheme.earthMedium.withValues(alpha: 0.5),
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // ── 完成后返回 ──
-                    if (_status == 'success')
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: appTheme.creamDark,
-                            borderRadius:
-                                BorderRadius.circular(appTheme.radiusMd),
-                          ),
-                          child: Center(
-                            child: Text('返回',
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: appTheme.earthLight)),
-                          ),
-                        ),
-                      ),
 
                     const SizedBox(height: 40),
                   ],
@@ -250,54 +218,6 @@ class _SyncSendPageState extends State<SyncSendPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInputLabel(AppThemeExtension appTheme, String label) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: appTheme.earthMedium,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    AppThemeExtension appTheme, {
-    required TextEditingController controller,
-    required String hint,
-    TextInputType? keyboardType,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        style: TextStyle(
-          fontFamily: GoogleFonts.dmSans().fontFamily,
-          fontSize: 15,
-          color: appTheme.earth,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            fontSize: 14,
-            color: appTheme.earthMedium.withValues(alpha: 0.4),
-          ),
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );
@@ -336,7 +256,17 @@ class _SyncSendPageState extends State<SyncSendPage> {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: textColor),
+          if (_status == 'sending')
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: textColor,
+              ),
+            )
+          else
+            Icon(icon, size: 18, color: textColor),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -351,5 +281,138 @@ class _SyncSendPageState extends State<SyncSendPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildEmptyState(AppThemeExtension appTheme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        children: [
+          Icon(Icons.devices_other_rounded,
+              size: 40, color: appTheme.earthMedium.withValues(alpha: 0.2)),
+          const SizedBox(height: 12),
+          Text(
+            '暂未发现设备',
+            style: TextStyle(
+              fontSize: 14,
+              color: appTheme.earthMedium.withValues(alpha: 0.4),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '请确认对方已打开「接收数据」',
+            style: TextStyle(
+              fontSize: 12,
+              color: appTheme.earthMedium.withValues(alpha: 0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeviceItem(AppThemeExtension appTheme, DiscoveredDevice device) {
+    final isSending = _sendingTo == device;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GestureDetector(
+        onTap: (_status == 'sending' && isSending) ? null : () => _sendToDevice(device),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: appTheme.cardBackground,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: appTheme.cardBorder, width: 0.5),
+          ),
+          child: Row(
+            children: [
+              // 设备图标
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _getDeviceIcon(device.name),
+                  size: 20,
+                  color: appTheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // 设备信息
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      device.name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: appTheme.earth,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      device.address,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.dmSans().fontFamily,
+                        fontSize: 11,
+                        color: appTheme.earthMedium.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // 发送按钮/状态
+              if (isSending && _status == 'sending')
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: appTheme.primary,
+                  ),
+                )
+              else
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: appTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '发送',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: appTheme.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _getDeviceIcon(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('windows') || lower.contains('pc') || lower.contains('desktop')) {
+      return Icons.computer_rounded;
+    } else if (lower.contains('android') || lower.contains('phone')) {
+      return Icons.phone_iphone_rounded;
+    } else if (lower.contains('iphone') || lower.contains('ios')) {
+      return Icons.phone_iphone_rounded;
+    } else if (lower.contains('mac') || lower.contains('macos')) {
+      return Icons.computer_rounded;
+    }
+    return Icons.devices_other_rounded;
   }
 }
