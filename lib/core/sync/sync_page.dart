@@ -414,7 +414,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
-          color: appTheme.creamDark.withValues(alpha: 0.25),
+          color: appTheme.earthMedium.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -440,7 +440,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             color: isSelected
                 ? appTheme.cardBackground
-                : appTheme.creamDark.withValues(alpha: 0.08),
+                : appTheme.earthMedium.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(9),
           ),
           child: Row(
