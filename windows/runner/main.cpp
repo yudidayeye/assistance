@@ -26,8 +26,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
-  // 9:16 aspect ratio, mobile phone simulation (405x720)
-  Win32Window::Size size(405, 720);
+  Win32Window::Size size(405, 820);
   if (!window.Create(L"my_assistant", origin, size)) {
     return EXIT_FAILURE;
   }
