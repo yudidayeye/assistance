@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/storage/database_service.dart';
 import '../core/theme/theme_extension.dart';
-import '../core/settings/settings_service.dart';
 
 /// 我的页面 — 用户中心
 class ProfilePageContent extends StatefulWidget {
@@ -46,11 +45,6 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
             // ── 用户卡片（页面焦点） ──
             SliverToBoxAdapter(
               child: _buildUserCard(appTheme),
-            ),
-
-            // ── 底部信息 ──
-            SliverToBoxAdapter(
-              child: _buildFooter(appTheme),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
@@ -185,37 +179,6 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                   ),
                 ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // 底部信息
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildFooter(AppThemeExtension appTheme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Center(
-        child: Column(
-          children: [
-            Text(
-              '我的工具箱',
-              style: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.4),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'V1.0.0 · 数据仅存储在本地',
-              style: TextStyle(
-                fontSize: 12,
-                color: appTheme.earthMedium.withValues(alpha: 0.3),
-              ),
             ),
           ],
         ),
