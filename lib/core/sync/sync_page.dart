@@ -438,9 +438,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
           curve: Curves.easeInOut,
           padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
-            color: isSelected
-                ? appTheme.cardBackground
-                : appTheme.earthMedium.withValues(alpha: 0.06),
+            color: isSelected ? appTheme.cardBackground : null,
             borderRadius: BorderRadius.circular(9),
           ),
           child: Row(
@@ -450,16 +448,16 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                   size: 15,
                   color: isSelected
                       ? appTheme.primary
-                      : appTheme.earthMedium.withValues(alpha: 0.5)),
+                      : appTheme.earthMedium.withValues(alpha: 0.45)),
               const SizedBox(width: 5),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 180),
+              Text(
+                label,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   color: isSelected ? appTheme.primary : appTheme.earthMedium,
                 ),
-                child: Text(label, textAlign: TextAlign.center),
               ),
             ],
           ),
