@@ -755,19 +755,24 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
   Widget _buildStartCard(AppThemeExtension appTheme) {
     return GestureDetector(
       onTap: _serverStarting ? null : _startServer,
-      child: Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+        decoration: BoxDecoration(
+          color: appTheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: _serverStarting
             ? SizedBox(
-                width: 18,
-                height: 18,
+                width: 14,
+                height: 14,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2,
+                  strokeWidth: 1.5,
                   color: appTheme.primary,
                 ),
               )
             : Text('开启接收',
                 style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: appTheme.primary)),
       ),
