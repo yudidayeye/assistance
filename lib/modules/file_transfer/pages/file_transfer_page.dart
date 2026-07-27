@@ -387,7 +387,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
             ],
           ),
           const SizedBox(height: 4),
-          Text('来自电脑上传，保存在 我的文件 目录',
+          Text('来自电脑上传，保存在 App 专属目录（文件管理器中搜索可找到）',
               style: TextStyle(fontSize: 12, color: appTheme.earthLight.withValues(alpha: 0.7))),
           const SizedBox(height: 12),
           ...files.take(10).map((f) => _buildReceivedFileItem(f, appTheme)),
