@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../services/file_server_service.dart';
 import '../services/transfer_service.dart';
@@ -49,32 +49,85 @@ class _FileTransferPageState extends State<FileTransferPage> {
     final appTheme = Theme.of(context).appTheme;
 
     return Scaffold(
-      backgroundColor: appTheme.cream,
-      appBar: AppBar(
-        title: const Text('文件互传'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: appTheme.earth,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildServerCard(appTheme),
-            if (_server.isRunning) ...[
-              const SizedBox(height: 16),
-              _buildGuideCard(appTheme),
-              const SizedBox(height: 16),
-              _buildSharedFilesCard(appTheme),
-            ],
-            if (_server.receivedFiles.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              _buildReceivedFilesCard(appTheme),
-            ],
-            const SizedBox(height: 16),
-            _buildHistoryCard(appTheme),
+      body: Container(
+        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            _buildHeader(appTheme),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildServerCard(appTheme),
+                    if (_server.isRunning) ...[
+                      const SizedBox(height: 16),
+                      _buildGuideCard(appTheme),
+                      const SizedBox(height: 16),
+                      _buildSharedFilesCard(appTheme),
+                    ],
+                    if (_server.receivedFiles.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildReceivedFilesCard(appTheme),
+                    ],
+                    const SizedBox(height: 16),
+                    _buildHistoryCard(appTheme),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ==================== 头部导航 ====================
+
+  Widget _buildHeader(AppThemeExtension appTheme) {
+    final safeTop = MediaQuery.of(context).padding.top;
+    final headerHeight = safeTop + 58;
+
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _PinnedHeaderDelegate(
+        height: headerHeight,
+        child: Container(
+          color: appTheme.cream,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: SizedBox(
+                    width: 28,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: appTheme.earth, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    '文件互传',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.dmSans().fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: appTheme.earth,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -647,5 +700,35 @@ class _FileTransferPageState extends State<FileTransferPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('路径已复制'), duration: const Duration(seconds: 1)),
     );
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _PinnedHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
   }
 }
