@@ -564,7 +564,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 功能列表项 — 无 chevron，柔和字重
+  // 功能列表项 — 带 chevron
   // ═══════════════════════════════════════════════════════════════
   Widget _buildFunctionItem(
     AppThemeExtension appTheme, {
@@ -596,6 +596,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     fontWeight: FontWeight.w500,
                     color: isDestructive ? appTheme.rose : appTheme.earth)),
           ),
+          Icon(Icons.chevron_right_rounded,
+              size: 18, color: appTheme.earthMedium.withValues(alpha: 0.4)),
         ]),
       ),
     );
@@ -640,6 +642,8 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
+        Icon(Icons.chevron_right_rounded,
+            size: 18, color: appTheme.earthMedium.withValues(alpha: 0.4)),
         // 更新按钮或状态
         if (_isCheckingUpdate)
           SizedBox(
@@ -836,22 +840,26 @@ class _SettingsPageState extends State<SettingsPage> {
               color: appTheme.earthMedium.withValues(alpha: 0.45), size: 18),
         ),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(title,
-                style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                    color: appTheme.earth)),
-            const SizedBox(height: 2),
-            Text(subtitle,
-                style: TextStyle(
-                    fontSize: 11.5,
-                    color: appTheme.earthMedium.withValues(alpha: 0.6))),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(title,
+                  style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: appTheme.earth)),
+              const SizedBox(height: 2),
+              Text(subtitle,
+                  style: TextStyle(
+                      fontSize: 11.5,
+                      color: appTheme.earthMedium.withValues(alpha: 0.6))),
+            ],
+          ),
         ),
+        Icon(Icons.chevron_right_rounded,
+            size: 18, color: appTheme.earthMedium.withValues(alpha: 0.4)),
       ]),
     );
   }
