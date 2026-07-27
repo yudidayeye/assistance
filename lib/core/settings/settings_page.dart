@@ -61,6 +61,7 @@ class _SettingsPageState extends State<SettingsPage> {
             _buildHeader(context, appTheme),
             SliverToBoxAdapter(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── 模块管理 ──
