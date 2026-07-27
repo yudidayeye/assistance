@@ -64,8 +64,6 @@ class _FileTransferPageState extends State<FileTransferPage> {
                     _buildServerCard(appTheme),
                     if (_server.isRunning) ...[
                       const SizedBox(height: 16),
-                      _buildGuideCard(appTheme),
-                      const SizedBox(height: 16),
                       _buildSharedFilesCard(appTheme),
                     ],
                     if (_server.receivedFiles.isNotEmpty) ...[
@@ -286,107 +284,6 @@ class _FileTransferPageState extends State<FileTransferPage> {
           ],
         ],
       ),
-    );
-  }
-
-  // ==================== 操作引导卡片 ====================
-
-  Widget _buildGuideCard(AppThemeExtension appTheme) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(appTheme),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.help_outline_rounded, color: appTheme.primary, size: 22),
-              const SizedBox(width: 8),
-              Text('如何使用',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: appTheme.earth)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildGuideItem(
-            icon: Icons.phone_android_rounded,
-            title: '手机传文件到电脑',
-            steps: [
-              '点击上方「选择文件分享到电脑」',
-              '在电脑浏览器打开 http://${_server.localIp}:${_server.port}',
-              '输入连接码 ${_server.connectionCode ?? '???'}',
-              '在网页上点击文件旁的「下载」按钮',
-            ],
-            appTheme: appTheme,
-          ),
-          const Divider(height: 28),
-          _buildGuideItem(
-            icon: Icons.computer_rounded,
-            title: '电脑传文件到手机',
-            steps: [
-              '在电脑浏览器打开 http://${_server.localIp}:${_server.port}',
-              '输入连接码 ${_server.connectionCode ?? '???'}',
-              '在网页上拖拽文件或点击上传区域选择文件',
-              '文件会自动保存到手机',
-            ],
-            appTheme: appTheme,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGuideItem({
-    required IconData icon,
-    required String title,
-    required List<String> steps,
-    required AppThemeExtension appTheme,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 40, height: 40,
-          decoration: BoxDecoration(
-            color: appTheme.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: appTheme.primary, size: 22),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: appTheme.earth)),
-              const SizedBox(height: 8),
-              ...steps.asMap().entries.map((e) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 20, height: 20,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: appTheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text('${e.key + 1}',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: appTheme.primary)),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(e.value,
-                          style: TextStyle(fontSize: 13, color: appTheme.earthLight, height: 1.4)),
-                    ),
-                  ],
-                ),
-              )),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
