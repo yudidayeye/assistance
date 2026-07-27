@@ -778,6 +778,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                       fontWeight: FontWeight.w500,
                       color: appTheme.primary)),
         ),
+      ),
     );
   }
 
