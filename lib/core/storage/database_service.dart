@@ -186,44 +186,6 @@ class DatabaseService {
     await db.execute('DROP TABLE IF EXISTS mod_accounting_categories');
   }
 
-  static Future<void> _createV12Schema(Database db) async {
-    // 文件互传模块 - 传输记录表
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS mod_file_transfer_records (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        file_name TEXT NOT NULL,
-        file_size INTEGER NOT NULL,
-        file_path TEXT NOT NULL,
-        direction TEXT NOT NULL,
-        target_path TEXT,
-        status TEXT NOT NULL DEFAULT 'pending',
-        error_message TEXT,
-        created_at TEXT NOT NULL,
-        completed_at TEXT
-      )
-    ''');
-    // 文件互传模块 - 连接配置表
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS mod_file_transfer_configs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        host TEXT NOT NULL,
-        port INTEGER DEFAULT 445,
-        share_name TEXT NOT NULL,
-        username TEXT,
-        password TEXT,
-        is_default INTEGER DEFAULT 0,
-        created_at TEXT NOT NULL
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_ft_records_created ON mod_file_transfer_records(created_at)',
-    );
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_ft_configs_default ON mod_file_transfer_configs(is_default)',
-    );
-  }
-
   // --- Lifecycle ---
 
   Future<void> _onCreate(Database db, int version) async {
@@ -237,8 +199,6 @@ class DatabaseService {
       await _createV4Schema(db);
       // v5 删除旧 accounting 模块表
       await _createV5Schema(db);
-      // v12 文件互传模块表
-      await _createV12Schema(db);
       await batch.commit(noResult: true);
     });
   }
@@ -272,11 +232,6 @@ class DatabaseService {
     // 如果从 v10 升级到 v11，添加 sort_order 字段到大额追加表
     if (oldVersion < 11 && newVersion >= 11) {
       await _migrateToV11(db);
-    }
-
-    // 如果从 v11 升级到 v12，添加文件互传模块表
-    if (oldVersion < 12 && newVersion >= 12) {
-      await _migrateToV12(db);
     }
 
     // 对于其他版本的升级，逐个执行
@@ -477,11 +432,6 @@ class DatabaseService {
     await db.execute(
       'ALTER TABLE mod_period_book_large_additions ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
     );
-  }
-
-  /// v12 迁移：添加文件互传模块表
-  Future<void> _migrateToV12(Database db) async {
-    await _createV12Schema(db);
   }
 
   /// v9 迁移：添加大额记录表（周期级，不计入总本金和总支出）
