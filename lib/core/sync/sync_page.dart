@@ -1105,7 +1105,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: appTheme.earthMedium.withValues(alpha: 0.03),
+        color: appTheme.earthMedium.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -1113,13 +1113,13 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         children: [
           Icon(icon,
               size: 15,
-              color: appTheme.earthMedium.withValues(alpha: 0.35)),
+              color: appTheme.earthMedium.withValues(alpha: 0.45)),
           const SizedBox(width: 10),
           Expanded(
             child: Text(text,
                 style: TextStyle(
                     fontSize: 12,
-                    color: appTheme.earthMedium.withValues(alpha: 0.5),
+                    color: appTheme.earthMedium.withValues(alpha: 0.55),
                     height: 1.6)),
           ),
         ],
