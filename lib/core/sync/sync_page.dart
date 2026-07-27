@@ -355,6 +355,8 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
               child: _buildSegmentedControl(appTheme),
             ),
 
+            const SizedBox(height: 12),
+
             // ── 内容区 ──
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
