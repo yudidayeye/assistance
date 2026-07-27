@@ -1105,9 +1105,8 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: appTheme.cardBackground.withValues(alpha: 0.35),
+        color: appTheme.earthMedium.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
