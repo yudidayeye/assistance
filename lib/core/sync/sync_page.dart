@@ -351,7 +351,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
 
             // ── Tab 切换 ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              padding: const EdgeInsets.only(top: 16),
               child: _buildSegmentedControl(appTheme),
             ),
 
@@ -409,17 +409,20 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
   }
 
   Widget _buildSegmentedControl(AppThemeExtension appTheme) {
-    return Container(
-      height: 36,
-      decoration: BoxDecoration(
-        color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          _buildTabItem(appTheme, '接收', 0, Icons.download_rounded),
-          _buildTabItem(appTheme, '发送', 1, Icons.upload_rounded),
-        ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        decoration: BoxDecoration(
+          color: appTheme.creamDark.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            _buildTabItem(appTheme, '接收', 0, Icons.download_rounded),
+            _buildTabItem(appTheme, '发送', 1, Icons.upload_rounded),
+          ],
+        ),
       ),
     );
   }
@@ -430,22 +433,15 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
     return Expanded(
       child: GestureDetector(
         onTap: () => _onTabChanged(index),
-        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.all(3),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
-            color: isSelected ? appTheme.cardBackground : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: appTheme.earth.withValues(alpha: 0.06),
-                      blurRadius: 6,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : [],
+            color: isSelected
+                ? appTheme.cardBackground
+                : appTheme.creamDark.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(9),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -456,13 +452,14 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                       ? appTheme.primary
                       : appTheme.earthMedium.withValues(alpha: 0.5)),
               const SizedBox(width: 5),
-              Text(
-                label,
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 180),
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? appTheme.earth : appTheme.earthMedium,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? appTheme.primary : appTheme.earthMedium,
                 ),
+                child: Text(label, textAlign: TextAlign.center),
               ),
             ],
           ),
@@ -528,52 +525,58 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
   }
 
   Widget _buildDoneState(AppThemeExtension appTheme) {
-    return Center(
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.0, end: 1.0),
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeOutCubic,
-        builder: (context, value, child) {
-          return Opacity(
-            opacity: value,
-            child: Transform.scale(
-              scale: 0.85 + 0.15 * value,
-              child: child,
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          const SizedBox(height: 48),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.scale(
+                  scale: 0.85 + 0.15 * value,
+                  child: child,
+                ),
+              );
+            },
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: appTheme.sage.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.check_circle_rounded,
+                      size: 40, color: appTheme.sage),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  '同步完成',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: appTheme.earth,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '数据已成功导入',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: appTheme.earthMedium.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
             ),
-          );
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: appTheme.sage.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.check_circle_rounded,
-                  size: 40, color: appTheme.sage),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              '同步完成',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: appTheme.earth,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '数据已成功导入',
-              style: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
