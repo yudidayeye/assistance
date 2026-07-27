@@ -234,12 +234,15 @@ class _SyncPageState extends State<SyncPage> {
         _rxMessage = '正在导入数据...';
       });
       request.confirm();
-      // 导入完成后切回 waiting
       await request.result;
       if (mounted) {
         setState(() {
-          _rxStatus = 'waiting';
-          _rxMessage = '导入完成，继续等待...';
+          _rxStatus = 'done';
+          _rxMessage = '数据同步完成';
+        });
+        // 2 秒后自动停止服务
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) _stopServer();
         });
       }
     } else {
@@ -293,6 +296,18 @@ class _SyncPageState extends State<SyncPage> {
         _txMessage = result.error ?? '发送失败';
       }
     });
+
+    // 3 秒后自动清除状态
+    if (result.isSuccess) {
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted && _txStatus == 'success') {
+          setState(() {
+            _txStatus = 'idle';
+            _txMessage = '';
+          });
+        }
+      });
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -434,6 +449,44 @@ class _SyncPageState extends State<SyncPage> {
   // ── 接收 Tab ──
 
   Widget _buildReceiveTab(AppThemeExtension appTheme) {
+    // 完成状态：居中展示成功
+    if (_rxStatus == 'done') {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: appTheme.sage.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.check_circle_rounded,
+                  size: 36, color: appTheme.sage),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '同步完成',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: appTheme.earth,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '数据已成功导入',
+              style: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -450,11 +503,12 @@ class _SyncPageState extends State<SyncPage> {
           if (_rxStatus == 'waiting' || _rxStatus == 'received' || _rxStatus == 'importing')
             _buildAddressCard(appTheme),
 
+          // 开启按钮
           if (_rxStatus == 'idle' || _rxStatus == 'failed')
             _buildStartCard(appTheme),
 
           // 停止按钮
-          if (_sync.isRunning) ...[
+          if (_sync.isRunning && _rxStatus != 'importing') ...[
             const SizedBox(height: 16),
             GestureDetector(
               onTap: _stopServer,
@@ -482,7 +536,7 @@ class _SyncPageState extends State<SyncPage> {
           _buildHintCard(
             appTheme,
             icon: Icons.info_outline_rounded,
-            text: _rxStatus == 'waiting' || _rxStatus == 'received'
+            text: (_rxStatus == 'waiting' || _rxStatus == 'received')
                 ? '请在另一台设备的「数据同步」页面中选择本机发送数据'
                 : '开启后，其他设备可在局域网内发现并发送数据到本机',
           ),
