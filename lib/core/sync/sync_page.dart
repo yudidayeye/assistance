@@ -484,8 +484,6 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          const SizedBox(height: 32),
-
           // ── 状态指示 ──
           _buildRxStatusIndicator(appTheme),
 
@@ -817,8 +815,6 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          const SizedBox(height: 20),
-
           // ── 状态提示 ──
           if (_txStatus != 'idle') ...[
             _buildTxStatusBar(appTheme),
