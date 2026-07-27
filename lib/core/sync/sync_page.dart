@@ -756,6 +756,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
     return GestureDetector(
       onTap: _serverStarting ? null : _startServer,
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
         decoration: BoxDecoration(
           color: appTheme.primary.withValues(alpha: 0.1),
