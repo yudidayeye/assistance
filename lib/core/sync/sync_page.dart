@@ -787,17 +787,17 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       onTap: _stopServer,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: appTheme.creamDark,
-          borderRadius: BorderRadius.circular(16),
+          color: appTheme.rose.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Center(
           child: Text('停止接收',
               style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: appTheme.earthLight)),
+                  color: appTheme.rose)),
         ),
       ),
     );
