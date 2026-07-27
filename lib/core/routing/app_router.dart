@@ -3,8 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../module_system/module_registry.dart';
 import '../../pages/main_shell_page.dart';
 import '../settings/settings_page.dart';
-import '../sync/sync_receive_page.dart';
-import '../sync/sync_send_page.dart';
+import '../sync/sync_page.dart';
 
 /// 全局路由管理 — 系统路由 + 设置页 + 动态收集模块路由
 class AppRouter {
@@ -56,17 +55,10 @@ class AppRouter {
           ),
         ),
         GoRoute(
-          path: '/sync/receive',
+          path: '/sync',
           pageBuilder: (context, state) => _buildPage(
             state: state,
-            child: const SyncReceivePage(),
-          ),
-        ),
-        GoRoute(
-          path: '/sync/send',
-          pageBuilder: (context, state) => _buildPage(
-            state: state,
-            child: const SyncSendPage(),
+            child: const SyncPage(),
           ),
         ),
         ..._buildModuleRoutes(),
