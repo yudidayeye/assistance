@@ -552,7 +552,7 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 
   Widget _buildCardTabBar(AppThemeExtension appTheme) {
-    const tabs = ['追加记录', '购物支出', '其他支出'];
+    const tabs = ['购物支出', '其他支出', '追加记录'];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -614,13 +614,13 @@ class _StageEditPageState extends State<StageEditPage> {
   Widget _buildTabContent(AppThemeExtension appTheme) {
     switch (_currentTabIndex) {
       case 0:
-        return _buildAdditionsSection(appTheme);
-      case 1:
         return _buildShoppingSection(appTheme);
-      case 2:
+      case 1:
         return _buildOtherSection(appTheme);
-      default:
+      case 2:
         return _buildAdditionsSection(appTheme);
+      default:
+        return _buildShoppingSection(appTheme);
     }
   }
 
