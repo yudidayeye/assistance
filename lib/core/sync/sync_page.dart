@@ -349,7 +349,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       body: Column(
         children: [
           // ── 顶部栏 ──
-          AppHeader.simple(title: '数据同步'),
+          AppHeader.simple(title: '数据同步').buildNormal(context),
 
           // ── Tab 切换 ──
           Padding(

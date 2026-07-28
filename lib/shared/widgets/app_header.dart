@@ -75,6 +75,11 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return buildSliver(context);
+  }
+
+  /// 构建 Sliver 版本（用于 CustomScrollView）
+  Widget buildSliver(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
     final safeTop = MediaQuery.of(context).padding.top;
     final headerHeight = heightOverride ?? (safeTop + 58);
@@ -83,53 +88,51 @@ class AppHeader extends StatelessWidget {
       pinned: true,
       delegate: PinnedHeaderDelegate(
         height: headerHeight,
-        child: Container(
-          color: appTheme.cream,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
-            child: Row(
-              children: [
-                if (showBack) ...[
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: SizedBox(
-                      width: 28,
-                      height: 40,
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: appTheme.earth,
-                        size: 20,
-                      ),
-                    ),
+        child: _buildContent(context, appTheme, safeTop),
+      ),
+    );
+  }
+
+  /// 构建普通 Widget 版本（用于 Column 等非滚动容器）
+  Widget buildNormal(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
+    final safeTop = MediaQuery.of(context).padding.top;
+    final headerHeight = heightOverride ?? (safeTop + 58);
+
+    return SizedBox(
+      height: headerHeight,
+      child: _buildContent(context, appTheme, safeTop),
+    );
+  }
+
+  Widget _buildContent(
+      BuildContext context, AppThemeExtension appTheme, double safeTop) {
+    return Container(
+      color: appTheme.cream,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
+        child: Row(
+          children: [
+            if (showBack) ...[
+              GestureDetector(
+                onTap: () => context.pop(),
+                child: SizedBox(
+                  width: 28,
+                  height: 40,
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: appTheme.earth,
+                    size: 20,
                   ),
-                  AppSpacing.w2,
-                ],
-                if (subtitle != null) ...[
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.headerTitle.copyWith(
-                            color: appTheme.earth,
-                          ),
-                        ),
-                        AppSpacing.w8,
-                        Text(
-                          subtitle!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: appTheme.earthMedium.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else ...[
-                  Expanded(
-                    child: Text(
+                ),
+              ),
+              AppSpacing.w2,
+            ],
+            if (subtitle != null) ...[
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -137,12 +140,31 @@ class AppHeader extends StatelessWidget {
                         color: appTheme.earth,
                       ),
                     ),
+                    AppSpacing.w8,
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: appTheme.earthMedium.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else ...[
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.headerTitle.copyWith(
+                    color: appTheme.earth,
                   ),
-                ],
-                ...actions,
-              ],
-            ),
-          ),
+                ),
+              ),
+            ],
+            ...actions,
+          ],
         ),
       ),
     );
