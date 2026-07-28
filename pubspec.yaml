@@ -1,7 +1,7 @@
 name: my_assistant
 description: 轻量级个人工具集App - 记账与生理期记录
 publish_to: 'none'
-version: 1.0.1+4
+version: 1.0.2+5
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -27,7 +27,6 @@ dependencies:
   url_launcher: ^6.2.0
   package_info_plus: ^8.0.0
   http: ^1.2.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
