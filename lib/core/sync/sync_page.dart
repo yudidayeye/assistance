@@ -353,7 +353,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
 
           // ── Tab 切换 ──
           Padding(
-            padding: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: AppSegmentedTab(
               items: const [
                 AppSegmentedTabItem(label: '接收', icon: Icons.download_rounded),
@@ -665,52 +665,23 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
   }
 
   Widget _buildStartCard(AppThemeExtension appTheme) {
-    return GestureDetector(
-      onTap: _serverStarting ? null : _startServer,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-        decoration: BoxDecoration(
-          color: appTheme.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(appTheme.radiusSm),
-        ),
-        child: Center(
-          child: _serverStarting
-              ? SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 1.5,
-                    color: appTheme.primary,
-                  ),
-                )
-              : Text('开启接收',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: appTheme.primary)),
-        ),
-      ),
-    );
+    return _serverStarting
+        ? AppButton.add(
+            label: '开启接收',
+            onTap: null,
+          )
+        : AppButton.add(
+            label: '开启接收',
+            onTap: _startServer,
+          );
   }
 
   Widget _buildStopButton(AppThemeExtension appTheme) {
-    return GestureDetector(
-      onTap: _stopServer,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: appTheme.rose.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(appTheme.radiusSm),
-        ),
-        child: Center(
-          child: Text('停止接收',
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: appTheme.rose)),
-        ),
+    return SizedBox(
+      width: double.infinity,
+      child: AppButton.danger(
+        label: '停止接收',
+        onTap: _stopServer,
       ),
     );
   }

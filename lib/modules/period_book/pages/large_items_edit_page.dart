@@ -293,25 +293,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
           if (_additionFormExpanded)
             _buildAdditionForm(appTheme)
           else
-            GestureDetector(
+            AppButton.add(
+              label: '添加追加',
               onTap: () => setState(() => _additionFormExpanded = true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: appTheme.sage.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    '+ 添加追加',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.sage,
-                    ),
-                  ),
-                ),
-              ),
+              icon: Icons.add_rounded,
             ),
         ],
       ),
@@ -553,25 +538,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
           if (_shoppingFormExpanded)
             _buildShoppingForm(appTheme)
           else
-            GestureDetector(
+            AppButton.add(
+              label: '添加支出',
               onTap: () => setState(() => _shoppingFormExpanded = true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: appTheme.rose.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    '+ 添加支出',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.rose,
-                    ),
-                  ),
-                ),
-              ),
+              icon: Icons.add_rounded,
             ),
         ],
       ),
@@ -642,25 +612,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
           if (_otherFormExpanded)
             _buildOtherForm(appTheme)
           else
-            GestureDetector(
+            AppButton.add(
+              label: '添加支出',
               onTap: () => setState(() => _otherFormExpanded = true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: appTheme.rose.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    '+ 添加支出',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.rose,
-                    ),
-                  ),
-                ),
-              ),
+              icon: Icons.add_rounded,
             ),
         ],
       ),

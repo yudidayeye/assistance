@@ -33,6 +33,7 @@ class SettingsListItem extends StatelessWidget {
     final textColor = isDestructive ? appTheme.rose : appTheme.earth;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
