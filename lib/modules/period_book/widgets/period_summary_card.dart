@@ -48,10 +48,20 @@ class PeriodSummaryCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: appTheme.cardBackground,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            appTheme.primaryLight.withValues(alpha: 0.13),
+            appTheme.cardBackground,
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: appTheme.cardShadow,
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
+        border: Border.all(
+          color: appTheme.primaryLight.withValues(alpha: 0.18),
+          width: 0.5,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
