@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
+import '../../../shared/widgets/pinned_header_delegate.dart';
+import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/foundation/app_typography.dart';
+import '../../../shared/foundation/app_spacing.dart';
 import '../services/period_book_service.dart';
 import '../services/period_book_settings.dart';
 
@@ -69,93 +75,38 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildHeader(appTheme),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    // 日期选择
-                    _buildDateCard(appTheme),
-                    const SizedBox(height: 16),
-                    // 初始本金
-                    _buildAmountCard(
-                      appTheme: appTheme,
-                      label: '初始本金',
-                      icon: Icons.account_balance_wallet_outlined,
-                      value: _baseAmount,
-                      onTap: () => _showAmountKeyboard(),
-                    ),
-                    const SizedBox(height: 32),
-                    // 保存按钮
-                    _buildSaveButton(appTheme),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 头部
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildHeader(AppThemeExtension appTheme) {
-    final safeTop = MediaQuery.of(context).padding.top;
-    final headerHeight = safeTop + 58;
-
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _PinnedHeaderDelegate(
-        height: headerHeight,
-        child: Container(
-          color: appTheme.cream,
+    return AppScrollScaffold(
+      slivers: [
+        AppHeader.simple(title: '新建周期'),
+        SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
               children: [
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: SizedBox(
-                    width: 28,
-                    height: 40,
-                    child: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: appTheme.earth, size: 20),
-                  ),
+                const SizedBox(height: 16),
+                // 日期选择
+                _buildDateCard(appTheme),
+                const SizedBox(height: 16),
+                // 初始本金
+                _buildAmountCard(
+                  appTheme: appTheme,
+                  label: '初始本金',
+                  icon: Icons.account_balance_wallet_outlined,
+                  value: _baseAmount,
+                  onTap: () => _showAmountKeyboard(),
                 ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Text(
-                    '新建周期',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                      letterSpacing: -0.1,
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 32),
+                // 保存按钮
+                _buildSaveButton(appTheme),
+                const SizedBox(height: 40),
               ],
             ),
           ),
         ),
-      ),
+      ],
     );
   }
+
 
   // ═══════════════════════════════════════════════════════════
   // 日期选择卡片
@@ -543,32 +494,3 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
   }
 }
 
-class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double height;
-  final Widget child;
-
-  const _PinnedHeaderDelegate({
-    required this.height,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
-    return height != oldDelegate.height || child != oldDelegate.child;
-  }
-}

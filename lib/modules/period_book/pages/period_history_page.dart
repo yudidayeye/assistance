@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
+import '../../../shared/widgets/pinned_header_delegate.dart';
+import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_dialog.dart';
+import '../../../shared/foundation/app_typography.dart';
+import '../../../shared/foundation/app_spacing.dart';
 import '../../../shared/utils/format_utils.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 import '../models/period_record.dart';
@@ -136,90 +143,42 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: _loading && _periods.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                onRefresh: _loadData,
-                color: appTheme.primary,
-                backgroundColor: appTheme.cardBackground,
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    _buildHeader(appTheme),
-                    if (_periods.isEmpty)
-                      const SliverToBoxAdapter(
-                        child: EmptyStateWidget(
-                          icon: Icons.history_rounded,
-                          title: '暂无历史记录',
-                          subtitle: '删除的周期记录不会出现在这里',
-                        ),
-                      )
-                    else
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final period = _periods[index];
-                            return _buildPeriodCard(appTheme, period);
-                          },
-                          childCount: _periods.length,
-                        ),
+    return AppScaffold(
+      body: _loading && _periods.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadData,
+              color: appTheme.primary,
+              backgroundColor: appTheme.cardBackground,
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  AppHeader.simple(title: '历史记录'),
+                  if (_periods.isEmpty)
+                    const SliverToBoxAdapter(
+                      child: EmptyStateWidget(
+                        icon: Icons.history_rounded,
+                        title: '暂无历史记录',
+                        subtitle: '删除的周期记录不会出现在这里',
                       ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                  ],
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(AppThemeExtension appTheme) {
-    final safeTop = MediaQuery.of(context).padding.top;
-    final headerHeight = safeTop + 58;
-
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _PinnedHeaderDelegate(
-        height: headerHeight,
-        child: Container(
-          color: appTheme.cream,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: SizedBox(
-                    width: 28,
-                    height: 40,
-                    child: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: appTheme.earth, size: 20),
-                  ),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Text(
-                    '历史记录',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                      letterSpacing: -0.1,
+                    )
+                  else
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final period = _periods[index];
+                          return _buildPeriodCard(appTheme, period);
+                        },
+                        childCount: _periods.length,
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
+
 
   /// 周期卡片 — 两行紧凑布局：日期与金额对比 + 辅助信息
   Widget _buildPeriodCard(AppThemeExtension appTheme, PeriodRecord period) {
@@ -401,32 +360,3 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   }
 }
 
-class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double height;
-  final Widget child;
-
-  const _PinnedHeaderDelegate({
-    required this.height,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
-    return height != oldDelegate.height || child != oldDelegate.child;
-  }
-}

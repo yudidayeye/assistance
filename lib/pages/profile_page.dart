@@ -3,6 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/storage/database_service.dart';
 import '../core/theme/theme_extension.dart';
+import '../shared/widgets/pinned_header_delegate.dart';
+import '../shared/widgets/app_header.dart';
+import '../shared/widgets/app_scaffold.dart';
+import '../shared/widgets/app_button.dart';
+import '../shared/widgets/app_dialog.dart';
+import '../shared/foundation/app_typography.dart';
+import '../shared/foundation/app_spacing.dart';
 
 /// 我的页面 — 用户中心
 class ProfilePageContent extends StatefulWidget {
@@ -33,78 +40,27 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ── 头部 ──
-            _buildHeader(appTheme),
-
-            // ── 用户卡片（页面焦点） ──
-            SliverToBoxAdapter(
-              child: _buildUserCard(appTheme),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 120)),
+    return AppScrollScaffold(
+      slivers: [
+        // ── 头部 ──
+        AppHeader.root(
+          title: '我的',
+          actions: [
+            AppHeader.iconButton(appTheme, Icons.settings_outlined,
+                () => context.push('/settings')),
           ],
         ),
-      ),
-    );
-  }
 
-  // ═══════════════════════════════════════════════════════════════
-  // 头部
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildHeader(AppThemeExtension appTheme) {
-    final safeTop = MediaQuery.of(context).padding.top;
-    final headerHeight = safeTop + 58;
-
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _PinnedHeaderDelegate(
-        height: headerHeight,
-        child: Container(
-          color: appTheme.cream,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '我的',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                      letterSpacing: -0.1,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => context.push('/settings'),
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: appTheme.earthMedium.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.settings_outlined,
-                        color: appTheme.earth, size: 20),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        // ── 用户卡片（页面焦点） ──
+        SliverToBoxAdapter(
+          child: _buildUserCard(appTheme),
         ),
-      ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 120)),
+      ],
     );
   }
+
 
   // ═══════════════════════════════════════════════════════════════
   // 用户卡片 — 页面焦点，居中布局
@@ -243,54 +199,19 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                 style: TextStyle(color: appTheme.earth, fontSize: 15),
               ),
               const SizedBox(height: 22),
-              Row(children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: appTheme.creamDark,
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      child: Center(
-                          child: Text('取消',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: appTheme.earthMedium))),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () async {
-                      final name = ctrl.text.trim();
-                      if (name.isEmpty) return;
-                      await DatabaseService.instance
-                          .upsertSetting('user_name', name);
-                      if (mounted) setState(() => _userName = name);
-                      if (ctx.mounted) Navigator.pop(ctx);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [appTheme.primary, appTheme.primaryDark],
-                        ),
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      child: const Center(
-                          child: Text('保存',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white))),
-                    ),
-                  ),
-                ),
-              ]),
+              AppDialog.confirmCancelPair(
+                context: ctx,
+                cancelLabel: '取消',
+                confirmLabel: '保存',
+                onConfirm: () async {
+                  final name = ctrl.text.trim();
+                  if (name.isEmpty) return;
+                  await DatabaseService.instance
+                      .upsertSetting('user_name', name);
+                  if (mounted) setState(() => _userName = name);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+              ),
             ],
           ),
         ),
@@ -299,32 +220,3 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
   }
 }
 
-class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double height;
-  final Widget child;
-
-  const _PinnedHeaderDelegate({
-    required this.height,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
-    return height != oldDelegate.height || child != oldDelegate.child;
-  }
-}

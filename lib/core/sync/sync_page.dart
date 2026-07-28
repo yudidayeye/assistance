@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/theme_extension.dart';
 import 'sync_service.dart';
+import '../../shared/widgets/app_header.dart';
+import '../../shared/widgets/app_scaffold.dart';
+import '../../shared/widgets/app_segmented_tab.dart';
+import '../../shared/widgets/app_button.dart';
 
 /// 数据同步页面 — 接收 / 发送合一
 class SyncPage extends StatefulWidget {
@@ -341,127 +345,35 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
     final appTheme = Theme.of(context).appTheme;
     final safeTop = MediaQuery.of(context).padding.top;
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: Column(
-          children: [
-            // ── 顶部栏 ──
-            _buildHeader(appTheme, safeTop),
+    return AppScaffold(
+      body: Column(
+        children: [
+          // ── 顶部栏 ──
+          AppHeader.simple(title: '数据同步'),
 
-            // ── Tab 切换 ──
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: _buildSegmentedControl(appTheme),
+          // ── Tab 切换 ──
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: AppSegmentedTab(
+              items: const [
+                AppSegmentedTabItem(label: '接收', icon: Icons.download_rounded),
+                AppSegmentedTabItem(label: '发送', icon: Icons.upload_rounded),
+              ],
+              selectedIndex: _tabIndex,
+              onChanged: _onTabChanged,
             ),
-
-            const SizedBox(height: 12),
-
-            // ── 内容区 ──
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: _tabIndex == 0
-                  ? _buildReceiveTab(appTheme)
-                  : _buildSendTab(appTheme),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(AppThemeExtension appTheme, double safeTop) {
-    return Container(
-      color: appTheme.cream,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, safeTop + 10, 16, 4),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () {
-                _stopDiscovery();
-                context.pop();
-              },
-              child: SizedBox(
-                width: 28,
-                height: 40,
-                child: Icon(Icons.arrow_back_ios_new_rounded,
-                    color: appTheme.earth, size: 20),
-              ),
-            ),
-            const SizedBox(width: 2),
-            Expanded(
-              child: Text(
-                '数据同步',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: appTheme.earth,
-                  letterSpacing: -0.1,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSegmentedControl(AppThemeExtension appTheme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        decoration: BoxDecoration(
-          color: appTheme.earthMedium.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            _buildTabItem(appTheme, '接收', 0, Icons.download_rounded),
-            _buildTabItem(appTheme, '发送', 1, Icons.upload_rounded),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabItem(
-      AppThemeExtension appTheme, String label, int index, IconData icon) {
-    final isSelected = _tabIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => _onTabChanged(index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          decoration: BoxDecoration(
-            color: isSelected ? appTheme.cardBackground : null,
-            borderRadius: BorderRadius.circular(9),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon,
-                  size: 15,
-                  color: isSelected
-                      ? appTheme.primary
-                      : appTheme.earthMedium.withValues(alpha: 0.45)),
-              const SizedBox(width: 5),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? appTheme.primary : appTheme.earthMedium,
-                ),
-              ),
-            ],
+
+          const SizedBox(height: 12),
+
+          // ── 内容区 ──
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: _tabIndex == 0
+                ? _buildReceiveTab(appTheme)
+                : _buildSendTab(appTheme),
           ),
-        ),
+        ],
       ),
     );
   }

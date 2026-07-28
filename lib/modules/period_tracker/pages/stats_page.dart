@@ -7,6 +7,11 @@ import '../services/period_service.dart';
 import '../services/prediction_service.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../core/theme/theme_extension.dart';
+import '../../../shared/widgets/pinned_header_delegate.dart';
+import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/foundation/app_typography.dart';
+import '../../../shared/foundation/app_spacing.dart';
 
 /// 周期统计页 — 柔和风格
 class PeriodStatsPage extends StatefulWidget {
@@ -81,80 +86,30 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
       }
     }
 
-    return Scaffold(
-      backgroundColor: appTheme.cream,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildHeader(context, appTheme),
-          SliverToBoxAdapter(
-            child: _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
-          ),
-          SliverToBoxAdapter(
-            child: _buildSectionHeader(appTheme, '历史记录'),
-          ),
-          if (_records.isEmpty)
-            SliverFillRemaining(
-              child: EmptyStateWidget(
-                icon: Icons.calendar_today_rounded,
-                title: '暂无历史记录',
-                subtitle: '记录经期后会在这里显示',
-                iconColor: appTheme.primary,
-              ),
-            )
-          else
-            SliverToBoxAdapter(
-              child: _buildRecordsList(appTheme),
-            ),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
-    final safeTop = MediaQuery.of(context).padding.top;
-    final headerHeight = safeTop + 58;
-
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _PinnedHeaderDelegate(
-        height: headerHeight,
-        child: Container(
-          color: appTheme.cream,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: SizedBox(
-                    width: 28,
-                    height: 40,
-                    child: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: appTheme.earth, size: 20),
-                  ),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Text(
-                    '周期统计',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                      letterSpacing: -0.1,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return AppScrollScaffold(
+      slivers: [
+        AppHeader.simple(title: '周期统计'),
+        SliverToBoxAdapter(
+          child: _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
         ),
-      ),
+        SliverToBoxAdapter(
+          child: _buildSectionHeader(appTheme, '历史记录'),
+        ),
+        if (_records.isEmpty)
+          SliverFillRemaining(
+            child: EmptyStateWidget(
+              icon: Icons.calendar_today_rounded,
+              title: '暂无历史记录',
+              subtitle: '记录经期后会在这里显示',
+              iconColor: appTheme.primary,
+            ),
+          )
+        else
+          SliverToBoxAdapter(
+            child: _buildRecordsList(appTheme),
+          ),
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+      ],
     );
   }
 
@@ -484,32 +439,3 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
   }
 }
 
-class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double height;
-  final Widget child;
-
-  const _PinnedHeaderDelegate({
-    required this.height,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
-    return height != oldDelegate.height || child != oldDelegate.child;
-  }
-}

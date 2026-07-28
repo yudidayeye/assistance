@@ -3,6 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
+import '../../../shared/widgets/pinned_header_delegate.dart';
+import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_dialog.dart';
+import '../../../shared/widgets/app_bottom_sheet.dart';
+import '../../../shared/foundation/app_typography.dart';
+import '../../../shared/foundation/app_spacing.dart';
 import '../models/period_record.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
@@ -100,169 +108,65 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     }
 
     if (_period == null) {
-      return Scaffold(
-        body: Container(
-          decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-          child: Column(
-            children: [
-              // 返回导航
-              _buildEmptyHeader(appTheme),
-              // 空状态内容
-              Expanded(
-                child: EmptyStateWidget(
-                  icon: Icons.account_balance_wallet_outlined,
-                  title: '还没有记账周期',
-                  subtitle: '创建第一个周期，开始记录你的收支',
-                  actionLabel: '新建周期',
-                  onAction: () async {
-                    await context.push('/period_book/new');
-                    // 从新建页返回后刷新数据
-                    if (mounted) {
-                      _loadData();
-                    }
-                  },
-                ),
+      return AppScaffold(
+        body: Column(
+          children: [
+            // 返回导航
+            AppHeader.simple(title: '周期详情'),
+            // 空状态内容
+            Expanded(
+              child: EmptyStateWidget(
+                icon: Icons.account_balance_wallet_outlined,
+                title: '还没有记账周期',
+                subtitle: '创建第一个周期，开始记录你的收支',
+                actionLabel: '新建周期',
+                onAction: () async {
+                  await context.push('/period_book/new');
+                  // 从新建页返回后刷新数据
+                  if (mounted) {
+                    _loadData();
+                  }
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildHeader(appTheme),
-            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
-            SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
-            SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
-            _buildStagesSection(appTheme),
-            SliverToBoxAdapter(child: const SizedBox(height: 100)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 空状态头部（返回导航）
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildEmptyHeader(AppThemeExtension appTheme) {
-    final safeTop = MediaQuery.of(context).padding.top;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, safeTop + 12, 24, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(Icons.arrow_back_ios_new_rounded,
-                  color: appTheme.earthMedium, size: 18),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 头部
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildHeader(AppThemeExtension appTheme) {
-    final safeTop = MediaQuery.of(context).padding.top;
     final start = DateTime.parse(_period!.startDate);
     final end = DateTime.parse(_period!.endDate);
-    final title = '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日';
 
-    final headerHeight = safeTop + 58;
-    final iconBackground = appTheme.earthMedium.withValues(alpha: 0.08);
-
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _PinnedHeaderDelegate(
-        height: headerHeight,
-        child: Container(
-          color: appTheme.cream,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: SizedBox(
-                    width: 28,
-                    height: 40,
-                    child: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: appTheme.earth, size: 20),
-                  ),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                      letterSpacing: -0.1,
-                    ),
-                  ),
-                ),
-                if (!_isReadOnly) ...[
-                  const SizedBox(width: 8),
-                  // 历史记录按钮
-                  GestureDetector(
-                    onTap: () => context.push('/period_book/history'),
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: iconBackground,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.history_rounded,
-                          color: appTheme.earth, size: 20),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // 编辑按钮
-                  GestureDetector(
-                    onTap: () =>
-                        context.push('/period_book/edit/${_period!.id}'),
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: iconBackground,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.edit_outlined,
-                          color: appTheme.earth, size: 20),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+    return AppScrollScaffold(
+      controller: _scrollController,
+      slivers: [
+        AppHeader.withActions(
+          title: '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日',
+          actions: [
+            if (!_isReadOnly) ...[
+              AppHeader.iconButton(
+                appTheme,
+                Icons.history_rounded,
+                () => context.push('/period_book/history'),
+              ),
+              const SizedBox(width: 8),
+              AppHeader.iconButton(
+                appTheme,
+                Icons.edit_outlined,
+                () => context.push('/period_book/edit/${_period!.id}'),
+              ),
+            ],
+          ],
         ),
-      ),
+        SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
+        SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
+        SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
+        _buildStagesSection(appTheme),
+        SliverToBoxAdapter(child: const SizedBox(height: 100)),
+      ],
     );
   }
+
 
   // ═══════════════════════════════════════════════════════════
   // 汇总卡片
@@ -730,32 +634,3 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   }
 }
 
-class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double height;
-  final Widget child;
-
-  const _PinnedHeaderDelegate({
-    required this.height,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
-    return height != oldDelegate.height || child != oldDelegate.child;
-  }
-}

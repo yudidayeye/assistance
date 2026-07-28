@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
+import '../../../shared/widgets/pinned_header_delegate.dart';
+import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_segmented_tab.dart';
+import '../../../shared/widgets/amount_chip.dart';
+import '../../../shared/foundation/app_typography.dart';
+import '../../../shared/foundation/app_spacing.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
 import '../models/expense_record.dart';
@@ -180,92 +188,35 @@ class _StageEditPageState extends State<StageEditPage> {
       );
     }
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildHeader(appTheme),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildDateSection(appTheme),
-                    const SizedBox(height: 16),
-                    _buildUnifiedCard(appTheme),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(AppThemeExtension appTheme) {
-    final safeTop = MediaQuery.of(context).padding.top;
-    final headerHeight = safeTop + 58;
     final start = DateTime.parse(_stage!.startDate);
     final end = DateTime.parse(_stage!.endDate);
     final dateRange = '${start.month}/${start.day} ~ ${end.month}/${end.day}';
 
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _PinnedHeaderDelegate(
-        height: headerHeight,
-        child: Container(
-          color: appTheme.cream,
+    return AppScrollScaffold(
+      slivers: [
+        AppHeader.withSubtitle(
+          title: '第${_stage!.sortOrder}阶段',
+          subtitle: dateRange,
+        ),
+        SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: SizedBox(
-                    width: 28,
-                    height: 40,
-                    child: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: appTheme.earth, size: 20),
-                  ),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Text(
-                        '第${_stage!.sortOrder}阶段',
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: appTheme.earth,
-                          letterSpacing: -0.1,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        dateRange,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: appTheme.earthMedium.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                const SizedBox(height: 16),
+                _buildDateSection(appTheme),
+                const SizedBox(height: 16),
+                _buildUnifiedCard(appTheme),
+                const SizedBox(height: 40),
               ],
             ),
           ),
         ),
-      ),
+      ],
     );
   }
+
 
   Widget _buildDateSection(AppThemeExtension appTheme) {
     final start = DateTime.parse(_stage!.startDate);
@@ -1664,32 +1615,3 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 }
 
-class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double height;
-  final Widget child;
-
-  const _PinnedHeaderDelegate({
-    required this.height,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
-    return height != oldDelegate.height || child != oldDelegate.child;
-  }
-}

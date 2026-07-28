@@ -8,6 +8,11 @@ import '../widgets/period_calendar.dart';
 import '../widgets/date_detail_panel.dart';
 import '../../../shared/utils/date_utils.dart';
 import '../../../core/theme/theme_extension.dart';
+import '../../../shared/widgets/pinned_header_delegate.dart';
+import '../../../shared/widgets/app_header.dart';
+import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/foundation/app_typography.dart';
+import '../../../shared/foundation/app_spacing.dart';
 
 /// 生理期日历视图主页 — 柔和健康陪伴风格
 class CalendarPage extends StatefulWidget {
@@ -50,8 +55,7 @@ class _CalendarPageState extends State<CalendarPage> {
     final theme = Theme.of(context);
     final appTheme = theme.appTheme;
 
-    return Scaffold(
-      backgroundColor: appTheme.cream,
+    return AppScaffold(
       body: _loading
           ? Center(
               child: CircularProgressIndicator(
@@ -61,7 +65,16 @@ class _CalendarPageState extends State<CalendarPage> {
           : CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                _buildHeader(context, appTheme),
+                AppHeader.withActions(
+                  title: '生理期记录',
+                  actions: [
+                    AppHeader.iconButton(
+                      appTheme,
+                      Icons.bar_chart_rounded,
+                      () => context.push('/period_tracker/stats'),
+                    ),
+                  ],
+                ),
                 if (_prediction != null)
                   SliverToBoxAdapter(
                     child: _buildPredictionCard(appTheme),
@@ -102,67 +115,6 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
-    final safeTop = MediaQuery.of(context).padding.top;
-    final headerHeight = safeTop + 58;
-
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _PinnedHeaderDelegate(
-        height: headerHeight,
-        child: Container(
-          color: appTheme.cream,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 6),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: SizedBox(
-                    width: 28,
-                    height: 40,
-                    child: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: appTheme.earth, size: 20),
-                  ),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Text(
-                    '生理期记录',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                      letterSpacing: -0.1,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => context.push('/period_tracker/stats'),
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: appTheme.earthMedium.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.bar_chart_rounded,
-                      color: appTheme.earth,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildPredictionCard(AppThemeExtension appTheme) {
     return Container(
@@ -286,32 +238,3 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 }
 
-class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double height;
-  final Widget child;
-
-  const _PinnedHeaderDelegate({
-    required this.height,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
-    return height != oldDelegate.height || child != oldDelegate.child;
-  }
-}

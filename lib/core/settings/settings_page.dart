@@ -13,6 +13,15 @@ import 'update_service.dart';
 import '../../modules/period_book/services/period_book_settings.dart';
 import '../../modules/period_book/services/period_book_service.dart';
 import '../../modules/period_tracker/services/period_service.dart';
+import '../../shared/widgets/pinned_header_delegate.dart';
+import '../../shared/widgets/app_header.dart';
+import '../../shared/widgets/app_scaffold.dart';
+import '../../shared/widgets/app_button.dart';
+import '../../shared/widgets/app_dialog.dart';
+import '../../shared/widgets/settings_list_item.dart';
+import '../../shared/widgets/section_card.dart';
+import '../../shared/foundation/app_typography.dart';
+import '../../shared/foundation/app_spacing.dart';
 
 /// 全局设置页面 — 简洁扁平风格
 ///
@@ -86,195 +95,125 @@ class _SettingsPageState extends State<SettingsPage> {
     final appTheme = Theme.of(context).appTheme;
     final modules = ModuleRegistry.instance.allModules;
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildHeader(context, appTheme),
-            SliverToBoxAdapter(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── 模块管理 ──
-                  _SectionLabel(
-                    appTheme: appTheme,
-                    title: '模块管理',
-                  ),
-                  _SectionCard(
-                    appTheme: appTheme,
-                    child: Column(
-                      children: modules.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final module = entry.value;
-                        final isLast = index == modules.length - 1;
-                        return Column(children: [
-                          _buildModuleItem(appTheme, module),
-                          if (!isLast) _buildSeparator(appTheme),
-                        ]);
-                      }).toList(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ── 周期记账 ──
-                  _SectionLabel(
-                    appTheme: appTheme,
-                    title: '周期记账',
-                  ),
-                  _SectionCard(
-                    appTheme: appTheme,
-                    child: _buildPeriodSettings(appTheme),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ── 主题设置 ──
-                  _SectionLabel(
-                    appTheme: appTheme,
-                    title: '主题设置',
-                  ),
-                  _SectionCard(
-                    appTheme: appTheme,
-                    child: _buildThemeSelector(appTheme),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ── 数据 ──
-                  _SectionLabel(
-                    appTheme: appTheme,
-                    title: '数据',
-                  ),
-                  _SectionCard(
-                    appTheme: appTheme,
-                    child: Column(children: [
-                      _buildFunctionItem(appTheme,
-                          icon: Icons.download_outlined,
-                          label: '导入数据',
-                          onTap: _handleImport),
-                      _buildSeparator(appTheme),
-                      _buildFunctionItem(appTheme,
-                          icon: Icons.upload_outlined,
-                          label: '导出数据',
-                          onTap: _handleExport),
-                      _buildSeparator(appTheme),
-                      _buildFunctionItem(appTheme,
-                          icon: Icons.sync_rounded,
-                          label: '数据同步',
-                          onTap: () => context.push('/sync')),
-                      _buildSeparator(appTheme),
-                      _buildFunctionItem(appTheme,
-                          icon: Icons.delete_outline_rounded,
-                          label: '清除业务数据',
-                          onTap: _confirmClearBusinessData,
-                          isDestructive: true),
-                    ]),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ── 功能 ──
-                  _SectionLabel(
-                    appTheme: appTheme,
-                    title: '功能',
-                  ),
-                  _SectionCard(
-                    appTheme: appTheme,
-                    child: Column(children: [
-                      _buildFunctionItem(appTheme,
-                          icon: Icons.notifications_outlined,
-                          label: '通知管理',
-                          onTap: () {}),
-                      _buildSeparator(appTheme),
-                      _buildFunctionItem(appTheme,
-                          icon: Icons.help_outline_rounded,
-                          label: '帮助与反馈',
-                          onTap: () {}),
-                    ]),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ── 关于 ──
-                  _SectionLabel(
-                    appTheme: appTheme,
-                    title: '关于',
-                  ),
-                  _SectionCard(
-                    appTheme: appTheme,
-                    child: Column(children: [
-                      _buildVersionItem(appTheme),
-                      _buildSeparator(appTheme),
-                      _buildAboutItem(appTheme, '隐私声明', '所有数据仅存储在本地',
-                          icon: Icons.lock_outline_rounded),
-                      _buildSeparator(appTheme),
-                      _buildAboutItem(appTheme, '免责声明', '生理期预测仅供参考',
-                          icon: Icons.shield_outlined),
-                    ]),
-                  ),
-
-                  const SizedBox(height: 60),
-                ],
+    return AppScrollScaffold(
+      slivers: [
+        AppHeader.simple(title: '设置'),
+        SliverToBoxAdapter(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── 模块管理 ──
+              const SectionLabel(title: '模块管理'),
+              SectionCard(
+                child: Column(
+                  children: modules.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final module = entry.value;
+                    final isLast = index == modules.length - 1;
+                    return Column(children: [
+                      _buildModuleItem(appTheme, module),
+                      if (!isLast) _buildSeparator(appTheme),
+                    ]);
+                  }).toList(),
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  // ═══════════════════════════════════════════════════════════════
-  // 头部
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildHeader(BuildContext context, AppThemeExtension appTheme) {
-    final safeTop = MediaQuery.of(context).padding.top;
-    final headerHeight = safeTop + 52;
+              const SizedBox(height: 10),
 
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _PinnedHeaderDelegate(
-        height: headerHeight,
-        child: Container(
-          color: appTheme.cream,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, safeTop + 10, 16, 4),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: SizedBox(
-                    width: 28,
-                    height: 40,
-                    child: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: appTheme.earth, size: 20),
+              // ── 周期记账 ──
+              const SectionLabel(title: '周期记账'),
+              SectionCard(child: _buildPeriodSettings(appTheme)),
+
+              const SizedBox(height: 10),
+
+              // ── 主题设置 ──
+              const SectionLabel(title: '主题设置'),
+              SectionCard(child: _buildThemeSelector(appTheme)),
+
+              const SizedBox(height: 10),
+
+              // ── 数据 ──
+              const SectionLabel(title: '数据'),
+              SectionCard(
+                child: Column(children: [
+                  SettingsListItem(
+                    icon: Icons.download_outlined,
+                    title: '导入数据',
+                    onTap: _handleImport,
                   ),
-                ),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Text(
-                    '设置',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth,
-                      letterSpacing: -0.1,
-                    ),
+                  _buildSeparator(appTheme),
+                  SettingsListItem(
+                    icon: Icons.upload_outlined,
+                    title: '导出数据',
+                    onTap: _handleExport,
                   ),
-                ),
-              ],
-            ),
+                  _buildSeparator(appTheme),
+                  SettingsListItem(
+                    icon: Icons.sync_rounded,
+                    title: '数据同步',
+                    onTap: () => context.push('/sync'),
+                  ),
+                  _buildSeparator(appTheme),
+                  SettingsListItem(
+                    icon: Icons.delete_outline_rounded,
+                    title: '清除业务数据',
+                    onTap: _confirmClearBusinessData,
+                    isDestructive: true,
+                  ),
+                ]),
+              ),
+
+              const SizedBox(height: 10),
+
+              // ── 功能 ──
+              const SectionLabel(title: '功能'),
+              SectionCard(
+                child: Column(children: [
+                  SettingsListItem(
+                    icon: Icons.notifications_outlined,
+                    title: '通知管理',
+                    onTap: () {},
+                  ),
+                  _buildSeparator(appTheme),
+                  SettingsListItem(
+                    icon: Icons.help_outline_rounded,
+                    title: '帮助与反馈',
+                    onTap: () {},
+                  ),
+                ]),
+              ),
+
+              const SizedBox(height: 10),
+
+              // ── 关于 ──
+              const SectionLabel(title: '关于'),
+              SectionCard(
+                child: Column(children: [
+                  _buildVersionItem(appTheme),
+                  _buildSeparator(appTheme),
+                  SettingsListItem(
+                    icon: Icons.lock_outline_rounded,
+                    title: '隐私声明',
+                    subtitle: '所有数据仅存储在本地',
+                  ),
+                  _buildSeparator(appTheme),
+                  SettingsListItem(
+                    icon: Icons.shield_outlined,
+                    title: '免责声明',
+                    subtitle: '生理期预测仅供参考',
+                  ),
+                ]),
+              ),
+
+              const SizedBox(height: 60),
+            ],
           ),
         ),
-      ),
+      ],
     );
   }
+
 
   // ═══════════════════════════════════════════════════════════════
   // 模块管理 — 扁平行
@@ -563,45 +502,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // 功能列表项 — 带 chevron
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildFunctionItem(
-    AppThemeExtension appTheme, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    bool isDestructive = false,
-  }) {
-    final iconColor = isDestructive ? appTheme.rose : appTheme.primary;
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Row(children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(label,
-                style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                    color: isDestructive ? appTheme.rose : appTheme.earth)),
-          ),
-          Icon(Icons.chevron_right_rounded,
-              size: 18, color: appTheme.earthMedium.withValues(alpha: 0.4)),
-        ]),
-      ),
-    );
-  }
 
   // ═══════════════════════════════════════════════════════════════
   // 版本信息项 — 带检查更新功能
@@ -815,52 +715,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // 关于信息项 — 柔和字重
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildAboutItem(
-    AppThemeExtension appTheme,
-    String title,
-    String subtitle, {
-    required IconData icon,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Row(children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: appTheme.primary.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon,
-              color: appTheme.earthMedium.withValues(alpha: 0.45), size: 18),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(title,
-                  style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
-                      color: appTheme.earth)),
-              const SizedBox(height: 2),
-              Text(subtitle,
-                  style: TextStyle(
-                      fontSize: 11.5,
-                      color: appTheme.earthMedium.withValues(alpha: 0.6))),
-            ],
-          ),
-        ),
-        Icon(Icons.chevron_right_rounded,
-            size: 18, color: appTheme.earthMedium.withValues(alpha: 0.4)),
-      ]),
-    );
-  }
 
   // ═══════════════════════════════════════════════════════════════
   // 内部柔和分割线
@@ -1323,98 +1177,4 @@ class _PaydayPickerState extends State<_PaydayPicker> {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════
-// 扁平组件：分区标签 + 卡片容器
-// ═════════════════════════════════════════════════════════════════
 
-/// 分区标签 — 强调色竖条 + 文字，置于卡片上方
-class _SectionLabel extends StatelessWidget {
-  final AppThemeExtension appTheme;
-  final String title;
-
-  const _SectionLabel({
-    required this.appTheme,
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earthMedium,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 扁平卡片容器 — 统一的大圆角、极轻阴影、细微边框
-class _SectionCard extends StatelessWidget {
-  final AppThemeExtension appTheme;
-  final Widget child;
-
-  const _SectionCard({
-    required this.appTheme,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: appTheme.cardShadow,
-        border: Border.all(
-          color: appTheme.cardBorder,
-          width: 0.5,
-        ),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double height;
-  final Widget child;
-
-  const _PinnedHeaderDelegate({
-    required this.height,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
-    return height != oldDelegate.height || child != oldDelegate.child;
-  }
-}
