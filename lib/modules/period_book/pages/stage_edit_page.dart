@@ -504,57 +504,16 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 
   Widget _buildCardTabBar(AppThemeExtension appTheme) {
-    const tabs = ['购物支出', '其他支出', '追加记录'];
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        decoration: BoxDecoration(
-          color: appTheme.creamDark.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12),
-          border: Border(
-            bottom: BorderSide(
-              color: appTheme.earthMedium.withValues(alpha: 0.06),
-              width: 0.5,
-            ),
-          ),
-        ),
-        child: Row(
-          children: List.generate(tabs.length, (index) {
-            final isSelected = _currentTabIndex == index;
-
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => setState(() => _currentTabIndex = index),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeInOut,
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? appTheme.cardBackground
-                        : appTheme.creamDark.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 180),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isSelected ? appTheme.primary : appTheme.earthMedium,
-                    ),
-                    child: Text(
-                      tabs[index],
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
+      child: AppSegmentedTab(
+        items: const [
+          AppSegmentedTabItem(label: '购物支出'),
+          AppSegmentedTabItem(label: '其他支出'),
+          AppSegmentedTabItem(label: '追加记录'),
+        ],
+        selectedIndex: _currentTabIndex,
+        onChanged: (index) => setState(() => _currentTabIndex = index),
       ),
     );
   }
