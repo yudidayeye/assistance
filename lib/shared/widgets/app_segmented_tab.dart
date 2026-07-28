@@ -42,9 +42,7 @@ class AppSegmentedTab extends StatelessWidget {
           return Expanded(
             child: GestureDetector(
               onTap: () => onChanged(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
+              child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 9),
                 decoration: BoxDecoration(
                   color: isSelected ? appTheme.cardBackground : null,
