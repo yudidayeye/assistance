@@ -1,3 +1,4 @@
+import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -46,17 +47,10 @@ class PeriodSummaryCard extends StatelessWidget {
     final expenseTotal = shopping + other + living;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            appTheme.primaryLight.withValues(alpha: 0.13),
-            appTheme.cardBackground,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: appTheme.primaryLight.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(appTheme.radiusXl),
         boxShadow: appTheme.cardShadow,
         border: Border.all(
           color: appTheme.primaryLight.withValues(alpha: 0.18),
@@ -64,7 +58,7 @@ class PeriodSummaryCard extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -76,18 +70,18 @@ class PeriodSummaryCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildBalanceSection(appTheme, balance),
-                      const SizedBox(height: 10),
+                      AppSpacing.h10,
                       _buildExpenseLegend(
                           appTheme, shopping, other, living, expenseTotal),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                AppSpacing.w16,
                 _buildExpenseDonut(
                     appTheme, shopping, other, living, expenseTotal),
               ],
             ),
-            const SizedBox(height: 14),
+            AppSpacing.h14,
             _buildProgressRow(appTheme, balanceRatio, spent),
           ],
         ),
@@ -95,7 +89,7 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 余额/本金合并展示：¥1859.70 / 2500
+  /// 余额/本金合并展示：¥1284.09 / ¥2500
   Widget _buildBalanceSection(AppThemeExtension appTheme, double? balance) {
     final balanceText = FormatUtils.formatAmount(balance ?? 0);
     final muted = balance == null || balance == 0;
@@ -103,8 +97,6 @@ class PeriodSummaryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTapTotalBase,
       child: Row(
-        // 基线对齐：让 26px 余额与 14px 本金的数字底部真正落在同一水平线
-        // （CrossAxisAlignment.end 只对齐文本盒底边，大小字号的下沉区不同会视觉错位）
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
@@ -124,29 +116,30 @@ class PeriodSummaryCard extends StatelessWidget {
                       ? appTheme.primary.withValues(alpha: 0.4)
                       : appTheme.primary,
                   letterSpacing: -0.5,
+                  height: 1.0,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          AppSpacing.w6,
           Text(
             '/',
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: appTheme.earthMedium.withValues(alpha: 0.3),
+              fontWeight: FontWeight.w400,
+              color: appTheme.earthMedium.withValues(alpha: 0.9),
               fontFamily: GoogleFonts.dmSans().fontFamily,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
-          const SizedBox(width: 8),
+          AppSpacing.w6,
           Text(
             FormatUtils.formatAmount(calc.totalBase),
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earthMedium.withValues(alpha: 0.5),
+              fontWeight: FontWeight.w500,
+              color: appTheme.earthMedium.withValues(alpha: 0.9),
               fontFamily: GoogleFonts.dmSans().fontFamily,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
@@ -167,8 +160,8 @@ class PeriodSummaryCard extends StatelessWidget {
     double total,
   ) {
     final chart = SizedBox(
-      width: 52,
-      height: 52,
+      width: 68,
+      height: 68,
       child: total <= 0
           ? // 空态：与环形等宽的灰色轨道圈
           Container(
@@ -203,7 +196,7 @@ class PeriodSummaryCard extends StatelessWidget {
                       showTitle: false,
                     ),
                 ],
-                centerSpaceRadius: 18,
+                centerSpaceRadius: 22,
                 sectionsSpace: 1.5,
                 startDegreeOffset: -90,
               ),
@@ -224,7 +217,7 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 支出构成图例行：●购物 45%  ●其他 20%  ●生活 35%
+  /// 支出构成图例行：●购物 72%  ●其他 12%  ●生活 15%
   Widget _buildExpenseLegend(
     AppThemeExtension appTheme,
     double shopping,
@@ -237,7 +230,7 @@ class PeriodSummaryCard extends StatelessWidget {
         '暂无支出构成',
         style: TextStyle(
           fontSize: 11,
-          color: appTheme.earthMedium.withValues(alpha: 0.4),
+          color: appTheme.earthMedium.withValues(alpha: 0.9),
         ),
       );
     }
@@ -245,10 +238,10 @@ class PeriodSummaryCard extends StatelessWidget {
     return Row(
       children: [
         _legendItem(appTheme, '购物', appTheme.sage, shopping / total),
-        const SizedBox(width: 14),
+        const SizedBox(width: 16),
         _legendItem(appTheme, '其他', appTheme.rose, other / total),
         if (living > 0) ...[
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           _legendItem(appTheme, '生活',
               appTheme.primary.withValues(alpha: 0.6), living / total),
         ],
@@ -257,33 +250,35 @@ class PeriodSummaryCard extends StatelessWidget {
   }
 
   Widget _legendItem(
-      AppThemeExtension appTheme, String label, Color color, double pct) {
+      AppThemeExtension appTheme, String label, Color color, double pct,
+      {Widget? marker}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2.5),
-          ),
-        ),
-        const SizedBox(width: 5),
+        marker ??
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+            ),
+        const SizedBox(width: 6),
         Text(
           label,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: appTheme.earthMedium.withValues(alpha: 0.7),
+            color: appTheme.earthMedium.withValues(alpha: 0.9),
           ),
         ),
-        const SizedBox(width: 4),
+        AppSpacing.w4,
         Text(
           '${(pct * 100).toStringAsFixed(0)}%',
           style: TextStyle(
             fontFamily: GoogleFonts.dmSans().fontFamily,
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: appTheme.earth,
             fontFeatures: const [FontFeature.tabularFigures()],
@@ -296,9 +291,9 @@ class PeriodSummaryCard extends StatelessWidget {
   /// 余额进度条（余额/本金，入场与数据变化时带过渡动画）
   Widget _buildUsageBar(AppThemeExtension appTheme, double balanceRatio) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(3),
+      borderRadius: BorderRadius.circular(4),
       child: SizedBox(
-        height: 6,
+        height: 8,
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: balanceRatio),
           duration: const Duration(milliseconds: 400),
@@ -308,7 +303,7 @@ class PeriodSummaryCard extends StatelessWidget {
               children: [
                 Positioned.fill(
                   child: ColoredBox(
-                    color: appTheme.roseLight.withValues(alpha: 0.35),
+                    color: appTheme.roseLight.withValues(alpha: 0.3),
                   ),
                 ),
                 Positioned(
@@ -342,70 +337,104 @@ class PeriodSummaryCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildUsageBar(appTheme, balanceRatio),
-        const SizedBox(height: 8),
+        AppSpacing.h10,
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            GestureDetector(
-              onTap: onEditLargeItems,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '大额 ',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: appTheme.earthMedium.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  Text(
-                    _formatLargeItemsValue(largeItemsNet ?? 0),
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: largeItemsNet != null
-                          ? (largeItemsNet! >= 0
-                              ? appTheme.sage
-                              : appTheme.rose)
-                          : appTheme.earthMedium.withValues(alpha: 0.4),
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                  if (onEditLargeItems != null)
+            Flexible(
+              child: GestureDetector(
+                onTap: onEditLargeItems,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Icon(
-                      Icons.chevron_right_rounded,
+                      Icons.diamond_outlined,
                       size: 14,
-                      color: appTheme.earthMedium.withValues(alpha: 0.4),
+                      color: appTheme.earthMedium.withValues(alpha: 0.75),
                     ),
-                ],
+                    AppSpacing.w4,
+                    Text(
+                      '大额',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: appTheme.earthMedium.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    AppSpacing.w6,
+                    Flexible(
+                      child: Text(
+                        _formatLargeItemsValue(largeItemsNet ?? 0),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: largeItemsNet != null
+                              ? (largeItemsNet! >= 0
+                                  ? appTheme.sage
+                                  : appTheme.rose)
+                              : appTheme.earthMedium.withValues(alpha: 0.9),
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                    if (onEditLargeItems != null)
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 15,
+                        color: appTheme.earthMedium.withValues(alpha: 0.5),
+                      ),
+                  ],
+                ),
               ),
             ),
-            GestureDetector(
-              onTap: onTapTotalExpense,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.trending_down_rounded,
-                    size: 14,
-                    color: appTheme.rose.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '支出 -${FormatUtils.formatAmount(spent)}',
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.dmSans().fontFamily,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: spent > 0
-                          ? appTheme.rose
-                          : appTheme.earthMedium.withValues(alpha: 0.4),
-                      fontFeatures: const [FontFeature.tabularFigures()],
+            Flexible(
+              child: GestureDetector(
+                onTap: onTapTotalExpense,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.trending_down_rounded,
+                      size: 14,
+                      color: appTheme.rose.withValues(alpha: 0.6),
                     ),
-                  ),
-                ],
+                    AppSpacing.w4,
+                    Text(
+                      '支出',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: appTheme.rose,
+                      ),
+                    ),
+                    AppSpacing.w6,
+                    Flexible(
+                      child: Text(
+                        '-${FormatUtils.formatAmount(spent)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.dmSans().fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: spent > 0
+                              ? appTheme.rose
+                              : appTheme.earthMedium.withValues(alpha: 0.9),
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                    if (onTapTotalExpense != null)
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 15,
+                        color: appTheme.earthMedium.withValues(alpha: 0.5),
+                      ),
+                  ],
+                ),
               ),
             ),
           ],
