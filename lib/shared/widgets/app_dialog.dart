@@ -1,45 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/theme_extension.dart';
-import '../foundation/app_typography.dart';
 import '../foundation/app_spacing.dart';
-import 'app_button.dart';
 
-/// 统一的应用弹窗组件
-///
-/// 提供标准化的弹窗容器和按钮对。
+/// 统一的应用弹窗组件（AlertDialog 风格）
 class AppDialog {
+  static Widget _textButton({
+    required BuildContext context,
+    required String label,
+    required VoidCallback onTap,
+    Color? textColor,
+  }) {
+    final appTheme = Theme.of(context).appTheme;
+    return TextButton(
+      onPressed: onTap,
+      child: Text(label, style: TextStyle(color: textColor ?? appTheme.earthMedium)),
+    );
+  }
+
   /// 弹窗内"取消 + 确认"按钮对
-  static Widget confirmCancelPair({
+  static List<Widget> confirmCancelPair({
     required BuildContext context,
     required String cancelLabel,
     required String confirmLabel,
     required VoidCallback onConfirm,
     VoidCallback? onCancel,
-    bool confirmEnabled = true,
     bool isDestructive = false,
   }) {
-    return Row(
-      children: [
-        AppButton.secondary(
-          label: cancelLabel,
-          onTap: onCancel ?? () => Navigator.pop(context),
-          expanded: true,
-        ),
-        AppSpacing.w12,
-        if (isDestructive)
-          AppButton.danger(
-            label: confirmLabel,
-            onTap: confirmEnabled ? onConfirm : null,
-            expanded: true,
-          )
-        else
-          AppButton.primary(
-            label: confirmLabel,
-            onTap: confirmEnabled ? onConfirm : null,
-            expanded: true,
-          ),
-      ],
-    );
+    final appTheme = Theme.of(context).appTheme;
+    return [
+      _textButton(context: context, label: cancelLabel, onTap: onCancel ?? () => Navigator.pop(context)),
+      _textButton(context: context, label: confirmLabel, onTap: onConfirm, textColor: isDestructive ? appTheme.rose : appTheme.primary),
+    ];
   }
 
   /// 快捷：显示一个完整弹窗
@@ -51,53 +43,35 @@ class AppDialog {
     String? confirmLabel,
     VoidCallback? onConfirm,
     bool isDestructive = false,
-    double radius = 28,
   }) {
     final appTheme = Theme.of(context).appTheme;
 
     return showDialog<T>(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(20), // Apple 风格：更紧凑
-          decoration: BoxDecoration(
-            color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusMd), // Apple 风格：更紧凑圆角
-            border: Border.all(
-              color: appTheme.earthMedium.withValues(alpha: 0.15),
-              width: 0.5,
-            ),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        title: Text(
+          title,
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 标题
-              Text(
-                title,
-                style: AppTypography.displayMd.copyWith(
-                  color: appTheme.earth,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              AppSpacing.h20,
-              // 内容
-              body,
-              // 按钮对
-              if (cancelLabel != null && confirmLabel != null) ...[
-                AppSpacing.h24,
-                confirmCancelPair(
-                  context: ctx,
-                  cancelLabel: cancelLabel,
-                  confirmLabel: confirmLabel,
-                  onConfirm: onConfirm ?? () => Navigator.pop(ctx),
-                  isDestructive: isDestructive,
-                ),
-              ],
-            ],
-          ),
+          textAlign: TextAlign.center,
         ),
+        content: body,
+        actions: [
+          if (cancelLabel != null && confirmLabel != null)
+            ...confirmCancelPair(
+              context: ctx,
+              cancelLabel: cancelLabel,
+              confirmLabel: confirmLabel,
+              onConfirm: onConfirm ?? () => Navigator.pop(ctx),
+              isDestructive: isDestructive,
+            ),
+        ],
       ),
     );
   }
@@ -113,7 +87,6 @@ class AppDialog {
     String? confirmLabel,
     VoidCallback? onConfirm,
     bool isDestructive = false,
-    double radius = 28,
   }) {
     final appTheme = Theme.of(context).appTheme;
 
@@ -151,7 +124,6 @@ class AppDialog {
       confirmLabel: confirmLabel,
       onConfirm: onConfirm,
       isDestructive: isDestructive,
-      radius: radius,
     );
   }
 }

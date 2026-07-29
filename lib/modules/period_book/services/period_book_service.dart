@@ -724,15 +724,16 @@ class PeriodBookService extends ChangeNotifier {
     // 阶段本金 = 上阶段余额 + 本阶段追加（第一阶段 = 初始本金）
     final baseAmount = previousBalance + additionsTotal;
 
-    // 支出分类汇总
+    // 支出分类汇总（兼容旧数据：shopping→购物, other→其他）
     final expenses = await getExpensesByStage(stageId);
-    double shoppingTotal = 0;
-    double otherTotal = 0;
+    double shoppingTotal = 0; // 个人支出（所有非 other 分类）
+    double otherTotal = 0; // 其他支出（仅 other）
     for (final e in expenses) {
-      if (e.category == 'shopping') {
-        shoppingTotal += e.amount;
-      } else {
+      if (e.category == 'other') {
         otherTotal += e.amount;
+      } else {
+        // shopping / 生活 / 购物 / 工作 / 娱乐 / 大餐 都算个人支出
+        shoppingTotal += e.amount;
       }
     }
 
@@ -800,13 +801,14 @@ class PeriodBookService extends ChangeNotifier {
           stageAdditions.fold<double>(0, (sum, a) => sum + a.amount);
       final baseAmount = previousBalance + additionsTotal;
 
-      double stageShoppingTotal = 0;
-      double stageOtherTotal = 0;
+      double stageShoppingTotal = 0; // 个人支出
+      double stageOtherTotal = 0; // 其他支出
       for (final e in stageExpenses) {
-        if (e.category == 'shopping') {
-          stageShoppingTotal += e.amount;
-        } else {
+        if (e.category == 'other') {
           stageOtherTotal += e.amount;
+        } else {
+          // shopping / 生活 / 购物 / 工作 / 娱乐 / 大餐 都算个人支出
+          stageShoppingTotal += e.amount;
         }
       }
 

@@ -199,7 +199,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                 style: TextStyle(color: appTheme.earth, fontSize: 15),
               ),
               const SizedBox(height: 22),
-              AppDialog.confirmCancelPair(
+              ...AppDialog.confirmCancelPair(
                 context: ctx,
                 cancelLabel: '取消',
                 confirmLabel: '保存',

@@ -14,6 +14,7 @@ import '../../../shared/foundation/app_spacing.dart';
 import '../models/period_record.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
+import '../models/expense_record.dart';
 import '../services/period_book_service.dart';
 import '../widgets/stage_card.dart';
 import '../widgets/period_summary_card.dart';
@@ -38,6 +39,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   PeriodCalculations? _calc;
   List<StageRecord> _stages = [];
   List<List<AdditionRecord>> _stageAdditions = [];
+  List<ExpenseRecord> _allExpenses = [];
   double? _largeItemsNet;
   bool _loading = true;
 
@@ -75,6 +77,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         _calc = await _service.getPeriodCalculations(_period!.id!);
         _stages = await _service.getStagesByPeriod(_period!.id!);
         final allAdditions = await _service.getAdditionsByPeriod(_period!.id!);
+        _allExpenses = await _service.getExpensesByPeriod(_period!.id!);
 
         // 按阶段分组追加记录
         _stageAdditions = _stages.map((stage) {
@@ -488,6 +491,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               stageCalc: stageCalc,
               previousBalance: previousBalance,
               additions: additions,
+              personalExpenseBreakdown:
+                  stage.id != null ? _computePersonalBreakdown(stage.id!) : null,
               onEditBalance:
                   _isReadOnly ? null : () => _showEditStageBalanceDialog(stage),
               onEdit: _isReadOnly
@@ -504,6 +509,31 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         ),
       ),
     );
+  }
+
+
+  Map<String, double> _computePersonalBreakdown(int stageId) {
+    final stageExpenses = _allExpenses
+        .where((e) => e.stageId == stageId && e.category != 'other')
+        .toList();
+    final map = <String, double>{};
+    for (final e in stageExpenses) {
+      final display = _categoryDisplayName(e.category);
+      map[display] = (map[display] ?? 0) + e.amount;
+    }
+    return map;
+  }
+
+  String _categoryDisplayName(String? dbValue) {
+    const map = {
+      'shopping': '购物',
+      '生活': '生活',
+      '购物': '购物',
+      '工作': '工作',
+      '娱乐': '娱乐',
+      '大餐': '大餐',
+    };
+    return dbValue != null && map.containsKey(dbValue) ? map[dbValue]! : (dbValue ?? '其他');
   }
 
   // ═══════════════════════════════════════════════════════════

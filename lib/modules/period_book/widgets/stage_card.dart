@@ -1,5 +1,7 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../models/stage_record.dart';
@@ -14,6 +16,12 @@ class StageCard extends StatefulWidget {
   final List<AdditionRecord> additions;
   final VoidCallback? onEditBalance;
   final VoidCallback? onEdit;
+  /// 是否显示头部行（标题 + 日期）。阶段编辑页传 false 避免与页面标题重复
+  final bool showHeader;
+  /// 是否默认展开支出明细
+  final bool expandExpenseByDefault;
+  /// 个人支出分类明细（用于饼图展示），key 为分类名，value 为金额
+  final Map<String, double>? personalExpenseBreakdown;
 
   const StageCard({
     super.key,
@@ -23,6 +31,9 @@ class StageCard extends StatefulWidget {
     required this.additions,
     this.onEditBalance,
     this.onEdit,
+    this.showHeader = true,
+    this.expandExpenseByDefault = false,
+    this.personalExpenseBreakdown,
   });
 
   @override
@@ -36,7 +47,7 @@ class _StageCardState extends State<StageCard> {
   @override
   void initState() {
     super.initState();
-    _expenseExpanded = _isCurrentStage;
+    _expenseExpanded = widget.expandExpenseByDefault || _isCurrentStage;
     _baseExpanded = false;
   }
 
@@ -44,7 +55,7 @@ class _StageCardState extends State<StageCard> {
   void didUpdateWidget(covariant StageCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.stage.id != widget.stage.id) {
-      _expenseExpanded = _isCurrentStage;
+      _expenseExpanded = widget.expandExpenseByDefault || _isCurrentStage;
       _baseExpanded = false;
     }
   }
@@ -100,16 +111,22 @@ class _StageCardState extends State<StageCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: widget.onEdit,
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, AppSpacing.xs), // 更紧凑
-              child: _buildHeaderRow(appTheme),
+          if (widget.showHeader)
+            GestureDetector(
+              onTap: widget.onEdit,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, AppSpacing.xs), // 更紧凑
+                child: _buildHeaderRow(appTheme),
+              ),
             ),
-          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.sm, 0, AppSpacing.sm, AppSpacing.xs), // 更紧凑
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              widget.showHeader ? 0 : AppSpacing.sm,
+              AppSpacing.sm,
+              AppSpacing.xs,
+            ),
             child: Column(
               children: [
                 Row(
@@ -278,42 +295,93 @@ class _StageCardState extends State<StageCard> {
   }
 
   Widget _buildExpenseBreakdown(AppThemeExtension appTheme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+    final breakdown = widget.personalExpenseBreakdown;
+    final hasBreakdown = breakdown != null && breakdown.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 4, 4, 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: appTheme.cardBackground.withValues(alpha: 0.82),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        ),
+        child: Row(
+          children: [
+            // 左侧饼图
+            Expanded(
+              flex: 5,
+              child: hasBreakdown
+                  ? _buildMiniPieChart(appTheme, breakdown!)
+                  : const SizedBox.shrink(),
+            ),
+            // 右侧分隔线
+            if (hasBreakdown)
+              Container(
+                width: 0.5,
+                height: 56,
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                color: appTheme.earthMedium.withValues(alpha: 0.1),
+              ),
+            // 右侧明细 — 金额右对齐
+            Expanded(
+              flex: 6,
+              child: Column(
+                children: [
+                  _buildCategoryRow(
+                    appTheme: appTheme,
+                    icon: Icons.shopping_cart_outlined,
+                    label: '个人',
+                    amountText:
+                        '-¥${widget.stageCalc.shoppingTotal.toStringAsFixed(2)}',
+                  ),
+                  _buildSoftDivider(appTheme),
+                  _buildCategoryRow(
+                    appTheme: appTheme,
+                    icon: Icons.more_horiz,
+                    label: '其他',
+                    amountText:
+                        '-¥${widget.stageCalc.otherTotal.toStringAsFixed(2)}',
+                  ),
+                  _buildSoftDivider(appTheme),
+                  _buildBalanceRow(appTheme),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        children: [
-          _buildCategoryRow(
-            appTheme: appTheme,
-            icon: Icons.shopping_bag_outlined,
-            label: '购物',
-            amountText:
-                '-¥${widget.stageCalc.shoppingTotal.toStringAsFixed(2)}',
-          ),
-          _buildSoftDivider(appTheme),
-          _buildCategoryRow(
-            appTheme: appTheme,
-            icon: Icons.more_horiz_rounded,
-            label: '其他',
-            amountText: '-¥${widget.stageCalc.otherTotal.toStringAsFixed(2)}',
-          ),
-          _buildSoftDivider(appTheme),
-          _buildCategoryRow(
-            appTheme: appTheme,
-            icon: Icons.wb_sunny_outlined,
-            label: '生活',
-            subtitle: widget.stageCalc.livingTotal != null &&
-                    widget.stageCalc.livingDailyAvg != null
-                ? '¥${widget.stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天 × ${widget.stage.livingDays}天'
-                : null,
-            amountText: widget.stageCalc.livingTotal != null &&
-                    widget.stageCalc.livingDailyAvg != null
-                ? '-¥${widget.stageCalc.livingTotal!.abs().toStringAsFixed(2)}'
-                : '-¥0.00',
-          ),
-        ],
+    );
+  }
+
+  Widget _buildMiniPieChart(
+      AppThemeExtension appTheme, Map<String, double> breakdown) {
+    final total = breakdown.values.fold(0.0, (sum, v) => sum + v);
+    if (total <= 0) return const SizedBox.shrink();
+
+    final colorMap = {
+      '生活': appTheme.sage.withValues(alpha: 0.55),
+      '购物': const Color(0xFF8B7EC8).withValues(alpha: 0.55),
+      '工作': const Color(0xFF3E6FA0).withValues(alpha: 0.55),
+      '娱乐': const Color(0xFFC49A6C).withValues(alpha: 0.55),
+      '大餐': appTheme.rose.withValues(alpha: 0.55),
+    };
+
+    final sections = breakdown.entries.map((entry) {
+      return PieChartSectionData(
+        value: entry.value,
+        color: colorMap[entry.key] ?? appTheme.earthMedium,
+      );
+    }).toList();
+
+    return SizedBox(
+      width: 105,
+      height: 105,
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: CustomPaint(
+          size: const Size(90, 90),
+          painter: _MiniPiePainter(sections: sections),
+        ),
       ),
     );
   }
@@ -638,39 +706,56 @@ class _StageCardState extends State<StageCard> {
             ),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: appTheme.earth,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: appTheme.earthMedium.withValues(alpha: 0.48),
-                      ),
+          // 标签 + 金额紧贴
+          ...(subtitle != null
+              ? [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: appTheme.earth,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: appTheme.earthMedium.withValues(alpha: 0.48),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            amountText,
-            style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 12),
-          ),
+                  const Spacer(),
+                  Text(
+                    amountText,
+                    style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 12),
+                  ),
+                ]
+              : [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: appTheme.earth,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    amountText,
+                    style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 12),
+                  ),
+                ]),
         ],
       ),
     );
@@ -687,6 +772,69 @@ class _StageCardState extends State<StageCard> {
     );
   }
 
+  Widget _buildBalanceRow(AppThemeExtension appTheme) {
+    final hasSubtitle = widget.stageCalc.livingTotal != null &&
+        widget.stageCalc.livingDailyAvg != null;
+    final amountText = hasSubtitle
+        ? '-¥${widget.stageCalc.livingTotal!.abs().toStringAsFixed(2)}'
+        : '-¥0.00';
+    final subtitleText = hasSubtitle
+        ? '¥${widget.stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天 × ${widget.stage.livingDays}天'
+        : null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: appTheme.earthMedium.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(appTheme.radiusPill),
+            ),
+            child: Icon(
+              Icons.wb_sunny_outlined,
+              size: 13,
+              color: appTheme.earth.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '结余',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: appTheme.earth,
+              ),
+            ),
+          ),
+          const Spacer(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                amountText,
+                style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 12),
+              ),
+              if (subtitleText != null)
+                Text(
+                  subtitleText,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: appTheme.earthMedium.withValues(alpha: 0.45),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   TextStyle _amountStyle(
     AppThemeExtension appTheme, {
     required Color color,
@@ -699,5 +847,52 @@ class _StageCardState extends State<StageCard> {
       color: color,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
+  }
+}
+
+class _MiniPiePainter extends CustomPainter {
+  _MiniPiePainter({required this.sections});
+
+  final List<PieChartSectionData> sections;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    var startAngle = -math.pi / 2;
+    for (final section in sections) {
+      final total = sections.fold(0.0, (s, e) => s + e.value);
+      if (total <= 0) return;
+      final sweep = (section.value / total) * 2 * math.pi;
+      paint.color = section.color;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweep,
+        true,
+        paint,
+      );
+      startAngle += sweep;
+    }
+
+    // 中心挖洞：用透明色覆盖，露出底层背景
+    final holePaint = Paint()
+      ..color = const Color(0x00FFFFFF)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius * 0.58, holePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniPiePainter oldDelegate) {
+    if (oldDelegate.sections.length != sections.length) return true;
+    for (var i = 0; i < sections.length; i++) {
+      if (oldDelegate.sections[i].value != sections[i].value ||
+          oldDelegate.sections[i].color != sections[i].color) {
+        return true;
+      }
+    }
+    return false;
   }
 }

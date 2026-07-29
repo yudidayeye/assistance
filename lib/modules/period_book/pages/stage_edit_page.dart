@@ -7,6 +7,7 @@ import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_segmented_tab.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/amount_chip.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
@@ -40,7 +41,7 @@ class _StageEditPageState extends State<StageEditPage> {
   bool _shoppingFormExpanded = false;
   bool _otherFormExpanded = false;
 
-  // Tab 切换（0=追加记录, 1=购物支出, 2=其他支出）
+  // Tab 切换（0=追加记录, 1=个人支出, 2=其他支出）
   int _currentTabIndex = 0;
   final _additionReasonController = TextEditingController();
   final _additionAmountController = TextEditingController();
@@ -232,7 +233,7 @@ class _StageEditPageState extends State<StageEditPage> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,
-              AppSpacing.md,
+              0,
               AppSpacing.md,
               80, // ToolboxBottomNav 高度
             ),
@@ -246,9 +247,12 @@ class _StageEditPageState extends State<StageEditPage> {
                     stageCalc: _stageCalc!,
                     previousBalance: _previousBalance,
                     additions: _additions,
+                    showHeader: false,
+                    expandExpenseByDefault: true,
+                    personalExpenseBreakdown: _computePersonalBreakdown(),
                     onEdit: () => context.pop(),
                   ),
-                AppSpacing.h16,
+                AppSpacing.h8,
                 _buildCardTabBar(appTheme),
                 AppSpacing.h12,
                 _buildUnifiedCard(appTheme),
@@ -271,67 +275,52 @@ class _StageEditPageState extends State<StageEditPage> {
     final displayCurrentDate =
         currentDateStr != null ? DateTime.parse(currentDateStr) : end;
 
-    await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: appTheme.cream,
-        title: Text(
-          '编辑阶段日期',
-          style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: appTheme.earth,
+    await AppDialog.show(
+      context,
+      title: '编辑阶段日期',
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDialogDateRow(
+            appTheme: appTheme,
+            label: '开始日期',
+            date: start,
+            onDateChanged: (date) {
+              setState(() {
+                _stage = _stage!.copyWith(startDate: _formatDate(date));
+              });
+              _saveStageDates();
+            },
           ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDialogDateRow(
-              appTheme: appTheme,
-              label: '开始日期',
-              date: start,
-              onDateChanged: (date) {
-                setState(() {
-                  _stage = _stage!.copyWith(startDate: _formatDate(date));
-                });
-                _saveStageDates();
-              },
-            ),
-            AppSpacing.h12,
-            _buildDialogDateRow(
-              appTheme: appTheme,
-              label: '结束日期',
-              date: end,
-              onDateChanged: (date) {
-                setState(() {
-                  _stage = _stage!.copyWith(endDate: _formatDate(date));
-                });
-                _saveStageDates();
-              },
-            ),
-            AppSpacing.h12,
-            _buildDialogDateRow(
-              appTheme: appTheme,
-              label: '当前日期',
-              date: displayCurrentDate,
-              highlight: true,
-              onDateChanged: (date) {
-                setState(() {
-                  _stage = _stage!.copyWith(currentDate: _formatDate(date));
-                });
-                _saveStageDates();
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('完成', style: TextStyle(color: appTheme.earthMedium)),
+          AppSpacing.h12,
+          _buildDialogDateRow(
+            appTheme: appTheme,
+            label: '结束日期',
+            date: end,
+            onDateChanged: (date) {
+              setState(() {
+                _stage = _stage!.copyWith(endDate: _formatDate(date));
+              });
+              _saveStageDates();
+            },
+          ),
+          AppSpacing.h12,
+          _buildDialogDateRow(
+            appTheme: appTheme,
+            label: '当前日期',
+            date: displayCurrentDate,
+            highlight: true,
+            onDateChanged: (date) {
+              setState(() {
+                _stage = _stage!.copyWith(currentDate: _formatDate(date));
+              });
+              _saveStageDates();
+            },
           ),
         ],
       ),
+      cancelLabel: '取消',
+      confirmLabel: '完成',
     );
   }
 
@@ -410,8 +399,8 @@ class _StageEditPageState extends State<StageEditPage> {
               Text(
                 '追加记录',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                   color: appTheme.earth,
                 ),
               ),
@@ -440,6 +429,7 @@ class _StageEditPageState extends State<StageEditPage> {
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               padding: EdgeInsets.zero,
+              buildDefaultDragHandles: false,
               onReorder: (oldIndex, newIndex) {
                 setState(() {
                   if (newIndex > oldIndex) newIndex -= 1;
@@ -489,7 +479,7 @@ class _StageEditPageState extends State<StageEditPage> {
   Widget _buildCardTabBar(AppThemeExtension appTheme) {
     return AppSegmentedTab(
       items: const [
-        AppSegmentedTabItem(label: '购物支出'),
+        AppSegmentedTabItem(label: '个人支出'),
         AppSegmentedTabItem(label: '其他支出'),
         AppSegmentedTabItem(label: '追加记录'),
       ],
@@ -711,12 +701,14 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 购物支出卡片
+  // 个人支出卡片
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildShoppingSection(AppThemeExtension appTheme) {
-    final shoppingExpenses =
-        _expenses.where((e) => e.category == 'shopping').toList();
+    // 个人支出 = 所有非"其他"分类（兼容已有 shopping + 新分类）
+    final shoppingExpenses = _expenses
+        .where((e) => e.category != 'other')
+        .toList();
     final shoppingTotal =
         shoppingExpenses.fold(0.0, (sum, e) => sum + e.amount);
 
@@ -728,10 +720,10 @@ class _StageEditPageState extends State<StageEditPage> {
           Row(
             children: [
               Text(
-                '购物支出',
+                '个人支出',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                   color: appTheme.earth,
                 ),
               ),
@@ -748,7 +740,7 @@ class _StageEditPageState extends State<StageEditPage> {
           if (shoppingExpenses.isEmpty)
             Center(
               child: Text(
-                '暂无购物支出',
+                '暂无个人支出',
                 style: TextStyle(
                   fontSize: 12,
                   color: appTheme.earthMedium.withValues(alpha: 0.5),
@@ -760,15 +752,14 @@ class _StageEditPageState extends State<StageEditPage> {
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               padding: EdgeInsets.zero,
+              buildDefaultDragHandles: false,
               onReorder: (oldIndex, newIndex) {
                 setState(() {
                   if (newIndex > oldIndex) newIndex -= 1;
                   final item = shoppingExpenses.removeAt(oldIndex);
                   shoppingExpenses.insert(newIndex, item);
                   _expenses = [
-                    ..._expenses.where((e) => e.category == 'shopping').toList()
-                      ..clear()
-                      ..addAll(shoppingExpenses),
+                    ...shoppingExpenses,
                     ..._expenses.where((e) => e.category == 'other'),
                   ];
                 });
@@ -813,8 +804,8 @@ class _StageEditPageState extends State<StageEditPage> {
               Text(
                 '其他支出',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                   color: appTheme.earth,
                 ),
               ),
@@ -843,16 +834,15 @@ class _StageEditPageState extends State<StageEditPage> {
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               padding: EdgeInsets.zero,
+              buildDefaultDragHandles: false,
               onReorder: (oldIndex, newIndex) {
                 setState(() {
                   if (newIndex > oldIndex) newIndex -= 1;
                   final item = otherExpenses.removeAt(oldIndex);
                   otherExpenses.insert(newIndex, item);
                   _expenses = [
-                    ..._expenses.where((e) => e.category == 'shopping'),
-                    ..._expenses.where((e) => e.category == 'other').toList()
-                      ..clear()
-                      ..addAll(otherExpenses),
+                    ..._expenses.where((e) => e.category != 'other'),
+                    ...otherExpenses,
                   ];
                 });
                 _service.updateExpensesOrder(_expenses);
@@ -878,7 +868,7 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 购物支出内嵌表单
+  // 个人支出内嵌表单
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildShoppingForm(AppThemeExtension appTheme) {
@@ -929,7 +919,7 @@ class _StageEditPageState extends State<StageEditPage> {
               final desc = _shoppingDescController.text.trim();
               if (amount == null || amount <= 0 || desc.isEmpty) return;
               _service
-                  .addExpense(widget.stageId, 'shopping', amount, desc)
+                  .addExpense(widget.stageId, '生活', amount, desc)
                   .then((_) {
                 _shoppingAmountController.clear();
                 _shoppingDescController.clear();
@@ -991,7 +981,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     final desc = _shoppingDescController.text.trim();
                     if (amount == null || amount <= 0 || desc.isEmpty) return;
                     _service
-                        .addExpense(widget.stageId, 'shopping', amount, desc)
+                        .addExpense(widget.stageId, '生活', amount, desc)
                         .then((_) {
                       _shoppingAmountController.clear();
                       _shoppingDescController.clear();
@@ -1172,11 +1162,9 @@ class _StageEditPageState extends State<StageEditPage> {
 
   Widget _buildExpenseItem(AppThemeExtension appTheme, ExpenseRecord expense,
       {int? index}) {
-    final icon = expense.category == 'shopping'
-        ? Icons.shopping_bag_outlined
-        : Icons.category_outlined;
-    // 支出类别图标用灰色（购物/其他类别由图标形状区分）
-    final color = appTheme.earthMedium.withValues(alpha: 0.5);
+    final displayCat = _mapCategoryForDisplay(expense.category);
+    final icon = _categoryIcon(displayCat);
+    final color = _categoryColor(appTheme, displayCat);
 
     return InkWell(
       key: ValueKey('expense_${expense.id}'),
@@ -1200,7 +1188,26 @@ class _StageEditPageState extends State<StageEditPage> {
               size: 18,
             ),
             AppSpacing.w8,
-            Icon(icon, size: 16, color: color),
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: color),
+              AppSpacing.w8,
+            ],
+            if (expense.category != 'other')
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(appTheme.radiusPill),
+                ),
+                child: Text(
+                  displayCat,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: color.withValues(alpha: 0.85),
+                  ),
+                ),
+              ),
             AppSpacing.w8,
             Expanded(
               child: Text(
@@ -1236,12 +1243,99 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
+  // 数据库 category 值 → 显示名称（兼容已有数据）
+  static const _categoryDisplayMap = {
+    'shopping': '购物',
+    'other': '其他',
+  };
+
+  // 显示名称 → 数据库存储值（反向映射，新增时用）
+  static const _categoryValueMap = {
+    '生活': '生活',
+    '购物': '购物',
+    '工作': '工作',
+    '娱乐': '娱乐',
+    '大餐': '大餐',
+  };
+
+  String _mapCategoryForDisplay(String dbValue) {
+    return _categoryDisplayMap[dbValue] ?? dbValue;
+  }
+
+  String _categoryToDbValue(String displayName) {
+    return _categoryValueMap[displayName] ?? displayName;
+  }
+
+  /// 计算个人支出分类明细（排除 other）
+  Map<String, double> _computePersonalBreakdown() {
+    final map = <String, double>{};
+    for (final e in _expenses) {
+      if (e.category == 'other') continue;
+      final display = _mapCategoryForDisplay(e.category);
+      map[display] = (map[display] ?? 0) + e.amount;
+    }
+    return map;
+  }
+
+  IconData? _categoryIcon(String displayName) {
+    switch (displayName) {
+      case '其他':
+        return null;
+      case '生活':
+        return Icons.coffee_outlined;
+      case '购物':
+        return Icons.shopping_bag_outlined;
+      case '工作':
+        return Icons.business_center_outlined;
+      case '娱乐':
+        return Icons.sports_esports_outlined;
+      case '大餐':
+        return Icons.restaurant_outlined;
+      default:
+        return Icons.category_outlined;
+    }
+  }
+
+  Color _categoryColorForName(String displayName) {
+    final appTheme = Theme.of(context).appTheme;
+    return _categoryColor(appTheme, displayName);
+  }
+
+  Color _categoryColor(AppThemeExtension appTheme, String displayName) {
+    switch (displayName) {
+      case '生活':
+        return appTheme.sage;
+      case '购物':
+        return const Color(0xFF8B7EC8); // 紫色
+      case '工作':
+        return const Color(0xFF3E6FA0); // 鲜明蓝
+      case '娱乐':
+        return const Color(0xFFC49A6C); // 柔和暖棕
+      case '大餐':
+        return appTheme.rose;
+      default:
+        return appTheme.earthMedium.withValues(alpha: 0.5);
+    }
+  }
+
+  // 可选类型列表（可后续扩展）
+  List<String> get _expenseCategories =>
+      const ['生活', '购物', '工作', '娱乐', '大餐'];
+
   Future<void> _showEditExpenseSheet(
       AppThemeExtension appTheme, ExpenseRecord expense) async {
     final amountController =
         TextEditingController(text: expense.amount.toStringAsFixed(2));
     final descController = TextEditingController(text: expense.description);
-    final isShopping = expense.category == 'shopping';
+    // 其他支出不显示类型选择，直接使用原 category
+    final isOther = expense.category == 'other';
+    final initialCategory = isOther
+        ? '其他'
+        : _mapCategoryForDisplay(expense.category);
+    final showCategorySelector = !isOther;
+    String selectedCategory = showCategorySelector
+        ? (_expenseCategories.contains(initialCategory) ? initialCategory : '生活')
+        : '其他';
 
     await showModalBottomSheet(
       context: context,
@@ -1249,8 +1343,10 @@ class _StageEditPageState extends State<StageEditPage> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         final sheetTheme = Theme.of(ctx).appTheme;
-        return Container(
-          padding: EdgeInsets.only(
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            return Container(
+              padding: EdgeInsets.only(
             left: 20,
             right: 20,
             top: 20,
@@ -1268,7 +1364,7 @@ class _StageEditPageState extends State<StageEditPage> {
               Row(
                 children: [
                   Text(
-                    '编辑${isShopping ? "购物" : "其他"}支出',
+                    isOther ? '编辑其他支出' : '编辑支出',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -1284,7 +1380,63 @@ class _StageEditPageState extends State<StageEditPage> {
                   ),
                 ],
               ),
-              AppSpacing.h16,
+              AppSpacing.h12,
+              if (showCategorySelector) ...[
+                // 类型选择
+                Text(
+                  '类型',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: sheetTheme.earthMedium.withValues(alpha: 0.7),
+                  ),
+                ),
+                AppSpacing.h8,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _expenseCategories.map((cat) {
+                    final isSelected = selectedCategory == cat;
+                    final catColor = _categoryColorForName(cat);
+                    return GestureDetector(
+                      onTap: () {
+                        setLocal(() => selectedCategory = cat);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? catColor.withValues(alpha: 0.12)
+                              : sheetTheme.creamDark.withValues(alpha: 0.5),
+                          borderRadius:
+                              BorderRadius.circular(sheetTheme.radiusPill),
+                          border: Border.all(
+                            color: isSelected
+                                ? catColor.withValues(alpha: 0.4)
+                                : sheetTheme.earthMedium.withValues(alpha: 0.1),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Text(
+                          cat,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: isSelected
+                                ? catColor.withValues(alpha: 0.85)
+                                : sheetTheme.earthMedium,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                AppSpacing.h16,
+              ] else
+                AppSpacing.h12,
               // 金额
               TextField(
                 controller: amountController,
@@ -1340,8 +1492,11 @@ class _StageEditPageState extends State<StageEditPage> {
               // 确定按钮
               GestureDetector(
                 onTap: () {
-                  _saveExpenseEdit(expense, expense.category, amountController,
-                      descController);
+                  final dbCategory = showCategorySelector
+                      ? _categoryToDbValue(selectedCategory)
+                      : 'other';
+                  _saveExpenseEdit(
+                      expense, dbCategory, amountController, descController);
                   Navigator.pop(ctx);
                 },
                 child: Container(
@@ -1368,6 +1523,8 @@ class _StageEditPageState extends State<StageEditPage> {
         );
       },
     );
+  },
+);
     // 编辑已实时保存，关闭弹窗后刷新列表
     if (mounted) await _loadData();
   }
