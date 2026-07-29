@@ -200,13 +200,13 @@ class _StageEditPageState extends State<StageEditPage> {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 _buildDateSection(appTheme),
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 _buildUnifiedCard(appTheme),
                 const SizedBox(height: 40),
               ],
@@ -223,10 +223,10 @@ class _StageEditPageState extends State<StageEditPage> {
     final end = DateTime.parse(_stage!.endDate);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(appTheme.radiusXl),
         boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
@@ -241,7 +241,7 @@ class _StageEditPageState extends State<StageEditPage> {
               color: appTheme.earth,
             ),
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           _buildDateRow(
             appTheme: appTheme,
             label: '开始日期',
@@ -253,7 +253,7 @@ class _StageEditPageState extends State<StageEditPage> {
               _saveStageDates();
             },
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           _buildDateRow(
             appTheme: appTheme,
             label: '结束日期',
@@ -265,7 +265,7 @@ class _StageEditPageState extends State<StageEditPage> {
               _saveStageDates();
             },
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           _buildCurrentDateRow(appTheme),
         ],
       ),
@@ -304,7 +304,7 @@ class _StageEditPageState extends State<StageEditPage> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: appTheme.creamDark,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(appTheme.radiusSm),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -317,7 +317,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     color: appTheme.earth,
                   ),
                 ),
-                const SizedBox(width: 4),
+                AppSpacing.w4,
                 Icon(
                   Icons.calendar_today,
                   size: 14,
@@ -369,7 +369,7 @@ class _StageEditPageState extends State<StageEditPage> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: appTheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(appTheme.radiusSm),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -382,7 +382,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     color: appTheme.primary,
                   ),
                 ),
-                const SizedBox(width: 4),
+                AppSpacing.w4,
                 Icon(
                   Icons.calendar_today,
                   size: 14,
@@ -398,7 +398,7 @@ class _StageEditPageState extends State<StageEditPage> {
 
   Widget _buildAdditionsSection(AppThemeExtension appTheme) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -421,7 +421,7 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           if (_additions.isEmpty)
             Center(
               child: Text(
@@ -450,7 +450,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   _buildAdditionItem(appTheme, addition),
               ],
             ),
-          const SizedBox(height: 8),
+          AppSpacing.h8,
           if (_additionFormExpanded)
             _buildAdditionForm(appTheme)
           else
@@ -459,7 +459,7 @@ class _StageEditPageState extends State<StageEditPage> {
               onTap: () => setState(() => _additionFormExpanded = true),
               icon: Icons.add_rounded,
             ),
-          const SizedBox(height: 8),
+          AppSpacing.h8,
         ],
       ),
     );
@@ -473,7 +473,7 @@ class _StageEditPageState extends State<StageEditPage> {
     return Container(
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(appTheme.radiusXl),
         boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
@@ -528,7 +528,7 @@ class _StageEditPageState extends State<StageEditPage> {
       onTap: () => _showEditAdditionSheet(appTheme, addition),
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         decoration: BoxDecoration(
           border: Border(
             top: BorderSide(
@@ -544,7 +544,7 @@ class _StageEditPageState extends State<StageEditPage> {
               color: appTheme.earthMedium.withValues(alpha: 0.4),
               size: 18,
             ),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             Expanded(
               child: Text(
                 addition.reason,
@@ -562,7 +562,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.sage,
               ),
             ),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             GestureDetector(
               onTap: () => _deleteAddition(addition),
               child: Icon(
@@ -626,7 +626,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 // 追加金额
                 TextField(
                   controller: amountController,
@@ -678,7 +678,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 // 确定按钮
                 GestureDetector(
                   onTap: () {
@@ -692,7 +692,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
                       color: sheetTheme.primary,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(appTheme.radiusMd),
                     ),
                     child: Center(
                       child: Text(
@@ -727,7 +727,7 @@ class _StageEditPageState extends State<StageEditPage> {
         shoppingExpenses.fold(0.0, (sum, e) => sum + e.amount);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -750,7 +750,7 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           if (shoppingExpenses.isEmpty)
             Center(
               child: Text(
@@ -785,7 +785,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   _buildExpenseItem(appTheme, shoppingExpenses[i], index: i),
               ],
             ),
-          const SizedBox(height: 8),
+          AppSpacing.h8,
           if (_shoppingFormExpanded)
             _buildShoppingForm(appTheme)
           else
@@ -794,7 +794,7 @@ class _StageEditPageState extends State<StageEditPage> {
               onTap: () => setState(() => _shoppingFormExpanded = true),
               icon: Icons.add_rounded,
             ),
-          const SizedBox(height: 8),
+          AppSpacing.h8,
         ],
       ),
     );
@@ -810,7 +810,7 @@ class _StageEditPageState extends State<StageEditPage> {
     final otherTotal = otherExpenses.fold(0.0, (sum, e) => sum + e.amount);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -833,7 +833,7 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           if (otherExpenses.isEmpty)
             Center(
               child: Text(
@@ -868,7 +868,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   _buildExpenseItem(appTheme, otherExpenses[i], index: i),
               ],
             ),
-          const SizedBox(height: 8),
+          AppSpacing.h8,
           if (_otherFormExpanded)
             _buildOtherForm(appTheme)
           else
@@ -877,7 +877,7 @@ class _StageEditPageState extends State<StageEditPage> {
               onTap: () => setState(() => _otherFormExpanded = true),
               icon: Icons.add_rounded,
             ),
-          const SizedBox(height: 8),
+          AppSpacing.h8,
         ],
       ),
     );
@@ -892,7 +892,7 @@ class _StageEditPageState extends State<StageEditPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -929,6 +929,19 @@ class _StageEditPageState extends State<StageEditPage> {
           TextField(
             controller: _shoppingDescController,
             focusNode: _shoppingDescFocusNode,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              final amount = double.tryParse(_shoppingAmountController.text);
+              final desc = _shoppingDescController.text.trim();
+              if (amount == null || amount <= 0 || desc.isEmpty) return;
+              _service
+                  .addExpense(widget.stageId, 'shopping', amount, desc)
+                  .then((_) {
+                _shoppingAmountController.clear();
+                _shoppingDescController.clear();
+                _loadData();
+              });
+            },
             decoration: InputDecoration(
               hintText: '描述',
               hintStyle: TextStyle(
@@ -1026,7 +1039,7 @@ class _StageEditPageState extends State<StageEditPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1063,6 +1076,19 @@ class _StageEditPageState extends State<StageEditPage> {
           TextField(
             controller: _otherDescController,
             focusNode: _otherDescFocusNode,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              final amount = double.tryParse(_otherAmountController.text);
+              final desc = _otherDescController.text.trim();
+              if (amount == null || amount <= 0 || desc.isEmpty) return;
+              _service
+                  .addExpense(widget.stageId, 'other', amount, desc)
+                  .then((_) {
+                _otherAmountController.clear();
+                _otherDescController.clear();
+                _loadData();
+              });
+            },
             decoration: InputDecoration(
               hintText: '描述',
               hintStyle: TextStyle(
@@ -1163,7 +1189,7 @@ class _StageEditPageState extends State<StageEditPage> {
       onTap: () => _showEditExpenseSheet(appTheme, expense),
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         decoration: BoxDecoration(
           border: Border(
             top: BorderSide(
@@ -1179,9 +1205,9 @@ class _StageEditPageState extends State<StageEditPage> {
               color: appTheme.earthMedium.withValues(alpha: 0.4),
               size: 18,
             ),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             Expanded(
               child: Text(
                 expense.description,
@@ -1201,7 +1227,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 color: appTheme.rose,
               ),
             ),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             GestureDetector(
               onTap: () => _deleteExpense(expense),
               child: Icon(
@@ -1264,7 +1290,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              AppSpacing.h16,
               // 金额
               TextField(
                 controller: amountController,
@@ -1316,7 +1342,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 ),
                 style: TextStyle(fontSize: 14, color: sheetTheme.earth),
               ),
-              const SizedBox(height: 16),
+              AppSpacing.h16,
               // 确定按钮
               GestureDetector(
                 onTap: () {
@@ -1329,7 +1355,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: sheetTheme.primary,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Center(
                     child: Text(
@@ -1364,7 +1390,7 @@ class _StageEditPageState extends State<StageEditPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(appTheme.radiusPill),
       ),
       child: Text(
         '$prefix${amount.toStringAsFixed(2)}',
@@ -1411,7 +1437,7 @@ class _StageEditPageState extends State<StageEditPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1450,6 +1476,8 @@ class _StageEditPageState extends State<StageEditPage> {
           TextField(
             controller: _additionReasonController,
             focusNode: _additionReasonFocusNode,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submitAddition(),
             decoration: InputDecoration(
               hintText: '追加原因',
               hintStyle: TextStyle(
