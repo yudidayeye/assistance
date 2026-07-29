@@ -106,12 +106,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          leading: IconButton(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            color: appTheme.earth,
-            iconSize: 20,
-          ),
+          automaticallyImplyLeading: true,
           title: Text(
             '周期详情',
             maxLines: 1,
@@ -151,12 +146,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          leading: IconButton(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            color: appTheme.earth,
-            iconSize: 20,
-          ),
+          automaticallyImplyLeading: true,
           title: Text(
             '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日',
             maxLines: 1,

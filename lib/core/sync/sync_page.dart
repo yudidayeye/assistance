@@ -347,18 +347,13 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         backgroundColor: appTheme.cream,
         elevation: 0,
         centerTitle: false,
+        automaticallyImplyLeading: true,
         titleSpacing: NavigationToolbar.kMiddleSpacing,
         title: Text(
           '数据同步',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
-        ),
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          color: appTheme.earth,
-          iconSize: 20,
         ),
       ),
       body: Column(

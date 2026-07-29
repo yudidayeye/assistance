@@ -115,12 +115,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          leading: IconButton(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            color: appTheme.earth,
-            iconSize: 20,
-          ),
+          automaticallyImplyLeading: true,
           title: Text(
             '大额记录 · $dateRange',
             maxLines: 1,

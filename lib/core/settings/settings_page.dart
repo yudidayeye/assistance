@@ -99,12 +99,7 @@ class _SettingsPageState extends State<SettingsPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          leading: IconButton(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            color: appTheme.earth,
-            iconSize: 20,
-          ),
+          automaticallyImplyLeading: true,
           title: Text(
             '设置',
             maxLines: 1,
