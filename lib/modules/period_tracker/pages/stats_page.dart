@@ -7,8 +7,6 @@ import '../services/period_service.dart';
 import '../services/prediction_service.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../core/theme/theme_extension.dart';
-import '../../../shared/widgets/pinned_header_delegate.dart';
-import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
@@ -88,7 +86,24 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
 
     return AppScrollScaffold(
       slivers: [
-        AppHeader.simple(title: '周期统计'),
+        SliverAppBar(
+          pinned: true,
+          backgroundColor: appTheme.cream,
+          elevation: 0,
+          centerTitle: false,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: appTheme.earth,
+            iconSize: 20,
+          ),
+          title: Text(
+            '周期统计',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+          ),
+        ),
         SliverToBoxAdapter(
           child: _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
         ),

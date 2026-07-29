@@ -5,8 +5,8 @@ import '../core/settings/settings_service.dart';
 import '../core/theme/theme_extension.dart';
 import '../shared/widgets/featured_card.dart';
 import '../shared/widgets/toolbox_bottom_nav.dart';
-import '../shared/widgets/app_header.dart';
 import '../shared/widgets/app_scaffold.dart';
+import '../shared/foundation/app_typography.dart';
 import 'profile_page.dart';
 
 /// 主页面容器 — 管理工具箱和我的两个 tab
@@ -64,11 +64,24 @@ class _MainShellPageState extends State<MainShellPage> {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        AppHeader.root(
-          title: '工具箱',
+        SliverAppBar(
+          pinned: true,
+          backgroundColor: appTheme.cream,
+          elevation: 0,
+          centerTitle: false,
+          title: Text(
+            '工具箱',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+          ),
           actions: [
-            AppHeader.iconButton(appTheme, Icons.settings_outlined,
-                () => context.push('/settings')),
+            IconButton(
+              onPressed: () => context.push('/settings'),
+              icon: const Icon(Icons.settings_outlined),
+              color: appTheme.earth,
+              iconSize: 20,
+            ),
           ],
         ),
         SliverPadding(

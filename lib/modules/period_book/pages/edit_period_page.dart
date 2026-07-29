@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
-import '../../../shared/widgets/pinned_header_delegate.dart';
-import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
@@ -80,7 +78,24 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
 
     return AppScrollScaffold(
       slivers: [
-        AppHeader.simple(title: '编辑周期'),
+        SliverAppBar(
+          pinned: true,
+          backgroundColor: appTheme.cream,
+          elevation: 0,
+          centerTitle: false,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: appTheme.earth,
+            iconSize: 20,
+          ),
+          title: Text(
+            '编辑周期',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+          ),
+        ),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),

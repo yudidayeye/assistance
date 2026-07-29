@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
-import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../../../shared/utils/format_utils.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
@@ -382,7 +382,24 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  AppHeader.simple(title: '历史记录'),
+                  SliverAppBar(
+                    pinned: true,
+                    backgroundColor: appTheme.cream,
+                    elevation: 0,
+                    centerTitle: false,
+                    leading: IconButton(
+                      onPressed: () => context.pop(),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                      color: appTheme.earth,
+                      iconSize: 20,
+                    ),
+                    title: Text(
+                      '历史记录',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+                    ),
+                  ),
                   if (_periods.isEmpty)
                     const SliverToBoxAdapter(
                       child: EmptyStateWidget(

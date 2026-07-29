@@ -8,12 +8,14 @@ class AppScaffold extends StatelessWidget {
   final Widget body;
   final Widget? bottomNavigationBar;
   final Widget? floatingActionButton;
+  final PreferredSizeWidget? appBar;
 
   const AppScaffold({
     super.key,
     required this.body,
     this.bottomNavigationBar,
     this.floatingActionButton,
+    this.appBar,
   });
 
   @override
@@ -22,6 +24,7 @@ class AppScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: appTheme.cream,
+      appBar: appBar,
       body: body,
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,

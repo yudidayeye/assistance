@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
-import '../../../shared/widgets/pinned_header_delegate.dart';
-import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/app_segmented_tab.dart';
 import '../../../shared/widgets/app_dialog.dart';
@@ -217,14 +215,29 @@ class _StageEditPageState extends State<StageEditPage> {
 
     return AppScrollScaffold(
       slivers: [
-        AppHeader.withSubtitle(
-          title: '第${_stage!.sortOrder}阶段',
-          subtitle: dateRange,
+        SliverAppBar(
+          pinned: true,
+          backgroundColor: appTheme.cream,
+          elevation: 0,
+          centerTitle: false,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: appTheme.earth,
+            iconSize: 20,
+          ),
+          title: Text(
+            '第${_stage!.sortOrder}阶段 · $dateRange',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+          ),
           actions: [
-            AppHeader.iconButton(
-              appTheme,
-              Icons.edit_outlined,
-              () => _showEditDatesDialog(appTheme),
+            IconButton(
+              onPressed: () => _showEditDatesDialog(appTheme),
+              icon: const Icon(Icons.edit_outlined),
+              color: appTheme.earth,
+              iconSize: 20,
             ),
           ],
         ),

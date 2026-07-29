@@ -3,10 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
-import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_bottom_sheet.dart';
+import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../models/period_record.dart';
 import '../models/stage_record.dart';
@@ -102,9 +102,25 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
     if (_period == null) {
       return AppScaffold(
+        appBar: AppBar(
+          backgroundColor: appTheme.cream,
+          elevation: 0,
+          centerTitle: false,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: appTheme.earth,
+            iconSize: 20,
+          ),
+          title: Text(
+            '周期详情',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+          ),
+        ),
         body: Column(
           children: [
-            AppHeader.simple(title: '周期详情'),
             Expanded(
               child: EmptyStateWidget(
                 icon: Icons.account_balance_wallet_outlined,
@@ -130,20 +146,36 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     return AppScrollScaffold(
       controller: _scrollController,
       slivers: [
-        AppHeader.withActions(
-          title: '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日',
+        SliverAppBar(
+          pinned: true,
+          backgroundColor: appTheme.cream,
+          elevation: 0,
+          centerTitle: false,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: appTheme.earth,
+            iconSize: 20,
+          ),
+          title: Text(
+            '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+          ),
           actions: [
             if (!_isReadOnly) ...[
-              AppHeader.iconButton(
-                appTheme,
-                Icons.history_rounded,
-                () => context.push('/period_book/history'),
+              IconButton(
+                onPressed: () => context.push('/period_book/history'),
+                icon: const Icon(Icons.history_rounded),
+                color: appTheme.earth,
+                iconSize: 20,
               ),
-              AppSpacing.w8,
-              AppHeader.iconButton(
-                appTheme,
-                Icons.edit_outlined,
-                () => context.push('/period_book/edit/${_period!.id}'),
+              IconButton(
+                onPressed: () => context.push('/period_book/edit/${_period!.id}'),
+                icon: const Icon(Icons.edit_outlined),
+                color: appTheme.earth,
+                iconSize: 20,
               ),
             ],
           ],

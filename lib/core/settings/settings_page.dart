@@ -13,8 +13,6 @@ import 'update_service.dart';
 import '../../modules/period_book/services/period_book_settings.dart';
 import '../../modules/period_book/services/period_book_service.dart';
 import '../../modules/period_tracker/services/period_service.dart';
-import '../../shared/widgets/pinned_header_delegate.dart';
-import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/app_dialog.dart';
 import '../../shared/widgets/settings_list_item.dart';
@@ -96,7 +94,24 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return AppScrollScaffold(
       slivers: [
-        AppHeader.simple(title: '设置'),
+        SliverAppBar(
+          pinned: true,
+          backgroundColor: appTheme.cream,
+          elevation: 0,
+          centerTitle: false,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: appTheme.earth,
+            iconSize: 20,
+          ),
+          title: Text(
+            '设置',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+          ),
+        ),
         SliverToBoxAdapter(
           child: Column(
             mainAxisSize: MainAxisSize.min,

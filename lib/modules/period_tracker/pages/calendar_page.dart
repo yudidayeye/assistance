@@ -8,8 +8,6 @@ import '../widgets/period_calendar.dart';
 import '../widgets/date_detail_panel.dart';
 import '../../../shared/utils/date_utils.dart';
 import '../../../core/theme/theme_extension.dart';
-import '../../../shared/widgets/pinned_header_delegate.dart';
-import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
@@ -65,13 +63,29 @@ class _CalendarPageState extends State<CalendarPage> {
           : CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                AppHeader.withActions(
-                  title: '生理期记录',
+                SliverAppBar(
+                  pinned: true,
+                  backgroundColor: appTheme.cream,
+                  elevation: 0,
+                  centerTitle: false,
+                  leading: IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    color: appTheme.earth,
+                    iconSize: 20,
+                  ),
+                  title: Text(
+                    '生理期记录',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+                  ),
                   actions: [
-                    AppHeader.iconButton(
-                      appTheme,
-                      Icons.bar_chart_rounded,
-                      () => context.push('/period_tracker/stats'),
+                    IconButton(
+                      onPressed: () => context.push('/period_tracker/stats'),
+                      icon: const Icon(Icons.bar_chart_rounded),
+                      color: appTheme.earth,
+                      iconSize: 20,
                     ),
                   ],
                 ),

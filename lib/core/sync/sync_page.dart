@@ -1,11 +1,11 @@
 import '../../shared/foundation/app_spacing.dart';
+import '../../shared/foundation/app_typography.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/theme_extension.dart';
 import 'sync_service.dart';
-import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/app_segmented_tab.dart';
 
@@ -341,14 +341,28 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
-    final safeTop = MediaQuery.of(context).padding.top;
 
     return AppScaffold(
+      appBar: AppBar(
+        backgroundColor: appTheme.cream,
+        elevation: 0,
+        centerTitle: false,
+        titleSpacing: NavigationToolbar.kMiddleSpacing,
+        title: Text(
+          '数据同步',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+        ),
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          color: appTheme.earth,
+          iconSize: 20,
+        ),
+      ),
       body: Column(
         children: [
-          // ── 顶部栏 ──
-          AppHeader.simple(title: '数据同步').buildNormal(context),
-
           // ── Tab 切换 ──
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
