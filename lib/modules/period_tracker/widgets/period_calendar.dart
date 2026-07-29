@@ -1,3 +1,4 @@
+import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import '../services/prediction_service.dart';
 import '../models/period_record.dart';
@@ -54,7 +55,7 @@ class PeriodCalendar extends StatelessWidget {
         children: [
           // 月份切换 header
           _buildMonthHeader(appTheme),
-          const SizedBox(height: 8),
+          AppSpacing.h8,
 
           // 星期标题
           Row(
@@ -198,7 +199,7 @@ class PeriodCalendar extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(appTheme.radiusSm),
           border: borderWidth > 0
               ? Border.all(color: borderColor, width: borderWidth)
               : null,
@@ -272,7 +273,7 @@ class PeriodCalendar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -298,7 +299,7 @@ class PeriodCalendar extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
           ),
         ),
-        const SizedBox(width: 4),
+        AppSpacing.w4,
         Text(
           label,
           style: TextStyle(

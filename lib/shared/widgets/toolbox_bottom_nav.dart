@@ -22,13 +22,13 @@ class ToolboxBottomNav extends StatelessWidget {
       padding: EdgeInsets.only(bottom: bottomPadding),
       decoration: BoxDecoration(
         color: appTheme.cream.withValues(alpha: 0.94),
-        boxShadow: [
-          BoxShadow(
-            color: appTheme.primaryDark.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, -6),
+        // Apple 风格：无阴影，用分隔线替代
+        border: Border(
+          top: BorderSide(
+            color: appTheme.earthMedium.withValues(alpha: 0.12),
+            width: 0.5,
           ),
-        ],
+        ),
       ),
       child: Row(
         children: [

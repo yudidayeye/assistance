@@ -3,7 +3,7 @@ import '../../core/theme/theme_extension.dart';
 
 /// 统一的应用脚手架
 ///
-/// 自动添加背景渐变，简化页面构建。
+/// Apple 风格：纯色背景，无渐变。
 class AppScaffold extends StatelessWidget {
   final Widget body;
   final Widget? bottomNavigationBar;
@@ -22,10 +22,7 @@ class AppScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: appTheme.cream,
-      body: Container(
-        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: body,
-      ),
+      body: body,
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
     );
@@ -34,7 +31,7 @@ class AppScaffold extends StatelessWidget {
 
 /// 滚动版本的 AppScaffold
 ///
-/// 自动添加 CustomScrollView + BouncingScrollPhysics。
+/// Apple 风格：纯色背景 + BouncingScrollPhysics。
 class AppScrollScaffold extends StatelessWidget {
   final List<Widget> slivers;
   final Widget? bottomNavigationBar;
@@ -53,13 +50,10 @@ class AppScrollScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: appTheme.cream,
-      body: Container(
-        decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-        child: CustomScrollView(
-          controller: controller,
-          physics: const BouncingScrollPhysics(),
-          slivers: slivers,
-        ),
+      body: CustomScrollView(
+        controller: controller,
+        physics: const BouncingScrollPhysics(),
+        slivers: slivers,
       ),
       bottomNavigationBar: bottomNavigationBar,
     );

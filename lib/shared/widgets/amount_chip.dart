@@ -19,20 +19,20 @@ class AmountChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(appTheme.radiusPill),
       ),
       child: Text(
         '$prefix${amount.toStringAsFixed(2)}',
         style: TextStyle(
-          fontFamily: AppTypography.dmSans,
           fontSize: 13,
           fontWeight: FontWeight.w700,
           color: color,
-          letterSpacing: 0.2,
+          letterSpacing: -0.2,
         ),
       ),
     );

@@ -13,6 +13,7 @@ import '../../../shared/foundation/app_spacing.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
 import '../models/expense_record.dart';
+import '../widgets/stage_card.dart';
 import '../services/period_book_service.dart';
 
 /// 阶段编辑页（单阶段编辑 + 批量记账）
@@ -31,6 +32,8 @@ class _StageEditPageState extends State<StageEditPage> {
   StageRecord? _stage;
   List<AdditionRecord> _additions = [];
   List<ExpenseRecord> _expenses = [];
+  StageCalculations? _stageCalc;
+  double _previousBalance = 0;
 
   // 内嵌表单状态
   bool _additionFormExpanded = false;
@@ -94,6 +97,26 @@ class _StageEditPageState extends State<StageEditPage> {
         }
         _additions = await _service.getAdditionsByStage(widget.stageId);
         _expenses = await _service.getExpensesByStage(widget.stageId);
+
+        // 计算上一阶段余额（用于 StageCard 展示）
+        final period = await _service.getPeriodById(_stage!.periodId);
+        if (period != null) {
+          final stages = await _service.getStagesByPeriod(period.id!);
+          final stageIndex = stages.indexWhere((s) => s.id == widget.stageId);
+          if (stageIndex == 0) {
+            _previousBalance = period.baseAmount;
+          } else if (stageIndex > 0) {
+            final prevStage = stages[stageIndex - 1];
+            final prevCalc = await _service.getStageCalculations(
+                prevStage.id!, stageIndex == 1 ? period.baseAmount : 0);
+            _previousBalance = prevCalc.balance ??
+                (prevCalc.baseAmount -
+                    prevCalc.shoppingTotal -
+                    prevCalc.otherTotal);
+          }
+          _stageCalc = await _service.getStageCalculations(
+              widget.stageId, _previousBalance);
+        }
       }
     } catch (e) {
       debugPrint('Load data error: $e');
@@ -126,7 +149,7 @@ class _StageEditPageState extends State<StageEditPage> {
             backgroundColor: Theme.of(context).appTheme.rose,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Theme.of(context).appTheme.radiusSm),
             ),
           ),
         );
@@ -197,20 +220,38 @@ class _StageEditPageState extends State<StageEditPage> {
         AppHeader.withSubtitle(
           title: '第${_stage!.sortOrder}阶段',
           subtitle: dateRange,
+          actions: [
+            AppHeader.iconButton(
+              appTheme,
+              Icons.edit_outlined,
+              () => _showEditDatesDialog(appTheme),
+            ),
+          ],
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              80, // ToolboxBottomNav 高度
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppSpacing.h16,
-                _buildDateSection(appTheme),
+                // 使用 StageCard 组件展示阶段头部
+                if (_stageCalc != null)
+                  StageCard(
+                    stage: _stage!,
+                    stageCalc: _stageCalc!,
+                    previousBalance: _previousBalance,
+                    additions: _additions,
+                    onEdit: () => context.pop(),
+                  ),
                 AppSpacing.h16,
                 _buildCardTabBar(appTheme),
                 AppSpacing.h12,
                 _buildUnifiedCard(appTheme),
-                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -219,66 +260,87 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 弹框：编辑阶段日期
+  // ═══════════════════════════════════════════════════════════
 
-  Widget _buildDateSection(AppThemeExtension appTheme) {
+  Future<void> _showEditDatesDialog(AppThemeExtension appTheme) async {
     final start = DateTime.parse(_stage!.startDate);
     final end = DateTime.parse(_stage!.endDate);
+    final currentDateStr = _stage?.currentDate;
+    final displayCurrentDate =
+        currentDateStr != null ? DateTime.parse(currentDateStr) : end;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusXl),
-        boxShadow: appTheme.cardShadow,
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '阶段日期',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earth,
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        title: Text(
+          '编辑阶段日期',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDialogDateRow(
+              appTheme: appTheme,
+              label: '开始日期',
+              date: start,
+              onDateChanged: (date) {
+                setState(() {
+                  _stage = _stage!.copyWith(startDate: _formatDate(date));
+                });
+                _saveStageDates();
+              },
             ),
+            AppSpacing.h12,
+            _buildDialogDateRow(
+              appTheme: appTheme,
+              label: '结束日期',
+              date: end,
+              onDateChanged: (date) {
+                setState(() {
+                  _stage = _stage!.copyWith(endDate: _formatDate(date));
+                });
+                _saveStageDates();
+              },
+            ),
+            AppSpacing.h12,
+            _buildDialogDateRow(
+              appTheme: appTheme,
+              label: '当前日期',
+              date: displayCurrentDate,
+              highlight: true,
+              onDateChanged: (date) {
+                setState(() {
+                  _stage = _stage!.copyWith(currentDate: _formatDate(date));
+                });
+                _saveStageDates();
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('完成', style: TextStyle(color: appTheme.earthMedium)),
           ),
-          AppSpacing.h12,
-          _buildDateRow(
-            appTheme: appTheme,
-            label: '开始日期',
-            date: start,
-            onDateChanged: (date) {
-              setState(() {
-                _stage = _stage!.copyWith(startDate: _formatDate(date));
-              });
-              _saveStageDates();
-            },
-          ),
-          AppSpacing.h12,
-          _buildDateRow(
-            appTheme: appTheme,
-            label: '结束日期',
-            date: end,
-            onDateChanged: (date) {
-              setState(() {
-                _stage = _stage!.copyWith(endDate: _formatDate(date));
-              });
-              _saveStageDates();
-            },
-          ),
-          AppSpacing.h12,
-          _buildCurrentDateRow(appTheme),
         ],
       ),
     );
   }
 
-  Widget _buildDateRow({
+  Widget _buildDialogDateRow({
     required AppThemeExtension appTheme,
     required String label,
     required DateTime date,
     required ValueChanged<DateTime> onDateChanged,
+    bool highlight = false,
   }) {
     return Row(
       children: [
@@ -286,7 +348,8 @@ class _StageEditPageState extends State<StageEditPage> {
           label,
           style: TextStyle(
             fontSize: 13,
-            color: appTheme.earthMedium,
+            color: highlight ? appTheme.primary : appTheme.earthMedium,
+            fontWeight: highlight ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
         const Spacer(),
@@ -305,7 +368,9 @@ class _StageEditPageState extends State<StageEditPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: appTheme.creamDark,
+              color: highlight
+                  ? appTheme.primary.withValues(alpha: 0.08)
+                  : appTheme.creamDark,
               borderRadius: BorderRadius.circular(appTheme.radiusSm),
             ),
             child: Row(
@@ -316,14 +381,14 @@ class _StageEditPageState extends State<StageEditPage> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: appTheme.earth,
+                    color: highlight ? appTheme.primary : appTheme.earth,
                   ),
                 ),
                 AppSpacing.w4,
                 Icon(
                   Icons.calendar_today,
                   size: 14,
-                  color: appTheme.primary,
+                  color: highlight ? appTheme.primary : appTheme.earthMedium,
                 ),
               ],
             ),
@@ -333,70 +398,6 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
-  Widget _buildCurrentDateRow(AppThemeExtension appTheme) {
-    final currentDateStr = _stage?.currentDate;
-    final start = DateTime.parse(_stage!.startDate);
-    final end = DateTime.parse(_stage!.endDate);
-    final displayDate =
-        currentDateStr != null ? DateTime.parse(currentDateStr) : end;
-
-    return Row(
-      children: [
-        Text(
-          '当前日期',
-          style: TextStyle(
-            fontSize: 13,
-            color: appTheme.earthMedium,
-          ),
-        ),
-        const Spacer(),
-        GestureDetector(
-          onTap: () async {
-            final initialDate =
-                currentDateStr != null ? DateTime.parse(currentDateStr) : end;
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: initialDate,
-              firstDate: start,
-              lastDate: end,
-            );
-            if (picked != null) {
-              setState(() {
-                _stage = _stage!.copyWith(currentDate: _formatDate(picked));
-              });
-              _saveStageDates();
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: appTheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(appTheme.radiusSm),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${displayDate.month.toString().padLeft(2, '0')}.${displayDate.day.toString().padLeft(2, '0')}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: appTheme.primary,
-                  ),
-                ),
-                AppSpacing.w4,
-                Icon(
-                  Icons.calendar_today,
-                  size: 14,
-                  color: appTheme.primary,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildAdditionsSection(AppThemeExtension appTheme) {
     return Container(
@@ -475,9 +476,11 @@ class _StageEditPageState extends State<StageEditPage> {
     return Container(
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusXl),
-        boxShadow: appTheme.cardShadow,
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        border: Border.all(
+          color: appTheme.earthMedium.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
       ),
       child: _buildTabContent(appTheme),
     );
@@ -517,7 +520,7 @@ class _StageEditPageState extends State<StageEditPage> {
     return InkWell(
       key: ValueKey('addition_${addition.id}'),
       onTap: () => _showEditAdditionSheet(appTheme, addition),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(appTheme.radiusMd),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         decoration: BoxDecoration(
@@ -633,7 +636,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     filled: true,
                     fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -658,7 +661,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     filled: true,
                     fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -905,7 +908,7 @@ class _StageEditPageState extends State<StageEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -942,7 +945,7 @@ class _StageEditPageState extends State<StageEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -963,7 +966,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -999,7 +1002,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.primary,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -1052,7 +1055,7 @@ class _StageEditPageState extends State<StageEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -1089,7 +1092,7 @@ class _StageEditPageState extends State<StageEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -1110,7 +1113,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -1145,7 +1148,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.primary,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -1178,7 +1181,7 @@ class _StageEditPageState extends State<StageEditPage> {
     return InkWell(
       key: ValueKey('expense_${expense.id}'),
       onTap: () => _showEditExpenseSheet(appTheme, expense),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(appTheme.radiusMd),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         decoration: BoxDecoration(
@@ -1297,7 +1300,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   filled: true,
                   fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     borderSide: BorderSide(
                       color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                       width: 1,
@@ -1322,7 +1325,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   filled: true,
                   fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     borderSide: BorderSide(
                       color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                       width: 1,
@@ -1451,7 +1454,7 @@ class _StageEditPageState extends State<StageEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -1478,7 +1481,7 @@ class _StageEditPageState extends State<StageEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -1501,7 +1504,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -1526,7 +1529,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.sage,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(

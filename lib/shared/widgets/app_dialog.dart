@@ -61,10 +61,14 @@ class AppDialog {
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
-          padding: AppSpacing.dialogPad,
+          padding: const EdgeInsets.all(20), // Apple 风格：更紧凑
           decoration: BoxDecoration(
             color: appTheme.cream,
-            borderRadius: BorderRadius.circular(radius),
+            borderRadius: BorderRadius.circular(appTheme.radiusMd), // Apple 风格：更紧凑圆角
+            border: Border.all(
+              color: appTheme.earthMedium.withValues(alpha: 0.15),
+              width: 0.5,
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -125,7 +129,7 @@ class AppDialog {
             height: 52,
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(appTheme.radiusLg),
             ),
             child: Icon(icon, color: iconColor, size: 26),
           ),

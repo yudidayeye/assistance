@@ -47,12 +47,13 @@ class AppHeader extends StatelessWidget {
   }) =>
       AppHeader._(title: title, showBack: true, actions: actions);
 
-  /// 返回 + 标题 + 副标题
+  /// 返回 + 标题 + 副标题，可带右侧操作按钮
   factory AppHeader.withSubtitle({
     required String title,
     required String subtitle,
+    List<Widget> actions = const [],
   }) =>
-      AppHeader._(title: title, showBack: true, subtitle: subtitle);
+      AppHeader._(title: title, showBack: true, subtitle: subtitle, actions: actions);
 
   /// 生成 34×34 圆形图标按钮（给 actions 用）
   static Widget iconButton(
@@ -67,7 +68,7 @@ class AppHeader extends StatelessWidget {
           height: 34,
           decoration: BoxDecoration(
             color: appTheme.earthMedium.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
           child: Icon(icon, color: appTheme.earth, size: 20),
         ),

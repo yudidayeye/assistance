@@ -2,14 +2,8 @@ import 'package:flutter/material.dart';
 
 double _lerpD(double a, double b, double t) => a + (b - a) * t;
 
-// ── 通用卡片阴影（所有主题共用） ──────────────────────
-const List<BoxShadow> cardShadow = [
-  BoxShadow(
-    color: Color(0x2a999999),
-    blurRadius: 4,
-    offset: Offset(0, 0),
-  ),
-];
+// ── 通用卡片阴影（Apple 风格：无阴影） ──────────────────────
+const List<BoxShadow> cardShadow = [];
 
 /// 应用主题扩展 — 通用色彩系统 + 卡片/背景/圆角/间距 token
 class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
@@ -38,13 +32,14 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   final Gradient scaffoldGradient;
   final Color surfaceOverlay;
 
-  // ── 圆角系统（新增） ──
-  final double radiusSm;
-  final double radiusMd;
-  final double radiusLg;
-  final double radiusXl;
+  // ── 圆角系统（Apple 风格：更紧凑） ──
+  final double radiusSm;  // 8px - 紧凑工具按钮、内联卡片图片
+  final double radiusMd;  // 11px - Pearl Button 胶囊
+  final double radiusLg;  // 18px - 商店工具卡片、配件网格卡片
+  final double radiusXl;  // 20px - 大型卡片
+  final double radiusPill; // 9999px - 主要按钮、chip
 
-  // ── 间距系统（新增） ──
+  // ── 间距系统（Apple 风格：更紧凑） ──
   final double spaceXs;
   final double spaceSm;
   final double spaceMd;
@@ -71,15 +66,16 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     required this.cardShadow,
     required this.scaffoldGradient,
     required this.surfaceOverlay,
-    this.radiusSm = 12,
-    this.radiusMd = 16,
-    this.radiusLg = 24,
-    this.radiusXl = 28,
-    this.spaceXs = 4,
-    this.spaceSm = 8,
-    this.spaceMd = 16,
-    this.spaceLg = 24,
-    this.spaceXl = 32,
+    this.radiusSm = 8,
+    this.radiusMd = 11,
+    this.radiusLg = 18,
+    this.radiusXl = 20,
+    this.radiusPill = 9999,
+    this.spaceXs = 2,
+    this.spaceSm = 4,
+    this.spaceMd = 12,
+    this.spaceLg = 20,
+    this.spaceXl = 28,
   });
 
   @override
@@ -107,6 +103,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     double? radiusMd,
     double? radiusLg,
     double? radiusXl,
+    double? radiusPill,
     double? spaceXs,
     double? spaceSm,
     double? spaceMd,
@@ -137,6 +134,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       radiusMd: radiusMd ?? this.radiusMd,
       radiusLg: radiusLg ?? this.radiusLg,
       radiusXl: radiusXl ?? this.radiusXl,
+      radiusPill: radiusPill ?? this.radiusPill,
       spaceXs: spaceXs ?? this.spaceXs,
       spaceSm: spaceSm ?? this.spaceSm,
       spaceMd: spaceMd ?? this.spaceMd,
@@ -171,6 +169,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       radiusMd: _lerpD(radiusMd, other.radiusMd, t),
       radiusLg: _lerpD(radiusLg, other.radiusLg, t),
       radiusXl: _lerpD(radiusXl, other.radiusXl, t),
+      radiusPill: _lerpD(radiusPill, other.radiusPill, t),
       spaceXs: _lerpD(spaceXs, other.spaceXs, t),
       spaceSm: _lerpD(spaceSm, other.spaceSm, t),
       spaceMd: _lerpD(spaceMd, other.spaceMd, t),
@@ -227,6 +226,11 @@ extension AppThemeGetter on ThemeData {
           cardBackground: Color(0xFFFEFEFE),
           cardBorder: Color(0xFFEBE8E4),
           cardShadow: cardShadow,
+          radiusSm: 8,
+          radiusMd: 11,
+          radiusLg: 18,
+          radiusXl: 20,
+          radiusPill: 9999,
           scaffoldGradient: LinearGradient(
             colors: [Color(0xFFF5F3F0), Color(0xFFEBE8E4)],
             begin: Alignment.topLeft,

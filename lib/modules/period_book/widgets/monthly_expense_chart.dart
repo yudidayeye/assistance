@@ -1,14 +1,15 @@
-import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/theme_extension.dart';
+import '../../../shared/foundation/app_spacing.dart';
+import '../../../core/theme/theme_extension.dart';
+import '../../../shared/utils/format_utils.dart';
 
-/// 余额趋势折线图 — 跨周期余额变化
-class BalanceTrendChart extends StatelessWidget {
+/// 月度支出趋势折线图 — 按月统计总支出
+class MonthlyExpenseChart extends StatelessWidget {
   final List<Map<String, dynamic>> data;
 
-  const BalanceTrendChart({super.key, required this.data});
+  const MonthlyExpenseChart({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,7 @@ class BalanceTrendChart extends StatelessWidget {
                 ),
                 AppSpacing.w8,
                 Text(
-                  '余额趋势',
+                  '月度支出趋势',
                   style: TextStyle(
                     fontFamily: GoogleFonts.dmSans().fontFamily,
                     fontSize: 14,
@@ -51,11 +52,11 @@ class BalanceTrendChart extends StatelessWidget {
               ],
             ),
           ),
-          if (data.isEmpty || data.every((d) => d['balance'] == null))
+          if (data.isEmpty || data.every((d) => d['expense'] == 0))
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 32),
               child: Text(
-                '暂无余额数据',
+                '暂无支出数据',
                 style: TextStyle(
                   fontSize: 13,
                   color: appTheme.earthMedium.withValues(alpha: 0.4),
@@ -69,7 +70,17 @@ class BalanceTrendChart extends StatelessWidget {
                 aspectRatio: 2.2,
                 child: LineChart(
                   LineChartData(
-                    gridData: const FlGridData(show: false),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: _getHorizontalInterval(),
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: appTheme.earthMedium.withValues(alpha: 0.1),
+                          strokeWidth: 1,
+                        );
+                      },
+                    ),
                     titlesData: FlTitlesData(
                       leftTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
@@ -83,17 +94,18 @@ class BalanceTrendChart extends StatelessWidget {
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 24,
+                          reservedSize: 28,
                           getTitlesWidget: (value, meta) {
                             final idx = value.toInt();
                             if (idx < 0 || idx >= data.length) {
                               return const SizedBox.shrink();
                             }
-                            final dt = DateTime.parse(data[idx]['startDate']);
+                            final month = data[idx]['month'] as int;
+                            // 显示格式：7月
                             return Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
-                                '${dt.month}/${dt.day}',
+                                '$month月',
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: appTheme.earthMedium
@@ -112,7 +124,7 @@ class BalanceTrendChart extends StatelessWidget {
                           return spots.map((spot) {
                             final item = data[spot.x.toInt()];
                             return LineTooltipItem(
-                              '${item['startDate'].substring(5)}\n¥${(item['balance'] as num).toStringAsFixed(2)}',
+                              '${item['month']}月\n¥${FormatUtils.formatAmount((item['expense'] as num).toDouble())}',
                               TextStyle(
                                 fontSize: 12,
                                 color: appTheme.earth,
@@ -127,12 +139,22 @@ class BalanceTrendChart extends StatelessWidget {
                       LineChartBarData(
                         spots: _buildSpots(),
                         isCurved: true,
-                        color: appTheme.earth,
+                        color: appTheme.primary,
                         barWidth: 2.5,
-                        dotData: const FlDotData(show: false),
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, bar, index) {
+                            return FlDotCirclePainter(
+                              radius: 3,
+                              color: appTheme.primary,
+                              strokeWidth: 1.5,
+                              strokeColor: appTheme.cardBackground,
+                            );
+                          },
+                        ),
                         belowBarData: BarAreaData(
                           show: true,
-                          color: appTheme.earth.withValues(alpha: 0.08),
+                          color: appTheme.primary.withValues(alpha: 0.1),
                         ),
                       ),
                     ],
@@ -148,14 +170,23 @@ class BalanceTrendChart extends StatelessWidget {
 
   List<FlSpot> _buildSpots() {
     final spots = <FlSpot>[];
-    int idx = 0;
-    for (final item in data) {
-      final balance = item['balance'];
-      if (balance != null) {
-        spots.add(FlSpot(idx.toDouble(), (balance as num).toDouble()));
-      }
-      idx++;
+    for (int i = 0; i < data.length; i++) {
+      final expense = data[i]['expense'] as num;
+      spots.add(FlSpot(i.toDouble(), expense.toDouble()));
     }
     return spots;
+  }
+
+  double _getHorizontalInterval() {
+    if (data.isEmpty) return 1000;
+    final maxExpense = data
+        .map((d) => (d['expense'] as num).toDouble())
+        .reduce((a, b) => a > b ? a : b);
+    if (maxExpense <= 0) return 1000;
+    // 根据最大值计算合适的间隔
+    if (maxExpense <= 1000) return 200;
+    if (maxExpense <= 5000) return 1000;
+    if (maxExpense <= 10000) return 2000;
+    return 5000;
   }
 }

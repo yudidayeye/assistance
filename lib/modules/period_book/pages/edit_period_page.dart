@@ -84,13 +84,13 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
         AppHeader.simple(title: '编辑周期'),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Column(
               children: [
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 // 日期选择
                 _buildDateCard(appTheme),
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 // 初始本金
                 _buildAmountCard(
                   appTheme: appTheme,
@@ -99,7 +99,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
                   value: _baseAmount,
                   onTap: () => _showAmountKeyboard(),
                 ),
-                const SizedBox(height: 32),
+                AppSpacing.h32,
                 // 保存按钮
                 _buildSaveButton(appTheme),
                 const SizedBox(height: 40),
@@ -120,7 +120,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(appTheme.radiusXl),
         boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
@@ -200,7 +200,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
               height: 40,
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: Icon(icon, color: iconColor, size: 20),
             ),
@@ -240,7 +240,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
                     : appTheme.earthMedium.withValues(alpha: 0.5),
               ),
             ),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             Icon(Icons.chevron_right_rounded,
                 size: 18, color: appTheme.earthMedium.withValues(alpha: 0.3)),
           ],
@@ -266,7 +266,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
         padding: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(appTheme.radiusXl),
           boxShadow: appTheme.cardShadow,
           border: Border.all(color: appTheme.cardBorder, width: 0.5),
         ),
@@ -279,7 +279,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
                 height: 40,
                 decoration: BoxDecoration(
                   color: appTheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
                 ),
                 child: Icon(icon, color: appTheme.primary, size: 20),
               ),
@@ -312,7 +312,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-              const SizedBox(width: 8),
+              AppSpacing.w8,
               Icon(Icons.chevron_right_rounded,
                   size: 18, color: appTheme.earthMedium.withValues(alpha: 0.3)),
             ],
@@ -426,7 +426,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
               color: appTheme.earthMedium.withValues(alpha: 0.4),
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(appTheme.radiusMd),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -473,7 +473,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
               backgroundColor: Theme.of(context).appTheme.rose,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(Theme.of(context).appTheme.radiusSm),
               ),
             ),
           );
@@ -502,7 +502,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
             backgroundColor: Theme.of(context).appTheme.rose,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Theme.of(context).appTheme.radiusSm),
             ),
           ),
         );

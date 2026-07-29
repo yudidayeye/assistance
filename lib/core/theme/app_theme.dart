@@ -36,8 +36,8 @@ class AppTheme {
   static const Color _softNightPrimary = Color(0xFF0A82FD);
   static const Color _softNightPrimaryLight = Color(0xFFB3D7FF);
   static const Color _softNightPrimaryDark = Color(0xFF0860D0);
-  static const Color _softNightCream = Color(0xFFFEFEFE);
-  static const Color _softNightCreamDark = Color(0xFFF5F5F5);
+  static const Color _softNightCream = Color(0xFFF8F8FA); // 偏白浅灰
+  static const Color _softNightCreamDark = Color(0xFFF0F0F2);
 
   // ══════════════════════════════════════════════════════
   // 主题 2: 晨雾 (Morning Mist)

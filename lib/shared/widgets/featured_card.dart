@@ -80,8 +80,11 @@ class _FeaturedCardState extends State<FeaturedCard> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(appTheme.radiusLg),
-          boxShadow: appTheme.cardShadow,
+          borderRadius: BorderRadius.circular(appTheme.radiusLg), // Apple 风格：紧凑圆角
+          border: Border.all(
+            color: appTheme.earthMedium.withValues(alpha: 0.15),
+            width: 0.5,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

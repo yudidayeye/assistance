@@ -1,3 +1,4 @@
+import '../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/theme_extension.dart';
 import '../foundation/app_typography.dart';
@@ -22,11 +23,10 @@ class SectionLabel extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontFamily: AppTypography.dmSans,
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: appTheme.earthMedium,
-              letterSpacing: 0.2,
+              letterSpacing: -0.2,
             ),
           ),
         ],
@@ -48,14 +48,13 @@ class SectionCard extends StatelessWidget {
     final appTheme = Theme.of(context).appTheme;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       padding: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: appTheme.cardShadow,
+        borderRadius: BorderRadius.circular(appTheme.radiusMd), // Apple 风格：更紧凑圆角
         border: Border.all(
-          color: appTheme.cardBorder,
+          color: appTheme.earthMedium.withValues(alpha: 0.15),
           width: 0.5,
         ),
       ),

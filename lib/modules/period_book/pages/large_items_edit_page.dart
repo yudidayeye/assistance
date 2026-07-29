@@ -119,11 +119,11 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 _buildUnifiedCard(appTheme),
                 const SizedBox(height: 40),
               ],
@@ -142,7 +142,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     return Container(
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(appTheme.radiusXl),
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
       child: Column(
@@ -168,7 +168,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
           color: appTheme.creamDark.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
           border: Border(
             bottom: BorderSide(
               color: appTheme.earthMedium.withValues(alpha: 0.06),
@@ -194,7 +194,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     color: isSelected
                         ? appTheme.cardBackground
                         : appTheme.creamDark.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(9),
+                    borderRadius: BorderRadius.circular(appTheme.radiusSm),
                   ),
                   child: AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 180),
@@ -237,7 +237,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
 
   Widget _buildAdditionsSection(AppThemeExtension appTheme) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -260,7 +260,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           if (_additions.isEmpty)
             Center(
               child: Text(
@@ -289,7 +289,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   _buildAdditionItem(appTheme, addition),
               ],
             ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           if (_additionFormExpanded)
             _buildAdditionForm(appTheme)
           else
@@ -308,9 +308,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     return InkWell(
       key: ValueKey('large_addition_${addition.id}'),
       onTap: () => _showEditAdditionSheet(appTheme, addition),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(appTheme.radiusMd),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         decoration: BoxDecoration(
           border: Border(
             top: BorderSide(
@@ -326,7 +326,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               color: appTheme.earthMedium.withValues(alpha: 0.4),
               size: 18,
             ),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             Expanded(
               child: Text(
                 addition.reason,
@@ -346,7 +346,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             GestureDetector(
               onTap: () => _deleteAddition(addition),
               child: Icon(
@@ -366,7 +366,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,7 +383,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -406,7 +406,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -427,7 +427,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -451,7 +451,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.sage,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -482,7 +482,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     final color = appTheme.rose;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -505,7 +505,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           if (_shoppingExpenses.isEmpty)
             Center(
               child: Text(
@@ -534,7 +534,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   _buildExpenseItem(appTheme, expense, color: color),
               ],
             ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           if (_shoppingFormExpanded)
             _buildShoppingForm(appTheme)
           else
@@ -556,7 +556,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     final color = appTheme.rose;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -579,7 +579,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           if (_otherExpenses.isEmpty)
             Center(
               child: Text(
@@ -608,7 +608,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   _buildExpenseItem(appTheme, expense, color: color),
               ],
             ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
           if (_otherFormExpanded)
             _buildOtherForm(appTheme)
           else
@@ -636,9 +636,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     return InkWell(
       key: ValueKey('large_expense_${expense.id}'),
       onTap: () => _showEditExpenseSheet(appTheme, expense),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(appTheme.radiusMd),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         decoration: BoxDecoration(
           border: Border(
             top: BorderSide(
@@ -654,9 +654,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               color: appTheme.earthMedium.withValues(alpha: 0.4),
               size: 18,
             ),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             Expanded(
               child: Text(
                 expense.description,
@@ -678,7 +678,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
-            const SizedBox(width: 8),
+            AppSpacing.w8,
             GestureDetector(
               onTap: () => _deleteExpense(expense),
               child: Icon(
@@ -702,7 +702,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,7 +719,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -742,7 +742,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -763,7 +763,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -800,7 +800,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.rose,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -832,7 +832,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -849,7 +849,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -872,7 +872,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               filled: true,
               fillColor: appTheme.cardBackground,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
                 borderSide: BorderSide(
                   color: appTheme.earthMedium.withValues(alpha: 0.25),
                   width: 1,
@@ -893,7 +893,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -928,7 +928,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: appTheme.rose,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Center(
                       child: Text(
@@ -1003,7 +1003,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 TextField(
                   controller: amountController,
                   keyboardType:
@@ -1018,7 +1018,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     filled: true,
                     fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -1042,7 +1042,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     filled: true,
                     fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -1053,7 +1053,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 SizedBox(
                   width: double.infinity,
                   child: GestureDetector(
@@ -1071,10 +1071,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                       await _loadData();
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                       decoration: BoxDecoration(
                         color: sheetTheme.primary,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(appTheme.radiusSm),
                       ),
                       child: Center(
                         child: Text(
@@ -1148,13 +1148,13 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 Text('分类',
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: sheetTheme.earthMedium)),
-                const SizedBox(height: 8),
+                AppSpacing.h8,
                 Row(
                   children: [
                     _buildCategoryChip(
@@ -1191,7 +1191,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     filled: true,
                     fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -1215,7 +1215,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     filled: true,
                     fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -1226,7 +1226,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   ),
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 SizedBox(
                   width: double.infinity,
                   child: GestureDetector(
@@ -1244,10 +1244,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                       await _loadData();
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                       decoration: BoxDecoration(
                         color: sheetTheme.primary,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(appTheme.radiusSm),
                       ),
                       child: Center(
                         child: Text(
@@ -1287,7 +1287,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(appTheme.radiusPill),
       ),
       child: Text(
         '$prefix${amount.toStringAsFixed(2)}',
@@ -1317,7 +1317,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         decoration: BoxDecoration(
           color:
               isSelected ? color.withValues(alpha: 0.15) : appTheme.creamDark,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(appTheme.radiusSm),
           border: isSelected
               ? Border.all(color: color.withValues(alpha: 0.3), width: 1)
               : null,

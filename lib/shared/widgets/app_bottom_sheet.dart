@@ -114,7 +114,7 @@ class AppBottomSheet {
               Flexible(
                 child: ListView(
                   shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   children: [
                     ...children,
                     SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),

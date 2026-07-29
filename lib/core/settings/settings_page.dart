@@ -229,13 +229,13 @@ class _SettingsPageState extends State<SettingsPage> {
             height: 34,
             decoration: BoxDecoration(
               color: module.themeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(appTheme.radiusMd),
             ),
             child: Center(
               child: module.icon.build(size: 18, color: module.themeColor),
             ),
           ),
-          const SizedBox(width: 12),
+          AppSpacing.w12,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,12 +289,12 @@ class _SettingsPageState extends State<SettingsPage> {
               height: 34,
               decoration: BoxDecoration(
                 color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
               child: Icon(Icons.calendar_month_rounded,
                   color: appTheme.primary, size: 18),
             ),
-            const SizedBox(width: 12),
+            AppSpacing.w12,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +352,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   color: appTheme.earth,
                 ),
               ),
-              const SizedBox(height: 8),
+              AppSpacing.h8,
               Text(
                 '每月几号发薪？（1~31）',
                 style: TextStyle(
@@ -360,14 +360,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   color: appTheme.earthMedium,
                 ),
               ),
-              const SizedBox(height: 24),
+              AppSpacing.h24,
               _PaydayPicker(
                 initialValue: _payday,
                 onChanged: (value) {
                   setState(() => _payday = value);
                 },
               ),
-              const SizedBox(height: 24),
+              AppSpacing.h24,
               Row(
                 children: [
                   Expanded(
@@ -393,7 +393,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  AppSpacing.w12,
                   Expanded(
                     child: GestureDetector(
                       onTap: () async {
@@ -518,12 +518,12 @@ class _SettingsPageState extends State<SettingsPage> {
           height: 34,
           decoration: BoxDecoration(
             color: appTheme.primary.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
           child: Icon(Icons.info_outline_rounded,
               color: appTheme.earthMedium.withValues(alpha: 0.45), size: 18),
         ),
-        const SizedBox(width: 12),
+        AppSpacing.w12,
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -559,14 +559,14 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: appTheme.sage.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(appTheme.radiusXl),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.system_update_rounded,
                       color: appTheme.sage, size: 14),
-                  const SizedBox(width: 4),
+                  AppSpacing.w4,
                   Text(
                     '更新 V$latestVersion',
                     style: TextStyle(
@@ -623,7 +623,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Icon(Icons.system_update_rounded,
                     color: appTheme.sage, size: 26),
               ),
-              const SizedBox(height: 20),
+              AppSpacing.h20,
               Text('发现新版本',
                   style: TextStyle(
                       fontFamily: GoogleFonts.playfairDisplay().fontFamily,
@@ -631,7 +631,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       fontWeight: FontWeight.w700,
                       color: appTheme.earth),
                   textAlign: TextAlign.center),
-              const SizedBox(height: 8),
+              AppSpacing.h8,
               Text(
                 'V${info.currentVersion} → V${info.latestVersion}',
                 style: TextStyle(
@@ -643,13 +643,13 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               if (info.releaseNotes != null &&
                   info.releaseNotes!.isNotEmpty) ...[
-                const SizedBox(height: 16),
+                AppSpacing.h16,
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: appTheme.creamDark,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
                   ),
                   child: Text(
                     info.releaseNotes!.length > 200
@@ -663,7 +663,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
+              AppSpacing.h24,
               Row(children: [
                 Expanded(
                   child: GestureDetector(
@@ -683,7 +683,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                AppSpacing.w12,
                 Expanded(
                   child: GestureDetector(
                     onTap: () async {
@@ -848,7 +848,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Icon(Icons.download_rounded,
                     color: appTheme.primary, size: 26),
               ),
-              const SizedBox(height: 20),
+              AppSpacing.h20,
               Text('确认导入数据？',
                   style: TextStyle(
                       fontFamily: GoogleFonts.playfairDisplay().fontFamily,
@@ -867,7 +867,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     fontSize: 14, color: appTheme.earthMedium, height: 1.5),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              AppSpacing.h24,
               Row(children: [
                 Expanded(
                   child: GestureDetector(
@@ -887,7 +887,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                AppSpacing.w12,
                 Expanded(
                   child: GestureDetector(
                     onTap: () => Navigator.pop(ctx, true),
@@ -940,7 +940,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Icon(Icons.error_outline_rounded,
                     color: appTheme.rose, size: 26),
               ),
-              const SizedBox(height: 20),
+              AppSpacing.h20,
               Text(title,
                   style: TextStyle(
                       fontFamily: GoogleFonts.playfairDisplay().fontFamily,
@@ -953,7 +953,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: TextStyle(
                       fontSize: 14, color: appTheme.earthMedium, height: 1.5),
                   textAlign: TextAlign.center),
-              const SizedBox(height: 24),
+              AppSpacing.h24,
               GestureDetector(
                 onTap: () => Navigator.pop(ctx),
                 child: Container(
@@ -1004,7 +1004,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Icon(Icons.warning_amber_rounded,
                     color: appTheme.rose, size: 26),
               ),
-              const SizedBox(height: 20),
+              AppSpacing.h20,
               Text('确认清除所有业务数据？',
                   style: TextStyle(
                       fontFamily: GoogleFonts.playfairDisplay().fontFamily,
@@ -1017,7 +1017,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: TextStyle(
                       fontSize: 14, color: appTheme.earthMedium, height: 1.5),
                   textAlign: TextAlign.center),
-              const SizedBox(height: 24),
+              AppSpacing.h24,
               Row(children: [
                 Expanded(
                   child: GestureDetector(
@@ -1037,7 +1037,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                AppSpacing.w12,
                 Expanded(
                   child: GestureDetector(
                     onTap: () async {
@@ -1079,8 +1079,8 @@ class _SettingsPageState extends State<SettingsPage> {
           style: TextStyle(color: appTheme.earth, fontWeight: FontWeight.w500)),
       backgroundColor: appTheme.primaryLight,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusMd)),
+      margin: const EdgeInsets.all(AppSpacing.md),
     ));
   }
 }
@@ -1129,7 +1129,7 @@ class _PaydayPickerState extends State<_PaydayPicker> {
             height: 44,
             decoration: BoxDecoration(
               color: appTheme.creamDark,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(appTheme.radiusMd),
             ),
             child: Icon(Icons.remove_rounded,
                 color: _value > 1
@@ -1138,7 +1138,7 @@ class _PaydayPickerState extends State<_PaydayPicker> {
                 size: 22),
           ),
         ),
-        const SizedBox(width: 20),
+        AppSpacing.w20,
         Text(
           '$_value',
           style: TextStyle(
@@ -1148,7 +1148,7 @@ class _PaydayPickerState extends State<_PaydayPicker> {
             color: appTheme.earth,
           ),
         ),
-        const SizedBox(width: 20),
+        AppSpacing.w20,
         GestureDetector(
           onTap: () {
             if (_value < 31) {
@@ -1163,7 +1163,7 @@ class _PaydayPickerState extends State<_PaydayPicker> {
             height: 44,
             decoration: BoxDecoration(
               color: appTheme.creamDark,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(appTheme.radiusMd),
             ),
             child: Icon(Icons.add_rounded,
                 color: _value < 31

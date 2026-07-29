@@ -1,3 +1,4 @@
+import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/theme_extension.dart';
@@ -31,7 +32,7 @@ class AdditionListItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: appTheme.cream.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Row(
         children: [
@@ -40,7 +41,7 @@ class AdditionListItem extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: appTheme.sage.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(appTheme.radiusMd),
             ),
             child: Icon(
               Icons.add_circle_outline_rounded,
@@ -48,7 +49,7 @@ class AdditionListItem extends StatelessWidget {
               color: appTheme.sage,
             ),
           ),
-          const SizedBox(width: 12),
+          AppSpacing.w12,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +103,7 @@ class AdditionListItem extends StatelessWidget {
         margin: const EdgeInsets.only(top: 4),
         decoration: BoxDecoration(
           color: appTheme.rose.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
         ),
         child:
             Icon(Icons.delete_outline_rounded, color: appTheme.rose, size: 20),

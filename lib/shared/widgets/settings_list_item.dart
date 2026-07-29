@@ -1,3 +1,4 @@
+import '../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/theme_extension.dart';
 
@@ -39,18 +40,18 @@ class SettingsListItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Row(
           children: [
-            // 图标
+            // 图标 — Apple 风格：紧凑圆角
             Container(
               width: 34,
               height: 34,
               decoration: BoxDecoration(
                 color: iconBgColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(appTheme.radiusSm), // Apple 风格：紧凑圆角
               ),
               child: Icon(icon, color: iconBgColor, size: 18),
             ),
-            const SizedBox(width: 12),
-            // 文本
+            AppSpacing.w12,
+            // 文本 — Apple 风格：更大字号
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,9 +60,10 @@ class SettingsListItem extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: 15, // Apple 风格：更接近 iOS 的 17pt
                       fontWeight: FontWeight.w500,
                       color: textColor,
+                      letterSpacing: -0.2,
                     ),
                   ),
                   if (subtitle != null) ...[

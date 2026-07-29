@@ -43,7 +43,7 @@ class AppButton extends StatelessWidget {
     this.icon,
   });
 
-  /// 主要操作按钮（primary 色）
+  /// 主要操作按钮（primary 色，pill 形状）
   factory AppButton.primary({
     required String label,
     VoidCallback? onTap,
@@ -53,6 +53,8 @@ class AppButton extends StatelessWidget {
       label: label,
       onTap: onTap,
       variant: AppButtonVariant.primary,
+      verticalPadding: 12,
+      borderRadius: 9999,
       expanded: expanded,
     );
   }
@@ -109,7 +111,7 @@ class AppButton extends StatelessWidget {
     );
   }
 
-  /// 渐变主要按钮（primary→primaryDark）
+  /// 渐变主要按钮（primary→primaryDark，pill 形状）
   factory AppButton.gradient({
     required String label,
     VoidCallback? onTap,
@@ -119,6 +121,8 @@ class AppButton extends StatelessWidget {
       label: label,
       onTap: onTap,
       variant: AppButtonVariant.gradient,
+      verticalPadding: 12,
+      borderRadius: 9999,
       expanded: expanded,
     );
   }
@@ -137,7 +141,7 @@ class AppButton extends StatelessWidget {
     );
   }
 
-  /// 边框按钮（primary 边框）
+  /// 边框按钮（primary 边框，pill 形状）
   factory AppButton.outline({
     required String label,
     VoidCallback? onTap,
@@ -147,6 +151,8 @@ class AppButton extends StatelessWidget {
       label: label,
       onTap: onTap,
       variant: AppButtonVariant.outline,
+      verticalPadding: 12,
+      borderRadius: 9999,
       expanded: expanded,
     );
   }
@@ -227,15 +233,7 @@ class AppButton extends StatelessWidget {
                           width: 1,
                         )
                       : null,
-          boxShadow: gradient != null && isEnabled
-              ? [
-                  BoxShadow(
-                    color: appTheme.primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
+          boxShadow: null, // Apple 风格：无阴影
         ),
         child: Center(
           child: child ??
@@ -249,7 +247,7 @@ class AppButton extends StatelessWidget {
                           size: 16,
                           color: isEnabled ? txtColor : appTheme.earthMedium,
                         ),
-                        const SizedBox(width: 4),
+                        AppSpacing.w4,
                         Text(
                           label,
                           style: AppTypography.bodyLg.copyWith(

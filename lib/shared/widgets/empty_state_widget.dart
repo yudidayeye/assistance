@@ -1,3 +1,4 @@
+import '../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/theme_extension.dart';
@@ -46,7 +47,7 @@ class EmptyStateWidget extends StatelessWidget {
                 color: color.withValues(alpha: 0.6),
               ),
             ),
-            const SizedBox(height: 24),
+            AppSpacing.h24,
             // 标题
             Text(
               title,
@@ -60,7 +61,7 @@ class EmptyStateWidget extends StatelessWidget {
             ),
             // 副标题
             if (subtitle != null) ...[
-              const SizedBox(height: 8),
+              AppSpacing.h8,
               Text(
                 subtitle!,
                 style: TextStyle(
@@ -71,9 +72,9 @@ class EmptyStateWidget extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ],
-            // 操作按钮
+            // 操作按钮 — Apple 风格：pill 形状
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 24),
+              AppSpacing.h24,
               GestureDetector(
                 onTap: onAction,
                 child: Container(
@@ -83,7 +84,7 @@ class EmptyStateWidget extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                    borderRadius: BorderRadius.circular(appTheme.radiusPill), // Apple 风格：pill 形状
                   ),
                   child: Text(
                     actionLabel!,
@@ -91,6 +92,7 @@ class EmptyStateWidget extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: color,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ),

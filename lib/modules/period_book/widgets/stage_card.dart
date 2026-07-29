@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
+import '../../../shared/foundation/app_spacing.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
 import '../services/period_book_service.dart';
@@ -85,15 +86,14 @@ class _StageCardState extends State<StageCard> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: AppSpacing.xs), // 更紧凑
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: appTheme.cardShadow,
+        borderRadius: BorderRadius.circular(appTheme.radiusMd), // Apple 风格
         border: Border.all(
           color: isCurrentStage
               ? appTheme.primary.withValues(alpha: 0.55)
-              : appTheme.cardBorder.withValues(alpha: 0.7),
+              : appTheme.earthMedium.withValues(alpha: 0.15),
           width: isCurrentStage ? 1.2 : 0.5,
         ),
       ),
@@ -104,12 +104,12 @@ class _StageCardState extends State<StageCard> {
             onTap: widget.onEdit,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 16, 12),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, AppSpacing.xs), // 更紧凑
               child: _buildHeaderRow(appTheme),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.sm, 0, AppSpacing.sm, AppSpacing.xs), // 更紧凑
             child: Column(
               children: [
                 Row(
@@ -187,7 +187,7 @@ class _StageCardState extends State<StageCard> {
         '¥${widget.stageCalc.baseAmount.toStringAsFixed(2)}',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: _amountStyle(appTheme, color: appTheme.earth, fontSize: 14),
+        style: _amountStyle(appTheme, color: appTheme.earth, fontSize: 12),
       ),
     );
   }
@@ -216,7 +216,7 @@ class _StageCardState extends State<StageCard> {
         '-¥${_totalExpense.abs().toStringAsFixed(2)}',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 14),
+        style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 12),
       ),
     );
   }
@@ -233,8 +233,8 @@ class _StageCardState extends State<StageCard> {
   }) {
     final labelStyle = TextStyle(
       fontSize: 12,
-      fontWeight: FontWeight.w600,
-      color: appTheme.earthMedium.withValues(alpha: 0.55),
+      fontWeight: FontWeight.w500,
+      color: appTheme.earthMedium.withValues(alpha: 0.9),
     );
     final content = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 52),
@@ -281,7 +281,7 @@ class _StageCardState extends State<StageCard> {
     return Container(
       decoration: BoxDecoration(
         color: appTheme.cardBackground.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
         children: [
@@ -302,11 +302,11 @@ class _StageCardState extends State<StageCard> {
           _buildSoftDivider(appTheme),
           _buildCategoryRow(
             appTheme: appTheme,
-            icon: Icons.restaurant_outlined,
+            icon: Icons.wb_sunny_outlined,
             label: '生活',
             subtitle: widget.stageCalc.livingTotal != null &&
                     widget.stageCalc.livingDailyAvg != null
-                ? '¥${widget.stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天 · ${widget.stage.livingDays}天'
+                ? '¥${widget.stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天 × ${widget.stage.livingDays}天'
                 : null,
             amountText: widget.stageCalc.livingTotal != null &&
                     widget.stageCalc.livingDailyAvg != null
@@ -343,7 +343,7 @@ class _StageCardState extends State<StageCard> {
           color: widget.stageCalc.balance != null
               ? appTheme.primary
               : appTheme.earthMedium.withValues(alpha: 0.42),
-          fontSize: 14,
+          fontSize: 12,
         ),
       ),
     );
@@ -355,7 +355,7 @@ class _StageCardState extends State<StageCard> {
     return Container(
       decoration: BoxDecoration(
         color: appTheme.cardBackground.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
         children: [
@@ -446,7 +446,7 @@ class _StageCardState extends State<StageCard> {
         padding: const EdgeInsets.fromLTRB(18, 14, 16, 14),
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(appTheme.radiusLg),
           boxShadow: appTheme.cardShadow,
           border: Border.all(
             color: appTheme.cardBorder.withValues(alpha: 0.7),
@@ -581,13 +581,13 @@ class _StageCardState extends State<StageCard> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(appTheme.radiusPill),
       ),
       child: Text(
         text,
         style: TextStyle(
           fontSize: 11,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           color: foreground,
         ),
       ),
@@ -604,7 +604,7 @@ class _StageCardState extends State<StageCard> {
       height: 24,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Theme.of(context).appTheme.radiusPill),
         border: borderColor == null
             ? null
             : Border.all(color: borderColor, width: 0.5),
@@ -621,31 +621,31 @@ class _StageCardState extends State<StageCard> {
     String? subtitle,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       child: Row(
         children: [
           Container(
-            width: 26,
-            height: 26,
+            width: 20,
+            height: 20,
             decoration: BoxDecoration(
               color: appTheme.earthMedium.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(appTheme.radiusPill),
             ),
             child: Icon(
               icon,
-              size: 15,
+              size: 13,
               color: appTheme.earth.withValues(alpha: 0.6),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Row(
               children: [
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                     color: appTheme.earth,
                   ),
                 ),
@@ -657,7 +657,7 @@ class _StageCardState extends State<StageCard> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         color: appTheme.earthMedium.withValues(alpha: 0.48),
                       ),
                     ),
@@ -666,10 +666,10 @@ class _StageCardState extends State<StageCard> {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Text(
             amountText,
-            style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 13),
+            style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 12),
           ),
         ],
       ),

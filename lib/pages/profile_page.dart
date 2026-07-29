@@ -168,7 +168,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
                 height: 56,
                 decoration: BoxDecoration(
                   color: appTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(appTheme.radiusLg),
                 ),
                 child: Icon(Icons.person_rounded,
                     color: appTheme.primary, size: 30),

@@ -1,3 +1,4 @@
+import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,11 +22,11 @@ class ExpensePieChart extends StatelessWidget {
     final livingPct = hasData ? data['living']! / _total : 0.0;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(appTheme.radiusXl),
         boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
@@ -44,7 +45,7 @@ class ExpensePieChart extends StatelessWidget {
                     borderRadius: BorderRadius.circular(1.5),
                   ),
                 ),
-                const SizedBox(width: 8),
+                AppSpacing.w8,
                 Text(
                   '支出占比',
                   style: TextStyle(
@@ -117,10 +118,10 @@ class ExpensePieChart extends StatelessWidget {
                       children: [
                         _buildLegend(appTheme, '购物', appTheme.sage,
                             data['shopping']!, shoppingPct),
-                        const SizedBox(height: 12),
+                        AppSpacing.h12,
                         _buildLegend(appTheme, '其他', appTheme.rose,
                             data['other']!, otherPct),
-                        const SizedBox(height: 12),
+                        AppSpacing.h12,
                         if (data['living']! > 0)
                           _buildLegend(
                               appTheme,
@@ -134,7 +135,7 @@ class ExpensePieChart extends StatelessWidget {
                 ],
               ),
             ),
-          const SizedBox(height: 8),
+          AppSpacing.h8,
         ],
       ),
     );
@@ -183,7 +184,7 @@ class ExpensePieChart extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
           ),
         ),
-        const SizedBox(width: 8),
+        AppSpacing.w8,
         Expanded(
           child: Text(
             label,

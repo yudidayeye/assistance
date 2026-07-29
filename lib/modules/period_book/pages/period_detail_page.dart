@@ -149,7 +149,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 Icons.history_rounded,
                 () => context.push('/period_book/history'),
               ),
-              const SizedBox(width: 8),
+              AppSpacing.w8,
               AppHeader.iconButton(
                 appTheme,
                 Icons.edit_outlined,
@@ -158,11 +158,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             ],
           ],
         ),
-        SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
         SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
-        SliverToBoxAdapter(child: SizedBox(height: appTheme.spaceMd)),
+        SliverToBoxAdapter(child: AppSpacing.h8),
         _buildStagesSection(appTheme),
-        SliverToBoxAdapter(child: const SizedBox(height: 100)),
+        SliverToBoxAdapter(child: AppSpacing.h80),
       ],
     );
   }
@@ -224,7 +223,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             Flexible(
               child: ListView(
                 shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 children: [
                   // 初始本金
                   _buildDetailRow(
@@ -267,7 +266,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                                             .withValues(alpha: 0.3),
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
+                                    AppSpacing.w4,
                                     Expanded(
                                       child: Text(
                                         a.reason,
@@ -352,7 +351,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             Flexible(
               child: ListView(
                 shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 children: [
                   // 购物
                   _buildDetailRow(
@@ -465,7 +464,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   Widget _buildStagesSection(AppThemeExtension appTheme) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
@@ -545,7 +544,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 color: appTheme.earthMedium.withValues(alpha: 0.6),
               ),
             ),
-            const SizedBox(height: 12),
+            AppSpacing.h12,
             TextField(
               controller: controller,
               keyboardType:
@@ -573,7 +572,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   color: appTheme.earthMedium.withValues(alpha: 0.4),
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -598,7 +597,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     backgroundColor: appTheme.rose,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                   ),
                 );

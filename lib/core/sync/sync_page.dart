@@ -1,3 +1,4 @@
+import '../../shared/foundation/app_spacing.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -177,7 +178,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                 child: Icon(Icons.cloud_download_rounded,
                     color: appTheme.primary, size: 26),
               ),
-              const SizedBox(height: 20),
+              AppSpacing.h20,
               Text('确认接收数据？',
                   style: TextStyle(
                       fontFamily: GoogleFonts.playfairDisplay().fontFamily,
@@ -196,7 +197,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                     fontSize: 14, color: appTheme.earthMedium, height: 1.5),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              AppSpacing.h24,
               Row(children: [
                 Expanded(
                   child: GestureDetector(
@@ -216,7 +217,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                AppSpacing.w12,
                 Expanded(
                   child: GestureDetector(
                     onTap: () => Navigator.pop(ctx, true),
@@ -364,7 +365,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
             ),
           ),
 
-          const SizedBox(height: 12),
+          AppSpacing.h12,
 
           // ── 内容区 ──
           AnimatedSwitcher(
@@ -391,7 +392,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
     return SingleChildScrollView(
       key: const ValueKey('receive'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Column(
         children: [
           // ── 状态指示 ──
@@ -411,7 +412,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
 
           // ── 停止按钮 ──
           if (_sync.isRunning && _rxStatus != 'importing') ...[
-            const SizedBox(height: 16),
+            AppSpacing.h16,
             _buildStopButton(appTheme),
           ],
 
@@ -435,10 +436,10 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
   Widget _buildDoneState(AppThemeExtension appTheme) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Column(
         children: [
-          const SizedBox(height: 48),
+          AppSpacing.h48,
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
             duration: const Duration(milliseconds: 500),
@@ -464,7 +465,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                   child: Icon(Icons.check_circle_rounded,
                       size: 40, color: appTheme.sage),
                 ),
-                const SizedBox(height: 20),
+                AppSpacing.h20,
                 Text(
                   '同步完成',
                   style: TextStyle(
@@ -549,7 +550,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                 ),
                 child: showLoading
                     ? Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
                           color: dotColor,
@@ -587,7 +588,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(appTheme.radiusXl),
         border: Border.all(
           color: _rxStatus == 'waiting'
               ? appTheme.sage.withValues(alpha: 0.2)
@@ -627,7 +628,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  AppSpacing.w8,
                   Text(
                     '本机地址',
                     style: TextStyle(
@@ -646,7 +647,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: appTheme.creamDark.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(appTheme.radiusMd),
             ),
             child: Text(
               address,
@@ -694,19 +695,19 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
     return SingleChildScrollView(
       key: const ValueKey('send'),
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Column(
         children: [
           // ── 状态提示 ──
           if (_txStatus != 'idle') ...[
             _buildTxStatusBar(appTheme),
-            const SizedBox(height: 16),
+            AppSpacing.h16,
           ],
 
           // ── 设备列表标题 ──
           _buildSectionHeader(appTheme),
 
-          const SizedBox(height: 12),
+          AppSpacing.h12,
 
           // ── 设备列表 ──
           if (_devices.isEmpty)
@@ -750,7 +751,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       children: [
         Icon(Icons.wifi_find_rounded,
             size: 17, color: appTheme.primary.withValues(alpha: 0.6)),
-        const SizedBox(width: 8),
+        AppSpacing.w8,
         Text(
           '附近的设备',
           style: TextStyle(
@@ -819,7 +820,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Row(
         children: [
@@ -858,7 +859,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
             child: Icon(Icons.devices_other_rounded,
                 size: 36, color: appTheme.earthMedium.withValues(alpha: 0.25)),
           ),
-          const SizedBox(height: 16),
+          AppSpacing.h16,
           Text('暂未发现设备',
               style: TextStyle(
                   fontSize: 14,
@@ -888,7 +889,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
             color: isSending
                 ? appTheme.primary.withValues(alpha: 0.04)
                 : appTheme.cardBackground,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(appTheme.radiusLg),
             border: Border.all(
               color: isSending
                   ? appTheme.primary.withValues(alpha: 0.15)
@@ -911,7 +912,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                 height: 40,
                 decoration: BoxDecoration(
                   color: appTheme.primary.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
                 ),
                 child: Icon(_getDeviceIcon(device.name),
                     size: 20, color: appTheme.primary.withValues(alpha: 0.7)),
@@ -951,14 +952,14 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
                     color: appTheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(appTheme.radiusXl),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.file_upload_outlined,
                           size: 13, color: appTheme.primary),
-                      const SizedBox(width: 4),
+                      AppSpacing.w4,
                       Text('发送',
                           style: TextStyle(
                               fontSize: 12,
@@ -978,10 +979,10 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       {required IconData icon, required String text}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: appTheme.earthMedium.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

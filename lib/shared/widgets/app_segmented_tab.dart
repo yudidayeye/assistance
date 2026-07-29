@@ -1,3 +1,4 @@
+import '../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/theme_extension.dart';
 import '../foundation/app_typography.dart';
@@ -32,7 +33,7 @@ class AppSegmentedTab extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       decoration: BoxDecoration(
         color: appTheme.earthMedium.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(appTheme.radiusSm), // Apple 风格：更紧凑圆角
       ),
       child: Row(
         children: List.generate(items.length, (index) {
@@ -46,16 +47,8 @@ class AppSegmentedTab extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 9),
                 decoration: BoxDecoration(
                   color: isSelected ? appTheme.cardBackground : null,
-                  borderRadius: BorderRadius.circular(9),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: appTheme.earthMedium.withValues(alpha: 0.15),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
+                  borderRadius: BorderRadius.circular(6), // Apple 风格：更紧凑圆角
+                  // Apple 风格：无阴影
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -66,7 +59,7 @@ class AppSegmentedTab extends StatelessWidget {
                         size: 16,
                         color: isSelected ? appTheme.primary : appTheme.earthMedium,
                       ),
-                      const SizedBox(width: 4),
+                      AppSpacing.w4,
                     ],
                     Text(
                       item.label,

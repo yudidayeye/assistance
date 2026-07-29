@@ -1,3 +1,4 @@
+import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import '../models/period_record.dart';
 import '../services/prediction_service.dart';
@@ -178,7 +179,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          AppSpacing.h12,
 
           // 开关行
           Row(
@@ -240,7 +241,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                     filled: true,
                     fillColor: appTheme.creamDark.withAlpha(100),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
                       borderSide: BorderSide.none,
                     ),
                     contentPadding:

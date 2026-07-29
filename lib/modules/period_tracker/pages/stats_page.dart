@@ -117,7 +117,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
       int avgDuration, String regularity) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusLg),
@@ -132,7 +132,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                 color: appTheme.earthMedium,
                 fontWeight: FontWeight.w500),
           ),
-          const SizedBox(height: 24),
+          AppSpacing.h24,
           Row(
             children: [
               Expanded(
@@ -187,7 +187,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
           ),
           child: Icon(icon, color: appTheme.primary, size: 20),
         ),
-        const SizedBox(height: 12),
+        AppSpacing.h12,
         Text(label,
             style: TextStyle(fontSize: 12, color: appTheme.earthMedium)),
         const SizedBox(height: 4),
@@ -257,7 +257,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          AppSpacing.h16,
           // 数据行
           ..._records.asMap().entries.map((entry) {
             final index = entry.key;
@@ -348,7 +348,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
             color: appTheme.cream,
             borderRadius: BorderRadius.circular(appTheme.radiusXl),
@@ -361,12 +361,12 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                 height: 64,
                 decoration: BoxDecoration(
                   color: appTheme.rose.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(appTheme.radiusXl),
                 ),
                 child: Icon(Icons.delete_outline_rounded,
                     color: appTheme.rose, size: 32),
               ),
-              const SizedBox(height: 20),
+              AppSpacing.h20,
               Text(
                 '确认删除？',
                 style: TextStyle(
@@ -376,12 +376,12 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                   color: appTheme.earth,
                 ),
               ),
-              const SizedBox(height: 12),
+              AppSpacing.h12,
               Text(
                 '删除后该记录将无法恢复。',
                 style: TextStyle(fontSize: 14, color: appTheme.earthMedium),
               ),
-              const SizedBox(height: 24),
+              AppSpacing.h24,
               Row(
                 children: [
                   Expanded(
@@ -404,7 +404,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  AppSpacing.w12,
                   Expanded(
                     child: GestureDetector(
                       onTap: () async {
