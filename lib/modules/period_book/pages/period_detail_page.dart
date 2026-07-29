@@ -3,13 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
-import '../../../shared/widgets/pinned_header_delegate.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_bottom_sheet.dart';
-import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../models/period_record.dart';
 import '../models/stage_record.dart';
@@ -49,7 +46,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   void initState() {
     super.initState();
     _loadData();
-    // 监听数据变更，自动刷新
     _service.addListener(_onDataChanged);
   }
 
@@ -73,18 +69,15 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         _period = await _service.getOngoingPeriod();
       }
       if (_period != null) {
-        // 一次性获取所有数据（性能优化）
         _calc = await _service.getPeriodCalculations(_period!.id!);
         _stages = await _service.getStagesByPeriod(_period!.id!);
         final allAdditions = await _service.getAdditionsByPeriod(_period!.id!);
         _allExpenses = await _service.getExpensesByPeriod(_period!.id!);
 
-        // 按阶段分组追加记录
         _stageAdditions = _stages.map((stage) {
           return allAdditions.where((a) => a.stageId == stage.id!).toList();
         }).toList();
 
-        // 加载大额记录净额
         _largeItemsNet = await _service.getLargeItemsNet(_period!.id!);
       }
     } catch (e) {
@@ -93,19 +86,16 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     if (mounted) setState(() => _loading = false);
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 构建
-  // ═══════════════════════════════════════════════════════════
-
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
 
     if (_loading) {
-      return Scaffold(
-        body: Container(
-          decoration: BoxDecoration(gradient: appTheme.scaffoldGradient),
-          child: const Center(child: CircularProgressIndicator()),
+      return AppScaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            color: appTheme.primary,
+          ),
         ),
       );
     }
@@ -114,9 +104,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       return AppScaffold(
         body: Column(
           children: [
-            // 返回导航
             AppHeader.simple(title: '周期详情'),
-            // 空状态内容
             Expanded(
               child: EmptyStateWidget(
                 icon: Icons.account_balance_wallet_outlined,
@@ -125,7 +113,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 actionLabel: '新建周期',
                 onAction: () async {
                   await context.push('/period_book/new');
-                  // 从新建页返回后刷新数据
                   if (mounted) {
                     _loadData();
                   }
@@ -164,15 +151,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
         SliverToBoxAdapter(child: AppSpacing.h8),
         _buildStagesSection(appTheme),
-        SliverToBoxAdapter(child: AppSpacing.h80),
+        const SliverToBoxAdapter(child: SizedBox(height: 80)),
       ],
     );
   }
-
-
-  // ═══════════════════════════════════════════════════════════
-  // 汇总卡片
-  // ══════════════════════════════════════════════════════════
 
   Widget _buildSummarySection(AppThemeExtension appTheme) {
     return PeriodSummaryCard(
@@ -192,124 +174,83 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   void _showTotalBaseDetail() {
     final appTheme = Theme.of(context).appTheme;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.7,
+    AppBottomSheet.showDetail(
+      context,
+      title: '总本金构成',
+      children: [
+        _buildDetailRow(
+          appTheme: appTheme,
+          label: '初始本金',
+          amount: _period!.baseAmount,
+          isTotal: false,
         ),
-        decoration: BoxDecoration(
-          color: appTheme.cream,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(appTheme.radiusXl),
-            topRight: Radius.circular(appTheme.radiusXl),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 标题
-            Padding(
-              padding: const EdgeInsets.only(top: 20, bottom: 16),
-              child: Text(
-                '总本金构成',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: appTheme.earth,
-                ),
-              ),
-            ),
-            // 内容
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                children: [
-                  // 初始本金
-                  _buildDetailRow(
-                    appTheme: appTheme,
-                    label: '初始本金',
-                    amount: _period!.baseAmount,
-                    isTotal: false,
-                  ),
-                  const Divider(height: 24),
-                  // 各阶段追加
-                  ..._stages.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final stage = entry.value;
-                    final additions = _stageAdditions[index];
-                    final total =
-                        additions.fold<double>(0, (sum, a) => sum + a.amount);
+        const Divider(height: 24),
+        ..._stages.asMap().entries.map((entry) {
+          final index = entry.key;
+          final stage = entry.value;
+          final additions = _stageAdditions[index];
+          final total =
+              additions.fold<double>(0, (sum, a) => sum + a.amount);
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildDetailRow(
-                          appTheme: appTheme,
-                          label: '第${stage.sortOrder}周追加',
-                          amount: total,
-                          isTotal: false,
-                          isEmpty: additions.isEmpty,
-                        ),
-                        if (additions.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          ...additions.map((a) => Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 16, bottom: 4),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      '└',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: appTheme.earthMedium
-                                            .withValues(alpha: 0.3),
-                                      ),
-                                    ),
-                                    AppSpacing.w4,
-                                    Expanded(
-                                      child: Text(
-                                        a.reason,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: appTheme.earthMedium
-                                              .withValues(alpha: 0.6),
-                                        ),
-                                      ),
-                                    ),
-                                    Text(
-                                      '¥${a.amount.toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: appTheme.sage,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )),
-                        ],
-                      ],
-                    );
-                  }),
-                  const Divider(height: 24),
-                  // 合计
-                  _buildDetailRow(
-                    appTheme: appTheme,
-                    label: '合计',
-                    amount: _calc!.totalBase,
-                    isTotal: true,
-                  ),
-                  SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-                ],
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow(
+                appTheme: appTheme,
+                label: '第${stage.sortOrder}周追加',
+                amount: total,
+                isTotal: false,
+                isEmpty: additions.isEmpty,
               ),
-            ),
-          ],
+              if (additions.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                for (final a in additions)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 4),
+                    child: Row(
+                      children: [
+                        Text(
+                          '└',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: appTheme.earthMedium
+                                .withValues(alpha: 0.3),
+                          ),
+                        ),
+                        AppSpacing.w4,
+                        Expanded(
+                          child: Text(
+                            a.reason,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: appTheme.earthMedium
+                                  .withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '¥${a.amount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: appTheme.sage,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ],
+          );
+        }),
+        const Divider(height: 24),
+        _buildDetailRow(
+          appTheme: appTheme,
+          label: '合计',
+          amount: _calc!.totalBase,
+          isTotal: true,
         ),
-      ),
+      ],
     );
   }
 
@@ -320,87 +261,45 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   void _showTotalExpenseDetail() {
     final appTheme = Theme.of(context).appTheme;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.7,
+    AppBottomSheet.showDetail(
+      context,
+      title: '总支出构成',
+      children: [
+        _buildDetailRow(
+          appTheme: appTheme,
+          label: '购物',
+          amount: _calc!.shoppingTotal,
+          color: appTheme.rose,
+          isTotal: false,
         ),
-        decoration: BoxDecoration(
-          color: appTheme.cream,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(appTheme.radiusXl),
-            topRight: Radius.circular(appTheme.radiusXl),
+        const Divider(height: 24),
+        _buildDetailRow(
+          appTheme: appTheme,
+          label: '其他',
+          amount: _calc!.otherTotal,
+          color: appTheme.rose,
+          isTotal: false,
+        ),
+        const Divider(height: 24),
+        if (_calc!.livingTotal != null &&
+            _calc!.livingTotal! > 0) ...[
+          _buildDetailRow(
+            appTheme: appTheme,
+            label: '生活',
+            amount: _calc!.livingTotal!,
+            color: appTheme.rose,
+            isTotal: false,
           ),
+          const Divider(height: 24),
+        ],
+        _buildDetailRow(
+          appTheme: appTheme,
+          label: '合计',
+          amount: _calc!.totalBase - (_calc?.balance ?? 0),
+          color: appTheme.rose,
+          isTotal: true,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 标题
-            Padding(
-              padding: const EdgeInsets.only(top: 20, bottom: 16),
-              child: Text(
-                '总支出构成',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: appTheme.earth,
-                ),
-              ),
-            ),
-            // 内容
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                children: [
-                  // 购物
-                  _buildDetailRow(
-                    appTheme: appTheme,
-                    label: '购物',
-                    amount: _calc!.shoppingTotal,
-                    color: appTheme.rose,
-                    isTotal: false,
-                  ),
-                  const Divider(height: 24),
-                  // 其他
-                  _buildDetailRow(
-                    appTheme: appTheme,
-                    label: '其他',
-                    amount: _calc!.otherTotal,
-                    color: appTheme.rose,
-                    isTotal: false,
-                  ),
-                  const Divider(height: 24),
-                  // 生活
-                  if (_calc!.livingTotal != null &&
-                      _calc!.livingTotal! > 0) ...[
-                    _buildDetailRow(
-                      appTheme: appTheme,
-                      label: '生活',
-                      amount: _calc!.livingTotal!,
-                      color: appTheme.rose,
-                      isTotal: false,
-                    ),
-                    const Divider(height: 24),
-                  ],
-                  // 合计
-                  _buildDetailRow(
-                    appTheme: appTheme,
-                    label: '合计',
-                    amount: _calc!.totalBase - (_calc?.balance ?? 0),
-                    color: appTheme.rose,
-                    isTotal: true,
-                  ),
-                  SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
@@ -475,7 +374,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             final stageCalc = _calc!.stages[index];
             final additions = _stageAdditions[index];
 
-            // 计算上一阶段余额（用于显示本金来源）
             double previousBalance;
             if (index == 0) {
               previousBalance = _period!.baseAmount;
@@ -511,7 +409,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     );
   }
 
-
   Map<String, double> _computePersonalBreakdown(int stageId) {
     final stageExpenses = _allExpenses
         .where((e) => e.stageId == stageId && e.category != 'other')
@@ -543,123 +440,100 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   void _showEditStageBalanceDialog(StageRecord stage) {
     final appTheme = Theme.of(context).appTheme;
     final currentBalanceText = stage.balance?.toStringAsFixed(2);
-    final controller = TextEditingController(); // 默认不填充，方便直接输入
+    final controller = TextEditingController();
 
-    // 获取当前阶段的本金
     final stageIndex = _stages.indexWhere((s) => s.id == stage.id);
     final stageCalc = stageIndex >= 0 ? _calc!.stages[stageIndex] : null;
     final maxBalance = stageCalc?.baseAmount ?? 0;
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: appTheme.cream,
-        title: Text(
-          '编辑余额',
-          style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: appTheme.earth,
+    AppDialog.show(
+      context,
+      title: '编辑余额',
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '最大余额: ¥${maxBalance.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 13,
+              color: appTheme.earthMedium.withValues(alpha: 0.6),
+            ),
           ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '最大余额: ¥${maxBalance.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 13,
+          AppSpacing.h12,
+          TextField(
+            controller: controller,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            autofocus: true,
+            style: TextStyle(
+              fontFamily: GoogleFonts.dmSans().fontFamily,
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: appTheme.earth,
+            ),
+            decoration: InputDecoration(
+              prefixText: '¥ ',
+              prefixStyle: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
                 color: appTheme.earthMedium.withValues(alpha: 0.6),
               ),
-            ),
-            AppSpacing.h12,
-            TextField(
-              controller: controller,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              autofocus: true,
-              style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
+              hintText: currentBalanceText != null
+                  ? currentBalanceText
+                  : '未设置',
+              hintStyle: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
-                color: appTheme.earth,
+                color: appTheme.earthMedium.withValues(alpha: 0.4),
               ),
-              decoration: InputDecoration(
-                prefixText: '¥ ',
-                prefixStyle: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earthMedium.withValues(alpha: 0.6),
-                ),
-                hintText: currentBalanceText != null
-                    ? currentBalanceText
-                    : '未设置',
-                hintStyle: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earthMedium.withValues(alpha: 0.4),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
               ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final val = double.tryParse(controller.text.trim());
-              // 验证余额不能超过本金
-              if (val != null && val > maxBalance) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}'),
-                    backgroundColor: appTheme.rose,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                  ),
-                );
-                return;
-              }
-              await _service.updateStageBalance(
-                stage.id!,
-                val,
-              );
-              // 保存当前滚动位置，_loadData() 重建后会恢复
-              _savedScrollOffset = _scrollController.hasClients
-                  ? _scrollController.offset
-                  : null;
-              await _loadData();
-              // 等待重建完成后恢复滚动位置
-              if (mounted) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_savedScrollOffset != null &&
-                      _scrollController.hasClients) {
-                    _scrollController.jumpTo(_savedScrollOffset!);
-                  }
-                });
-              }
-              if (mounted) {
-                Navigator.of(context).pop();
-              }
-            },
-            child: Text('确定', style: TextStyle(color: appTheme.primary)),
           ),
         ],
       ),
+      cancelLabel: '取消',
+      confirmLabel: '确定',
+      onConfirm: () async {
+        final val = double.tryParse(controller.text.trim());
+        if (val != null && val > maxBalance) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}'),
+              backgroundColor: appTheme.rose,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(appTheme.radiusSm),
+              ),
+            ),
+          );
+          return;
+        }
+        await _service.updateStageBalance(
+          stage.id!,
+          val,
+        );
+        _savedScrollOffset = _scrollController.hasClients
+            ? _scrollController.offset
+            : null;
+        await _loadData();
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_savedScrollOffset != null &&
+                _scrollController.hasClients) {
+              _scrollController.jumpTo(_savedScrollOffset!);
+            }
+          });
+        }
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      },
     );
   }
 }
-

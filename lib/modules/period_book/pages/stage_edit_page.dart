@@ -5,7 +5,6 @@ import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/pinned_header_delegate.dart';
 import '../../../shared/widgets/app_header.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_segmented_tab.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/amount_chip.dart';
@@ -447,10 +446,14 @@ class _StageEditPageState extends State<StageEditPage> {
           if (_additionFormExpanded)
             _buildAdditionForm(appTheme)
           else
-            AppButton.add(
-              label: '添加追加',
-              onTap: () => setState(() => _additionFormExpanded = true),
-              icon: Icons.add_rounded,
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => setState(() => _additionFormExpanded = true),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('添加追加'),
+                style: _addButtonStyle(appTheme),
+              ),
             ),
           AppSpacing.h8,
         ],
@@ -602,11 +605,16 @@ class _StageEditPageState extends State<StageEditPage> {
                       ),
                     ),
                     const Spacer(),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: Icon(Icons.close_rounded,
-                          size: 20,
-                          color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: sheetTheme.earthMedium.withValues(alpha: 0.6),
+                      ),
                     ),
                   ],
                 ),
@@ -664,30 +672,23 @@ class _StageEditPageState extends State<StageEditPage> {
                 ),
                 AppSpacing.h16,
                 // 确定按钮
-                GestureDetector(
-                  onTap: () {
-                    // 先保存一次确保最新数据写入
-                    _saveAdditionEdit(
-                        addition, reasonController, amountController);
-                    Navigator.pop(ctx);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: sheetTheme.primary,
-                      borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      // 先保存一次确保最新数据写入
+                      _saveAdditionEdit(
+                          addition, reasonController, amountController);
+                      Navigator.pop(ctx);
+                    },
+                    style: _primaryButtonStyle(
+                      sheetTheme,
+                      background: sheetTheme.primary,
+                      verticalPadding: 14,
+                      radius: sheetTheme.radiusMd,
+                      fontSize: 15,
                     ),
-                    child: Center(
-                      child: Text(
-                        '保存修改',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    child: const Text('保存修改'),
                   ),
                 ),
               ],
@@ -774,10 +775,14 @@ class _StageEditPageState extends State<StageEditPage> {
           if (_shoppingFormExpanded)
             _buildShoppingForm(appTheme)
           else
-            AppButton.add(
-              label: '添加支出',
-              onTap: () => setState(() => _shoppingFormExpanded = true),
-              icon: Icons.add_rounded,
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => setState(() => _shoppingFormExpanded = true),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('添加支出'),
+                style: _addButtonStyle(appTheme),
+              ),
             ),
           AppSpacing.h8,
         ],
@@ -856,10 +861,14 @@ class _StageEditPageState extends State<StageEditPage> {
           if (_otherFormExpanded)
             _buildOtherForm(appTheme)
           else
-            AppButton.add(
-              label: '添加支出',
-              onTap: () => setState(() => _otherFormExpanded = true),
-              icon: Icons.add_rounded,
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => setState(() => _otherFormExpanded = true),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('添加支出'),
+                style: _addButtonStyle(appTheme),
+              ),
             ),
           AppSpacing.h8,
         ],
@@ -950,32 +959,18 @@ class _StageEditPageState extends State<StageEditPage> {
           Row(
             children: [
               Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _shoppingFormExpanded = false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '收起',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.earthMedium,
-                        ),
-                      ),
-                    ),
-                  ),
+                child: TextButton(
+                  onPressed: () =>
+                      setState(() => _shoppingFormExpanded = false),
+                  style: _secondaryButtonStyle(appTheme),
+                  child: const Text('收起'),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 flex: 2,
-                child: GestureDetector(
-                  onTap: () {
+                child: FilledButton(
+                  onPressed: () {
                     final amount =
                         double.tryParse(_shoppingAmountController.text);
                     final desc = _shoppingDescController.text.trim();
@@ -988,23 +983,9 @@ class _StageEditPageState extends State<StageEditPage> {
                       _loadData();
                     });
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: appTheme.primary,
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '确认添加',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
+                  style: _primaryButtonStyle(appTheme,
+                      background: appTheme.primary),
+                  child: const Text('确认添加'),
                 ),
               ),
             ],
@@ -1097,32 +1078,17 @@ class _StageEditPageState extends State<StageEditPage> {
           Row(
             children: [
               Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _otherFormExpanded = false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '收起',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.earthMedium,
-                        ),
-                      ),
-                    ),
-                  ),
+                child: TextButton(
+                  onPressed: () => setState(() => _otherFormExpanded = false),
+                  style: _secondaryButtonStyle(appTheme),
+                  child: const Text('收起'),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 flex: 2,
-                child: GestureDetector(
-                  onTap: () {
+                child: FilledButton(
+                  onPressed: () {
                     final amount = double.tryParse(_otherAmountController.text);
                     final desc = _otherDescController.text.trim();
                     if (amount == null || amount <= 0 || desc.isEmpty) return;
@@ -1134,23 +1100,9 @@ class _StageEditPageState extends State<StageEditPage> {
                       _loadData();
                     });
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: appTheme.primary,
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '确认添加',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
+                  style: _primaryButtonStyle(appTheme,
+                      background: appTheme.primary),
+                  child: const Text('确认添加'),
                 ),
               ),
             ],
@@ -1372,11 +1324,16 @@ class _StageEditPageState extends State<StageEditPage> {
                     ),
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Icon(Icons.close_rounded,
-                        size: 20,
-                        color: sheetTheme.earthMedium.withValues(alpha: 0.6)),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.6),
+                    ),
                   ),
                 ],
               ),
@@ -1490,32 +1447,25 @@ class _StageEditPageState extends State<StageEditPage> {
               ),
               AppSpacing.h16,
               // 确定按钮
-              GestureDetector(
-                onTap: () {
-                  final dbCategory = showCategorySelector
-                      ? _categoryToDbValue(selectedCategory)
-                      : 'other';
-                  _saveExpenseEdit(
-                      expense, dbCategory, amountController, descController);
-                  Navigator.pop(ctx);
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: sheetTheme.primary,
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    final dbCategory = showCategorySelector
+                        ? _categoryToDbValue(selectedCategory)
+                        : 'other';
+                    _saveExpenseEdit(
+                        expense, dbCategory, amountController, descController);
+                    Navigator.pop(ctx);
+                  },
+                  style: _primaryButtonStyle(
+                    sheetTheme,
+                    background: sheetTheme.primary,
+                    verticalPadding: 14,
+                    radius: sheetTheme.radiusMd,
+                    fontSize: 15,
                   ),
-                  child: Center(
-                    child: Text(
-                      '保存修改',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  child: const Text('保存修改'),
                 ),
               ),
             ],
@@ -1527,6 +1477,56 @@ class _StageEditPageState extends State<StageEditPage> {
 );
     // 编辑已实时保存，关闭弹窗后刷新列表
     if (mounted) await _loadData();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Material 按钮样式
+  // ═══════════════════════════════════════════════════════════
+
+  /// 添加按钮样式（OutlinedButton.icon 用）
+  ButtonStyle _addButtonStyle(AppThemeExtension appTheme) {
+    return OutlinedButton.styleFrom(
+      foregroundColor: appTheme.primary,
+      backgroundColor: appTheme.primary.withValues(alpha: 0.1),
+      side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+    );
+  }
+
+  /// 次要按钮样式（收起）
+  ButtonStyle _secondaryButtonStyle(AppThemeExtension appTheme) {
+    return TextButton.styleFrom(
+      backgroundColor: appTheme.creamDark,
+      foregroundColor: appTheme.earthMedium,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(appTheme.radiusSm),
+      ),
+      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    );
+  }
+
+  /// 主要按钮样式（确认添加 / 保存修改）
+  ButtonStyle _primaryButtonStyle(
+    AppThemeExtension appTheme, {
+    required Color background,
+    double verticalPadding = 10,
+    double? radius,
+    double fontSize = 14,
+  }) {
+    return FilledButton.styleFrom(
+      backgroundColor: background,
+      foregroundColor: Colors.white,
+      padding: EdgeInsets.symmetric(vertical: verticalPadding),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(radius ?? appTheme.radiusSm),
+      ),
+      textStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600),
+    );
   }
 
   /// 卡片标题行右上角的合计金额徽章
@@ -1655,50 +1655,22 @@ class _StageEditPageState extends State<StageEditPage> {
             children: [
               // 收起按钮
               Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _additionFormExpanded = false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: appTheme.creamDark,
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '收起',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.earthMedium,
-                        ),
-                      ),
-                    ),
-                  ),
+                child: TextButton(
+                  onPressed: () =>
+                      setState(() => _additionFormExpanded = false),
+                  style: _secondaryButtonStyle(appTheme),
+                  child: const Text('收起'),
                 ),
               ),
               const SizedBox(width: 10),
               // 确认添加按钮
               Expanded(
                 flex: 2,
-                child: GestureDetector(
-                  onTap: _submitAddition,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: appTheme.sage,
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '确认添加',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
+                child: FilledButton(
+                  onPressed: _submitAddition,
+                  style: _primaryButtonStyle(appTheme,
+                      background: appTheme.sage),
+                  child: const Text('确认添加'),
                 ),
               ),
             ],

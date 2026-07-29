@@ -8,7 +8,6 @@ import 'sync_service.dart';
 import '../../shared/widgets/app_header.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/app_segmented_tab.dart';
-import '../../shared/widgets/app_button.dart';
 
 /// 数据同步页面 — 接收 / 发送合一
 class SyncPage extends StatefulWidget {
@@ -200,40 +199,38 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
               AppSpacing.h24,
               Row(children: [
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, false),
-                    child: Container(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    style: TextButton.styleFrom(
+                      backgroundColor: appTheme.creamDark,
+                      foregroundColor: appTheme.earthLight,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: appTheme.creamDark,
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(appTheme.radiusMd),
                       ),
-                      child: Center(
-                          child: Text('拒绝',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: appTheme.earthLight))),
+                      textStyle: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w500),
                     ),
+                    child: const Text('拒绝'),
                   ),
                 ),
                 AppSpacing.w12,
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, true),
-                    child: Container(
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: appTheme.primary,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: appTheme.primary,
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(appTheme.radiusMd),
                       ),
-                      child: const Center(
-                          child: Text('确认接收',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white))),
+                      textStyle: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600),
                     ),
+                    child: const Text('确认接收'),
                   ),
                 ),
               ]),
@@ -666,23 +663,44 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
   }
 
   Widget _buildStartCard(AppThemeExtension appTheme) {
-    return _serverStarting
-        ? AppButton.add(
-            label: '开启接收',
-            onTap: null,
-          )
-        : AppButton.add(
-            label: '开启接收',
-            onTap: _startServer,
-          );
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: _serverStarting ? null : _startServer,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: appTheme.primary,
+          backgroundColor: appTheme.primary.withValues(alpha: 0.1),
+          side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
+          disabledForegroundColor: appTheme.earthMedium,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          textStyle:
+              const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+        child: const Text('开启接收'),
+      ),
+    );
   }
 
   Widget _buildStopButton(AppThemeExtension appTheme) {
     return SizedBox(
       width: double.infinity,
-      child: AppButton.danger(
-        label: '停止接收',
-        onTap: _stopServer,
+      child: OutlinedButton(
+        onPressed: _stopServer,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: appTheme.rose,
+          backgroundColor: appTheme.rose.withValues(alpha: 0.1),
+          side: BorderSide(color: appTheme.rose.withValues(alpha: 0.3)),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          textStyle:
+              const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+        child: const Text('停止接收'),
       ),
     );
   }
