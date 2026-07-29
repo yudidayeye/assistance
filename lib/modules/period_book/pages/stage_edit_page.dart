@@ -207,6 +207,8 @@ class _StageEditPageState extends State<StageEditPage> {
                 AppSpacing.h16,
                 _buildDateSection(appTheme),
                 AppSpacing.h16,
+                _buildCardTabBar(appTheme),
+                AppSpacing.h8,
                 _buildUnifiedCard(appTheme),
                 const SizedBox(height: 40),
               ],
@@ -466,7 +468,7 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 统一记录卡片（Tab 切换集成在卡片内）
+  // 统一记录卡片
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildUnifiedCard(AppThemeExtension appTheme) {
@@ -477,30 +479,19 @@ class _StageEditPageState extends State<StageEditPage> {
         boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Tab 头部（集成在卡片内）
-          _buildCardTabBar(appTheme),
-          // 内容区域
-          _buildTabContent(appTheme),
-        ],
-      ),
+      child: _buildTabContent(appTheme),
     );
   }
 
   Widget _buildCardTabBar(AppThemeExtension appTheme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: AppSegmentedTab(
-        items: const [
-          AppSegmentedTabItem(label: '购物支出'),
-          AppSegmentedTabItem(label: '其他支出'),
-          AppSegmentedTabItem(label: '追加记录'),
-        ],
-        selectedIndex: _currentTabIndex,
-        onChanged: (index) => setState(() => _currentTabIndex = index),
-      ),
+    return AppSegmentedTab(
+      items: const [
+        AppSegmentedTabItem(label: '购物支出'),
+        AppSegmentedTabItem(label: '其他支出'),
+        AppSegmentedTabItem(label: '追加记录'),
+      ],
+      selectedIndex: _currentTabIndex,
+      onChanged: (index) => setState(() => _currentTabIndex = index),
     );
   }
 
