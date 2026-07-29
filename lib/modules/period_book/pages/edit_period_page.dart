@@ -84,6 +84,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
+          titleSpacing: 0,
           title: Text(
             '编辑周期',
             maxLines: 1,

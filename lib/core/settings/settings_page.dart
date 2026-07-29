@@ -100,6 +100,7 @@ class _SettingsPageState extends State<SettingsPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
+          titleSpacing: 0,
           title: Text(
             '设置',
             maxLines: 1,

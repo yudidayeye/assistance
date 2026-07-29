@@ -33,6 +33,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
+          titleSpacing: 0,
           title: Text(
             '记一笔',
             maxLines: 1,

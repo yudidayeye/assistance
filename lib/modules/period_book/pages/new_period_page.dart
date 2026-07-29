@@ -80,6 +80,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
+          titleSpacing: 0,
           title: Text(
             '新建周期',
             maxLines: 1,

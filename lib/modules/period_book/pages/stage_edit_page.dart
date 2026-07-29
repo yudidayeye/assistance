@@ -221,6 +221,7 @@ class _StageEditPageState extends State<StageEditPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
+          titleSpacing: 0,
           title: Text(
             '第${_stage!.sortOrder}阶段 · $dateRange',
             maxLines: 1,

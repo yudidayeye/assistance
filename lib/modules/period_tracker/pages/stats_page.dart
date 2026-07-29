@@ -92,6 +92,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
+          titleSpacing: 0,
           title: Text(
             '周期统计',
             maxLines: 1,

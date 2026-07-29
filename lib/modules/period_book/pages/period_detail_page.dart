@@ -107,6 +107,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
+          titleSpacing: 0,
           title: Text(
             '周期详情',
             maxLines: 1,
@@ -147,6 +148,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
+          titleSpacing: 0,
           title: Text(
             '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日',
             maxLines: 1,

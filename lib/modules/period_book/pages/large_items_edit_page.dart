@@ -116,6 +116,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
+          titleSpacing: 0,
           title: Text(
             '大额记录 · $dateRange',
             maxLines: 1,

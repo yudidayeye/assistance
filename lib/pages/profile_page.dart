@@ -45,6 +45,7 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
+          titleSpacing: 0,
           title: Text(
             '我的',
             maxLines: 1,

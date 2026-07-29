@@ -348,7 +348,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         elevation: 0,
         centerTitle: false,
         automaticallyImplyLeading: true,
-        titleSpacing: NavigationToolbar.kMiddleSpacing,
+        titleSpacing: 0,
         title: Text(
           '数据同步',
           maxLines: 1,

@@ -69,6 +69,7 @@ class _MainShellPageState extends State<MainShellPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
+          titleSpacing: 0,
           title: Text(
             '工具箱',
             maxLines: 1,
