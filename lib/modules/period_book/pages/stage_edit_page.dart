@@ -192,11 +192,64 @@ class _StageEditPageState extends State<StageEditPage> {
     final end = DateTime.parse(_stage!.endDate);
     final dateRange = '${start.month}/${start.day} ~ ${end.month}/${end.day}';
 
+    final safeTop = MediaQuery.of(context).padding.top;
+    final titleText = '第${_stage!.sortOrder}阶段';
+
     return AppScrollScaffold(
       slivers: [
-        AppHeader.withSubtitle(
-          title: '第${_stage!.sortOrder}阶段',
-          subtitle: dateRange,
+        // 自定义头部：标题行 + Tab 置底（pinned）
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: PinnedHeaderDelegate(
+            height: safeTop + 88,
+            child: Container(
+              color: appTheme.cream,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, safeTop + 12, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 标题行（返回 + 标题 + 日期）
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => context.pop(),
+                          child: SizedBox(
+                            width: 28,
+                            height: 40,
+                            child: Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: appTheme.earth,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        AppSpacing.w2,
+                        Text(
+                          titleText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.headerTitle.copyWith(
+                            color: appTheme.earth,
+                          ),
+                        ),
+                        AppSpacing.w8,
+                        Text(
+                          dateRange,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: appTheme.earthMedium.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Tab 在底部
+                    _buildCardTabBar(appTheme),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
         SliverToBoxAdapter(
           child: Padding(
@@ -204,11 +257,9 @@ class _StageEditPageState extends State<StageEditPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppSpacing.h16,
+                AppSpacing.h8,
                 _buildDateSection(appTheme),
                 AppSpacing.h16,
-                _buildCardTabBar(appTheme),
-                AppSpacing.h8,
                 _buildUnifiedCard(appTheme),
                 const SizedBox(height: 40),
               ],
