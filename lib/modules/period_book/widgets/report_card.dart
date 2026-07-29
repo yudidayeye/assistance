@@ -164,7 +164,6 @@ class _ReportCardState extends State<ReportCard> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 标题
               Padding(
                 padding: const EdgeInsets.only(
                   left: AppSpacing.lg,
@@ -202,7 +201,6 @@ class _ReportCardState extends State<ReportCard> {
                   ],
                 ),
               ),
-              // 选项列表
               _buildViewOption(
                 appTheme: appTheme,
                 viewType: ReportViewType.monthlyTrend,

@@ -388,7 +388,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                     elevation: 0,
                     centerTitle: false,
                     automaticallyImplyLeading: true,
-                    titleSpacing: 0,
                     title: Text(
                       '历史记录',
                       maxLines: 1,

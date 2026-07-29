@@ -2,7 +2,6 @@ import '../../shared/foundation/app_spacing.dart';
 import '../../shared/foundation/app_typography.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/theme_extension.dart';
 import 'sync_service.dart';
@@ -156,87 +155,47 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
     final confirmed = await showDialog<bool>(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(28),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        icon: Container(
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
-            color: appTheme.cream,
+            color: appTheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: appTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                ),
-                child: Icon(Icons.cloud_download_rounded,
-                    color: appTheme.primary, size: 26),
-              ),
-              AppSpacing.h20,
-              Text('确认接收数据？',
-                  style: TextStyle(
-                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 10),
-              Text(
-                '将导入 ${preview.settingsCount} 项设置、'
-                '${preview.periodRecordsCount} 条生理期记录、'
-                '${preview.bookPeriodsCount} 个周期、'
-                '${preview.bookStagesCount} 个阶段。\n'
-                '已存在的设置和记录将被覆盖。',
-                style: TextStyle(
-                    fontSize: 14, color: appTheme.earthMedium, height: 1.5),
-                textAlign: TextAlign.center,
-              ),
-              AppSpacing.h24,
-              Row(children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    style: TextButton.styleFrom(
-                      backgroundColor: appTheme.creamDark,
-                      foregroundColor: appTheme.earthLight,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      textStyle: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w500),
-                    ),
-                    child: const Text('拒绝'),
-                  ),
-                ),
-                AppSpacing.w12,
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: appTheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      textStyle: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
-                    child: const Text('确认接收'),
-                  ),
-                ),
-              ]),
-            ],
-          ),
+          child: Icon(Icons.cloud_download_rounded,
+              color: appTheme.primary, size: 26),
         ),
+        title: Text(
+          '确认接收数据？',
+          style: TextStyle(
+              fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+              color: appTheme.earth),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          '将导入 ${preview.settingsCount} 项设置、'
+          '${preview.periodRecordsCount} 条生理期记录、'
+          '${preview.bookPeriodsCount} 个周期、'
+          '${preview.bookStagesCount} 个阶段。\n'
+          '已存在的设置和记录将被覆盖。',
+          style: TextStyle(
+              fontSize: 14, color: appTheme.earthMedium, height: 1.5),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('拒绝', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('确认接收', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
       ),
     );
 
@@ -348,7 +307,6 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         elevation: 0,
         centerTitle: false,
         automaticallyImplyLeading: true,
-        titleSpacing: 0,
         title: Text(
           '数据同步',
           maxLines: 1,

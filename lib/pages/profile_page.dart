@@ -4,9 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/storage/database_service.dart';
 import '../core/theme/theme_extension.dart';
 import '../shared/widgets/app_scaffold.dart';
-import '../shared/widgets/app_dialog.dart';
 import '../shared/foundation/app_typography.dart';
-import '../shared/foundation/app_spacing.dart';
 
 /// 我的页面 — 用户中心
 class ProfilePageContent extends StatefulWidget {
@@ -33,14 +31,6 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
     }
   }
 
-  void _showProfileSearch(BuildContext context) {
-    final appTheme = Theme.of(context).appTheme;
-    showSearch(
-      context: context,
-      delegate: _ProfileSearchDelegate(appTheme),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
@@ -53,7 +43,6 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          titleSpacing: 0,
           title: Text(
             '我的',
             maxLines: 1,
@@ -61,15 +50,14 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
           actions: [
-            IconButton(
-              onPressed: () => _showProfileSearch(context),
-              icon: Icon(Icons.search_rounded, color: appTheme.earth, size: 20),
-            ),
-            IconButton(
-              onPressed: () => context.push('/settings'),
-              icon: const Icon(Icons.settings_outlined),
-              color: appTheme.earth,
-              iconSize: 20,
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                onPressed: () => context.push('/settings'),
+                icon: const Icon(Icons.settings_outlined),
+                color: appTheme.earth,
+                iconSize: 20,
+              ),
             ),
           ],
         ),
@@ -175,147 +163,65 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
     await showDialog(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(28),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        icon: Container(
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
-            color: appTheme.cream,
-            borderRadius: BorderRadius.circular(appTheme.radiusXl),
+            color: appTheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(appTheme.radiusLg),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: appTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(appTheme.radiusLg),
-                ),
-                child: Icon(Icons.person_rounded,
-                    color: appTheme.primary, size: 30),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                '编辑用户名',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earth,
-                ),
-              ),
-              const SizedBox(height: 18),
-              TextField(
-                controller: ctrl,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: '输入用户名',
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.7),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                style: TextStyle(color: appTheme.earth, fontSize: 15),
-              ),
-              const SizedBox(height: 22),
-              ...AppDialog.confirmCancelPair(
-                context: ctx,
-                cancelLabel: '取消',
-                confirmLabel: '保存',
-                onConfirm: () async {
-                  final name = ctrl.text.trim();
-                  if (name.isEmpty) return;
-                  await DatabaseService.instance
-                      .upsertSetting('user_name', name);
-                  if (mounted) setState(() => _userName = name);
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-              ),
-            ],
-          ),
+          child: Icon(Icons.person_rounded,
+              color: appTheme.primary, size: 30),
         ),
+        title: Text(
+          '编辑用户名',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: '输入用户名',
+                filled: true,
+                fillColor: appTheme.cardBackground,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              style: TextStyle(color: appTheme.earth, fontSize: 15),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final name = ctrl.text.trim();
+              if (name.isEmpty) return;
+              await DatabaseService.instance
+                  .upsertSetting('user_name', name);
+              if (mounted) setState(() => _userName = name);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: Text('保存', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
       ),
     );
   }
 }
-
-class _ProfileSearchDelegate extends SearchDelegate<String> {
-  final AppThemeExtension appTheme;
-
-  _ProfileSearchDelegate(this.appTheme);
-
-  @override
-  String get searchFieldLabel => '搜索设置';
-
-  static const _allItems = [
-    {'icon': Icons.settings_outlined, 'label': '设置', 'route': '/settings'},
-    {'icon': Icons.sync_rounded, 'label': '数据同步', 'route': '/sync'},
-    {'icon': Icons.palette_outlined, 'label': '主题设置', 'route': '/settings'},
-    {'icon': Icons.info_outlined, 'label': '关于', 'route': '/settings'},
-  ];
-
-  @override
-  List<Widget>? buildActions(BuildContext context) => [
-    if (query.isNotEmpty)
-      IconButton(
-        onPressed: () => query = '',
-        icon: Icon(Icons.clear_rounded, color: appTheme.earthMedium),
-      ),
-  ];
-
-  @override
-  Widget? buildLeading(BuildContext context) => IconButton(
-    onPressed: () => close(context, ''),
-    icon: Icon(Icons.arrow_back_ios_new_rounded, color: appTheme.earth),
-  );
-
-  @override
-  Widget buildResults(BuildContext context) {
-    final results = _allItems
-        .where((item) => (item['label'] as String).contains(query))
-        .toList();
-    return _buildResultsList(results);
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    final results = query.isEmpty
-        ? _allItems
-        : _allItems
-            .where((item) => (item['label'] as String).contains(query))
-            .toList();
-    return _buildResultsList(results);
-  }
-
-  Widget _buildResultsList(List<Map<String, dynamic>> items) {
-    if (items.isEmpty) {
-      return Center(
-        child: Text(
-          '未找到匹配项',
-          style: TextStyle(color: appTheme.earthMedium.withValues(alpha: 0.5)),
-        ),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return ListTile(
-          leading: Icon(item['icon'] as IconData, color: appTheme.earth),
-          title: Text(item['label'] as String, style: TextStyle(color: appTheme.earth)),
-          onTap: () {
-            close(context, '');
-            final route = item['route'] as String;
-            context.push(route);
-          },
-        );
-      },
-    );
-  }
-}
-

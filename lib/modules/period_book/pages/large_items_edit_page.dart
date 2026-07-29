@@ -116,7 +116,6 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
-          titleSpacing: 0,
           title: Text(
             '大额记录 · $dateRange',
             maxLines: 1,
@@ -910,9 +909,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
             decoration: BoxDecoration(
-              color: sheetTheme.cardBackground,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              color: sheetTheme.cream,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -955,9 +953,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),
                     ),
                     filled: true,
-                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    fillColor: sheetTheme.cardBackground,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                      borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -979,9 +977,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),
                     ),
                     filled: true,
-                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    fillColor: sheetTheme.cardBackground,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                      borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -1051,9 +1049,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
             decoration: BoxDecoration(
-              color: sheetTheme.cardBackground,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              color: sheetTheme.cream,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1124,9 +1121,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),
                     ),
                     filled: true,
-                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    fillColor: sheetTheme.cardBackground,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                      borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -1148,9 +1145,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),
                     ),
                     filled: true,
-                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    fillColor: sheetTheme.cardBackground,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                      borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,

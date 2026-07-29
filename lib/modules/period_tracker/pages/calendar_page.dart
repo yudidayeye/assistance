@@ -69,7 +69,6 @@ class _CalendarPageState extends State<CalendarPage> {
                   elevation: 0,
                   centerTitle: false,
                   automaticallyImplyLeading: true,
-                  titleSpacing: 0,
                   title: Text(
                     '生理期记录',
                     maxLines: 1,

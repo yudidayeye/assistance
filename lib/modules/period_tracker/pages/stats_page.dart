@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/period_record.dart';
 import '../services/period_service.dart';
@@ -92,7 +92,6 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
-          titleSpacing: 0,
           title: Text(
             '周期统计',
             maxLines: 1,
@@ -356,95 +355,47 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
     showDialog(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        icon: Container(
+          width: 64,
+          height: 64,
           decoration: BoxDecoration(
-            color: appTheme.cream,
+            color: appTheme.rose.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(appTheme.radiusXl),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: appTheme.rose.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(appTheme.radiusXl),
-                ),
-                child: Icon(Icons.delete_outline_rounded,
-                    color: appTheme.rose, size: 32),
-              ),
-              AppSpacing.h20,
-              Text(
-                '确认删除？',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: appTheme.earth,
-                ),
-              ),
-              AppSpacing.h12,
-              Text(
-                '删除后该记录将无法恢复。',
-                style: TextStyle(fontSize: 14, color: appTheme.earthMedium),
-              ),
-              AppSpacing.h24,
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: appTheme.creamDark,
-                          borderRadius:
-                              BorderRadius.circular(appTheme.radiusMd),
-                        ),
-                        child: Center(
-                          child: Text('取消',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: appTheme.earthMedium)),
-                        ),
-                      ),
-                    ),
-                  ),
-                  AppSpacing.w12,
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        await PeriodService.instance.deleteRecord(id);
-                        if (ctx.mounted) Navigator.pop(ctx);
-                        _loadData();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: appTheme.rose,
-                          borderRadius:
-                              BorderRadius.circular(appTheme.radiusMd),
-                        ),
-                        child: const Center(
-                          child: Text('删除',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          child: Icon(Icons.delete_outline_rounded,
+              color: appTheme.rose, size: 32),
         ),
+        title: Text(
+          '确认删除？',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          '删除后该记录将无法恢复。',
+          style: TextStyle(fontSize: 14, color: appTheme.earthMedium),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () async {
+              await PeriodService.instance.deleteRecord(id);
+              if (ctx.mounted) Navigator.pop(ctx);
+              _loadData();
+            },
+            child: Text('删除', style: TextStyle(color: appTheme.rose)),
+          ),
+        ],
       ),
     );
   }

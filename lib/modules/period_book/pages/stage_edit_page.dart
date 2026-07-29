@@ -4,8 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/app_segmented_tab.dart';
-import '../../../shared/widgets/app_dialog.dart';
-import '../../../shared/widgets/amount_chip.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../models/stage_record.dart';
@@ -221,7 +219,6 @@ class _StageEditPageState extends State<StageEditPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
-          titleSpacing: 0,
           title: Text(
             '第${_stage!.sortOrder}阶段 · $dateRange',
             maxLines: 1,
@@ -283,52 +280,73 @@ class _StageEditPageState extends State<StageEditPage> {
     final displayCurrentDate =
         currentDateStr != null ? DateTime.parse(currentDateStr) : end;
 
-    await AppDialog.show(
-      context,
-      title: '编辑阶段日期',
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildDialogDateRow(
-            appTheme: appTheme,
-            label: '开始日期',
-            date: start,
-            onDateChanged: (date) {
-              setState(() {
-                _stage = _stage!.copyWith(startDate: _formatDate(date));
-              });
-              _saveStageDates();
-            },
+    await showDialog(
+      context: context,
+      barrierColor: Theme.of(context).appTheme.surfaceOverlay,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        title: Text(
+          '编辑阶段日期',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
           ),
-          AppSpacing.h12,
-          _buildDialogDateRow(
-            appTheme: appTheme,
-            label: '结束日期',
-            date: end,
-            onDateChanged: (date) {
-              setState(() {
-                _stage = _stage!.copyWith(endDate: _formatDate(date));
-              });
-              _saveStageDates();
-            },
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDialogDateRow(
+              appTheme: appTheme,
+              label: '开始日期',
+              date: start,
+              onDateChanged: (date) {
+                setState(() {
+                  _stage = _stage!.copyWith(startDate: _formatDate(date));
+                });
+                _saveStageDates();
+              },
+            ),
+            AppSpacing.h12,
+            _buildDialogDateRow(
+              appTheme: appTheme,
+              label: '结束日期',
+              date: end,
+              onDateChanged: (date) {
+                setState(() {
+                  _stage = _stage!.copyWith(endDate: _formatDate(date));
+                });
+                _saveStageDates();
+              },
+            ),
+            AppSpacing.h12,
+            _buildDialogDateRow(
+              appTheme: appTheme,
+              label: '当前日期',
+              date: displayCurrentDate,
+              highlight: true,
+              onDateChanged: (date) {
+                setState(() {
+                  _stage = _stage!.copyWith(currentDate: _formatDate(date));
+                });
+                _saveStageDates();
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
           ),
-          AppSpacing.h12,
-          _buildDialogDateRow(
-            appTheme: appTheme,
-            label: '当前日期',
-            date: displayCurrentDate,
-            highlight: true,
-            onDateChanged: (date) {
-              setState(() {
-                _stage = _stage!.copyWith(currentDate: _formatDate(date));
-              });
-              _saveStageDates();
-            },
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('完成', style: TextStyle(color: appTheme.primary)),
           ),
         ],
       ),
-      cancelLabel: '取消',
-      confirmLabel: '完成',
     );
   }
 
@@ -594,15 +612,13 @@ class _StageEditPageState extends State<StageEditPage> {
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
             decoration: BoxDecoration(
-              color: sheetTheme.cardBackground,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              color: sheetTheme.cream,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 标题
                 Row(
                   children: [
                     Text(
@@ -628,7 +644,6 @@ class _StageEditPageState extends State<StageEditPage> {
                   ],
                 ),
                 AppSpacing.h16,
-                // 追加金额
                 TextField(
                   controller: amountController,
                   keyboardType:
@@ -641,9 +656,9 @@ class _StageEditPageState extends State<StageEditPage> {
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),
                     ),
                     filled: true,
-                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    fillColor: sheetTheme.cardBackground,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                      borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -655,7 +670,6 @@ class _StageEditPageState extends State<StageEditPage> {
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
                 const SizedBox(height: 14),
-                // 追加原因
                 TextField(
                   controller: reasonController,
                   decoration: InputDecoration(
@@ -666,9 +680,9 @@ class _StageEditPageState extends State<StageEditPage> {
                       color: sheetTheme.earthMedium.withValues(alpha: 0.5),
                     ),
                     filled: true,
-                    fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                    fillColor: sheetTheme.cardBackground,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                      borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
                       borderSide: BorderSide(
                         color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                         width: 1,
@@ -680,12 +694,10 @@ class _StageEditPageState extends State<StageEditPage> {
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
                 AppSpacing.h16,
-                // 确定按钮
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () {
-                      // 先保存一次确保最新数据写入
                       _saveAdditionEdit(
                           addition, reasonController, amountController);
                       Navigator.pop(ctx);
@@ -706,7 +718,6 @@ class _StageEditPageState extends State<StageEditPage> {
         );
       },
     );
-    // 编辑已实时保存，关闭弹窗后刷新列表
     if (mounted) await _loadData();
   }
 
@@ -1314,8 +1325,8 @@ class _StageEditPageState extends State<StageEditPage> {
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
           decoration: BoxDecoration(
-            color: sheetTheme.cardBackground,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            color: sheetTheme.cream,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1416,9 +1427,9 @@ class _StageEditPageState extends State<StageEditPage> {
                     color: sheetTheme.earthMedium.withValues(alpha: 0.5),
                   ),
                   filled: true,
-                  fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                  fillColor: sheetTheme.cardBackground,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                    borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
                     borderSide: BorderSide(
                       color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                       width: 1,
@@ -1441,9 +1452,9 @@ class _StageEditPageState extends State<StageEditPage> {
                     color: sheetTheme.earthMedium.withValues(alpha: 0.5),
                   ),
                   filled: true,
-                  fillColor: sheetTheme.creamDark.withValues(alpha: 0.5),
+                  fillColor: sheetTheme.cardBackground,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                    borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
                     borderSide: BorderSide(
                       color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                       width: 1,

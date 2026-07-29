@@ -14,7 +14,6 @@ import '../../modules/period_book/services/period_book_settings.dart';
 import '../../modules/period_book/services/period_book_service.dart';
 import '../../modules/period_tracker/services/period_service.dart';
 import '../../shared/widgets/app_scaffold.dart';
-import '../../shared/widgets/app_dialog.dart';
 import '../../shared/widgets/settings_list_item.dart';
 import '../../shared/widgets/section_card.dart';
 import '../../shared/foundation/app_typography.dart';
@@ -100,7 +99,6 @@ class _SettingsPageState extends State<SettingsPage> {
           elevation: 0,
           centerTitle: false,
           automaticallyImplyLeading: true,
-          titleSpacing: 0,
           title: Text(
             '设置',
             maxLines: 1,
@@ -342,101 +340,62 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(28),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        icon: Container(
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
-            color: appTheme.cream,
+            color: appTheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '设置发薪日',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w700,
-                  color: appTheme.earth,
-                ),
-              ),
-              AppSpacing.h8,
-              Text(
-                '每月几号发薪？（1~31）',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: appTheme.earthMedium,
-                ),
-              ),
-              AppSpacing.h24,
-              _PaydayPicker(
-                initialValue: _payday,
-                onChanged: (value) {
-                  setState(() => _payday = value);
-                },
-              ),
-              AppSpacing.h24,
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: appTheme.creamDark,
-                          borderRadius:
-                              BorderRadius.circular(appTheme.radiusMd),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '取消',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: appTheme.earthLight,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  AppSpacing.w12,
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        await _periodSettings.setPayday(_payday);
-                        if (!ctx.mounted) return;
-                        Navigator.pop(ctx);
-                        _showSnackBar('发薪日已设置为每月$_payday号');
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: appTheme.primary,
-                          borderRadius:
-                              BorderRadius.circular(appTheme.radiusMd),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            '确认',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          child: Icon(Icons.calendar_month_rounded,
+              color: appTheme.primary, size: 26),
         ),
+        title: Text(
+          '设置发薪日',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '每月几号发薪？（1~31）',
+              style: TextStyle(
+                fontSize: 14,
+                color: appTheme.earthMedium,
+              ),
+            ),
+            AppSpacing.h24,
+            _PaydayPicker(
+              initialValue: _payday,
+              onChanged: (value) {
+                setState(() => _payday = value);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _periodSettings.setPayday(_payday);
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              _showSnackBar('发薪日已设置为每月$_payday号');
+            },
+            child: Text('确认', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
       ),
     );
   }
@@ -612,115 +571,78 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(28),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        icon: Container(
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
-            color: appTheme.cream,
+            color: appTheme.sage.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          child: Icon(Icons.system_update_rounded,
+              color: appTheme.sage, size: 26),
+        ),
+        title: Text(
+          '发现新版本',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'V${info.currentVersion} → V${info.latestVersion}',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: appTheme.sage,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (info.releaseNotes != null &&
+                info.releaseNotes!.isNotEmpty) ...[
+              AppSpacing.h16,
               Container(
-                width: 52,
-                height: 52,
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: appTheme.sage.withValues(alpha: 0.1),
+                  color: appTheme.cardBackground,
                   borderRadius: BorderRadius.circular(appTheme.radiusMd),
                 ),
-                child: Icon(Icons.system_update_rounded,
-                    color: appTheme.sage, size: 26),
-              ),
-              AppSpacing.h20,
-              Text('发现新版本',
+                child: Text(
+                  info.releaseNotes!.length > 200
+                      ? '${info.releaseNotes!.substring(0, 200)}...'
+                      : info.releaseNotes!,
                   style: TextStyle(
-                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth),
-                  textAlign: TextAlign.center),
-              AppSpacing.h8,
-              Text(
-                'V${info.currentVersion} → V${info.latestVersion}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.sage,
+                    fontSize: 12,
+                    color: appTheme.earthMedium,
+                    height: 1.5,
+                  ),
                 ),
-                textAlign: TextAlign.center,
               ),
-              if (info.releaseNotes != null &&
-                  info.releaseNotes!.isNotEmpty) ...[
-                AppSpacing.h16,
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: appTheme.creamDark,
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                  ),
-                  child: Text(
-                    info.releaseNotes!.length > 200
-                        ? '${info.releaseNotes!.substring(0, 200)}...'
-                        : info.releaseNotes!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: appTheme.earthMedium,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
-              AppSpacing.h24,
-              Row(children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: appTheme.creamDark,
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      child: Center(
-                          child: Text('稍后再说',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: appTheme.earthLight))),
-                    ),
-                  ),
-                ),
-                AppSpacing.w12,
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () async {
-                      Navigator.pop(ctx);
-                      if (info.releaseUrl != null) {
-                        await _updateService.openReleasePage(info.releaseUrl!);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: appTheme.sage,
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      child: const Center(
-                          child: Text('前往更新',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white))),
-                    ),
-                  ),
-                ),
-              ]),
             ],
-          ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('稍后再说', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              if (info.releaseUrl != null) {
+                await _updateService.openReleasePage(info.releaseUrl!);
+              }
+            },
+            child: Text('前往更新', style: TextStyle(color: appTheme.sage)),
+          ),
+        ],
       ),
     );
   }
@@ -837,89 +759,47 @@ class _SettingsPageState extends State<SettingsPage> {
     return showDialog<bool>(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(28),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        icon: Container(
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
-            color: appTheme.cream,
+            color: appTheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: appTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                ),
-                child: Icon(Icons.download_rounded,
-                    color: appTheme.primary, size: 26),
-              ),
-              AppSpacing.h20,
-              Text('确认导入数据？',
-                  style: TextStyle(
-                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 10),
-              Text(
-                '将导入 $settingsCount 项设置、$periodRecordsCount 条生理期记录'
-                '、$bookPeriodsCount 个周期、$bookStagesCount 个阶段'
-                '、$bookAdditionsCount 条追加、$bookExpensesCount 条支出'
-                '、$bookLargeAdditionsCount 条大额追加、$bookLargeExpensesCount 条大额支出。\n'
-                '已存在的设置和记录将被覆盖。',
-                style: TextStyle(
-                    fontSize: 14, color: appTheme.earthMedium, height: 1.5),
-                textAlign: TextAlign.center,
-              ),
-              AppSpacing.h24,
-              Row(children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, false),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: appTheme.creamDark,
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      child: Center(
-                          child: Text('取消',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: appTheme.earthLight))),
-                    ),
-                  ),
-                ),
-                AppSpacing.w12,
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, true),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: appTheme.primary,
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      child: const Center(
-                          child: Text('确认导入',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white))),
-                    ),
-                  ),
-                ),
-              ]),
-            ],
-          ),
+          child: Icon(Icons.download_rounded,
+              color: appTheme.primary, size: 26),
         ),
+        title: Text(
+          '确认导入数据？',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          '将导入 $settingsCount 项设置、$periodRecordsCount 条生理期记录'
+          '、$bookPeriodsCount 个周期、$bookStagesCount 个阶段'
+          '、$bookAdditionsCount 条追加、$bookExpensesCount 条支出'
+          '、$bookLargeAdditionsCount 条大额追加、$bookLargeExpensesCount 条大额支出。\n'
+          '已存在的设置和记录将被覆盖。',
+          style: TextStyle(
+              fontSize: 14, color: appTheme.earthMedium, height: 1.5),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('确认导入', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
       ),
     );
   }
@@ -929,61 +809,35 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(28),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        icon: Container(
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
-            color: appTheme.cream,
+            color: appTheme.rose.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: appTheme.rose.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                ),
-                child: Icon(Icons.error_outline_rounded,
-                    color: appTheme.rose, size: 26),
-              ),
-              AppSpacing.h20,
-              Text(title,
-                  style: TextStyle(
-                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 10),
-              Text(message,
-                  style: TextStyle(
-                      fontSize: 14, color: appTheme.earthMedium, height: 1.5),
-                  textAlign: TextAlign.center),
-              AppSpacing.h24,
-              GestureDetector(
-                onTap: () => Navigator.pop(ctx),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: appTheme.primary,
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                  ),
-                  child: const Center(
-                      child: Text('确定',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white))),
-                ),
-              ),
-            ],
-          ),
+          child: Icon(Icons.error_outline_rounded,
+              color: appTheme.rose, size: 26),
         ),
+        title: Text(title,
+            style: TextStyle(
+                fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+                color: appTheme.earth),
+            textAlign: TextAlign.center),
+        content: Text(message,
+            style: TextStyle(
+                fontSize: 14, color: appTheme.earthMedium, height: 1.5),
+            textAlign: TextAlign.center),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('确定', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
       ),
     );
   }
@@ -993,91 +847,51 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(28),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        icon: Container(
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
-            color: appTheme.cream,
+            color: appTheme.rose.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: appTheme.rose.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                ),
-                child: Icon(Icons.warning_amber_rounded,
-                    color: appTheme.rose, size: 26),
-              ),
-              AppSpacing.h20,
-              Text('确认清除所有业务数据？',
-                  style: TextStyle(
-                      fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.earth),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 10),
-              Text('此操作将删除所有周期记账和生理期记录，但保留设置和主题偏好。',
-                  style: TextStyle(
-                      fontSize: 14, color: appTheme.earthMedium, height: 1.5),
-                  textAlign: TextAlign.center),
-              AppSpacing.h24,
-              Row(children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: appTheme.creamDark,
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      child: Center(
-                          child: Text('取消',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: appTheme.earthLight))),
-                    ),
-                  ),
-                ),
-                AppSpacing.w12,
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () async {
-                      await _db.clearAllBusinessData();
-                      if (!context.mounted) return;
-                      Navigator.pop(ctx);
-                      // 通知各模块刷新首页卡片
-                      PeriodBookService.instance.notifyChanged();
-                      PeriodService.instance.notifyChanged();
-                      _showSnackBar('业务数据已清除');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: appTheme.rose,
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      child: const Center(
-                          child: Text('确认清除',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white))),
-                    ),
-                  ),
-                ),
-              ]),
-            ],
-          ),
+          child: Icon(Icons.warning_amber_rounded,
+              color: appTheme.rose, size: 26),
         ),
+        title: Text(
+          '确认清除所有业务数据？',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          '此操作将删除所有周期记账和生理期记录，但保留设置和主题偏好。',
+          style: TextStyle(
+              fontSize: 14, color: appTheme.earthMedium, height: 1.5),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _db.clearAllBusinessData();
+              if (!context.mounted) return;
+              Navigator.pop(ctx);
+              // 通知各模块刷新首页卡片
+              PeriodBookService.instance.notifyChanged();
+              PeriodService.instance.notifyChanged();
+              _showSnackBar('业务数据已清除');
+            },
+            child: Text('确认清除', style: TextStyle(color: appTheme.rose)),
+          ),
+        ],
       ),
     );
   }
