@@ -33,6 +33,14 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
     }
   }
 
+  void _showProfileSearch(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
+    showSearch(
+      context: context,
+      delegate: _ProfileSearchDelegate(appTheme),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
@@ -53,6 +61,10 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
           actions: [
+            IconButton(
+              onPressed: () => _showProfileSearch(context),
+              icon: Icon(Icons.search_rounded, color: appTheme.earth, size: 20),
+            ),
             IconButton(
               onPressed: () => context.push('/settings'),
               icon: const Icon(Icons.settings_outlined),
@@ -227,6 +239,82 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ProfileSearchDelegate extends SearchDelegate<String> {
+  final AppThemeExtension appTheme;
+
+  _ProfileSearchDelegate(this.appTheme);
+
+  @override
+  String get searchFieldLabel => '搜索设置';
+
+  static const _allItems = [
+    {'icon': Icons.settings_outlined, 'label': '设置', 'route': '/settings'},
+    {'icon': Icons.sync_rounded, 'label': '数据同步', 'route': '/sync'},
+    {'icon': Icons.palette_outlined, 'label': '主题设置', 'route': '/settings'},
+    {'icon': Icons.info_outlined, 'label': '关于', 'route': '/settings'},
+  ];
+
+  @override
+  List<Widget>? buildActions(BuildContext context) => [
+    if (query.isNotEmpty)
+      IconButton(
+        onPressed: () => query = '',
+        icon: Icon(Icons.clear_rounded, color: appTheme.earthMedium),
+      ),
+  ];
+
+  @override
+  Widget? buildLeading(BuildContext context) => IconButton(
+    onPressed: () => close(context, ''),
+    icon: Icon(Icons.arrow_back_ios_new_rounded, color: appTheme.earth),
+  );
+
+  @override
+  Widget buildResults(BuildContext context) {
+    final results = _allItems
+        .where((item) => (item['label'] as String).contains(query))
+        .toList();
+    return _buildResultsList(results);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final results = query.isEmpty
+        ? _allItems
+        : _allItems
+            .where((item) => (item['label'] as String).contains(query))
+            .toList();
+    return _buildResultsList(results);
+  }
+
+  Widget _buildResultsList(List<Map<String, dynamic>> items) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          '未找到匹配项',
+          style: TextStyle(color: appTheme.earthMedium.withValues(alpha: 0.5)),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return ListTile(
+          leading: Icon(item['icon'] as IconData, color: appTheme.earth),
+          title: Text(item['label'] as String, style: TextStyle(color: appTheme.earth)),
+          onTap: () {
+            close(context, '');
+            final route = item['route'] as String;
+            context.push(route);
+          },
+        );
+      },
     );
   }
 }
