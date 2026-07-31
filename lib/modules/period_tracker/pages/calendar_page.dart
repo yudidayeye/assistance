@@ -68,6 +68,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   backgroundColor: appTheme.cream,
                   elevation: 0,
                   centerTitle: false,
+                  titleSpacing: 0,
                   automaticallyImplyLeading: true,
                   title: Text(
                     '生理期记录',

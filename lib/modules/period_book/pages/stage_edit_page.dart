@@ -11,6 +11,9 @@ import '../models/addition_record.dart';
 import '../models/expense_record.dart';
 import '../widgets/stage_card.dart';
 import '../services/period_book_service.dart';
+import '../widgets/expense_category_helper.dart';
+import '../widgets/expense_section_card.dart';
+import '../widgets/addition_section_card.dart';
 
 /// 阶段编辑页（单阶段编辑 + 批量记账）
 class StageEditPage extends StatefulWidget {
@@ -218,6 +221,7 @@ class _StageEditPageState extends State<StageEditPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
+          titleSpacing: 0,
           automaticallyImplyLeading: true,
           title: Text(
             '第${_stage!.sortOrder}阶段 · $dateRange',
@@ -415,75 +419,36 @@ class _StageEditPageState extends State<StageEditPage> {
 
 
   Widget _buildAdditionsSection(AppThemeExtension appTheme) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                '追加记录',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: appTheme.earth,
-                ),
-              ),
-              const Spacer(),
-              _buildTotalChip(
-                appTheme: appTheme,
-                amount: _additionsTotal,
-                color: appTheme.sage,
-                prefix: '+¥',
-              ),
-            ],
-          ),
-          AppSpacing.h12,
-          if (_additions.isEmpty)
-            Center(
-              child: Text(
-                '暂无追加记录',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: appTheme.earthMedium.withValues(alpha: 0.5),
-                ),
-              ),
-            )
-          else
-            ReorderableListView(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              buildDefaultDragHandles: false,
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) newIndex -= 1;
-                  final item = _additions.removeAt(oldIndex);
-                  _additions.insert(newIndex, item);
-                });
-                _service.updateAdditionsOrder(_additions);
-              },
-              children: [
-                for (final addition in _additions)
-                  _buildAdditionItem(appTheme, addition),
-              ],
-            ),
-          AppSpacing.h8,
-          if (_additionFormExpanded)
-            _buildAdditionForm(appTheme)
-          else
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => setState(() => _additionFormExpanded = true),
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('添加追加'),
-                style: _addButtonStyle(appTheme),
-              ),
-            ),
-          AppSpacing.h8,
-        ],
+    return AdditionSectionCard(
+      title: '追加记录',
+      emptyText: '暂无追加记录',
+      additions: _additions.map((a) => AdditionItemData(
+        id: '${a.id}',
+        reason: a.reason,
+        amount: a.amount,
+      )).toList(),
+      color: appTheme.sage,
+      prefix: '+¥',
+      onAdd: () => setState(() => _additionFormExpanded = true),
+      onEdit: (data) {
+        final addition = _additions.firstWhere((a) => '${a.id}' == data.id);
+        _showEditAdditionSheet(appTheme, addition);
+      },
+      onDelete: (data) {
+        final addition = _additions.firstWhere((a) => '${a.id}' == data.id);
+        _deleteAddition(addition);
+      },
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          final item = _additions.removeAt(oldIndex);
+          _additions.insert(newIndex, item);
+        });
+        _service.updateAdditionsOrder(_additions);
+      },
+      leading: Icon(
+        Icons.drag_handle_rounded,
+        color: appTheme.earthMedium.withValues(alpha: 0.4),
+        size: 18,
       ),
     );
   }
@@ -533,62 +498,6 @@ class _StageEditPageState extends State<StageEditPage> {
       default:
         return _buildShoppingSection(appTheme);
     }
-  }
-
-  Widget _buildAdditionItem(
-      AppThemeExtension appTheme, AdditionRecord addition) {
-    return InkWell(
-      key: ValueKey('addition_${addition.id}'),
-      onTap: () => _showEditAdditionSheet(appTheme, addition),
-      borderRadius: BorderRadius.circular(appTheme.radiusMd),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: appTheme.earthMedium.withValues(alpha: 0.1),
-              width: 0.5,
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.drag_handle_rounded,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
-              size: 18,
-            ),
-            AppSpacing.w8,
-            Expanded(
-              child: Text(
-                addition.reason,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: appTheme.earth,
-                ),
-              ),
-            ),
-            Text(
-              '+¥${addition.amount.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: appTheme.sage,
-              ),
-            ),
-            AppSpacing.w8,
-            GestureDetector(
-              onTap: () => _deleteAddition(addition),
-              child: Icon(
-                Icons.close,
-                size: 16,
-                color: appTheme.earthMedium.withValues(alpha: 0.4),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _showEditAdditionSheet(
@@ -726,86 +635,43 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildShoppingSection(AppThemeExtension appTheme) {
-    // 个人支出 = 所有非"其他"分类（兼容已有 shopping + 新分类）
-    final shoppingExpenses = _expenses
-        .where((e) => e.category != 'other')
-        .toList();
-    final shoppingTotal =
-        shoppingExpenses.fold(0.0, (sum, e) => sum + e.amount);
+    final shoppingExpenses = _expenses.where((e) => e.category != 'other').toList();
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                '个人支出',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: appTheme.earth,
-                ),
-              ),
-              const Spacer(),
-              _buildTotalChip(
-                appTheme: appTheme,
-                amount: shoppingTotal,
-                color: appTheme.rose,
-                prefix: '-¥',
-              ),
-            ],
-          ),
-          AppSpacing.h12,
-          if (shoppingExpenses.isEmpty)
-            Center(
-              child: Text(
-                '暂无个人支出',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: appTheme.earthMedium.withValues(alpha: 0.5),
-                ),
-              ),
-            )
-          else
-            ReorderableListView(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              buildDefaultDragHandles: false,
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) newIndex -= 1;
-                  final item = shoppingExpenses.removeAt(oldIndex);
-                  shoppingExpenses.insert(newIndex, item);
-                  _expenses = [
-                    ...shoppingExpenses,
-                    ..._expenses.where((e) => e.category == 'other'),
-                  ];
-                });
-                _service.updateExpensesOrder(_expenses);
-              },
-              children: [
-                for (int i = 0; i < shoppingExpenses.length; i++)
-                  _buildExpenseItem(appTheme, shoppingExpenses[i], index: i),
-              ],
-            ),
-          AppSpacing.h8,
-          if (_shoppingFormExpanded)
-            _buildShoppingForm(appTheme)
-          else
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => setState(() => _shoppingFormExpanded = true),
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('添加支出'),
-                style: _addButtonStyle(appTheme),
-              ),
-            ),
-          AppSpacing.h8,
-        ],
+    return ExpenseSectionCard(
+      title: '个人支出',
+      emptyText: '暂无个人支出',
+      expenses: shoppingExpenses.map((e) => ExpenseItemData(
+        id: '${e.id}',
+        category: e.category,
+        description: e.description,
+        amount: e.amount,
+      )).toList(),
+      color: appTheme.rose,
+      onAdd: () => setState(() => _shoppingFormExpanded = true),
+      onEdit: (data) {
+        final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
+        _showEditExpenseSheet(appTheme, expense);
+      },
+      onDelete: (data) {
+        final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
+        _deleteExpense(expense);
+      },
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          final shoppingExpenses = _expenses.where((e) => e.category != 'other').toList();
+          final item = shoppingExpenses.removeAt(oldIndex);
+          shoppingExpenses.insert(newIndex, item);
+          _expenses = [
+            ...shoppingExpenses,
+            ..._expenses.where((e) => e.category == 'other'),
+          ];
+        });
+        _service.updateExpensesOrder(_expenses);
+      },
+      leading: Icon(
+        Icons.drag_handle_rounded,
+        color: appTheme.earthMedium.withValues(alpha: 0.4),
+        size: 18,
       ),
     );
   }
@@ -815,83 +681,44 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildOtherSection(AppThemeExtension appTheme) {
-    final otherExpenses =
-        _expenses.where((e) => e.category == 'other').toList();
-    final otherTotal = otherExpenses.fold(0.0, (sum, e) => sum + e.amount);
+    final otherExpenses = _expenses.where((e) => e.category == 'other').toList();
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                '其他支出',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: appTheme.earth,
-                ),
-              ),
-              const Spacer(),
-              _buildTotalChip(
-                appTheme: appTheme,
-                amount: otherTotal,
-                color: appTheme.rose,
-                prefix: '-¥',
-              ),
-            ],
-          ),
-          AppSpacing.h12,
-          if (otherExpenses.isEmpty)
-            Center(
-              child: Text(
-                '暂无其他支出',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: appTheme.earthMedium.withValues(alpha: 0.5),
-                ),
-              ),
-            )
-          else
-            ReorderableListView(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              buildDefaultDragHandles: false,
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) newIndex -= 1;
-                  final item = otherExpenses.removeAt(oldIndex);
-                  otherExpenses.insert(newIndex, item);
-                  _expenses = [
-                    ..._expenses.where((e) => e.category != 'other'),
-                    ...otherExpenses,
-                  ];
-                });
-                _service.updateExpensesOrder(_expenses);
-              },
-              children: [
-                for (int i = 0; i < otherExpenses.length; i++)
-                  _buildExpenseItem(appTheme, otherExpenses[i], index: i),
-              ],
-            ),
-          AppSpacing.h8,
-          if (_otherFormExpanded)
-            _buildOtherForm(appTheme)
-          else
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => setState(() => _otherFormExpanded = true),
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('添加支出'),
-                style: _addButtonStyle(appTheme),
-              ),
-            ),
-          AppSpacing.h8,
-        ],
+    return ExpenseSectionCard(
+      title: '其他支出',
+      emptyText: '暂无其他支出',
+      expenses: otherExpenses.map((e) => ExpenseItemData(
+        id: '${e.id}',
+        category: e.category,
+        description: e.description,
+        amount: e.amount,
+      )).toList(),
+      color: appTheme.rose,
+      isOther: true,
+      onAdd: () => setState(() => _otherFormExpanded = true),
+      onEdit: (data) {
+        final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
+        _showEditExpenseSheet(appTheme, expense);
+      },
+      onDelete: (data) {
+        final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
+        _deleteExpense(expense);
+      },
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          final otherExpenses = _expenses.where((e) => e.category == 'other').toList();
+          final item = otherExpenses.removeAt(oldIndex);
+          otherExpenses.insert(newIndex, item);
+          _expenses = [
+            ..._expenses.where((e) => e.category != 'other'),
+            ...otherExpenses,
+          ];
+        });
+        _service.updateExpensesOrder(_expenses);
+      },
+      leading: Icon(
+        Icons.drag_handle_rounded,
+        color: appTheme.earthMedium.withValues(alpha: 0.4),
+        size: 18,
       ),
     );
   }
@@ -1128,89 +955,6 @@ class _StageEditPageState extends State<StageEditPage> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildExpenseItem(AppThemeExtension appTheme, ExpenseRecord expense,
-      {int? index}) {
-    final displayCat = _mapCategoryForDisplay(expense.category);
-    final icon = _categoryIcon(displayCat);
-    final color = _categoryColor(appTheme, displayCat);
-
-    return InkWell(
-      key: ValueKey('expense_${expense.id}'),
-      onTap: () => _showEditExpenseSheet(appTheme, expense),
-      borderRadius: BorderRadius.circular(appTheme.radiusMd),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: appTheme.earthMedium.withValues(alpha: 0.1),
-              width: 0.5,
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.drag_handle_rounded,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
-              size: 18,
-            ),
-            AppSpacing.w8,
-            if (icon != null) ...[
-              Icon(icon, size: 16, color: color),
-              AppSpacing.w8,
-            ],
-            if (expense.category != 'other')
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(appTheme.radiusPill),
-                ),
-                child: Text(
-                  displayCat,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: color.withValues(alpha: 0.85),
-                  ),
-                ),
-              ),
-            AppSpacing.w8,
-            Expanded(
-              child: Text(
-                expense.description,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: appTheme.earth,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Text(
-              '-¥${expense.amount.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: appTheme.rose,
-              ),
-            ),
-            AppSpacing.w8,
-            GestureDetector(
-              onTap: () => _deleteExpense(expense),
-              child: Icon(
-                Icons.close,
-                size: 16,
-                color: appTheme.earthMedium.withValues(alpha: 0.4),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -1546,33 +1290,6 @@ class _StageEditPageState extends State<StageEditPage> {
         borderRadius: BorderRadius.circular(radius ?? appTheme.radiusSm),
       ),
       textStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600),
-    );
-  }
-
-  /// 卡片标题行右上角的合计金额徽章
-  Widget _buildTotalChip({
-    required AppThemeExtension appTheme,
-    required double amount,
-    required Color color,
-    required String prefix,
-  }) {
-    return Container(
-      key: ValueKey(amount),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(appTheme.radiusPill),
-      ),
-      child: Text(
-        '$prefix${amount.toStringAsFixed(2)}',
-        style: TextStyle(
-          fontFamily: GoogleFonts.dmSans().fontFamily,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: color,
-          letterSpacing: 0.2,
-        ),
-      ),
     );
   }
 

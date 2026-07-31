@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../module_system/module_registry.dart';
 import '../module_system/tool_module.dart';
 import 'settings_service.dart';
@@ -52,13 +53,17 @@ class _SettingsPageState extends State<SettingsPage> {
     _checkUpdate();
   }
 
-  /// 加载当前版本号
+  /// 加载当前版本号（本地读取，不请求网络）
   Future<void> _loadVersion() async {
-    final info = await _updateService.checkForUpdate();
-    if (mounted) {
-      setState(() {
-        _currentVersion = info.currentVersion;
-      });
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _currentVersion = packageInfo.version;
+        });
+      }
+    } catch (e) {
+      // 忽略，版本号将在检查更新时填充
     }
   }
 
@@ -98,6 +103,7 @@ class _SettingsPageState extends State<SettingsPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
+          titleSpacing: 0,
           automaticallyImplyLeading: true,
           title: Text(
             '设置',
@@ -250,32 +256,35 @@ class _SettingsPageState extends State<SettingsPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(module.displayName,
-                    style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: appTheme.earth,
-                        height: 1.2)),
+                    style: AppTypography.bodySm.copyWith(color: appTheme.earth)),
                 const SizedBox(height: 2),
                 Text(enabled ? '已启用' : '已禁用',
-                    style: TextStyle(
-                        fontSize: 11.5,
+                    style: AppTypography.caption.copyWith(
                         color: enabled
                             ? appTheme.sage.withValues(alpha: 0.8)
                             : appTheme.earthMedium.withValues(alpha: 0.5))),
               ],
             ),
           ),
-          Switch(
-            value: enabled,
-            onChanged: (val) async {
-              await _controller.setModuleEnabled(module.moduleId, val);
-              setState(() {});
-            },
-            activeTrackColor: module.themeColor.withValues(alpha: 0.12),
-            activeThumbColor: module.themeColor,
-            inactiveThumbColor: appTheme.earthMedium.withValues(alpha: 0.25),
-            inactiveTrackColor: appTheme.creamDark.withValues(alpha: 0.35),
-            trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+          Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: enabled,
+              onChanged: (val) async {
+                await _controller.setModuleEnabled(module.moduleId, val);
+                setState(() {});
+              },
+              activeTrackColor: module.themeColor.withValues(alpha: 0.12),
+              activeThumbColor: module.themeColor,
+              inactiveThumbColor: appTheme.earthMedium.withValues(alpha: 0.45),
+              inactiveTrackColor: appTheme.earthMedium.withValues(alpha: 0.12),
+              trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.transparent;
+                }
+                return appTheme.earthMedium.withValues(alpha: 0.25);
+              }),
+            ),
           ),
         ],
       ),
@@ -310,17 +319,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     '发薪日',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: appTheme.earth,
-                    ),
+                    style: AppTypography.bodySm.copyWith(color: appTheme.earth),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '每月$_payday号（新建周期默认使用）',
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: AppTypography.caption.copyWith(
                       color: appTheme.earthMedium.withValues(alpha: 0.6),
                     ),
                   ),
@@ -354,10 +358,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         title: Text(
           '设置发薪日',
-          style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
+          style: AppTypography.displayMd.copyWith(
             color: appTheme.earth,
           ),
           textAlign: TextAlign.center,
@@ -367,8 +368,7 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             Text(
               '每月几号发薪？（1~31）',
-              style: TextStyle(
-                fontSize: 14,
+              style: AppTypography.bodyMd.copyWith(
                 color: appTheme.earthMedium,
               ),
             ),
@@ -458,8 +458,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 6),
               Text(type.label,
-                  style: TextStyle(
-                      fontSize: 12,
+                  style: AppTypography.caption.copyWith(
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w400,
                       color:
@@ -486,11 +485,11 @@ class _SettingsPageState extends State<SettingsPage> {
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: appTheme.primary.withValues(alpha: 0.06),
+            color: appTheme.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
           child: Icon(Icons.info_outline_rounded,
-              color: appTheme.earthMedium.withValues(alpha: 0.45), size: 18),
+              color: appTheme.primary, size: 18),
         ),
         AppSpacing.w12,
         Expanded(
@@ -499,14 +498,10 @@ class _SettingsPageState extends State<SettingsPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('版本',
-                  style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
-                      color: appTheme.earth)),
+                  style: AppTypography.bodyMd.copyWith(color: appTheme.earth)),
               const SizedBox(height: 2),
               Text('V$_currentVersion',
-                  style: TextStyle(
-                      fontSize: 11.5,
+                  style: AppTypography.caption.copyWith(
                       color: appTheme.earthMedium.withValues(alpha: 0.6))),
             ],
           ),
@@ -538,9 +533,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   AppSpacing.w4,
                   Text(
                     '更新 V$latestVersion',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                    style: AppTypography.label.copyWith(
                       color: appTheme.sage,
                     ),
                   ),
@@ -553,8 +546,7 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: _checkUpdate,
             child: Text(
               '检查更新',
-              style: TextStyle(
-                fontSize: 11,
+              style: AppTypography.caption.copyWith(
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
             ),
@@ -585,11 +577,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         title: Text(
           '发现新版本',
-          style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
-            color: appTheme.earth),
+          style: AppTypography.displayMd.copyWith(color: appTheme.earth),
           textAlign: TextAlign.center,
         ),
         content: Column(
@@ -597,8 +585,7 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             Text(
               'V${info.currentVersion} → V${info.latestVersion}',
-              style: TextStyle(
-                fontSize: 14,
+              style: AppTypography.bodyMd.copyWith(
                 fontWeight: FontWeight.w600,
                 color: appTheme.sage,
               ),
@@ -618,8 +605,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   info.releaseNotes!.length > 200
                       ? '${info.releaseNotes!.substring(0, 200)}...'
                       : info.releaseNotes!,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: AppTypography.caption.copyWith(
                     color: appTheme.earthMedium,
                     height: 1.5,
                   ),
@@ -655,7 +641,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Padding(
       padding: const EdgeInsets.only(left: 66),
       child: Divider(
-          height: 1, color: appTheme.earthMedium.withValues(alpha: 0.07)),
+          height: 0, thickness: 0.5, color: appTheme.earthMedium.withValues(alpha: 0.07)),
     );
   }
 
@@ -773,11 +759,9 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         title: Text(
           '确认导入数据？',
-          style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
-            color: appTheme.earth),
+          style: AppTypography.displayMd.copyWith(
+            color: appTheme.earth,
+          ),
           textAlign: TextAlign.center,
         ),
         content: Text(
@@ -786,8 +770,8 @@ class _SettingsPageState extends State<SettingsPage> {
           '、$bookAdditionsCount 条追加、$bookExpensesCount 条支出'
           '、$bookLargeAdditionsCount 条大额追加、$bookLargeExpensesCount 条大额支出。\n'
           '已存在的设置和记录将被覆盖。',
-          style: TextStyle(
-              fontSize: 14, color: appTheme.earthMedium, height: 1.5),
+          style: AppTypography.bodyMd.copyWith(
+              color: appTheme.earthMedium, height: 1.5),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -822,15 +806,11 @@ class _SettingsPageState extends State<SettingsPage> {
               color: appTheme.rose, size: 26),
         ),
         title: Text(title,
-            style: TextStyle(
-                fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                color: appTheme.earth),
+            style: AppTypography.displayMd.copyWith(color: appTheme.earth),
             textAlign: TextAlign.center),
         content: Text(message,
-            style: TextStyle(
-                fontSize: 14, color: appTheme.earthMedium, height: 1.5),
+            style: AppTypography.bodyMd.copyWith(
+                color: appTheme.earthMedium, height: 1.5),
             textAlign: TextAlign.center),
         actions: [
           TextButton(
@@ -861,17 +841,13 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         title: Text(
           '确认清除所有业务数据？',
-          style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
-            color: appTheme.earth),
+          style: AppTypography.displayMd.copyWith(color: appTheme.earth),
           textAlign: TextAlign.center,
         ),
         content: Text(
           '此操作将删除所有周期记账和生理期记录，但保留设置和主题偏好。',
-          style: TextStyle(
-              fontSize: 14, color: appTheme.earthMedium, height: 1.5),
+          style: AppTypography.bodyMd.copyWith(
+              color: appTheme.earthMedium, height: 1.5),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -900,7 +876,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final appTheme = Theme.of(context).appTheme;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message,
-          style: TextStyle(color: appTheme.earth, fontWeight: FontWeight.w500)),
+          style: AppTypography.bodyMd.copyWith(
+              color: appTheme.earth, fontWeight: FontWeight.w500)),
       backgroundColor: appTheme.primaryLight,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusMd)),

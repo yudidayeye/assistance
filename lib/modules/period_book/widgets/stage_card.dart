@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -137,35 +136,25 @@ class _StageCardState extends State<StageCard> {
                     Expanded(child: _buildBalanceMetric(appTheme)),
                   ],
                 ),
-                AnimatedCrossFade(
-                  firstChild: const SizedBox.shrink(),
-                  secondChild: Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: _buildBaseBreakdown(appTheme),
-                  ),
-                  crossFadeState: _baseExpanded && canExpandBase
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
+                AnimatedSize(
                   duration: const Duration(milliseconds: 180),
-                  reverseDuration: const Duration(milliseconds: 140),
-                  firstCurve: Curves.easeOutCubic,
-                  secondCurve: Curves.easeOutCubic,
-                  sizeCurve: Curves.easeOutCubic,
+                  curve: Curves.easeOutCubic,
+                  child: _baseExpanded && canExpandBase
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: _buildBaseBreakdown(appTheme),
+                        )
+                      : const SizedBox.shrink(),
                 ),
-                AnimatedCrossFade(
-                  firstChild: const SizedBox.shrink(),
-                  secondChild: Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: _buildExpenseBreakdown(appTheme),
-                  ),
-                  crossFadeState: _expenseExpanded
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
+                AnimatedSize(
                   duration: const Duration(milliseconds: 180),
-                  reverseDuration: const Duration(milliseconds: 140),
-                  firstCurve: Curves.easeOutCubic,
-                  secondCurve: Curves.easeOutCubic,
-                  sizeCurve: Curves.easeOutCubic,
+                  curve: Curves.easeOutCubic,
+                  child: _expenseExpanded
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: _buildExpenseBreakdown(appTheme),
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ],
             ),
@@ -267,7 +256,14 @@ class _StageCardState extends State<StageCard> {
               children: [
                 // 左侧占位与右侧[间距+图标盒]等宽，保证标题居中而不被图标顶偏
                 if (labelTrailing != null) const SizedBox(width: 20),
-                Text(label, style: labelStyle),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: labelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 if (labelTrailing != null) ...[
                   const SizedBox(width: 2),
                   SizedBox(
@@ -306,25 +302,20 @@ class _StageCardState extends State<StageCard> {
           borderRadius: BorderRadius.circular(appTheme.radiusMd),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 左侧饼图
-            Expanded(
-              flex: 5,
-              child: hasBreakdown
-                  ? _buildMiniPieChart(appTheme, breakdown!)
-                  : const SizedBox.shrink(),
-            ),
-            // 右侧分隔线
+            // 左侧饼图 — 固定宽度
             if (hasBreakdown)
-              Container(
-                width: 0.5,
-                height: 56,
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                color: appTheme.earthMedium.withValues(alpha: 0.1),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 6, 32, 6),
+                child: SizedBox(
+                  width: 85,
+                  height: 85,
+                  child: _buildMiniPieChart(appTheme, breakdown!),
+                ),
               ),
             // 右侧明细 — 金额右对齐
             Expanded(
-              flex: 6,
               child: Column(
                 children: [
                   _buildCategoryRow(
@@ -367,23 +358,66 @@ class _StageCardState extends State<StageCard> {
     };
 
     final sections = breakdown.entries.map((entry) {
+      final icon = _categoryIcon(entry.key);
       return PieChartSectionData(
         value: entry.value,
         color: colorMap[entry.key] ?? appTheme.earthMedium,
+        showTitle: false,
+        badgeWidget: icon != null
+            ? Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 10,
+                  color: colorMap[entry.key]?.withValues(alpha: 0.9) ?? appTheme.earthMedium,
+                ),
+              )
+            : null,
+        badgePositionPercentageOffset: 0.65,
       );
     }).toList();
 
-    return SizedBox(
-      width: 105,
-      height: 105,
-      child: FittedBox(
-        fit: BoxFit.contain,
-        child: CustomPaint(
-          size: const Size(90, 90),
-          painter: _MiniPiePainter(sections: sections),
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.biggest.shortestSide.clamp(0.0, 70.0);
+        final ratio = size / 70;
+        return Center(
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: PieChart(
+              PieChartData(
+                sections: sections,
+                centerSpaceRadius: 20 * ratio,
+                sectionsSpace: 1.5 * ratio,
+                startDegreeOffset: -90,
+              ),
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  IconData? _categoryIcon(String category) {
+    switch (category) {
+      case '生活':
+        return Icons.coffee_outlined;
+      case '购物':
+        return Icons.shopping_bag_outlined;
+      case '工作':
+        return Icons.business_center_outlined;
+      case '娱乐':
+        return Icons.sports_esports_outlined;
+      case '大餐':
+        return Icons.restaurant_outlined;
+      default:
+        return Icons.category_outlined;
+    }
   }
 
   // 余额列：水平三列之一，右对齐，金额右侧带编辑图标，整列可点编辑
@@ -689,7 +723,7 @@ class _StageCardState extends State<StageCard> {
     String? subtitle,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       child: Row(
         children: [
           Container(
@@ -783,7 +817,7 @@ class _StageCardState extends State<StageCard> {
         : null;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -850,49 +884,3 @@ class _StageCardState extends State<StageCard> {
   }
 }
 
-class _MiniPiePainter extends CustomPainter {
-  _MiniPiePainter({required this.sections});
-
-  final List<PieChartSectionData> sections;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    var startAngle = -math.pi / 2;
-    for (final section in sections) {
-      final total = sections.fold(0.0, (s, e) => s + e.value);
-      if (total <= 0) return;
-      final sweep = (section.value / total) * 2 * math.pi;
-      paint.color = section.color;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweep,
-        true,
-        paint,
-      );
-      startAngle += sweep;
-    }
-
-    // 中心挖洞：用透明色覆盖，露出底层背景
-    final holePaint = Paint()
-      ..color = const Color(0x00FFFFFF)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, radius * 0.58, holePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _MiniPiePainter oldDelegate) {
-    if (oldDelegate.sections.length != sections.length) return true;
-    for (var i = 0; i < sections.length; i++) {
-      if (oldDelegate.sections[i].value != sections[i].value ||
-          oldDelegate.sections[i].color != sections[i].color) {
-        return true;
-      }
-    }
-    return false;
-  }
-}

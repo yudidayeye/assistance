@@ -1,6 +1,7 @@
 import '../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/theme_extension.dart';
+import '../foundation/app_typography.dart';
 
 /// 设置页面列表项
 ///
@@ -59,19 +60,13 @@ class SettingsListItem extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 15, // Apple 风格：更接近 iOS 的 17pt
-                      fontWeight: FontWeight.w500,
-                      color: textColor,
-                      letterSpacing: -0.2,
-                    ),
+                    style: AppTypography.bodyMd.copyWith(color: textColor),
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
                     Text(
                       subtitle!,
-                      style: TextStyle(
-                        fontSize: 11.5,
+                      style: AppTypography.caption.copyWith(
                         color: appTheme.earthMedium.withValues(alpha: 0.6),
                       ),
                     ),

@@ -79,6 +79,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
+          titleSpacing: 0,
           automaticallyImplyLeading: true,
           title: Text(
             '新建周期',

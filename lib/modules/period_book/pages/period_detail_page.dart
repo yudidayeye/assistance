@@ -104,6 +104,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
+          titleSpacing: 0,
           automaticallyImplyLeading: true,
           title: Text(
             '周期详情',
@@ -144,6 +145,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
+          titleSpacing: 0,
           automaticallyImplyLeading: true,
           title: Text(
             '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日',

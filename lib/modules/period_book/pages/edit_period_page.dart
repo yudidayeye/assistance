@@ -83,6 +83,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
+          titleSpacing: 0,
           automaticallyImplyLeading: true,
           title: Text(
             '编辑周期',

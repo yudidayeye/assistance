@@ -22,12 +22,7 @@ class SectionLabel extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: appTheme.earthMedium,
-              letterSpacing: -0.2,
-            ),
+            style: AppTypography.label.copyWith(color: appTheme.earthMedium),
           ),
         ],
       ),

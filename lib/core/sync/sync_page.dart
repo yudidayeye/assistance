@@ -306,6 +306,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         backgroundColor: appTheme.cream,
         elevation: 0,
         centerTitle: false,
+        titleSpacing: 0,
         automaticallyImplyLeading: true,
         title: Text(
           '数据同步',

@@ -32,6 +32,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
+          titleSpacing: 0,
           automaticallyImplyLeading: true,
           title: Text(
             '记一笔',

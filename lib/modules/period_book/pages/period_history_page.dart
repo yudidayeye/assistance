@@ -387,6 +387,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                     backgroundColor: appTheme.cream,
                     elevation: 0,
                     centerTitle: false,
+                    titleSpacing: 0,
                     automaticallyImplyLeading: true,
                     title: Text(
                       '历史记录',

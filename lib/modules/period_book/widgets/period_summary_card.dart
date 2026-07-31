@@ -9,7 +9,7 @@ import '../services/period_book_service.dart' show PeriodCalculations;
 
 /// 周期汇总卡片 — 余额/本金一行式布局
 ///
-/// 结构：余额/本金合并展示 + 右上角支出占比环形图（购物/其他/生活）
+/// 结构：余额/本金合并展示 + 右上角支出占比环形图（个人/其他/结余）
 /// + 进度条 + 支出/大额纯文本统计。
 class PeriodSummaryCard extends StatelessWidget {
   final PeriodCalculations calc;
@@ -38,7 +38,7 @@ class PeriodSummaryCard extends StatelessWidget {
         ? ((balance ?? 0) / calc.totalBase).clamp(0.0, 1.0)
         : 0.0;
 
-    // 支出构成：购物 / 其他 / 生活（生活为倒推值，未填余额时未知）
+    // 支出构成：个人 / 其他 / 结余（结余为倒推值，未填余额时未知）
     final shopping = calc.shoppingTotal > 0 ? calc.shoppingTotal : 0.0;
     final other = calc.otherTotal > 0 ? calc.otherTotal : 0.0;
     final living = (calc.livingTotal != null && calc.livingTotal! > 0)
@@ -149,7 +149,7 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 右上角支出占比环形图 — 购物（sage）/ 其他（rose）/ 生活（primary）
+  /// 右上角支出占比环形图 — 个人（sage）/ 其他（rose）/ 结余（primary）
   ///
   /// 入场带轻微缩放渐显，数据变化时扇区平滑过渡。
   Widget _buildExpenseDonut(
@@ -217,7 +217,7 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 支出构成图例行：●购物 72%  ●其他 12%  ●生活 15%
+  /// 支出构成图例行：●个人 72%  ●其他 12%  ●结余 15%
   Widget _buildExpenseLegend(
     AppThemeExtension appTheme,
     double shopping,
@@ -235,16 +235,15 @@ class PeriodSummaryCard extends StatelessWidget {
       );
     }
 
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
       children: [
-        _legendItem(appTheme, '购物', appTheme.sage, shopping / total),
-        const SizedBox(width: 16),
+        _legendItem(appTheme, '个人', appTheme.sage, shopping / total),
         _legendItem(appTheme, '其他', appTheme.rose, other / total),
-        if (living > 0) ...[
-          const SizedBox(width: 16),
-          _legendItem(appTheme, '生活',
+        if (living > 0)
+          _legendItem(appTheme, '结余',
               appTheme.primary.withValues(alpha: 0.6), living / total),
-        ],
       ],
     );
   }
@@ -264,11 +263,11 @@ class PeriodSummaryCard extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w500,
             color: appTheme.earthMedium.withValues(alpha: 0.9),
           ),
@@ -278,7 +277,7 @@ class PeriodSummaryCard extends StatelessWidget {
           '${(pct * 100).toStringAsFixed(0)}%',
           style: TextStyle(
             fontFamily: GoogleFonts.dmSans().fontFamily,
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w600,
             color: appTheme.earth,
             fontFeatures: const [FontFeature.tabularFigures()],
@@ -401,7 +400,7 @@ class PeriodSummaryCard extends StatelessWidget {
                       size: 14,
                       color: appTheme.rose.withValues(alpha: 0.6),
                     ),
-                    AppSpacing.w4,
+                    const SizedBox(width: 3),
                     Text(
                       '支出',
                       style: TextStyle(
@@ -410,7 +409,7 @@ class PeriodSummaryCard extends StatelessWidget {
                         color: appTheme.rose,
                       ),
                     ),
-                    AppSpacing.w6,
+                    const SizedBox(width: 4),
                     Flexible(
                       child: Text(
                         '-${FormatUtils.formatAmount(spent)}',
@@ -428,10 +427,13 @@ class PeriodSummaryCard extends StatelessWidget {
                       ),
                     ),
                     if (onTapTotalExpense != null)
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: 15,
-                        color: appTheme.earthMedium.withValues(alpha: 0.5),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 2),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 15,
+                          color: appTheme.earthMedium.withValues(alpha: 0.5),
+                        ),
                       ),
                   ],
                 ),
