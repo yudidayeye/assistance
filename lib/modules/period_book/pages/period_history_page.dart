@@ -103,8 +103,10 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
 
     // 提取阶段序号（仅在选中月份时显示对应阶段）
     if (_selectedMonth != null) {
+      // 实时计算当前筛选条件下的周期，避免使用过期的 _filteredPeriods
+      final filtered = _getFilteredPeriods();
       int maxStages = 0;
-      for (final p in _filteredPeriods) {
+      for (final p in filtered) {
         final calc = _calcMap[p.id];
         if (calc != null && calc.stages.length > maxStages) {
           maxStages = calc.stages.length;
