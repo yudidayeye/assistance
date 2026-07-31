@@ -74,7 +74,7 @@ class HistoryFilterBar extends StatelessWidget {
             label: '阶段',
             items: availableStages.map((stage) => _FilterChipItem(
               value: stage,
-              label: '第$stage周',
+              label: '第$stage阶段',
             )).toList(),
             selectedValue: selectedStage,
             onChanged: onStageChanged,

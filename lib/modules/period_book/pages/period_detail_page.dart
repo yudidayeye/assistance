@@ -249,7 +249,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                         children: [
                           _buildDetailRow(
                             appTheme: appTheme,
-                            label: '第${stage.sortOrder}周追加',
+                            label: '第${stage.sortOrder}阶段追加',
                             amount: total,
                             isTotal: false,
                             isEmpty: additions.isEmpty,

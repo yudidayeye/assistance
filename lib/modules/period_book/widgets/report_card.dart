@@ -533,7 +533,7 @@ class _ReportCardState extends State<ReportCard> {
                     return Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        '第$stage周',
+                        '第$stage阶段',
                         style: TextStyle(
                           fontFamily: GoogleFonts.dmSans().fontFamily,
                           fontSize: 10,
@@ -575,7 +575,7 @@ class _ReportCardState extends State<ReportCard> {
                   return spots.map((spot) {
                     final item = widget.stageData[spot.x.toInt()];
                     return LineTooltipItem(
-                      '第${item['stage']}周\n${FormatUtils.formatAmount((item['expense'] as num).toDouble())}',
+                      '第${item['stage']}阶段\n${FormatUtils.formatAmount((item['expense'] as num).toDouble())}',
                       TextStyle(
                         fontSize: 12,
                         color: appTheme.earth,
