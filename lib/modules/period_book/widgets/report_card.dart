@@ -633,28 +633,48 @@ class _ReportCardState extends State<ReportCard> {
     );
   }
 
+  /// 分类显示顺序和颜色映射
+  static const _categoryOrder = ['购物', '生活', '工作', '娱乐', '大餐', '其他', 'balance'];
+
+  Color _categoryColor(String key, AppThemeExtension appTheme) {
+    switch (key) {
+      case '购物':
+        return appTheme.sage;
+      case '生活':
+        return appTheme.primary;
+      case '工作':
+        return const Color(0xFF3E6FA0);
+      case '娱乐':
+        return const Color(0xFFC49A6C);
+      case '大餐':
+        return appTheme.rose;
+      case '其他':
+        return appTheme.earthMedium;
+      case 'balance':
+        return appTheme.primaryLight;
+      default:
+        return appTheme.earthMedium;
+    }
+  }
+
+  String _categoryLabel(String key) {
+    return key == 'balance' ? '结余' : key;
+  }
+
   /// 构建支出占比图
   Widget _buildExpensePie(AppThemeExtension appTheme) {
-    final hasData = widget.expenseTypeData.values.any((v) => v > 0);
+    // 按固定顺序排列有数据的分类
+    final entries = _categoryOrder
+        .where((k) => (widget.expenseTypeData[k] ?? 0) > 0)
+        .map((k) => MapEntry(k, widget.expenseTypeData[k]!))
+        .toList();
 
-    if (!hasData) {
+    if (entries.isEmpty) {
       return _buildEmptyState(appTheme, '暂无支出数据');
     }
 
-    final total = widget.expenseTypeData.values.fold(0.0, (sum, v) => sum + v);
-    final shoppingPct = total > 0
-        ? (widget.expenseTypeData['shopping'] ?? 0) / total
-        : 0.0;
-    final otherPct =
-        total > 0 ? (widget.expenseTypeData['other'] ?? 0) / total : 0.0;
-    final livingPct =
-        total > 0 ? (widget.expenseTypeData['living'] ?? 0) / total : 0.0;
-
-    // 计算月均值
+    final total = entries.fold(0.0, (sum, e) => sum + e.value);
     final monthCount = widget.monthlyData.isNotEmpty ? widget.monthlyData.length : 1;
-    final shoppingAvg = (widget.expenseTypeData['shopping'] ?? 0) / monthCount;
-    final otherAvg = (widget.expenseTypeData['other'] ?? 0) / monthCount;
-    final livingAvg = (widget.expenseTypeData['living'] ?? 0) / monthCount;
 
     return Padding(
       padding: AppSpacing.pageH,
@@ -667,26 +687,15 @@ class _ReportCardState extends State<ReportCard> {
               aspectRatio: 1,
               child: PieChart(
                 PieChartData(
-                  sections: [
-                    _buildPieSection(
-                      value: widget.expenseTypeData['shopping'] ?? 0,
-                      color: appTheme.sage,
-                      title: '购物',
-                      pct: shoppingPct,
-                    ),
-                    _buildPieSection(
-                      value: widget.expenseTypeData['other'] ?? 0,
-                      color: appTheme.rose,
-                      title: '其他',
-                      pct: otherPct,
-                    ),
-                    _buildPieSection(
-                      value: widget.expenseTypeData['living'] ?? 0,
-                      color: appTheme.primary,
-                      title: '生活',
-                      pct: livingPct,
-                    ),
-                  ],
+                  sections: entries.map((e) {
+                    final pct = total > 0 ? e.value / total : 0.0;
+                    return _buildPieSection(
+                      value: e.value,
+                      color: _categoryColor(e.key, appTheme),
+                      title: _categoryLabel(e.key),
+                      pct: pct,
+                    );
+                  }).toList(),
                   centerSpaceRadius: 28,
                   sectionsSpace: 2,
                   startDegreeOffset: -90,
@@ -701,31 +710,21 @@ class _ReportCardState extends State<ReportCard> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildLegend(
-                  appTheme: appTheme,
-                  label: '购物',
-                  color: appTheme.sage,
-                  value: shoppingAvg,
-                  pct: shoppingPct,
-                ),
-                AppSpacing.h14,
-                _buildLegend(
-                  appTheme: appTheme,
-                  label: '其他',
-                  color: appTheme.rose,
-                  value: otherAvg,
-                  pct: otherPct,
-                ),
-                AppSpacing.h14,
-                _buildLegend(
-                  appTheme: appTheme,
-                  label: '生活',
-                  color: appTheme.primary,
-                  value: livingAvg,
-                  pct: livingPct,
-                ),
-              ],
+              children: entries.asMap().entries.map((indexed) {
+                final e = indexed.value;
+                final pct = total > 0 ? e.value / total : 0.0;
+                final avg = e.value / monthCount;
+                return Padding(
+                  padding: EdgeInsets.only(top: indexed.key > 0 ? 14 : 0),
+                  child: _buildLegend(
+                    appTheme: appTheme,
+                    label: _categoryLabel(e.key),
+                    color: _categoryColor(e.key, appTheme),
+                    value: avg,
+                    pct: pct,
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],

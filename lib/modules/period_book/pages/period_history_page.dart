@@ -8,6 +8,7 @@ import '../../../shared/foundation/app_spacing.dart';
 import '../../../shared/utils/format_utils.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 import '../models/period_record.dart';
+import '../models/expense_record.dart';
 import '../services/period_book_service.dart';
 import '../widgets/history_filter_bar.dart';
 import '../widgets/report_card.dart';
@@ -25,6 +26,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   List<PeriodRecord> _periods = [];
   final Map<int, double?> _balances = {};
   final Map<int, PeriodCalculations> _calcMap = {};
+  final Map<int, List<ExpenseRecord>> _expenseMap = {};
   bool _loading = true;
 
   // 统计数据
@@ -55,11 +57,12 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       final periods = await _service.getAllPeriods();
       _periods = periods;
 
-      // 批量获取余额和计算数据
+      // 批量获取余额、计算数据和支出明细
       for (final p in periods) {
         final calc = await _service.getPeriodCalculations(p.id!);
         _balances[p.id!] = calc.balance;
         _calcMap[p.id!] = calc;
+        _expenseMap[p.id!] = await _service.getExpensesByPeriod(p.id!);
       }
 
       // 提取可用筛选项
@@ -127,10 +130,9 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     final Map<String, double> monthlyExpenseMap = {};
     // 阶段支出数据（当选择月份时使用）
     final List<Map<String, dynamic>> stageDataList = [];
-    // 消费类型汇总（购物、其他、生活）
-    double totalShopping = 0;
-    double totalOther = 0;
-    double totalLiving = 0;
+    // 消费类型汇总（按明细 category 汇总）
+    final Map<String, double> categoryTotals = {};
+    double totalBalance = 0;
 
     // 获取筛选后的周期列表
     _filteredPeriods = _getFilteredPeriods();
@@ -140,16 +142,19 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       if (calc == null) continue;
 
       final balance = _balances[period.id];
-      final totalExpense = calc.totalBase - (balance ?? 0);
+      totalBalance += balance ?? 0;
 
-      // 累加消费类型（分开计算）
-      totalShopping += calc.shoppingTotal;
-      totalLiving += calc.livingTotal ?? 0;
-      totalOther += calc.otherTotal;
+      // 从支出明细中按 category 汇总
+      final expenses = _expenseMap[period.id] ?? [];
+      for (final e in expenses) {
+        final cat = _normalizeCategory(e.category);
+        categoryTotals[cat] = (categoryTotals[cat] ?? 0) + e.amount;
+      }
 
       // 按结束日期的月份统计
       final endDate = DateTime.parse(period.endDate);
       final monthKey = '${endDate.year}-${endDate.month.toString().padLeft(2, '0')}';
+      final totalExpense = calc.totalBase - (balance ?? 0);
       monthlyExpenseMap[monthKey] = (monthlyExpenseMap[monthKey] ?? 0) + totalExpense;
 
       // 当选择月份时，收集阶段数据
@@ -208,12 +213,17 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       _stageData = [];
     }
 
-    // 消费类型数据（购物、其他、生活）
+    // 消费类型数据（购物/生活/工作/娱乐/大餐/其他 + 结余）
     _expenseTypeData = {
-      'shopping': totalShopping,
-      'other': totalOther,
-      'living': totalLiving,
+      ...categoryTotals,
+      'balance': totalBalance,
     };
+  }
+
+  /// 标准化分类名称：数据库中 'shopping' 映射为 '购物'，其余保持原样
+  String _normalizeCategory(String dbCategory) {
+    if (dbCategory == 'shopping') return '购物';
+    return dbCategory;
   }
 
   /// 获取筛选后的周期列表
@@ -333,6 +343,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
         _periods.removeWhere((p) => p.id == period.id);
         _balances.remove(period.id);
         _calcMap.remove(period.id);
+        _expenseMap.remove(period.id);
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
