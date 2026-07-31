@@ -67,18 +67,20 @@ class HistoryFilterBar extends StatelessWidget {
             selectedValue: selectedMonth,
             onChanged: onMonthChanged,
           ),
-          AppSpacing.h8,
-          // 阶段筛选
-          _buildChipRow(
-            appTheme: appTheme,
-            label: '阶段',
-            items: availableStages.map((stage) => _FilterChipItem(
-              value: stage,
-              label: '第$stage阶段',
-            )).toList(),
-            selectedValue: selectedStage,
-            onChanged: onStageChanged,
-          ),
+          // 阶段筛选（仅在选中月份时显示）
+          if (selectedMonth != null) ...[
+            AppSpacing.h8,
+            _buildChipRow(
+              appTheme: appTheme,
+              label: '阶段',
+              items: availableStages.map((stage) => _FilterChipItem(
+                value: stage,
+                label: '第$stage阶段',
+              )).toList(),
+              selectedValue: selectedStage,
+              onChanged: onStageChanged,
+            ),
+          ],
         ],
       ),
     );

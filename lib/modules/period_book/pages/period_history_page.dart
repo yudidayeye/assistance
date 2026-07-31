@@ -101,9 +101,8 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       _availableMonths = months;
     }
 
-    // 提取阶段序号（根据选中的月份动态更新）
+    // 提取阶段序号（仅在选中月份时显示对应阶段）
     if (_selectedMonth != null) {
-      // 当选择月份时，获取该月份对应周期的最大阶段数
       int maxStages = 0;
       for (final p in _filteredPeriods) {
         final calc = _calcMap[p.id];
@@ -113,15 +112,8 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       }
       _availableStages = List.generate(maxStages, (i) => i + 1);
     } else {
-      // 当未选择月份时，获取所有周期的最大阶段数
-      int maxStages = 0;
-      for (final p in _periods) {
-        final calc = _calcMap[p.id];
-        if (calc != null && calc.stages.length > maxStages) {
-          maxStages = calc.stages.length;
-        }
-      }
-      _availableStages = List.generate(maxStages, (i) => i + 1);
+      _availableStages = [];
+      _selectedStage = null;
     }
 
     // 不再自动选中年份，允许用户选择"全部"
@@ -265,6 +257,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     setState(() {
       _selectedMonth = month;
       _selectedStage = null; // 重置阶段选择
+      _extractFilterOptions();
       _calculateStats();
     });
   }
