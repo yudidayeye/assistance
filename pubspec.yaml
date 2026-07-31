@@ -1,7 +1,7 @@
 name: my_assistant
 description: 轻量级个人工具集App - 记账与生理期记录
 publish_to: 'none'
-version: 1.0.4+8
+version: 1.0.4+9
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
