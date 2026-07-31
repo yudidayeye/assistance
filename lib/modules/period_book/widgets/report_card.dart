@@ -381,6 +381,10 @@ class _ReportCardState extends State<ReportCard> {
                   showTitles: true,
                   reservedSize: 28,
                   getTitlesWidget: (value, meta) {
+                    // 仅在整数位置（数据点）显示标签
+                    if (value != value.roundToDouble()) {
+                      return const SizedBox.shrink();
+                    }
                     final idx = value.toInt();
                     if (idx < 0 || idx >= widget.monthlyData.length) {
                       return const SizedBox.shrink();
@@ -525,6 +529,10 @@ class _ReportCardState extends State<ReportCard> {
                   showTitles: true,
                   reservedSize: 28,
                   getTitlesWidget: (value, meta) {
+                    // 仅在整数位置（数据点）显示标签
+                    if (value != value.roundToDouble()) {
+                      return const SizedBox.shrink();
+                    }
                     final idx = value.toInt();
                     if (idx < 0 || idx >= widget.stageData.length) {
                       return const SizedBox.shrink();
