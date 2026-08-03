@@ -14,6 +14,7 @@ import '../services/period_book_service.dart';
 import '../widgets/expense_category_helper.dart';
 import '../widgets/expense_section_card.dart';
 import '../widgets/addition_section_card.dart';
+import '../widgets/add_form.dart';
 
 /// 阶段编辑页（单阶段编辑 + 批量记账）
 class StageEditPage extends StatefulWidget {
@@ -870,138 +871,27 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildShoppingForm(AppThemeExtension appTheme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: appTheme.creamDark.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _shoppingAmountController,
-            focusNode: _shoppingAmountFocusNode,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textInputAction: TextInputAction.next,
-            onEditingComplete: () {
-              FocusScope.of(context).requestFocus(_shoppingDescFocusNode);
-            },
-            decoration: InputDecoration(
-              labelText: '金额',
-              hintText: '请输入金额',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              labelStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 14, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _shoppingDescController,
-            focusNode: _shoppingDescFocusNode,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) {
-              final amount = double.tryParse(_shoppingAmountController.text);
-              final desc = _shoppingDescController.text.trim();
-              if (amount == null || amount <= 0 || desc.isEmpty) return;
-              _service
-                  .addExpense(widget.stageId, '生活', amount, desc)
-                  .then((_) {
-                _shoppingAmountController.clear();
-                _shoppingDescController.clear();
-                _loadData();
-              });
-            },
-            decoration: InputDecoration(
-              labelText: '描述',
-              hintText: '请输入描述',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              labelStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 14, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton.icon(
-                  onPressed: () =>
-                      setState(() => _shoppingFormExpanded = false),
-                  style: _secondaryButtonStyle(appTheme),
-                  icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 18),
-                  label: const Text('收起'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    final amount =
-                        double.tryParse(_shoppingAmountController.text);
-                    final desc = _shoppingDescController.text.trim();
-                    if (amount == null || amount <= 0 || desc.isEmpty) return;
-                    _service
-                        .addExpense(widget.stageId, '生活', amount, desc)
-                        .then((_) {
-                      _shoppingAmountController.clear();
-                      _shoppingDescController.clear();
-                      setState(() => _shoppingFormExpanded = false);
-                      _loadDataPreserveScroll();
-                    });
-                  },
-                  icon: const Icon(Icons.check_rounded, size: 16),
-                  label: const Text('确认添加'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: appTheme.primary,
-                    backgroundColor: appTheme.primary.withValues(alpha: 0.1),
-                    side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return AddForm(
+      amountLabel: '金额',
+      descLabel: '描述',
+      amountHint: '请输入金额',
+      descHint: '请输入描述',
+      amountController: _shoppingAmountController,
+      descController: _shoppingDescController,
+      onCollapse: () => setState(() => _shoppingFormExpanded = false),
+      onConfirm: () {
+        final amount = double.tryParse(_shoppingAmountController.text);
+        final desc = _shoppingDescController.text.trim();
+        if (amount == null || amount <= 0 || desc.isEmpty) return;
+        _service.addExpense(widget.stageId, '生活', amount, desc).then((_) {
+          _shoppingAmountController.clear();
+          _shoppingDescController.clear();
+          _loadDataPreserveScroll();
+        });
+      },
+      confirmForeground: appTheme.primary,
+      confirmBackground: appTheme.primary,
+      confirmBorder: appTheme.primary,
     );
   }
 
@@ -1118,7 +1008,6 @@ class _StageEditPageState extends State<StageEditPage> {
                         .then((_) {
                       _otherAmountController.clear();
                       _otherDescController.clear();
-                      setState(() => _otherFormExpanded = false);
                       _loadDataPreserveScroll();
                     });
                   },
@@ -1499,7 +1388,6 @@ class _StageEditPageState extends State<StageEditPage> {
     _service.addAddition(widget.stageId, amount, reason).then((_) {
       _additionReasonController.clear();
       _additionAmountController.clear();
-      setState(() => _additionFormExpanded = false);
       _loadDataPreserveScroll();
     });
   }
