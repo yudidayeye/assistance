@@ -519,7 +519,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       '工作': '工作',
       '娱乐': '娱乐',
       '大餐': '大餐',
-      '杂项': '杂项',
     };
     return dbValue != null && map.containsKey(dbValue) ? map[dbValue]! : (dbValue ?? '其他');
   }
