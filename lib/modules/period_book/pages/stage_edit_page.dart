@@ -354,7 +354,6 @@ class _StageEditPageState extends State<StageEditPage> {
               appTheme: appTheme,
               label: '当前日期',
               date: displayCurrentDate,
-              highlight: true,
               onDateChanged: (date) {
                 setState(() {
                   _stage = _stage!.copyWith(currentDate: _formatDate(date));
