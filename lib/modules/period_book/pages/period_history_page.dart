@@ -155,6 +155,13 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
         categoryTotals[cat] = (categoryTotals[cat] ?? 0) + e.amount;
       }
 
+      // 杂项 = 漏记杂项（livingTotal，各阶段汇总）
+      final livingTotal = calc.stages.fold<double>(
+          0, (sum, s) => sum + (s.livingTotal ?? 0));
+      if (livingTotal > 0) {
+        categoryTotals['杂项'] = (categoryTotals['杂项'] ?? 0) + livingTotal;
+      }
+
       // 按开始日期的月份统计
       final startDate = DateTime.parse(period.startDate);
       final monthKey = '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}';
@@ -217,7 +224,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       _stageData = [];
     }
 
-    // 消费类型数据（购物/生活/工作/娱乐/大餐/其他 + 结余）
+    // 消费类型数据（购物/生活/工作/娱乐/大餐/杂项/其他 + 结余）
     _expenseTypeData = {
       ...categoryTotals,
       'balance': totalBalance,
@@ -233,12 +240,16 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
         final stages = _stagesMap[period.id];
         if (stages == null || stages.isEmpty) continue;
 
+        final calc = _calcMap[period.id];
+        if (calc == null) continue;
+
         // 按 sortOrder 取第 N 个阶段（_selectedStage 是 1-based）
         final stageIndex = _selectedStage! - 1;
         if (stageIndex >= stages.length) continue;
 
         final targetStage = stages[stageIndex];
         final targetStageId = targetStage.id!;
+        final targetStageCalc = calc.stages[stageIndex];
 
         // 从支出明细中筛选该阶段的记录，按 category 汇总
         final expenses = _expenseMap[period.id] ?? [];
@@ -253,6 +264,13 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
         if (targetStage.balance != null) {
           stageTotalBalance += targetStage.balance!;
         }
+
+        // 杂项 = 该阶段漏记杂项（livingTotal）
+        final stageLiving = targetStageCalc.livingTotal ?? 0;
+        if (stageLiving > 0) {
+          stageCategoryTotals['杂项'] =
+              (stageCategoryTotals['杂项'] ?? 0) + stageLiving;
+        }
       }
 
       _stageExpenseTypeData = {
@@ -262,9 +280,10 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     }
   }
 
-  /// 标准化分类名称：数据库中 'shopping' 映射为 '购物'，其余保持原样
+  /// 标准化分类名称：数据库中 'shopping'→'购物', 'other'→'其他'，其余保持原样
   String _normalizeCategory(String dbCategory) {
     if (dbCategory == 'shopping') return '购物';
+    if (dbCategory == 'other') return '其他';
     return dbCategory;
   }
 

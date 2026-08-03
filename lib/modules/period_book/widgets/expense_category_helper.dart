@@ -41,7 +41,7 @@ class ExpenseCategoryHelper {
   static IconData? categoryIcon(String displayName) {
     switch (displayName) {
       case '其他':
-        return null;
+        return Icons.more_horiz;
       case '生活':
         return Icons.coffee_outlined;
       case '购物':

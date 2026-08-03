@@ -5,6 +5,7 @@ import '../../../shared/foundation/app_spacing.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/utils/format_utils.dart';
+import '../widgets/expense_category_helper.dart';
 
 /// 报表视图类型
 enum ReportViewType {
@@ -616,24 +617,24 @@ class _ReportCardState extends State<ReportCard> {
   }
 
   /// 分类显示顺序和颜色映射
-  static const _categoryOrder = ['购物', '生活', '工作', '娱乐', '大餐', '其他', 'balance'];
+  static const _categoryOrder = ['购物', '生活', '工作', '娱乐', '大餐', '杂项', '其他', 'balance'];
 
   Color _categoryColor(String key, AppThemeExtension appTheme) {
     switch (key) {
       case '购物':
         return appTheme.sage;
       case '生活':
-        return appTheme.primary;
+        return appTheme.primary.withValues(alpha: 0.6);
       case '工作':
         return const Color(0xFF3E6FA0);
       case '娱乐':
         return const Color(0xFFC49A6C);
       case '大餐':
         return appTheme.rose;
+      case '杂项':
+        return const Color(0xFF7A8B99);
       case '其他':
-        return appTheme.earthMedium;
-      case 'balance':
-        return appTheme.primaryLight;
+        return appTheme.rose;
       default:
         return appTheme.earthMedium;
     }
@@ -793,13 +794,27 @@ class _ReportCardState extends State<ReportCard> {
     required String title,
     required double pct,
   }) {
-    // fl_chart 0.69.2 badge 渲染器在相邻扇区时存在越界 bug，暂时关闭 badge
+    final icon = ExpenseCategoryHelper.categoryIcon(title);
+    final showBadge = icon != null && pct >= 0.1;
     return PieChartSectionData(
       value: value > 0 ? value : 0.001,
       color: color,
       title: '',
-      badgeWidget: null,
-      titlePositionPercentageOffset: 0.5,
+      badgeWidget: showBadge
+          ? Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 10,
+                color: color,
+              ),
+            )
+          : null,
+      badgePositionPercentageOffset: 0.65,
     );
   }
 
@@ -810,17 +825,13 @@ class _ReportCardState extends State<ReportCard> {
     required double value,
     required double pct,
   }) {
+    final icon = ExpenseCategoryHelper.categoryIcon(label);
     return Row(
       children: [
-        Container(
-          width: AppSpacing.xs,
-          height: AppSpacing.xs,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        AppSpacing.w8,
+        if (icon != null) ...[
+          Icon(icon, size: 13, color: color),
+          AppSpacing.w6,
+        ],
         Text(
           label,
           style: AppTypography.bodySm.copyWith(color: appTheme.earth),

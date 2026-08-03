@@ -337,7 +337,7 @@ class _StageCardState extends State<StageCard> {
                   _buildCategoryRow(
                     appTheme: appTheme,
                     icon: Icons.shopping_cart_outlined,
-                    label: '个人',
+                    label: '个人消费',
                     amountText:
                         '-¥${widget.stageCalc.shoppingTotal.toStringAsFixed(2)}',
                   ),
@@ -345,7 +345,7 @@ class _StageCardState extends State<StageCard> {
                   _buildCategoryRow(
                     appTheme: appTheme,
                     icon: Icons.more_horiz,
-                    label: '其他',
+                    label: '其他消费',
                     amountText:
                         '-¥${widget.stageCalc.otherTotal.toStringAsFixed(2)}',
                   ),
@@ -872,7 +872,7 @@ class _StageCardState extends State<StageCard> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '结余',
+              '漏记杂项',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
