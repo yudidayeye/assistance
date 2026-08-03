@@ -8,22 +8,25 @@ import '../../../shared/utils/format_utils.dart';
 
 /// 报表视图类型
 enum ReportViewType {
-  monthlyTrend, // 月度支出趋势
-  stageTrend, // 阶段支出趋势
+  expenseTrend, // 支出趋势（月度/阶段，根据筛选条件自动选择）
   expensePie, // 支出占比
 }
 
-/// 报表卡片 — 整合月度趋势和支出占比，支持视图切换
+/// 报表卡片 — 整合支出趋势和支出占比，支持视图切换
 class ReportCard extends StatefulWidget {
   final List<Map<String, dynamic>> monthlyData;
   final List<Map<String, dynamic>> stageData;
   final Map<String, double> expenseTypeData;
+  final Map<String, double>? stageExpenseTypeData;
+  final ReportViewType defaultView;
 
   const ReportCard({
     super.key,
     required this.monthlyData,
     required this.stageData,
     required this.expenseTypeData,
+    this.stageExpenseTypeData,
+    this.defaultView = ReportViewType.expensePie,
   });
 
   @override
@@ -31,27 +34,20 @@ class ReportCard extends StatefulWidget {
 }
 
 class _ReportCardState extends State<ReportCard> {
-  ReportViewType _currentView = ReportViewType.monthlyTrend;
+  ReportViewType _currentView = ReportViewType.expensePie;
 
   @override
   void initState() {
     super.initState();
-    // 当有阶段数据时，默认显示阶段趋势
-    if (widget.stageData.isNotEmpty) {
-      _currentView = ReportViewType.stageTrend;
-    }
+    _currentView = widget.defaultView;
   }
 
   @override
   void didUpdateWidget(ReportCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 当阶段数据从无有时，自动切换到阶段趋势
-    if (widget.stageData.isNotEmpty && oldWidget.stageData.isEmpty) {
-      _currentView = ReportViewType.stageTrend;
-    }
-    // 当阶段数据从有到无时，切换到月度趋势
-    if (widget.stageData.isEmpty && oldWidget.stageData.isNotEmpty) {
-      _currentView = ReportViewType.monthlyTrend;
+    // 当 defaultView 变化时，同步更新当前视图
+    if (widget.defaultView != oldWidget.defaultView) {
+      _currentView = widget.defaultView;
     }
   }
 
@@ -203,19 +199,13 @@ class _ReportCardState extends State<ReportCard> {
               ),
               _buildViewOption(
                 appTheme: appTheme,
-                viewType: ReportViewType.monthlyTrend,
+                viewType: ReportViewType.expenseTrend,
                 icon: Icons.trending_up_rounded,
-                title: '月度支出趋势',
-                subtitle: '查看每月支出变化',
+                title: '支出趋势',
+                subtitle: widget.stageData.isNotEmpty
+                    ? '查看各阶段支出变化'
+                    : '查看每月支出变化',
               ),
-              if (widget.stageData.isNotEmpty)
-                _buildViewOption(
-                  appTheme: appTheme,
-                  viewType: ReportViewType.stageTrend,
-                  icon: Icons.show_chart_rounded,
-                  title: '阶段支出趋势',
-                  subtitle: '查看各阶段支出变化',
-                ),
               _buildViewOption(
                 appTheme: appTheme,
                 viewType: ReportViewType.expensePie,
@@ -316,10 +306,8 @@ class _ReportCardState extends State<ReportCard> {
   /// 获取视图标签
   String _getViewLabel(ReportViewType viewType) {
     switch (viewType) {
-      case ReportViewType.monthlyTrend:
-        return '月度趋势';
-      case ReportViewType.stageTrend:
-        return '阶段趋势';
+      case ReportViewType.expenseTrend:
+        return '支出趋势';
       case ReportViewType.expensePie:
         return '支出占比';
     }
@@ -328,10 +316,13 @@ class _ReportCardState extends State<ReportCard> {
   /// 构建内容区域
   Widget _buildContent(AppThemeExtension appTheme) {
     switch (_currentView) {
-      case ReportViewType.monthlyTrend:
+      case ReportViewType.expenseTrend:
+        // 有阶段数据时显示阶段趋势，否则显示月度趋势
+        if (widget.stageData.isNotEmpty &&
+            !widget.stageData.every((d) => d['expense'] == 0)) {
+          return _buildStageTrend(appTheme);
+        }
         return _buildMonthlyTrend(appTheme);
-      case ReportViewType.stageTrend:
-        return _buildStageTrend(appTheme);
       case ReportViewType.expensePie:
         return _buildExpensePie(appTheme);
     }
@@ -663,11 +654,15 @@ class _ReportCardState extends State<ReportCard> {
 
   /// 构建支出占比图
   Widget _buildExpensePie(AppThemeExtension appTheme) {
-    // 按固定顺序排列有数据的分类
+    // 选中阶段时使用阶段维度的数据，否则使用全局汇总
+    final data = widget.stageExpenseTypeData ?? widget.expenseTypeData;
+
+    // 筛选有数据的分类（排除 balance），按金额从大到小排序
     final entries = _categoryOrder
-        .where((k) => (widget.expenseTypeData[k] ?? 0) > 0)
-        .map((k) => MapEntry(k, widget.expenseTypeData[k]!))
-        .toList();
+        .where((k) => k != 'balance' && (data[k] ?? 0) > 0)
+        .map((k) => MapEntry(k, data[k]!))
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     if (entries.isEmpty) {
       return _buildEmptyState(appTheme, '暂无支出数据');
@@ -807,31 +802,13 @@ class _ReportCardState extends State<ReportCard> {
     required String title,
     required double pct,
   }) {
-    final showTitle = pct > 0.1;
+    // fl_chart 0.69.2 badge 渲染器在相邻扇区时存在越界 bug，暂时关闭 badge
     return PieChartSectionData(
       value: value > 0 ? value : 0.001,
       color: color,
-      radius: showTitle ? 48 : 24,
-      badgeWidget: showTitle
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                '${(pct * 100).toStringAsFixed(0)}%',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
-                ),
-              ),
-            )
-          : null,
-      badgePositionPercentageOffset: 0.5,
       title: '',
+      badgeWidget: null,
+      titlePositionPercentageOffset: 0.5,
     );
   }
 

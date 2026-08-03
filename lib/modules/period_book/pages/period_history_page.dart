@@ -9,6 +9,7 @@ import '../../../shared/utils/format_utils.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 import '../models/period_record.dart';
 import '../models/expense_record.dart';
+import '../models/stage_record.dart';
 import '../services/period_book_service.dart';
 import '../widgets/history_filter_bar.dart';
 import '../widgets/report_card.dart';
@@ -27,12 +28,14 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   final Map<int, double?> _balances = {};
   final Map<int, PeriodCalculations> _calcMap = {};
   final Map<int, List<ExpenseRecord>> _expenseMap = {};
+  final Map<int, List<StageRecord>> _stagesMap = {}; // 周期ID → 阶段列表（按sortOrder排序）
   bool _loading = true;
 
   // 统计数据
   List<Map<String, dynamic>> _monthlyData = [];
   List<Map<String, dynamic>> _stageData = [];
   Map<String, double> _expenseTypeData = {};
+  Map<String, double> _stageExpenseTypeData = {}; // 选中阶段时的支出类型数据
 
   // 筛选状态
   int? _selectedYear;
@@ -57,12 +60,13 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       final periods = await _service.getAllPeriods();
       _periods = periods;
 
-      // 批量获取余额、计算数据和支出明细
+      // 批量获取余额、计算数据、阶段列表和支出明细
       for (final p in periods) {
         final calc = await _service.getPeriodCalculations(p.id!);
         _balances[p.id!] = calc.balance;
         _calcMap[p.id!] = calc;
         _expenseMap[p.id!] = await _service.getExpensesByPeriod(p.id!);
+        _stagesMap[p.id!] = await _service.getStagesByPeriod(p.id!);
       }
 
       // 提取可用筛选项
@@ -151,9 +155,9 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
         categoryTotals[cat] = (categoryTotals[cat] ?? 0) + e.amount;
       }
 
-      // 按结束日期的月份统计
-      final endDate = DateTime.parse(period.endDate);
-      final monthKey = '${endDate.year}-${endDate.month.toString().padLeft(2, '0')}';
+      // 按开始日期的月份统计
+      final startDate = DateTime.parse(period.startDate);
+      final monthKey = '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}';
       final totalExpense = calc.totalBase - (balance ?? 0);
       monthlyExpenseMap[monthKey] = (monthlyExpenseMap[monthKey] ?? 0) + totalExpense;
 
@@ -218,6 +222,44 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
       ...categoryTotals,
       'balance': totalBalance,
     };
+
+    // 选中阶段时，计算该阶段的支出类型数据（从支出明细按 stageId 筛选）
+    _stageExpenseTypeData = {};
+    if (_selectedStage != null) {
+      final Map<String, double> stageCategoryTotals = {};
+      double stageTotalBalance = 0;
+
+      for (final period in _filteredPeriods) {
+        final stages = _stagesMap[period.id];
+        if (stages == null || stages.isEmpty) continue;
+
+        // 按 sortOrder 取第 N 个阶段（_selectedStage 是 1-based）
+        final stageIndex = _selectedStage! - 1;
+        if (stageIndex >= stages.length) continue;
+
+        final targetStage = stages[stageIndex];
+        final targetStageId = targetStage.id!;
+
+        // 从支出明细中筛选该阶段的记录，按 category 汇总
+        final expenses = _expenseMap[period.id] ?? [];
+        for (final e in expenses) {
+          if (e.stageId == targetStageId) {
+            final cat = _normalizeCategory(e.category);
+            stageCategoryTotals[cat] = (stageCategoryTotals[cat] ?? 0) + e.amount;
+          }
+        }
+
+        // 阶段余额
+        if (targetStage.balance != null) {
+          stageTotalBalance += targetStage.balance!;
+        }
+      }
+
+      _stageExpenseTypeData = {
+        ...stageCategoryTotals,
+        'balance': stageTotalBalance,
+      };
+    }
   }
 
   /// 标准化分类名称：数据库中 'shopping' 映射为 '购物'，其余保持原样
@@ -282,6 +324,14 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     });
   }
 
+  /// 获取默认视图：选年份或选全部时默认支出趋势，选中阶段时默认支出占比
+  ReportViewType _getDefaultView() {
+    if (_selectedStage != null) {
+      return ReportViewType.expensePie;
+    }
+    return ReportViewType.expenseTrend;
+  }
+
   String _fmtDateRange(String startDate, String endDate) {
     final start = DateTime.parse(startDate);
     final end = DateTime.parse(endDate);
@@ -344,6 +394,7 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
         _balances.remove(period.id);
         _calcMap.remove(period.id);
         _expenseMap.remove(period.id);
+        _stagesMap.remove(period.id);
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -436,6 +487,10 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                               monthlyData: _monthlyData,
                               stageData: _stageData,
                               expenseTypeData: _expenseTypeData,
+                              stageExpenseTypeData: _selectedStage != null
+                                  ? _stageExpenseTypeData
+                                  : null,
+                              defaultView: _getDefaultView(),
                             ),
                           AppSpacing.h8,
                         ],
