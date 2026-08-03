@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/app_segmented_tab.dart';
-import '../../../shared/widgets/amount_chip.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
-import '../../../shared/utils/format_utils.dart';
 import '../models/period_record.dart';
 import '../models/large_addition_record.dart';
 import '../models/large_expense_record.dart';
@@ -15,6 +12,7 @@ import '../services/period_book_service.dart';
 import '../widgets/expense_category_helper.dart';
 import '../widgets/expense_section_card.dart';
 import '../widgets/addition_section_card.dart';
+import '../widgets/add_form.dart';
 
 /// 大额记录编辑页（周期级，不计入总本金和总支出）
 class LargeItemsEditPage extends StatefulWidget {
@@ -48,6 +46,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
 
   bool _loading = true;
 
+  // 滚动位置保存
+  final ScrollController _scrollController = ScrollController();
+  double? _savedScrollOffset;
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +58,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _additionReasonController.dispose();
     _additionAmountController.dispose();
     _shoppingAmountController.dispose();
@@ -82,6 +85,22 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       debugPrint('Load large items error: $e');
     }
     if (mounted) setState(() => _loading = false);
+  }
+
+  /// 加载数据并保持滚动位置
+  Future<void> _loadDataPreserveScroll() async {
+    _savedScrollOffset = _scrollController.hasClients
+        ? _scrollController.offset
+        : null;
+    await _loadData();
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_savedScrollOffset != null &&
+            _scrollController.hasClients) {
+          _scrollController.jumpTo(_savedScrollOffset!);
+        }
+      });
+    }
   }
 
   @override
@@ -111,6 +130,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     final dateRange = '${start.month}/${start.day} ~ ${end.month}/${end.day}';
 
     return AppScrollScaffold(
+      controller: _scrollController,
       slivers: [
         SliverAppBar(
           pinned: true,
@@ -200,6 +220,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       )).toList(),
       color: appTheme.sage,
       prefix: '+¥',
+      showAddButton: !_additionFormExpanded,
+      form: _additionFormExpanded ? _buildAdditionForm(appTheme) : null,
       onAdd: () => setState(() => _additionFormExpanded = true),
       onEdit: (data) {
         final addition = _additions.firstWhere((a) => 'large_${a.id}' == data.id);
@@ -225,87 +247,19 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
   }
 
   Widget _buildAdditionForm(AppThemeExtension appTheme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _additionAmountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              hintText: '追加金额',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _additionReasonController,
-            decoration: InputDecoration(
-              hintText: '追加原因（必填）',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () =>
-                      setState(() => _additionFormExpanded = false),
-                  style: _secondaryButtonStyle(appTheme),
-                  child: const Text('收起'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: FilledButton(
-                  onPressed: _submitAddition,
-                  style: _primaryButtonStyle(appTheme,
-                      background: appTheme.sage),
-                  child: const Text('确认添加'),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
-        ],
-      ),
+    return AddForm(
+      amountLabel: '追加金额',
+      descLabel: '追加原因',
+      amountHint: '请输入金额',
+      descHint: '请输入追加原因',
+      amountController: _additionAmountController,
+      descController: _additionReasonController,
+      onCollapse: () => setState(() => _additionFormExpanded = false),
+      onConfirm: _submitAddition,
+      confirmText: '确认添加',
+      confirmForeground: appTheme.sage,
+      confirmBackground: appTheme.sage,
+      confirmBorder: appTheme.sage,
     );
   }
 
@@ -324,6 +278,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         amount: e.amount,
       )).toList(),
       color: appTheme.rose,
+      showAddButton: !_shoppingFormExpanded,
+      form: _shoppingFormExpanded ? _buildShoppingForm(appTheme) : null,
       onAdd: () => setState(() => _shoppingFormExpanded = true),
       onEdit: (data) {
         final expense = _shoppingExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
@@ -348,6 +304,23 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     );
   }
 
+  Widget _buildShoppingForm(AppThemeExtension appTheme) {
+    return AddForm(
+      amountLabel: '金额',
+      descLabel: '描述',
+      amountHint: '请输入金额',
+      descHint: '请输入描述',
+      amountController: _shoppingAmountController,
+      descController: _shoppingDescController,
+      onCollapse: () => setState(() => _shoppingFormExpanded = false),
+      onConfirm: _submitShoppingExpense,
+      confirmText: '确认添加',
+      confirmForeground: appTheme.rose,
+      confirmBackground: appTheme.rose,
+      confirmBorder: appTheme.rose,
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════
   // 其他支出
   // ═══════════════════════════════════════════════════════════
@@ -364,6 +337,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       )).toList(),
       color: appTheme.rose,
       isOther: true,
+      showAddButton: !_otherFormExpanded,
+      form: _otherFormExpanded ? _buildOtherForm(appTheme) : null,
       onAdd: () => setState(() => _otherFormExpanded = true),
       onEdit: (data) {
         final expense = _otherExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
@@ -388,204 +363,20 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 购物支出内嵌表单
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildShoppingForm(AppThemeExtension appTheme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _shoppingAmountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              hintText: '金额',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _shoppingDescController,
-            decoration: InputDecoration(
-              hintText: '描述',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () =>
-                      setState(() => _shoppingFormExpanded = false),
-                  style: _secondaryButtonStyle(appTheme),
-                  child: const Text('收起'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: FilledButton(
-                  onPressed: () {
-                    final amount =
-                        double.tryParse(_shoppingAmountController.text);
-                    final desc = _shoppingDescController.text.trim();
-                    if (amount == null || amount <= 0 || desc.isEmpty) return;
-                    _service
-                        .addLargeExpense(
-                            widget.periodId, 'shopping', amount, desc)
-                        .then((_) {
-                      _shoppingAmountController.clear();
-                      _shoppingDescController.clear();
-                      _loadData();
-                    });
-                  },
-                  style: _primaryButtonStyle(appTheme,
-                      background: appTheme.rose),
-                  child: const Text('确认添加'),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 其他支出内嵌表单
-  // ═══════════════════════════════════════════════════════════
-
   Widget _buildOtherForm(AppThemeExtension appTheme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: appTheme.creamDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _otherAmountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              hintText: '金额',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _otherDescController,
-            decoration: InputDecoration(
-              hintText: '描述',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => setState(() => _otherFormExpanded = false),
-                  style: _secondaryButtonStyle(appTheme),
-                  child: const Text('收起'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: FilledButton(
-                  onPressed: () {
-                    final amount = double.tryParse(_otherAmountController.text);
-                    final desc = _otherDescController.text.trim();
-                    if (amount == null || amount <= 0 || desc.isEmpty) return;
-                    _service
-                        .addLargeExpense(widget.periodId, 'other', amount, desc)
-                        .then((_) {
-                      _otherAmountController.clear();
-                      _otherDescController.clear();
-                      _loadData();
-                    });
-                  },
-                  style: _primaryButtonStyle(appTheme,
-                      background: appTheme.rose),
-                  child: const Text('确认添加'),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 0),
-        ],
-      ),
+    return AddForm(
+      amountLabel: '金额',
+      descLabel: '描述',
+      amountHint: '请输入金额',
+      descHint: '请输入描述',
+      amountController: _otherAmountController,
+      descController: _otherDescController,
+      onCollapse: () => setState(() => _otherFormExpanded = false),
+      onConfirm: _submitOtherExpense,
+      confirmText: '确认添加',
+      confirmForeground: appTheme.rose,
+      confirmBackground: appTheme.rose,
+      confirmBorder: appTheme.rose,
     );
   }
 
@@ -710,14 +501,19 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                         reason: reason,
                       );
                       if (ctx.mounted) Navigator.pop(ctx);
-                      await _loadData();
+                      await _loadDataPreserveScroll();
                     },
-                    style: _primaryButtonStyle(
-                      sheetTheme,
-                      background: sheetTheme.primary,
-                      verticalPadding: AppSpacing.sm,
-                      radius: appTheme.radiusSm,
-                      fontSize: 15,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: sheetTheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     child: const Text('保存修改'),
                   ),
@@ -753,128 +549,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
           amount: amount,
           description: description,
         );
-        await _loadData();
+        await _loadDataPreserveScroll();
       },
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // Material 按钮样式
-  // ═══════════════════════════════════════════════════════════
-
-  /// 添加按钮样式（OutlinedButton.icon 用）
-  ButtonStyle _addButtonStyle(AppThemeExtension appTheme) {
-    return OutlinedButton.styleFrom(
-      foregroundColor: appTheme.primary,
-      backgroundColor: appTheme.primary.withValues(alpha: 0.1),
-      side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-    );
-  }
-
-  /// 次要按钮样式（收起）
-  ButtonStyle _secondaryButtonStyle(AppThemeExtension appTheme) {
-    return TextButton.styleFrom(
-      backgroundColor: appTheme.creamDark,
-      foregroundColor: appTheme.earthMedium,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(appTheme.radiusSm),
-      ),
-      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-    );
-  }
-
-  /// 主要按钮样式（确认添加 / 保存修改）
-  ButtonStyle _primaryButtonStyle(
-    AppThemeExtension appTheme, {
-    required Color background,
-    double verticalPadding = 10,
-    double? radius,
-    double fontSize = 14,
-  }) {
-    return FilledButton.styleFrom(
-      backgroundColor: background,
-      foregroundColor: Colors.white,
-      padding: EdgeInsets.symmetric(vertical: verticalPadding),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(radius ?? appTheme.radiusSm),
-      ),
-      textStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 金额徽章
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildTotalChip({
-    required AppThemeExtension appTheme,
-    required double amount,
-    required Color color,
-    required String prefix,
-  }) {
-    return Container(
-      key: ValueKey(amount),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(appTheme.radiusPill),
-      ),
-      child: Text(
-        '$prefix${amount.toStringAsFixed(2)}',
-        style: TextStyle(
-          fontFamily: GoogleFonts.dmSans().fontFamily,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: color,
-          letterSpacing: 0.2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip({
-    required AppThemeExtension appTheme,
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color:
-              isSelected ? color.withValues(alpha: 0.15) : appTheme.creamDark,
-          borderRadius: BorderRadius.circular(appTheme.radiusSm),
-          border: isSelected
-              ? Border.all(color: color.withValues(alpha: 0.3), width: 1)
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon,
-                size: 14, color: isSelected ? color : appTheme.earthMedium),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? color : appTheme.earthMedium,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -884,20 +560,19 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
 
   Future<void> _deleteAddition(LargeAdditionRecord addition) async {
     await _service.deleteLargeAddition(addition.id!);
-    await _loadData();
+    await _loadDataPreserveScroll();
   }
 
   Future<void> _deleteExpense(LargeExpenseRecord expense) async {
     await _service.deleteLargeExpense(expense.id!);
-    await _loadData();
+    await _loadDataPreserveScroll();
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 排序（按分类更新 sort_order）
+  // 排序
   // ═══════════════════════════════════════════════════════════
 
   Future<void> _updateShoppingExpensesOrder() async {
-    // 重新合并所有支出以保持全局 sort_order 一致
     final allExpenses = [
       ..._shoppingExpenses.map((e) => LargeExpenseRecord(
             id: e.id,
@@ -961,7 +636,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     _service.addLargeAddition(widget.periodId, amount, reason).then((_) {
       _additionReasonController.clear();
       _additionAmountController.clear();
-      _loadData();
+      _loadDataPreserveScroll();
     });
   }
 
@@ -975,7 +650,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         .then((_) {
       _shoppingAmountController.clear();
       _shoppingDescController.clear();
-      _loadData();
+      _loadDataPreserveScroll();
     });
   }
 
@@ -987,8 +662,7 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     _service.addLargeExpense(widget.periodId, 'other', amount, desc).then((_) {
       _otherAmountController.clear();
       _otherDescController.clear();
-      _loadData();
+      _loadDataPreserveScroll();
     });
   }
 }
-
