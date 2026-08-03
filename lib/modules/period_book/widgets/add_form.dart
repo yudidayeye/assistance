@@ -166,8 +166,8 @@ class _AddFormState extends State<AddForm> {
                     backgroundColor: appTheme.creamDark,
                     foregroundColor: appTheme.earthMedium,
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     textStyle: const TextStyle(fontSize: 14),
                   ),
