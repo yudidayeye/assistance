@@ -55,23 +55,14 @@ class _ReportCardState extends State<ReportCard> {
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-        boxShadow: appTheme.cardShadow,
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
-      ),
-      child: Column(
-        children: [
-          // 标题行 + 视图切换
-          _buildHeader(appTheme),
-          // 内容区域
-          _buildContent(appTheme),
-          AppSpacing.h16,
-        ],
-      ),
+    return Column(
+      children: [
+        // 标题行 + 视图切换
+        _buildHeader(appTheme),
+        // 内容区域
+        _buildContent(appTheme),
+        AppSpacing.h16,
+      ],
     );
   }
 

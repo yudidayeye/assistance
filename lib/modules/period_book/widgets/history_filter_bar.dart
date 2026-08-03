@@ -32,18 +32,11 @@ class HistoryFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+    return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-        boxShadow: appTheme.cardShadow,
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
-      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
           // 年份筛选
           _buildChipRow(
             appTheme: appTheme,

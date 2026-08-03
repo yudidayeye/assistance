@@ -462,38 +462,48 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                       ),
                     )
                   else ...[
-                    // 筛选栏
+                    // 筛选 + 报表（同一个卡片）
                     SliverToBoxAdapter(
-                      child: HistoryFilterBar(
-                        selectedYear: _selectedYear,
-                        selectedMonth: _selectedMonth,
-                        selectedStage: _selectedStage,
-                        availableYears: _availableYears,
-                        availableMonths: _availableMonths,
-                        availableStages: _availableStages,
-                        onYearChanged: _onYearChanged,
-                        onMonthChanged: _onMonthChanged,
-                        onStageChanged: _onStageChanged,
-                      ),
-                    ),
-                    // 报表卡片
-                    SliverToBoxAdapter(
-                      child: Column(
-                        children: [
-                          if (_monthlyData.isNotEmpty ||
-                              _stageData.isNotEmpty ||
-                              _expenseTypeData.values.any((v) => v > 0))
-                            ReportCard(
-                              monthlyData: _monthlyData,
-                              stageData: _stageData,
-                              expenseTypeData: _expenseTypeData,
-                              stageExpenseTypeData: _selectedStage != null
-                                  ? _stageExpenseTypeData
-                                  : null,
-                              defaultView: _getDefaultView(),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: appTheme.cardBackground,
+                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                          boxShadow: appTheme.cardShadow,
+                          border: Border.all(color: appTheme.cardBorder, width: 0.5),
+                        ),
+                        child: Column(
+                          children: [
+                            HistoryFilterBar(
+                              selectedYear: _selectedYear,
+                              selectedMonth: _selectedMonth,
+                              selectedStage: _selectedStage,
+                              availableYears: _availableYears,
+                              availableMonths: _availableMonths,
+                              availableStages: _availableStages,
+                              onYearChanged: _onYearChanged,
+                              onMonthChanged: _onMonthChanged,
+                              onStageChanged: _onStageChanged,
                             ),
-                          AppSpacing.h8,
-                        ],
+                            // 分割线
+                            Divider(
+                              height: 1,
+                              color: appTheme.earthMedium.withValues(alpha: 0.08),
+                            ),
+                            if (_monthlyData.isNotEmpty ||
+                                _stageData.isNotEmpty ||
+                                _expenseTypeData.values.any((v) => v > 0))
+                              ReportCard(
+                                monthlyData: _monthlyData,
+                                stageData: _stageData,
+                                expenseTypeData: _expenseTypeData,
+                                stageExpenseTypeData: _selectedStage != null
+                                    ? _stageExpenseTypeData
+                                    : null,
+                                defaultView: _getDefaultView(),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                     // 周期列表
