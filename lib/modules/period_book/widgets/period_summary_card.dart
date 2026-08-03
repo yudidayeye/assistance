@@ -9,7 +9,7 @@ import '../services/period_book_service.dart' show PeriodCalculations;
 
 /// 周期汇总卡片 — 余额/本金一行式布局
 ///
-/// 结构：余额/本金合并展示 + 右上角支出占比环形图（个人/其他/结余）
+/// 结构：余额/本金合并展示 + 右上角支出占比环形图（个人/其他/杂项）
 /// + 进度条 + 支出/大额纯文本统计。
 class PeriodSummaryCard extends StatelessWidget {
   final PeriodCalculations calc;
@@ -38,7 +38,7 @@ class PeriodSummaryCard extends StatelessWidget {
         ? ((balance ?? 0) / calc.totalBase).clamp(0.0, 1.0)
         : 0.0;
 
-    // 支出构成：个人 / 其他 / 结余（结余为倒推值，未填余额时未知）
+    // 支出构成：个人 / 其他 / 杂项（杂项为倒推值，未填余额时未知）
     final shopping = calc.shoppingTotal > 0 ? calc.shoppingTotal : 0.0;
     final other = calc.otherTotal > 0 ? calc.otherTotal : 0.0;
     final living = (calc.livingTotal != null && calc.livingTotal! > 0)
@@ -217,7 +217,7 @@ class PeriodSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 支出构成图例行：●个人 72%  ●其他 12%  ●结余 15%
+  /// 支出构成图例行：●个人 72%  ●其他 12%  ●杂项 15%
   Widget _buildExpenseLegend(
     AppThemeExtension appTheme,
     double shopping,
@@ -242,7 +242,7 @@ class PeriodSummaryCard extends StatelessWidget {
         _legendItem(appTheme, '个人', appTheme.sage, shopping / total),
         _legendItem(appTheme, '其他', appTheme.rose, other / total),
         if (living > 0)
-          _legendItem(appTheme, '结余',
+          _legendItem(appTheme, '杂项',
               appTheme.primary.withValues(alpha: 0.6), living / total),
       ],
     );

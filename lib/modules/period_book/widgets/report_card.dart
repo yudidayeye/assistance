@@ -641,7 +641,7 @@ class _ReportCardState extends State<ReportCard> {
   }
 
   String _categoryLabel(String key) {
-    return key == 'balance' ? '结余' : key;
+    return key == 'balance' ? '杂项' : key;
   }
 
   /// 构建支出占比图

@@ -870,14 +870,12 @@ class _StageCardState extends State<StageCard> {
             ),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '漏记杂项',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: appTheme.earth,
-              ),
+          Text(
+            '漏记杂项',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: appTheme.earth,
             ),
           ),
           const Spacer(),

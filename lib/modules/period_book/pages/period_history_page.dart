@@ -652,7 +652,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                     appTheme: appTheme,
                     label: '个人消费',
                     value: personalExpense,
-                    dotColor: appTheme.primary,
                   ),
                   // 分隔符
                   Padding(
@@ -670,7 +669,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                     appTheme: appTheme,
                     label: '其他消费',
                     value: otherExpense,
-                    dotColor: appTheme.earthMedium.withValues(alpha: 0.35),
                   ),
                   const Spacer(),
                   // 删除按钮
@@ -684,26 +682,15 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     );
   }
 
-  /// 支出明细项 — 圆点 + 标签 + 金额
+  /// 支出明细项 — 标签 + 金额
   Widget _buildExpenseItem({
     required AppThemeExtension appTheme,
     required String label,
     required double value,
-    required Color dotColor,
   }) {
     final hasValue = value > 0;
     return Row(
       children: [
-        // 彩色圆点
-        Container(
-          width: 5,
-          height: 5,
-          decoration: BoxDecoration(
-            color: dotColor,
-            shape: BoxShape.circle,
-          ),
-        ),
-        AppSpacing.w6,
         // 标签
         Text(
           label,
