@@ -34,6 +34,10 @@ class _StageEditPageState extends State<StageEditPage> {
   StageCalculations? _stageCalc;
   double _previousBalance = 0;
 
+  // 滚动位置保存
+  final ScrollController _scrollController = ScrollController();
+  double? _savedScrollOffset;
+
   // 内嵌表单状态
   bool _additionFormExpanded = false;
   bool _shoppingFormExpanded = false;
@@ -70,6 +74,7 @@ class _StageEditPageState extends State<StageEditPage> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _additionReasonController.dispose();
     _additionAmountController.dispose();
     _shoppingDescController.dispose();
@@ -121,6 +126,22 @@ class _StageEditPageState extends State<StageEditPage> {
       debugPrint('Load data error: $e');
     }
     if (mounted) setState(() => _loading = false);
+  }
+
+  /// 加载数据并保持滚动位置
+  Future<void> _loadDataPreserveScroll() async {
+    _savedScrollOffset = _scrollController.hasClients
+        ? _scrollController.offset
+        : null;
+    await _loadData();
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_savedScrollOffset != null &&
+            _scrollController.hasClients) {
+          _scrollController.jumpTo(_savedScrollOffset!);
+        }
+      });
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -215,6 +236,7 @@ class _StageEditPageState extends State<StageEditPage> {
     final dateRange = '${start.month}/${start.day} ~ ${end.month}/${end.day}';
 
     return AppScrollScaffold(
+      controller: _scrollController,
       slivers: [
         SliverAppBar(
           pinned: true,
@@ -260,6 +282,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     expandExpenseByDefault: true,
                     personalExpenseBreakdown: _computePersonalBreakdown(),
                     onEdit: () => context.pop(),
+                    onEditBalance: _showEditBalanceSheet,
                   ),
                 AppSpacing.h8,
                 _buildCardTabBar(appTheme),
@@ -429,6 +452,8 @@ class _StageEditPageState extends State<StageEditPage> {
       )).toList(),
       color: appTheme.sage,
       prefix: '+¥',
+      showAddButton: !_additionFormExpanded,
+      form: _additionFormExpanded ? _buildAdditionForm(appTheme) : null,
       onAdd: () => setState(() => _additionFormExpanded = true),
       onEdit: (data) {
         final addition = _additions.firstWhere((a) => '${a.id}' == data.id);
@@ -498,6 +523,119 @@ class _StageEditPageState extends State<StageEditPage> {
       default:
         return _buildShoppingSection(appTheme);
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 弹窗：编辑阶段余额
+  // ═══════════════════════════════════════════════════════════
+
+  Future<void> _showEditBalanceSheet() async {
+    final appTheme = Theme.of(context).appTheme;
+    final currentBalanceText = _stage!.balance?.toStringAsFixed(2);
+    final controller = TextEditingController(text: currentBalanceText ?? '');
+    final maxBalance = _stageCalc?.baseAmount ?? 0;
+
+    await showDialog(
+      context: context,
+      barrierColor: appTheme.surfaceOverlay,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        title: Text(
+          '编辑余额',
+          style: TextStyle(
+            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                hintText: '请输入余额',
+                hintStyle: TextStyle(
+                  fontSize: 13,
+                  color: appTheme.earthMedium.withValues(alpha: 0.5),
+                ),
+                filled: true,
+                fillColor: appTheme.cardBackground,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                  borderSide: BorderSide(
+                    color: appTheme.earthMedium.withValues(alpha: 0.25),
+                    width: 1,
+                  ),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+              style: TextStyle(fontSize: 14, color: appTheme.earth),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '本金: ¥${maxBalance.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 12,
+                color: appTheme.earthMedium.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final val = double.tryParse(controller.text.trim());
+              if (val != null && val > maxBalance) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}'),
+                    backgroundColor: appTheme.rose,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(appTheme.radiusSm),
+                    ),
+                  ),
+                );
+                return;
+              }
+              if (val == null || val < 0) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('请输入有效的余额金额'),
+                    backgroundColor: appTheme.rose,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(appTheme.radiusSm),
+                    ),
+                  ),
+                );
+                return;
+              }
+              await _service.updateStageBalance(widget.stageId, val);
+              await _loadData();
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+            child: Text('确定', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showEditAdditionSheet(
@@ -647,6 +785,8 @@ class _StageEditPageState extends State<StageEditPage> {
         amount: e.amount,
       )).toList(),
       color: appTheme.rose,
+      showAddButton: !_shoppingFormExpanded,
+      form: _shoppingFormExpanded ? _buildShoppingForm(appTheme) : null,
       onAdd: () => setState(() => _shoppingFormExpanded = true),
       onEdit: (data) {
         final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
@@ -694,6 +834,8 @@ class _StageEditPageState extends State<StageEditPage> {
       )).toList(),
       color: appTheme.rose,
       isOther: true,
+      showAddButton: !_otherFormExpanded,
+      form: _otherFormExpanded ? _buildOtherForm(appTheme) : null,
       onAdd: () => setState(() => _otherFormExpanded = true),
       onEdit: (data) {
         final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
@@ -731,7 +873,7 @@ class _StageEditPageState extends State<StageEditPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: appTheme.creamDark.withValues(alpha: 0.5),
+        color: appTheme.creamDark.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
@@ -746,8 +888,13 @@ class _StageEditPageState extends State<StageEditPage> {
               FocusScope.of(context).requestFocus(_shoppingDescFocusNode);
             },
             decoration: InputDecoration(
-              hintText: '金额',
+              labelText: '金额',
+              hintText: '请输入金额',
               hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              labelStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
@@ -763,7 +910,7 @@ class _StageEditPageState extends State<StageEditPage> {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
+            style: TextStyle(fontSize: 14, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
           TextField(
@@ -783,8 +930,13 @@ class _StageEditPageState extends State<StageEditPage> {
               });
             },
             decoration: InputDecoration(
-              hintText: '描述',
+              labelText: '描述',
+              hintText: '请输入描述',
               hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              labelStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
@@ -800,23 +952,24 @@ class _StageEditPageState extends State<StageEditPage> {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
+            style: TextStyle(fontSize: 14, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: TextButton(
+                child: TextButton.icon(
                   onPressed: () =>
                       setState(() => _shoppingFormExpanded = false),
                   style: _secondaryButtonStyle(appTheme),
-                  child: const Text('收起'),
+                  icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 18),
+                  label: const Text('收起'),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 flex: 2,
-                child: FilledButton(
+                child: OutlinedButton.icon(
                   onPressed: () {
                     final amount =
                         double.tryParse(_shoppingAmountController.text);
@@ -827,12 +980,22 @@ class _StageEditPageState extends State<StageEditPage> {
                         .then((_) {
                       _shoppingAmountController.clear();
                       _shoppingDescController.clear();
-                      _loadData();
+                      setState(() => _shoppingFormExpanded = false);
+                      _loadDataPreserveScroll();
                     });
                   },
-                  style: _primaryButtonStyle(appTheme,
-                      background: appTheme.primary),
-                  child: const Text('确认添加'),
+                  icon: const Icon(Icons.check_rounded, size: 16),
+                  label: const Text('确认添加'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: appTheme.primary,
+                    backgroundColor: appTheme.primary.withValues(alpha: 0.1),
+                    side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
             ],
@@ -850,7 +1013,7 @@ class _StageEditPageState extends State<StageEditPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: appTheme.creamDark.withValues(alpha: 0.5),
+        color: appTheme.creamDark.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
@@ -865,8 +1028,13 @@ class _StageEditPageState extends State<StageEditPage> {
               FocusScope.of(context).requestFocus(_otherDescFocusNode);
             },
             decoration: InputDecoration(
-              hintText: '金额',
+              labelText: '金额',
+              hintText: '请输入金额',
               hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              labelStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
@@ -882,7 +1050,7 @@ class _StageEditPageState extends State<StageEditPage> {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
+            style: TextStyle(fontSize: 14, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
           TextField(
@@ -902,8 +1070,13 @@ class _StageEditPageState extends State<StageEditPage> {
               });
             },
             decoration: InputDecoration(
-              hintText: '描述',
+              labelText: '描述',
+              hintText: '请输入描述',
               hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              labelStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
@@ -919,22 +1092,23 @@ class _StageEditPageState extends State<StageEditPage> {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
+            style: TextStyle(fontSize: 14, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: TextButton(
+                child: TextButton.icon(
                   onPressed: () => setState(() => _otherFormExpanded = false),
                   style: _secondaryButtonStyle(appTheme),
-                  child: const Text('收起'),
+                  icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 18),
+                  label: const Text('收起'),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 flex: 2,
-                child: FilledButton(
+                child: OutlinedButton.icon(
                   onPressed: () {
                     final amount = double.tryParse(_otherAmountController.text);
                     final desc = _otherDescController.text.trim();
@@ -944,12 +1118,22 @@ class _StageEditPageState extends State<StageEditPage> {
                         .then((_) {
                       _otherAmountController.clear();
                       _otherDescController.clear();
-                      _loadData();
+                      setState(() => _otherFormExpanded = false);
+                      _loadDataPreserveScroll();
                     });
                   },
-                  style: _primaryButtonStyle(appTheme,
-                      background: appTheme.primary),
-                  child: const Text('确认添加'),
+                  icon: const Icon(Icons.check_rounded, size: 16),
+                  label: const Text('确认添加'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: appTheme.primary,
+                    backgroundColor: appTheme.primary.withValues(alpha: 0.1),
+                    side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
             ],
@@ -1268,9 +1452,9 @@ class _StageEditPageState extends State<StageEditPage> {
       foregroundColor: appTheme.earthMedium,
       padding: const EdgeInsets.symmetric(vertical: 10),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(appTheme.radiusSm),
+        borderRadius: BorderRadius.circular(10),
       ),
-      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      textStyle: const TextStyle(fontSize: 14),
     );
   }
 
@@ -1315,8 +1499,8 @@ class _StageEditPageState extends State<StageEditPage> {
     _service.addAddition(widget.stageId, amount, reason).then((_) {
       _additionReasonController.clear();
       _additionAmountController.clear();
-      _loadData();
-      // 保持展开状态，不清空
+      setState(() => _additionFormExpanded = false);
+      _loadDataPreserveScroll();
     });
   }
 
@@ -1324,7 +1508,7 @@ class _StageEditPageState extends State<StageEditPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: appTheme.creamDark.withValues(alpha: 0.5),
+        color: appTheme.creamDark.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(appTheme.radiusMd),
       ),
       child: Column(
@@ -1340,8 +1524,13 @@ class _StageEditPageState extends State<StageEditPage> {
               FocusScope.of(context).requestFocus(_additionReasonFocusNode);
             },
             decoration: InputDecoration(
-              hintText: '追加金额',
+              labelText: '追加金额',
+              hintText: '请输入追加金额',
               hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              labelStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
@@ -1357,7 +1546,7 @@ class _StageEditPageState extends State<StageEditPage> {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
+            style: TextStyle(fontSize: 14, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
           // 原因输入
@@ -1367,8 +1556,13 @@ class _StageEditPageState extends State<StageEditPage> {
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submitAddition(),
             decoration: InputDecoration(
-              hintText: '追加原因',
+              labelText: '追加原因',
+              hintText: '请输入追加原因',
               hintStyle: TextStyle(
+                fontSize: 13,
+                color: appTheme.earthMedium.withValues(alpha: 0.5),
+              ),
+              labelStyle: TextStyle(
                 fontSize: 13,
                 color: appTheme.earthMedium.withValues(alpha: 0.5),
               ),
@@ -1384,7 +1578,7 @@ class _StageEditPageState extends State<StageEditPage> {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            style: TextStyle(fontSize: 13, color: appTheme.earth),
+            style: TextStyle(fontSize: 14, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
           // 操作按钮行
@@ -1392,22 +1586,32 @@ class _StageEditPageState extends State<StageEditPage> {
             children: [
               // 收起按钮
               Expanded(
-                child: TextButton(
+                child: TextButton.icon(
                   onPressed: () =>
                       setState(() => _additionFormExpanded = false),
                   style: _secondaryButtonStyle(appTheme),
-                  child: const Text('收起'),
+                  icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 18),
+                  label: const Text('收起'),
                 ),
               ),
               const SizedBox(width: 10),
               // 确认添加按钮
               Expanded(
                 flex: 2,
-                child: FilledButton(
+                child: OutlinedButton.icon(
                   onPressed: _submitAddition,
-                  style: _primaryButtonStyle(appTheme,
-                      background: appTheme.sage),
-                  child: const Text('确认添加'),
+                  icon: const Icon(Icons.check_rounded, size: 16),
+                  label: const Text('确认添加'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: appTheme.sage,
+                    backgroundColor: appTheme.sage.withValues(alpha: 0.1),
+                    side: BorderSide(color: appTheme.sage.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
             ],

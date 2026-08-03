@@ -79,10 +79,26 @@ class _StageCardState extends State<StageCard> {
         endDate.difference(today).inDays >= 0;
   }
 
-  double get _totalExpense =>
-      widget.stageCalc.shoppingTotal +
-      widget.stageCalc.otherTotal +
-      (widget.stageCalc.livingTotal ?? 0);
+  double get _totalExpense {
+    final living = widget.stageCalc.livingTotal ?? 0;
+    if (_isBalanceOverridden) {
+      return widget.stageCalc.shoppingTotal + widget.stageCalc.otherTotal;
+    }
+    return widget.stageCalc.shoppingTotal +
+        widget.stageCalc.otherTotal +
+        living;
+  }
+
+  /// 余额是否大于计算值（本金 + 追加 - 个人支出 - 其他支出），说明用户手动修改过余额
+  bool get _isBalanceOverridden {
+    final balance = widget.stageCalc.balance;
+    if (balance == null) return false;
+    final expected = widget.previousBalance +
+        widget.stageCalc.additionsTotal -
+        widget.stageCalc.shoppingTotal -
+        widget.stageCalc.otherTotal;
+    return balance > expected;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -434,19 +450,44 @@ class _StageCardState extends State<StageCard> {
               color: appTheme.primary.withValues(alpha: 0.6),
             )
           : null,
-      value: Text(
-        widget.stageCalc.balance != null
-            ? '¥${widget.stageCalc.balance!.toStringAsFixed(2)}'
-            : '¥0.00',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: _amountStyle(
-          appTheme,
-          color: widget.stageCalc.balance != null
-              ? appTheme.primary
-              : appTheme.earthMedium.withValues(alpha: 0.42),
-          fontSize: 12,
-        ),
+      value: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_isBalanceOverridden)
+            Container(
+              width: 14,
+              height: 14,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE6A817),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text(
+                  '!',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          if (_isBalanceOverridden) const SizedBox(width: 3),
+          Text(
+            widget.stageCalc.balance != null
+                ? '¥${widget.stageCalc.balance!.toStringAsFixed(2)}'
+                : '¥0.00',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _amountStyle(
+              appTheme,
+              color: widget.stageCalc.balance != null
+                  ? appTheme.primary
+                  : appTheme.earthMedium.withValues(alpha: 0.42),
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -809,12 +850,6 @@ class _StageCardState extends State<StageCard> {
   Widget _buildBalanceRow(AppThemeExtension appTheme) {
     final hasSubtitle = widget.stageCalc.livingTotal != null &&
         widget.stageCalc.livingDailyAvg != null;
-    final amountText = hasSubtitle
-        ? '-¥${widget.stageCalc.livingTotal!.abs().toStringAsFixed(2)}'
-        : '-¥0.00';
-    final subtitleText = hasSubtitle
-        ? '¥${widget.stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天 × ${widget.stage.livingDays}天'
-        : null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
@@ -850,13 +885,46 @@ class _StageCardState extends State<StageCard> {
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                amountText,
-                style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 12),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isBalanceOverridden)
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE6A817),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Text(
+                          '!',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (_isBalanceOverridden) const SizedBox(width: 3),
+                  Text(
+                    hasSubtitle
+                        ? (_isBalanceOverridden
+                            ? '+¥${widget.stageCalc.livingTotal!.abs().toStringAsFixed(2)}'
+                            : '-¥${widget.stageCalc.livingTotal!.abs().toStringAsFixed(2)}')
+                        : '-¥0.00',
+                    style: _amountStyle(
+                      appTheme,
+                      color: appTheme.rose,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-              if (subtitleText != null)
+              if (hasSubtitle)
                 Text(
-                  subtitleText,
+                  '¥${widget.stageCalc.livingDailyAvg!.abs().toStringAsFixed(2)}/天 × ${widget.stage.livingDays}天',
                   style: TextStyle(
                     fontSize: 10,
                     color: appTheme.earthMedium.withValues(alpha: 0.45),

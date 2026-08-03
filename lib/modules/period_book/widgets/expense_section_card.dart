@@ -17,6 +17,8 @@ class ExpenseSectionCard extends StatelessWidget {
   final Function(ExpenseItemData expense)? onDelete;
   final Function(int oldIndex, int newIndex)? onReorder;
   final Widget? leading;
+  final Widget? form;
+  final bool showAddButton;
 
   const ExpenseSectionCard({
     super.key,
@@ -30,6 +32,8 @@ class ExpenseSectionCard extends StatelessWidget {
     this.onDelete,
     this.onReorder,
     this.leading,
+    this.form,
+    this.showAddButton = true,
   });
 
   @override
@@ -86,9 +90,14 @@ class ExpenseSectionCard extends StatelessWidget {
             )
           else
             ...expenses.map((e) => _buildExpenseItem(context, appTheme, e)),
+          // 内嵌表单（在列表和添加按钮之间）
+          if (form != null) ...[
+            AppSpacing.h8,
+            form!,
+          ],
           AppSpacing.h12,
           // 添加按钮
-          if (onAdd != null)
+          if (showAddButton && onAdd != null)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(

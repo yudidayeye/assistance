@@ -18,6 +18,8 @@ class AdditionSectionCard extends StatelessWidget {
   final Function(AdditionItemData addition)? onDelete;
   final Function(int oldIndex, int newIndex)? onReorder;
   final Widget? leading;
+  final Widget? form;
+  final bool showAddButton;
 
   const AdditionSectionCard({
     super.key,
@@ -31,6 +33,8 @@ class AdditionSectionCard extends StatelessWidget {
     this.onDelete,
     this.onReorder,
     this.leading,
+    this.form,
+    this.showAddButton = true,
   });
 
   @override
@@ -87,9 +91,14 @@ class AdditionSectionCard extends StatelessWidget {
             )
           else
             ...additions.map((a) => _buildAdditionItem(context, appTheme, a)),
+          // 内嵌表单（在列表和添加按钮之间）
+          if (form != null) ...[
+            AppSpacing.h8,
+            form!,
+          ],
           AppSpacing.h12,
           // 添加按钮
-          if (onAdd != null)
+          if (showAddButton && onAdd != null)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
