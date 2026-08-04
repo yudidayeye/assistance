@@ -16,7 +16,12 @@ fi
 VERSION="$1"
 NOTES="${2:-}"
 TAG="v${VERSION}"
-APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+APK_DIR="build/app/outputs/flutter-apk"
+APK_PATHS=(
+  "$APK_DIR/app-armeabi-v7a-release.apk"
+  "$APK_DIR/app-arm64-v8a-release.apk"
+  "$APK_DIR/app-x86_64-release.apk"
+)
 
 echo "========================================"
 echo "  发布 v${VERSION}"
@@ -50,16 +55,18 @@ git commit -m "chore: 发布 v${VERSION}"
 echo ">>> 构建 Release APK"
 flutter clean
 flutter pub get
-flutter build apk --release
-
-if [ ! -f "$APK_PATH" ]; then
-  echo "错误: APK 构建失败，路径: $APK_PATH"
-  exit 1
-fi
-echo "    APK 大小: $(du -h "$APK_PATH" | cut -f1)"
+flutter build apk --release --split-per-abi
 
 # --- 打 Tag ---
 echo ">>> 打 Tag: ${TAG}"
+for APK_PATH in "${APK_PATHS[@]}"; do
+  if [ ! -f "$APK_PATH" ]; then
+    echo "错误: 分包 APK 构建失败，路径: $APK_PATH"
+    exit 1
+  fi
+  echo "    $(basename "$APK_PATH"): $(du -h "$APK_PATH" | cut -f1)"
+done
+
 git tag "$TAG"
 
 # --- 推送到远程 ---
@@ -75,13 +82,13 @@ if [ -z "$NOTES" ]; then
   gh release create "$TAG" \
     --title "$TAG" \
     --generate-notes \
-    "$APK_PATH"
+    "${APK_PATHS[@]}"
 else
   # 带自定义说明
   gh release create "$TAG" \
     --title "$TAG" \
     --notes "$NOTES" \
-    "$APK_PATH"
+    "${APK_PATHS[@]}"
 fi
 
 echo ""
