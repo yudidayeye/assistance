@@ -267,16 +267,15 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
       }
     });
 
-    if (result.isSuccess) {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted && _txStatus == 'success') {
-          setState(() {
-            _txStatus = 'idle';
-            _txMessage = '';
-          });
-        }
-      });
-    }
+    // 无论成功或失败，延迟一小段时间后立即重置，允许重新发送
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() {
+          _txStatus = 'idle';
+          _txMessage = '';
+        });
+      }
+    });
   }
 
   // ═══════════════════════════════════════════════════════════

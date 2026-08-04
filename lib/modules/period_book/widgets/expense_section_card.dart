@@ -142,6 +142,14 @@ class ExpenseSectionCard extends StatelessWidget {
   Widget _buildExpenseItem(
       BuildContext context, AppThemeExtension appTheme, ExpenseItemData expense,
       {int? index}) {
+    Widget? effectiveLeading = leading;
+    if (effectiveLeading != null && onReorder != null && index != null) {
+      effectiveLeading = ReorderableDragStartListener(
+        index: index,
+        child: effectiveLeading,
+      );
+    }
+
     return ExpenseCategoryHelper.buildExpenseItem(
       context: context,
       appTheme: appTheme,
@@ -151,7 +159,7 @@ class ExpenseSectionCard extends StatelessWidget {
       amount: expense.amount,
       onTap: () => onEdit?.call(expense),
       onDelete: () => onDelete?.call(expense),
-      leading: leading,
+      leading: effectiveLeading,
     );
   }
 }

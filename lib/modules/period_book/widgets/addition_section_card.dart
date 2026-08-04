@@ -143,6 +143,14 @@ class AdditionSectionCard extends StatelessWidget {
   Widget _buildAdditionItem(
       BuildContext context, AppThemeExtension appTheme, AdditionItemData addition,
       {int? index}) {
+    Widget? effectiveLeading = leading;
+    if (effectiveLeading != null && onReorder != null && index != null) {
+      effectiveLeading = ReorderableDragStartListener(
+        index: index,
+        child: effectiveLeading,
+      );
+    }
+
     return GestureDetector(
       key: ValueKey('addition_${addition.id}'),
       onTap: () => onEdit?.call(addition),
@@ -159,8 +167,8 @@ class AdditionSectionCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            if (leading != null) leading!,
-            if (leading != null) AppSpacing.w8,
+            if (effectiveLeading != null) effectiveLeading,
+            if (effectiveLeading != null) AppSpacing.w8,
             Expanded(
               child: Text(
                 addition.reason,
