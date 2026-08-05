@@ -691,7 +691,7 @@ class _ReportCardState extends State<ReportCard> {
         children: [
           // 饼图
           Expanded(
-            flex: 5,
+            flex: 4,
             child: Stack(
               clipBehavior: Clip.none,
               children: [

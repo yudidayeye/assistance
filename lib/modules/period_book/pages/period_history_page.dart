@@ -578,23 +578,25 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                 children: [
                   // 日历图标
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: appTheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
                     child: Icon(
                       Icons.calendar_today_rounded,
-                      size: 16,
+                      size: 14,
                       color: appTheme.primary,
                     ),
                   ),
-                  AppSpacing.w10,
+                  AppSpacing.w8,
                   // 日期范围
                   Expanded(
                     child: Text(
                       _fmtDateRange(period.startDate, period.endDate),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,

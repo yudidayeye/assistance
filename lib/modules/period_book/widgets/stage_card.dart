@@ -324,7 +324,7 @@ class _StageCardState extends State<StageCard> {
             // 超出盒子绘制的部分无法命中点击手势
             if (hasBreakdown)
               Padding(
-                padding: const EdgeInsets.only(right: 13),
+                padding: const EdgeInsets.only(right: 4),
                 child: SizedBox(
                   width: 116,
                   height: 116,
