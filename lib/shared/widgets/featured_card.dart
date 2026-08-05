@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/module_system/tool_module.dart';
 import '../../core/module_system/module_summary.dart';
 import '../../core/theme/theme_extension.dart';
@@ -107,7 +106,6 @@ class _FeaturedCardState extends State<FeaturedCard> {
             Text(
               widget.module.displayName,
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: appTheme.earth,

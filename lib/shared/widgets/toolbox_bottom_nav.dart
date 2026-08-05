@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/theme_extension.dart';
 
 /// 工具箱底部导航栏 — 毛玻璃柔和风格
@@ -100,7 +99,6 @@ class _NavItem extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: color,

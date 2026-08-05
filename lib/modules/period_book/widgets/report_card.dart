@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../core/theme/theme_extension.dart';
@@ -121,7 +120,6 @@ class _ReportCardState extends State<ReportCard> {
       child: Text(
         '-$formatted',
         style: TextStyle(
-          fontFamily: GoogleFonts.dmSans().fontFamily,
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: appTheme.rose,
@@ -148,7 +146,6 @@ class _ReportCardState extends State<ReportCard> {
             Text(
               _getViewLabel(_currentView),
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: appTheme.primary,
@@ -408,7 +405,6 @@ class _ReportCardState extends State<ReportCard> {
                       child: Text(
                         '$month月',
                         style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
                           fontSize: 10,
                           color: appTheme.earthMedium.withValues(alpha: 0.6),
                         ),
@@ -453,7 +449,6 @@ class _ReportCardState extends State<ReportCard> {
                         fontSize: 12,
                         color: appTheme.earth,
                         fontWeight: FontWeight.w500,
-                        fontFamily: GoogleFonts.dmSans().fontFamily,
                       ),
                     );
                   }).toList();
@@ -556,7 +551,6 @@ class _ReportCardState extends State<ReportCard> {
                       child: Text(
                         '第$stage阶段',
                         style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
                           fontSize: 10,
                           color: appTheme.earthMedium.withValues(alpha: 0.6),
                         ),
@@ -601,7 +595,6 @@ class _ReportCardState extends State<ReportCard> {
                         fontSize: 12,
                         color: appTheme.earth,
                         fontWeight: FontWeight.w500,
-                        fontFamily: GoogleFonts.dmSans().fontFamily,
                       ),
                     );
                   }).toList();
@@ -940,7 +933,6 @@ class _ReportCardState extends State<ReportCard> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 color: color,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
@@ -973,7 +965,6 @@ class _ReportCardState extends State<ReportCard> {
         Text(
           '${(pct * 100).toStringAsFixed(0)}%',
           style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 11,
             color: appTheme.earth,
           ),
@@ -982,7 +973,6 @@ class _ReportCardState extends State<ReportCard> {
         Text(
           FormatUtils.formatAmount(value),
           style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: color,

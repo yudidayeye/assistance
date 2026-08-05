@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -427,7 +426,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             Text(
               '¥0.00',
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: isTotal ? 16 : 14,
                 fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
                 color: appTheme.earthMedium.withValues(alpha: 0.4),
@@ -438,7 +436,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             Text(
               '¥${amount.toStringAsFixed(2)}',
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: isTotal ? 16 : 14,
                 fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
                 color: color ?? (isTotal ? appTheme.primary : appTheme.earth),
@@ -553,7 +550,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         title: Text(
           '编辑余额',
           style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: appTheme.earth,
@@ -578,7 +574,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   const TextInputType.numberWithOptions(decimal: true),
               autofocus: true,
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
                 color: appTheme.earth,

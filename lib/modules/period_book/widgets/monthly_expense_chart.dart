@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/utils/format_utils.dart';
@@ -43,7 +42,6 @@ class MonthlyExpenseChart extends StatelessWidget {
                 Text(
                   '月度支出趋势',
                   style: TextStyle(
-                    fontFamily: GoogleFonts.dmSans().fontFamily,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: appTheme.earthMedium,

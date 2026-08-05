@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';

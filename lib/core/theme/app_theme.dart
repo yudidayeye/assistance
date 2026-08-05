@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'theme_extension.dart';
 import 'theme_provider.dart';
 
@@ -122,7 +121,6 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: GoogleFonts.dmSans().fontFamily,
 
       // 色彩
       colorScheme: ColorScheme.light(
@@ -151,7 +149,6 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontFamily: GoogleFonts.dmSans().fontFamily,
           fontSize: 22,
           fontWeight: FontWeight.w700,
           color: _earth,

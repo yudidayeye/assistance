@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/theme_extension.dart';
 
 /// 月份选择器 — 柔和风格
@@ -63,7 +62,6 @@ class _MonthSelectorState extends State<MonthSelector> {
                 Text(
                   monthStr,
                   style: TextStyle(
-                    fontFamily: GoogleFonts.dmSans().fontFamily,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: appTheme.earth,

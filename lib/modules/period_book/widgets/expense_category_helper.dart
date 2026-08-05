@@ -2,7 +2,6 @@ import '../../../../core/theme/theme_extension.dart';
 import '../../../../shared/foundation/app_spacing.dart';
 import '../../../../shared/utils/format_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// 支出分类相关工具方法（阶段编辑页和大额记录页共用）
 class ExpenseCategoryHelper {
@@ -147,7 +146,6 @@ class ExpenseCategoryHelper {
             Text(
               '-${FormatUtils.formatAmount(amount)}',
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: appTheme.rose,

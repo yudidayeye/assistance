@@ -1,7 +1,6 @@
 import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/theme_extension.dart';
 
 /// 支出占比饼图 — 购物 / 其他 / 生活
@@ -49,7 +48,6 @@ class ExpensePieChart extends StatelessWidget {
                 Text(
                   '支出占比',
                   style: TextStyle(
-                    fontFamily: GoogleFonts.dmSans().fontFamily,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: appTheme.earthMedium,
@@ -202,7 +200,6 @@ class ExpensePieChart extends StatelessWidget {
             Text(
               '${(pct * 100).toStringAsFixed(0)}%',
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: appTheme.earth,

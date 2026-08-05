@@ -2,7 +2,6 @@ import '../../shared/foundation/app_spacing.dart';
 import '../../shared/foundation/app_typography.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/theme_extension.dart';
 import 'sync_service.dart';
 import '../../shared/widgets/app_scaffold.dart';
@@ -170,7 +169,6 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         title: Text(
           '确认接收数据？',
           style: TextStyle(
-              fontFamily: GoogleFonts.playfairDisplay().fontFamily,
               fontSize: 19,
               fontWeight: FontWeight.w700,
               color: appTheme.earth),
@@ -616,7 +614,6 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
             child: Text(
               address,
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: appTheme.earth,
@@ -916,7 +913,6 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
                     const SizedBox(height: 3),
                     Text(device.address,
                         style: TextStyle(
-                            fontFamily: GoogleFonts.dmSans().fontFamily,
                             fontSize: 11,
                             color:
                                 appTheme.earthMedium.withValues(alpha: 0.45))),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../../../core/theme/theme_extension.dart';
 
@@ -97,7 +96,6 @@ class HistoryFilterBar extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: appTheme.earthMedium,
@@ -164,7 +162,6 @@ class HistoryFilterBar extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isSelected ? appTheme.primary : appTheme.earthMedium,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../core/storage/database_service.dart';
 import '../core/theme/theme_extension.dart';
 import '../shared/widgets/app_scaffold.dart';
@@ -122,7 +121,6 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
             Text(
               _userName,
               style: TextStyle(
-                fontFamily: GoogleFonts.playfairDisplay().fontFamily,
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
                 color: appTheme.earth,
@@ -178,7 +176,6 @@ class _ProfilePageContentState extends State<ProfilePageContent> {
         title: Text(
           '编辑用户名',
           style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
             fontSize: 19,
             fontWeight: FontWeight.w700,
             color: appTheme.earth,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
@@ -239,7 +238,6 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
             Text(
               date != null ? _fmt(date) : '请选择',
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
                 color: date != null
@@ -320,7 +318,6 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
               Text(
                 value.isEmpty ? '0' : '¥$value',
                 style: TextStyle(
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: value.isEmpty && !isOptional
@@ -415,7 +412,6 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
         title: Text(
           '初始本金',
           style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: appTheme.earth,
@@ -426,7 +422,6 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           autofocus: true,
           style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 24,
             fontWeight: FontWeight.w600,
             color: appTheme.earth,

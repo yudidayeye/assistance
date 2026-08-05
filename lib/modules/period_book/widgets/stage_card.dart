@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/foundation/app_spacing.dart';
@@ -534,7 +533,6 @@ class _StageCardState extends State<StageCard> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 color: color,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
@@ -751,7 +749,6 @@ class _StageCardState extends State<StageCard> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: appTheme.earth,
@@ -798,7 +795,6 @@ class _StageCardState extends State<StageCard> {
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: appTheme.earth,
-            fontFamily: GoogleFonts.dmSans().fontFamily,
           ),
         ),
       );
@@ -812,7 +808,6 @@ class _StageCardState extends State<StageCard> {
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: Colors.white,
-            fontFamily: GoogleFonts.dmSans().fontFamily,
           ),
         ),
       );
@@ -1073,7 +1068,6 @@ class _StageCardState extends State<StageCard> {
     return TextStyle(
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
-      fontFamily: GoogleFonts.dmSans().fontFamily,
       color: color,
       fontFeatures: const [FontFeature.tabularFigures()],
     );

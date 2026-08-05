@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../models/period_record.dart';
 import '../services/period_service.dart';
 import '../services/prediction_service.dart';

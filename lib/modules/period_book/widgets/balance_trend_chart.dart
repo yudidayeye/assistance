@@ -1,7 +1,6 @@
 import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/theme_extension.dart';
 
 /// 余额趋势折线图 — 跨周期余额变化
@@ -42,7 +41,6 @@ class BalanceTrendChart extends StatelessWidget {
                 Text(
                   '余额趋势',
                   style: TextStyle(
-                    fontFamily: GoogleFonts.dmSans().fontFamily,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: appTheme.earthMedium,

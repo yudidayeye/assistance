@@ -1,7 +1,6 @@
 import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../shared/utils/format_utils.dart';
 import '../models/period_record.dart';
@@ -109,7 +108,6 @@ class PeriodSummaryCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontFamily: GoogleFonts.dmSans().fontFamily,
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: muted
@@ -129,7 +127,6 @@ class PeriodSummaryCard extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: appTheme.earthMedium.withValues(alpha: 0.9),
-              fontFamily: GoogleFonts.dmSans().fontFamily,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -140,7 +137,6 @@ class PeriodSummaryCard extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: appTheme.earthMedium.withValues(alpha: 0.9),
-              fontFamily: GoogleFonts.dmSans().fontFamily,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -276,7 +272,6 @@ class PeriodSummaryCard extends StatelessWidget {
         Text(
           '${(pct * 100).toStringAsFixed(0)}%',
           style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: appTheme.earth,
@@ -367,7 +362,6 @@ class PeriodSummaryCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: largeItemsNet != null
@@ -416,7 +410,6 @@ class PeriodSummaryCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: spent > 0

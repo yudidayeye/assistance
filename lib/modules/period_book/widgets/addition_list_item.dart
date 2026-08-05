@@ -1,6 +1,5 @@
 import '../../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../shared/utils/format_utils.dart';
 import '../models/addition_record.dart';
@@ -79,7 +78,6 @@ class AdditionListItem extends StatelessWidget {
           Text(
             '+${FormatUtils.formatAmount(addition.amount)}',
             style: TextStyle(
-              fontFamily: GoogleFonts.dmSans().fontFamily,
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: appTheme.sage,

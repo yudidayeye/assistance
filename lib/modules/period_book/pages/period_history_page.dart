@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
@@ -597,7 +596,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                     child: Text(
                       _fmtDateRange(period.startDate, period.endDate),
                       style: TextStyle(
-                        fontFamily: GoogleFonts.dmSans().fontFamily,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: appTheme.earthLight,
@@ -614,7 +612,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                             ? '-${FormatUtils.formatAmount(totalExpense)}'
                             : FormatUtils.formatAmount(0),
                         style: TextStyle(
-                          fontFamily: GoogleFonts.dmSans().fontFamily,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: hasExpense
@@ -707,7 +704,6 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
               ? '-${FormatUtils.formatAmount(value)}'
               : '¥0',
           style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 11,
             fontWeight: FontWeight.w500,
             color: hasValue

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../module_system/module_registry.dart';
 import '../module_system/tool_module.dart';
@@ -968,7 +967,6 @@ class _PaydayPickerState extends State<_PaydayPicker> {
         Text(
           '$_value',
           style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 32,
             fontWeight: FontWeight.w700,
             color: appTheme.earth,

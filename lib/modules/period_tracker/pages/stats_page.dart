@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../models/period_record.dart';
 import '../services/period_service.dart';
 import '../services/prediction_service.dart';
@@ -205,7 +204,6 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
         Text(
           value,
           style: TextStyle(
-            fontFamily: GoogleFonts.dmSans().fontFamily,
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: appTheme.earth,
@@ -221,7 +219,6 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
       child: Text(
         title,
         style: TextStyle(
-          fontFamily: GoogleFonts.playfairDisplay().fontFamily,
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: appTheme.earth,
@@ -371,7 +368,6 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
         title: Text(
           '确认删除？',
           style: TextStyle(
-            fontFamily: GoogleFonts.playfairDisplay().fontFamily,
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: appTheme.earth,

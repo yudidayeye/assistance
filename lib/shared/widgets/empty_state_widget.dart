@@ -1,6 +1,5 @@
 import '../../shared/foundation/app_spacing.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/theme_extension.dart';
 
 /// 通用空状态组件 — 柔和引导风格
@@ -52,7 +51,6 @@ class EmptyStateWidget extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                fontFamily: GoogleFonts.dmSans().fontFamily,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: appTheme.earth,
