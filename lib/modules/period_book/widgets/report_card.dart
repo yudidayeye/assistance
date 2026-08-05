@@ -94,10 +94,39 @@ class _ReportCardState extends State<ReportCard> {
             '报表',
             style: AppTypography.bodySm.copyWith(color: appTheme.earth),
           ),
+          // 消费总金额
+          _buildTotalAmount(appTheme),
           const Spacer(),
           // 视图切换选择器
           _buildViewSelector(appTheme),
         ],
+      ),
+    );
+  }
+
+  /// 构建消费总金额（排除 balance 结余项，与饼图 tooltip 一致）
+  Widget _buildTotalAmount(AppThemeExtension appTheme) {
+    final data = widget.stageExpenseTypeData ?? widget.expenseTypeData;
+    final total = data.entries
+        .where((e) => e.key != 'balance')
+        .fold(0.0, (sum, e) => sum + e.value);
+    final formatted = FormatUtils.formatAmount(total);
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: ShapeDecoration(
+        color: appTheme.roseLight.withValues(alpha: 0.5),
+        shape: const StadiumBorder(),
+      ),
+      child: Text(
+        '-$formatted',
+        style: TextStyle(
+          fontFamily: GoogleFonts.dmSans().fontFamily,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: appTheme.rose,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
       ),
     );
   }
