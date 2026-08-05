@@ -30,6 +30,12 @@ class SettingsService {
 
   final Map<String, bool> _moduleEnabledCache = {};
 
+  /// 模块展示顺序缓存（moduleId 列表，空表示使用默认注册顺序）
+  List<String> _moduleOrderCache = [];
+
+  /// 获取已保存的模块展示顺序
+  List<String> get moduleOrder => List.unmodifiable(_moduleOrderCache);
+
   /// 从数据库加载设置到缓存
   Future<void> loadSettings() async {
     final rows =
@@ -43,6 +49,8 @@ class SettingsService {
     for (final module in ModuleRegistry.instance.allModules) {
       _moduleEnabledCache.putIfAbsent(module.moduleId, () => true);
     }
+    // 加载模块展示顺序
+    await _loadModuleOrder();
     // 加载隐私声明
     await loadPrivacyDisclaimer();
   }
@@ -51,6 +59,25 @@ class SettingsService {
   Future<void> setModuleEnabled(String moduleId, bool enabled) async {
     _moduleEnabledCache[moduleId] = enabled;
     await _db.upsertSetting('module_enabled_$moduleId', enabled ? '1' : '0');
+  }
+
+  /// 从数据库加载模块展示顺序
+  Future<void> _loadModuleOrder() async {
+    final rows = await _db.query('app_settings',
+        where: "key = 'module_order'");
+    if (rows.isEmpty) {
+      _moduleOrderCache = [];
+      return;
+    }
+    final value = (rows.first['value'] as String?) ?? '';
+    _moduleOrderCache =
+        value.split(',').where((id) => id.isNotEmpty).toList();
+  }
+
+  /// 保存模块展示顺序（同步更新缓存，再持久化）
+  Future<void> setModuleOrder(List<String> moduleIds) async {
+    _moduleOrderCache = List.of(moduleIds);
+    await _db.upsertSetting('module_order', moduleIds.join(','));
   }
 
   /// 获取免责声明确认状态
@@ -84,6 +111,12 @@ class SettingsController extends ChangeNotifier {
 
   Future<void> setModuleEnabled(String moduleId, bool enabled) async {
     await _service.setModuleEnabled(moduleId, enabled);
+    notifyListeners();
+  }
+
+  /// 保存模块展示顺序并通知 UI（首页卡片顺序随之更新）
+  Future<void> setModuleOrder(List<String> moduleIds) async {
+    await _service.setModuleOrder(moduleIds);
     notifyListeners();
   }
 

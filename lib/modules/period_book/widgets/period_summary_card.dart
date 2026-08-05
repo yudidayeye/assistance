@@ -48,16 +48,16 @@ class PeriodSummaryCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       decoration: BoxDecoration(
-        color: appTheme.primaryLight.withValues(alpha: 0.22),
+        color: appTheme.primaryLight.withValues(alpha: 0.48),
         borderRadius: BorderRadius.circular(appTheme.radiusXl),
         boxShadow: appTheme.cardShadow,
         border: Border.all(
-          color: appTheme.primaryLight.withValues(alpha: 0.18),
-          width: 0.5,
+          color: appTheme.primaryLight.withValues(alpha: 0.68),
+          width: 1,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+        padding: const EdgeInsets.fromLTRB(18, 6, 18, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -80,7 +80,7 @@ class PeriodSummaryCard extends StatelessWidget {
                     appTheme, shopping, other, living, expenseTotal),
               ],
             ),
-            AppSpacing.h14,
+            AppSpacing.h6,
             _buildProgressRow(appTheme, balanceRatio, spent),
           ],
         ),
@@ -287,7 +287,7 @@ class PeriodSummaryCard extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: SizedBox(
-        height: 8,
+        height: 6,
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: balanceRatio),
           duration: const Duration(milliseconds: 400),
@@ -297,7 +297,7 @@ class PeriodSummaryCard extends StatelessWidget {
               children: [
                 Positioned.fill(
                   child: ColoredBox(
-                    color: appTheme.roseLight.withValues(alpha: 0.3),
+                    color: appTheme.roseLight.withValues(alpha: 0.6),
                   ),
                 ),
                 Positioned(

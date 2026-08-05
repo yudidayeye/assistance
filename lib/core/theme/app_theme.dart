@@ -44,8 +44,8 @@ class AppTheme {
   static const Color _morningMistPrimary = Color(0xFF8AADB8);
   static const Color _morningMistPrimaryLight = Color(0xFFD6E5EA);
   static const Color _morningMistPrimaryDark = Color(0xFF6A8E9A);
-  static const Color _morningMistCream = Color(0xFFF4F6F7);
-  static const Color _morningMistCreamDark = Color(0xFFE8EDEF);
+  static const Color _morningMistCream = Color(0xFFF8F8FA);
+  static const Color _morningMistCreamDark = Color(0xFFF0F0F2);
 
   // ══════════════════════════════════════════════════════
   // 主题 3: 叶语 (Leaf Whisper)
@@ -53,8 +53,8 @@ class AppTheme {
   static const Color _leafWhisperPrimary = Color(0xFF9CAD8A);
   static const Color _leafWhisperPrimaryLight = Color(0xFFDDE5D6);
   static const Color _leafWhisperPrimaryDark = Color(0xFF7A8D6A);
-  static const Color _leafWhisperCream = Color(0xFFF5F4F0);
-  static const Color _leafWhisperCreamDark = Color(0xFFEBE9E4);
+  static const Color _leafWhisperCream = Color(0xFFF8F8FA);
+  static const Color _leafWhisperCreamDark = Color(0xFFF0F0F2);
 
   // ══════════════════════════════════════════════════════
   // 主题 4: 花雾 (Flower Mist)
@@ -62,8 +62,8 @@ class AppTheme {
   static const Color _flowerMistPrimary = Color(0xFFC9A0AA);
   static const Color _flowerMistPrimaryLight = Color(0xFFEDD8DE);
   static const Color _flowerMistPrimaryDark = Color(0xFFA8808A);
-  static const Color _flowerMistCream = Color(0xFFF7F4F5);
-  static const Color _flowerMistCreamDark = Color(0xFFEFEAEB);
+  static const Color _flowerMistCream = Color(0xFFF8F8FA);
+  static const Color _flowerMistCreamDark = Color(0xFFF0F0F2);
 
   /// 根据主题类型获取 ThemeData
   static ThemeData getTheme(AppThemeType type) {

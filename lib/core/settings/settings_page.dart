@@ -96,7 +96,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
-    final modules = ModuleRegistry.instance.allModules;
+    final modules = ModuleRegistry.instance.orderedModules;
 
     return AppScrollScaffold(
       slivers: [
@@ -119,19 +119,28 @@ class _SettingsPageState extends State<SettingsPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── 模块管理 ──
+              // ── 模块管理（拖动排序，顺序同步到首页卡片） ──
               const SectionLabel(title: '模块管理'),
               SectionCard(
-                child: Column(
-                  children: modules.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final module = entry.value;
+                child: ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  buildDefaultDragHandles: false,
+                  onReorderItem: _onModuleReorder,
+                  proxyDecorator: (child, index, animation) =>
+                      _buildModuleDragProxy(appTheme, child),
+                  itemCount: modules.length,
+                  itemBuilder: (context, index) {
+                    final module = modules[index];
                     final isLast = index == modules.length - 1;
-                    return Column(children: [
-                      _buildModuleItem(appTheme, module),
-                      if (!isLast) _buildSeparator(appTheme),
-                    ]);
-                  }).toList(),
+                    return Column(
+                      key: ValueKey(module.moduleId),
+                      children: [
+                        _buildModuleItem(appTheme, module, index),
+                        if (!isLast) _buildSeparator(appTheme),
+                      ],
+                    );
+                  },
                 ),
               ),
 
@@ -232,40 +241,54 @@ class _SettingsPageState extends State<SettingsPage> {
 
 
   // ═══════════════════════════════════════════════════════════════
-  // 模块管理 — 扁平行
+  // 模块管理 — 扁平行（支持拖动排序）
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildModuleItem(AppThemeExtension appTheme, ToolModule module) {
+  Widget _buildModuleItem(
+      AppThemeExtension appTheme, ToolModule module, int index) {
     final enabled = _settings.isModuleEnabled(module.moduleId);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: module.themeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(appTheme.radiusMd),
-            ),
-            child: Center(
-              child: module.icon.build(size: 18, color: module.themeColor),
-            ),
-          ),
-          AppSpacing.w12,
+          // 内容区：长按即可拖动（不干扰开关的点按）
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(module.displayName,
-                    style: AppTypography.bodySm.copyWith(color: appTheme.earth)),
-                const SizedBox(height: 2),
-                Text(enabled ? '已启用' : '已禁用',
-                    style: AppTypography.caption.copyWith(
-                        color: enabled
-                            ? appTheme.sage.withValues(alpha: 0.8)
-                            : appTheme.earthMedium.withValues(alpha: 0.5))),
-              ],
+            child: ReorderableDelayedDragStartListener(
+              index: index,
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: module.themeColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                    ),
+                    child: Center(
+                      child:
+                          module.icon.build(size: 18, color: module.themeColor),
+                    ),
+                  ),
+                  AppSpacing.w12,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(module.displayName,
+                            style: AppTypography.bodySm
+                                .copyWith(color: appTheme.earth)),
+                        const SizedBox(height: 2),
+                        Text(enabled ? '已启用' : '已禁用',
+                            style: AppTypography.caption.copyWith(
+                                color: enabled
+                                    ? appTheme.sage.withValues(alpha: 0.8)
+                                    : appTheme.earthMedium
+                                        .withValues(alpha: 0.5))),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           Transform.scale(
@@ -288,7 +311,63 @@ class _SettingsPageState extends State<SettingsPage> {
               }),
             ),
           ),
+          // 拖拽手柄：按下即拖，无需长按
+          ReorderableDragStartListener(
+            index: index,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: Icon(Icons.drag_indicator_rounded,
+                  size: 18,
+                  color: appTheme.earthMedium.withValues(alpha: 0.35)),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  /// 拖拽排序回调 — 更新模块展示顺序并持久化
+  ///
+  /// onReorderItem 传入的 newIndex 已由框架修正（无需再减一）。
+  /// 缓存同步更新后立即重建，保证落下动画与新顺序一致；
+  /// 数据库写入在后台完成，首页卡片顺序通过 SettingsController 通知刷新。
+  void _onModuleReorder(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    final ids = ModuleRegistry.instance.orderedModules
+        .map((m) => m.moduleId)
+        .toList();
+    final movedId = ids.removeAt(oldIndex);
+    ids.insert(newIndex, movedId);
+    setState(() {
+      _controller.setModuleOrder(ids);
+    });
+  }
+
+  /// 拖拽中的浮动代理样式 — 卡片底色 + 极轻阴影，保持安静的视觉语言
+  ///
+  /// 代理子树挂载在 Overlay 中（脱离原页面的 Material 祖先），
+  /// 因此必须包一层透明 Material，否则行内的 Switch 会因找不到
+  /// Material 祖先而报错。
+  Widget _buildModuleDragProxy(AppThemeExtension appTheme, Widget child) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: appTheme.cardBackground,
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          border: Border.all(
+            color: appTheme.earthMedium.withValues(alpha: 0.15),
+            width: 0.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: appTheme.earthMedium.withValues(alpha: 0.18),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: child,
       ),
     );
   }

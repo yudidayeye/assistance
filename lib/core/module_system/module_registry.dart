@@ -36,12 +36,30 @@ class ModuleRegistry {
     _initialized = true;
   }
 
-  /// 获取所有已注册模块
+  /// 获取所有已注册模块（注册顺序）
   List<ToolModule> get allModules => _modules.values.toList();
 
-  /// 获取已启用模块
+  /// 获取按用户自定义顺序排列的所有模块
+  ///
+  /// 已保存顺序中不存在的新注册模块按注册顺序追加到末尾，
+  /// 已保存但不再注册的模块 ID 会被自动忽略。
+  List<ToolModule> get orderedModules {
+    final savedOrder = SettingsService.instance.moduleOrder;
+    final remaining = Map<String, ToolModule>.of(_modules);
+    final result = <ToolModule>[];
+    for (final moduleId in savedOrder) {
+      final module = remaining.remove(moduleId);
+      if (module != null) {
+        result.add(module);
+      }
+    }
+    result.addAll(remaining.values);
+    return result;
+  }
+
+  /// 获取已启用模块（遵循用户自定义顺序）
   List<ToolModule> getEnabledModules() {
-    return _modules.values
+    return orderedModules
         .where((m) => SettingsService.instance.isModuleEnabled(m.moduleId))
         .toList();
   }
