@@ -42,6 +42,7 @@ class StageCard extends StatefulWidget {
 class _StageCardState extends State<StageCard> {
   late bool _expenseExpanded;
   late bool _baseExpanded;
+  int? _touchedIndex;
 
   @override
   void initState() {
@@ -366,30 +367,43 @@ class _StageCardState extends State<StageCard> {
     if (total <= 0) return const SizedBox.shrink();
 
     final colorMap = {
-      '生活': appTheme.sage.withValues(alpha: 0.55),
-      '购物': const Color(0xFF8B7EC8).withValues(alpha: 0.55),
-      '工作': const Color(0xFF3E6FA0).withValues(alpha: 0.55),
-      '娱乐': const Color(0xFFC49A6C).withValues(alpha: 0.55),
-      '大餐': appTheme.rose.withValues(alpha: 0.55),
+      '生活': appTheme.sage.withValues(alpha: 0.72),
+      '购物': const Color(0xFF8B7EC8).withValues(alpha: 0.72),
+      '工作': const Color(0xFF3E6FA0).withValues(alpha: 0.72),
+      '娱乐': const Color(0xFFE88D67).withValues(alpha: 0.72),
+      '大餐': appTheme.rose.withValues(alpha: 0.72),
+      '杂项': const Color(0xFFD4A76A).withValues(alpha: 0.72),
+      '其他': const Color(0xFF4DB6AC).withValues(alpha: 0.72),
     };
 
-    final sections = breakdown.entries.map((entry) {
+    final sortedEntries = breakdown.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final pctMap = {for (final e in sortedEntries) e.key: total > 0 ? e.value / total : 0.0};
+
+    final sections = sortedEntries.asMap().entries.map((indexed) {
+      final idx = indexed.key;
+      final entry = indexed.value;
       final icon = _categoryIcon(entry.key);
+      final pct = pctMap[entry.key]!;
+      final showBadge = icon != null && pct >= 0.05;
       return PieChartSectionData(
         value: entry.value,
         color: colorMap[entry.key] ?? appTheme.earthMedium,
         showTitle: false,
-        badgeWidget: icon != null
-            ? Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: 10,
-                  color: colorMap[entry.key]?.withValues(alpha: 0.9) ?? appTheme.earthMedium,
+        badgeWidget: showBadge
+            ? IgnorePointer(
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 10,
+                    color: colorMap[entry.key] ?? appTheme.earthMedium,
+                  ),
                 ),
               )
             : null,
@@ -397,25 +411,129 @@ class _StageCardState extends State<StageCard> {
       );
     }).toList();
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final size = constraints.biggest.shortestSide.clamp(0.0, 70.0);
-        final ratio = size / 70;
-        return Center(
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: PieChart(
-              PieChartData(
-                sections: sections,
-                centerSpaceRadius: 20 * ratio,
-                sectionsSpace: 1.5 * ratio,
-                startDegreeOffset: -90,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final size = constraints.biggest.shortestSide.clamp(0.0, 70.0);
+            final ratio = size / 70;
+            return Center(
+              child: SizedBox(
+                width: size,
+                height: size,
+                child: PieChart(
+                  PieChartData(
+                    sections: sections,
+                    centerSpaceRadius: 18 * ratio,
+                    sectionsSpace: 1.5 * ratio,
+                    startDegreeOffset: -90,
+                    pieTouchData: PieTouchData(
+                      touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                        // 只响应点击事件，忽略悬浮
+                        if (event is! FlTapDownEvent) return;
+                        if (pieTouchResponse == null ||
+                            pieTouchResponse.touchedSection == null) {
+                          if (_touchedIndex != null) {
+                            setState(() => _touchedIndex = null);
+                          }
+                          return;
+                        }
+                        final newIndex =
+                            pieTouchResponse.touchedSection!.touchedSectionIndex;
+                        if (newIndex < 0 || newIndex >= sortedEntries.length) {
+                          if (_touchedIndex != null) {
+                            setState(() => _touchedIndex = null);
+                          }
+                        } else if (newIndex == _touchedIndex) {
+                          // 再次点击同一扇区则取消选中
+                          setState(() => _touchedIndex = null);
+                        } else {
+                          setState(() => _touchedIndex = newIndex);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        if (_touchedIndex != null &&
+            _touchedIndex! >= 0 &&
+            _touchedIndex! < sortedEntries.length)
+          Positioned(
+            bottom: -22,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: _buildPieTooltip(
+                appTheme,
+                sortedEntries[_touchedIndex!].key,
+                sortedEntries[_touchedIndex!].value,
+                pctMap[sortedEntries[_touchedIndex!].key]!,
+                colorMap[sortedEntries[_touchedIndex!].key] ?? appTheme.earthMedium,
               ),
             ),
           ),
-        );
-      },
+      ],
+    );
+  }
+
+  Widget _buildPieTooltip(
+    AppThemeExtension appTheme,
+    String label,
+    double amount,
+    double pct,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusSm),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '$label ${(pct * 100).toStringAsFixed(0)}%',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: appTheme.earth,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '¥${amount.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                color: color,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -431,6 +549,10 @@ class _StageCardState extends State<StageCard> {
         return Icons.sports_esports_outlined;
       case '大餐':
         return Icons.restaurant_outlined;
+      case '杂项':
+        return Icons.wb_sunny_outlined;
+      case '其他':
+        return Icons.more_horiz;
       default:
         return Icons.category_outlined;
     }

@@ -501,12 +501,20 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   Map<String, double> _computePersonalBreakdown(int stageId) {
     final stageExpenses = _allExpenses
-        .where((e) => e.stageId == stageId && e.category != 'other')
+        .where((e) => e.stageId == stageId)
         .toList();
     final map = <String, double>{};
     for (final e in stageExpenses) {
       final display = _categoryDisplayName(e.category);
       map[display] = (map[display] ?? 0) + e.amount;
+    }
+    // 加入杂项（漏记杂项 livingTotal）
+    final stageIndex = _stages.indexWhere((s) => s.id == stageId);
+    if (stageIndex >= 0 && _calc != null) {
+      final living = _calc!.stages[stageIndex].livingTotal ?? 0;
+      if (living > 0) {
+        map['杂项'] = (map['杂项'] ?? 0) + living;
+      }
     }
     return map;
   }
@@ -514,6 +522,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   String _categoryDisplayName(String? dbValue) {
     const map = {
       'shopping': '购物',
+      'other': '其他',
       '生活': '生活',
       '购物': '购物',
       '工作': '工作',

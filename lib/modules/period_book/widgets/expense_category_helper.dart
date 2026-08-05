@@ -52,6 +52,8 @@ class ExpenseCategoryHelper {
         return Icons.sports_esports_outlined;
       case '大餐':
         return Icons.restaurant_outlined;
+      case '杂项':
+        return Icons.wb_sunny_outlined;
       default:
         return Icons.category_outlined;
     }
@@ -60,17 +62,19 @@ class ExpenseCategoryHelper {
   static Color categoryColor(AppThemeExtension appTheme, String displayName) {
     switch (displayName) {
       case '生活':
-        return appTheme.sage;
+        return appTheme.sage.withValues(alpha: 0.72);
       case '购物':
-        return const Color(0xFF8B7EC8);
+        return const Color(0xFF8B7EC8).withValues(alpha: 0.72);
       case '工作':
-        return const Color(0xFF3E6FA0);
+        return const Color(0xFF3E6FA0).withValues(alpha: 0.72);
       case '娱乐':
-        return const Color(0xFFC49A6C);
+        return const Color(0xFFE88D67).withValues(alpha: 0.72);
       case '大餐':
-        return appTheme.rose;
+        return appTheme.rose.withValues(alpha: 0.72);
+      case '杂项':
+        return const Color(0xFFD4A76A).withValues(alpha: 0.72);
       default:
-        return appTheme.earthMedium.withValues(alpha: 0.5);
+        return appTheme.earthMedium.withValues(alpha: 0.72);
     }
   }
 

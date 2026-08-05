@@ -1054,13 +1054,19 @@ class _StageEditPageState extends State<StageEditPage> {
     return _categoryValueMap[displayName] ?? displayName;
   }
 
-  /// 计算个人支出分类明细（排除 other）
+  /// 计算个人支出分类明细
   Map<String, double> _computePersonalBreakdown() {
     final map = <String, double>{};
     for (final e in _expenses) {
-      if (e.category == 'other') continue;
       final display = _mapCategoryForDisplay(e.category);
       map[display] = (map[display] ?? 0) + e.amount;
+    }
+    // 加入杂项（漏记杂项 livingTotal）
+    if (_stageCalc != null) {
+      final living = _stageCalc!.livingTotal ?? 0;
+      if (living > 0) {
+        map['杂项'] = (map['杂项'] ?? 0) + living;
+      }
     }
     return map;
   }

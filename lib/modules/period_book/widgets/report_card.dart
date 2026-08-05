@@ -36,6 +36,7 @@ class ReportCard extends StatefulWidget {
 
 class _ReportCardState extends State<ReportCard> {
   ReportViewType _currentView = ReportViewType.expensePie;
+  int? _touchedIndex;
 
   @override
   void initState() {
@@ -622,21 +623,21 @@ class _ReportCardState extends State<ReportCard> {
   Color _categoryColor(String key, AppThemeExtension appTheme) {
     switch (key) {
       case '购物':
-        return appTheme.sage;
+        return const Color(0xFF8B7EC8).withValues(alpha: 0.72);
       case '生活':
-        return appTheme.primary.withValues(alpha: 0.6);
+        return appTheme.sage.withValues(alpha: 0.72);
       case '工作':
-        return const Color(0xFF3E6FA0);
+        return const Color(0xFF3E6FA0).withValues(alpha: 0.72);
       case '娱乐':
-        return const Color(0xFFC49A6C);
+        return const Color(0xFFE88D67).withValues(alpha: 0.72);
       case '大餐':
-        return appTheme.rose;
+        return appTheme.rose.withValues(alpha: 0.72);
       case '杂项':
-        return const Color(0xFF7A8B99);
+        return const Color(0xFFD4A76A).withValues(alpha: 0.72);
       case '其他':
-        return appTheme.rose;
+        return const Color(0xFF4DB6AC).withValues(alpha: 0.72);
       default:
-        return appTheme.earthMedium;
+        return appTheme.earthMedium.withValues(alpha: 0.72);
     }
   }
 
@@ -670,24 +671,70 @@ class _ReportCardState extends State<ReportCard> {
           // 饼图
           Expanded(
             flex: 5,
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: PieChart(
-                PieChartData(
-                  sections: entries.map((e) {
-                    final pct = total > 0 ? e.value / total : 0.0;
-                    return _buildPieSection(
-                      value: e.value,
-                      color: _categoryColor(e.key, appTheme),
-                      title: _categoryLabel(e.key),
-                      pct: pct,
-                    );
-                  }).toList(),
-                  centerSpaceRadius: 28,
-                  sectionsSpace: 2,
-                  startDegreeOffset: -90,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: PieChart(
+                    PieChartData(
+                      sections: entries.asMap().entries.map((indexed) {
+                        final pct = total > 0 ? indexed.value.value / total : 0.0;
+                        return _buildPieSection(
+                          value: indexed.value.value,
+                          color: _categoryColor(indexed.value.key, appTheme),
+                          title: _categoryLabel(indexed.value.key),
+                          pct: pct,
+                          isTouched: indexed.key == _touchedIndex,
+                        );
+                      }).toList(),
+                      centerSpaceRadius: 28,
+                      sectionsSpace: 2,
+                      startDegreeOffset: -90,
+                      pieTouchData: PieTouchData(
+                        touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                          // 只响应点击事件，忽略悬浮
+                          if (event is! FlTapDownEvent) return;
+                          if (pieTouchResponse == null ||
+                              pieTouchResponse.touchedSection == null) {
+                            if (_touchedIndex != null) {
+                              setState(() => _touchedIndex = null);
+                            }
+                            return;
+                          }
+                          final newIndex =
+                              pieTouchResponse.touchedSection!.touchedSectionIndex;
+                          if (newIndex < 0 || newIndex >= entries.length) {
+                            if (_touchedIndex != null) {
+                              setState(() => _touchedIndex = null);
+                            }
+                          } else if (newIndex == _touchedIndex) {
+                            // 再次点击同一扇区则取消选中
+                            setState(() => _touchedIndex = null);
+                          } else {
+                            setState(() => _touchedIndex = newIndex);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                if (_touchedIndex != null && _touchedIndex! < entries.length)
+                  Positioned(
+                    bottom: -22,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: _buildPieTooltip(
+                        appTheme,
+                        _categoryLabel(entries[_touchedIndex!].key),
+                        entries[_touchedIndex!].value,
+                        total > 0 ? entries[_touchedIndex!].value / total : 0,
+                        _categoryColor(entries[_touchedIndex!].key, appTheme),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           AppSpacing.w16,
@@ -793,13 +840,15 @@ class _ReportCardState extends State<ReportCard> {
     required Color color,
     required String title,
     required double pct,
+    bool isTouched = false,
   }) {
     final icon = ExpenseCategoryHelper.categoryIcon(title);
-    final showBadge = icon != null && pct >= 0.1;
+    final showBadge = icon != null && pct >= 0.05;
     return PieChartSectionData(
       value: value > 0 ? value : 0.001,
       color: color,
       title: '',
+
       badgeWidget: showBadge
           ? Container(
               padding: const EdgeInsets.all(2),
@@ -815,6 +864,63 @@ class _ReportCardState extends State<ReportCard> {
             )
           : null,
       badgePositionPercentageOffset: 0.65,
+    );
+  }
+
+  Widget _buildPieTooltip(
+    AppThemeExtension appTheme,
+    String label,
+    double amount,
+    double pct,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusSm),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '$label ${(pct * 100).toStringAsFixed(0)}%',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: appTheme.earth,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '¥${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2)}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                fontFamily: GoogleFonts.dmSans().fontFamily,
+                color: color,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

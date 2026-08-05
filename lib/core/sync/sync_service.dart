@@ -164,10 +164,35 @@ class SyncService {
   /// 获取本机局域网 IP
   Future<String?> getLocalIp() async {
     try {
-      for (final iface in await NetworkInterface.list(
+      final interfaces = await NetworkInterface.list(
         type: InternetAddressType.IPv4,
         includeLinkLocal: false,
-      )) {
+      );
+
+      // 1. 优先选择物理网卡（Wi-Fi/以太网）
+      for (final iface in interfaces) {
+        if (_isPhysicalInterface(iface.name)) {
+          for (final addr in iface.addresses) {
+            if (!addr.isLoopback) {
+              return addr.address;
+            }
+          }
+        }
+      }
+
+      // 2. 排除虚拟网卡（VPN/虚拟机）后的第一个
+      for (final iface in interfaces) {
+        if (!_isVirtualInterface(iface.name)) {
+           for (final addr in iface.addresses) {
+            if (!addr.isLoopback) {
+              return addr.address;
+            }
+          }
+        }
+      }
+
+      // 3. 兜底
+      for (final iface in interfaces) {
         for (final addr in iface.addresses) {
           if (!addr.isLoopback) {
             return addr.address;
@@ -178,6 +203,20 @@ class SyncService {
       debugPrint('Get local IP error: $e');
     }
     return null;
+  }
+
+  bool _isPhysicalInterface(String name) {
+    name = name.toLowerCase();
+    // 常见物理网卡名称
+    final keywords = ['ethernet', 'wi-fi', 'wlan', 'eth', 'en0', 'en1', 'en2', 'en3'];
+    return keywords.any((k) => name.contains(k));
+  }
+
+  bool _isVirtualInterface(String name) {
+    name = name.toLowerCase();
+    // 常见虚拟网卡/VPN名称
+    final keywords = ['tun', 'tap', 'utun', 'ppp', 'vbox', 'vmware', 'docker', 'br-', 'virbr', 'loopback', 'lo'];
+    return keywords.any((k) => name.contains(k));
   }
 
   /// 发送备份数据到目标设备
