@@ -26,6 +26,10 @@ dependencies:
   url_launcher: ^6.2.0
   package_info_plus: ^8.0.0
   http: ^1.2.0
+  dio: ^5.11.0
+  open_filex: ^4.7.0
+  permission_handler: ^13.0.0
+  device_info_plus: ^12.4.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
