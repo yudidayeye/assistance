@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +12,7 @@ import '../storage/database_service.dart';
 import '../theme/theme_extension.dart';
 import '../theme/theme_provider.dart';
 import 'import_export_service.dart';
+import 'update_dialog.dart';
 import 'update_service.dart';
 import '../../modules/period_book/services/period_book_settings.dart';
 import '../../modules/period_book/services/period_book_service.dart';
@@ -555,11 +558,33 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  /// 显示更新详情弹窗
-  void _showUpdateDialog(AppThemeExtension appTheme) {
+  /// 显示更新弹窗
+  ///
+  /// Android 且能匹配到本机架构的 APK 时，走应用内下载 + 安装的 [UpdateDialog]；
+  /// 否则（iOS / 无匹配产物）降级为原有外链跳转 Release 页面的弹窗。
+  Future<void> _showUpdateDialog(AppThemeExtension appTheme) async {
     final info = _updateInfo;
     if (info == null || !info.hasUpdate) return;
 
+    // 尝试匹配本机架构对应的 APK
+    ReleaseAsset? asset;
+    if (Platform.isAndroid) {
+      final abis = await _updateService.getSupportedAbis();
+      asset = UpdateService.selectAsset(info.assets, abis);
+    }
+
+    if (!mounted) return;
+    if (asset != null) {
+      // 应用内更新：展示更新内容 + 下载进度 + 自动安装
+      await UpdateDialog.show(context, info: info, asset: asset);
+    } else {
+      // 降级：跳转 GitHub Release 页面手动下载
+      _showFallbackUpdateDialog(appTheme, info);
+    }
+  }
+
+  /// 降级更新弹窗：跳转外部浏览器打开 Release 页面（iOS 或无匹配 APK）
+  void _showFallbackUpdateDialog(AppThemeExtension appTheme, UpdateInfo info) {
     showDialog(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
