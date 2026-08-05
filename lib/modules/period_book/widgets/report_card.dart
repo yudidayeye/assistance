@@ -662,7 +662,6 @@ class _ReportCardState extends State<ReportCard> {
     }
 
     final total = entries.fold(0.0, (sum, e) => sum + e.value);
-    final monthCount = widget.monthlyData.isNotEmpty ? widget.monthlyData.length : 1;
 
     return Padding(
       padding: AppSpacing.pageH,
@@ -747,14 +746,13 @@ class _ReportCardState extends State<ReportCard> {
               children: entries.asMap().entries.map((indexed) {
                 final e = indexed.value;
                 final pct = total > 0 ? e.value / total : 0.0;
-                final avg = e.value / monthCount;
                 return Padding(
                   padding: EdgeInsets.only(top: indexed.key > 0 ? 14 : 0),
                   child: _buildLegend(
                     appTheme: appTheme,
                     label: _categoryLabel(e.key),
                     color: _categoryColor(e.key, appTheme),
-                    value: avg,
+                    value: e.value,
                     pct: pct,
                   ),
                 );
