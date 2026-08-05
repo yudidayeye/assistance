@@ -381,43 +381,49 @@ class _StageCardState extends State<StageCard> {
 
     final pctMap = {for (final e in sortedEntries) e.key: total > 0 ? e.value / total : 0.0};
 
-    final sections = sortedEntries.asMap().entries.map((indexed) {
-      final idx = indexed.key;
-      final entry = indexed.value;
-      final icon = _categoryIcon(entry.key);
-      final pct = pctMap[entry.key]!;
-      final showBadge = icon != null && pct >= 0.05;
-      return PieChartSectionData(
-        value: entry.value,
-        color: colorMap[entry.key] ?? appTheme.earthMedium,
-        showTitle: false,
-        badgeWidget: showBadge
-            ? IgnorePointer(
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 10,
-                    color: colorMap[entry.key] ?? appTheme.earthMedium,
-                  ),
-                ),
-              )
-            : null,
-        badgePositionPercentageOffset: 0.65,
-      );
-    }).toList();
-
     return Stack(
       clipBehavior: Clip.none,
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
-            final size = constraints.biggest.shortestSide.clamp(0.0, 70.0);
-            final ratio = size / 70;
+            final size = constraints.biggest.shortestSide.clamp(0.0, 85.0);
+            final ratio = size / 85;
+            final centerRadius = 18 * ratio;
+            // 扇区半径铺满「中心空洞 → 图表边缘」的剩余空间，让扇区与分类图标
+            // 都落在图表自身边界内；超出组件边界的绘制区域无法命中点击手势
+            final sectionRadius = size / 2 - centerRadius;
+
+            final sections = sortedEntries.asMap().entries.map((indexed) {
+              final entry = indexed.value;
+              final icon = _categoryIcon(entry.key);
+              final pct = pctMap[entry.key]!;
+              final showBadge = icon != null && pct >= 0.05;
+              return PieChartSectionData(
+                value: entry.value,
+                color: colorMap[entry.key] ?? appTheme.earthMedium,
+                radius: sectionRadius,
+                showTitle: false,
+                badgeWidget: showBadge
+                    ? IgnorePointer(
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            icon,
+                            size: 10,
+                            color:
+                                colorMap[entry.key] ?? appTheme.earthMedium,
+                          ),
+                        ),
+                      )
+                    : null,
+                badgePositionPercentageOffset: 0.65,
+              );
+            }).toList();
+
             return Center(
               child: SizedBox(
                 width: size,
@@ -425,7 +431,7 @@ class _StageCardState extends State<StageCard> {
                 child: PieChart(
                   PieChartData(
                     sections: sections,
-                    centerSpaceRadius: 18 * ratio,
+                    centerSpaceRadius: centerRadius,
                     sectionsSpace: 1.5 * ratio,
                     startDegreeOffset: -90,
                     pieTouchData: PieTouchData(
