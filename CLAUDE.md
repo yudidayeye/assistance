@@ -90,14 +90,6 @@ flutter build ios
 
 通过 `Theme.of(context).appTheme` 获取 `AppThemeExtension`（含色彩、卡片、圆角、间距 token），通过 `Theme.of(context).moduleTheme` 获取模块主题色。
 
-**UI 设计原则（详见 `docs/UI.md`）：**
-
-- 安静科技感 + 温和健康陪伴
-- 低对比、高柔和度、轻渐变过渡
-- 大圆角（16-28px）、极轻阴影、无硬边框
-- 信息密度低、单焦点中心结构
-- 卡片风格为"状态容器"而非"按钮化"
-
 ### 服务单例模式
 
 所有核心服务使用 `static final instance = ClassName._();` 单例模式：
