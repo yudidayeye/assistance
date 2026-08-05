@@ -321,13 +321,14 @@ class _StageCardState extends State<StageCard> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 左侧饼图 — 固定宽度
+            // 左侧饼图 — 盒子需完整容纳饼图（含图标徽章），
+            // 超出盒子绘制的部分无法命中点击手势
             if (hasBreakdown)
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 6, 32, 6),
+                padding: const EdgeInsets.only(right: 13),
                 child: SizedBox(
-                  width: 85,
-                  height: 85,
+                  width: 116,
+                  height: 116,
                   child: _buildMiniPieChart(appTheme, breakdown!),
                 ),
               ),
@@ -386,11 +387,11 @@ class _StageCardState extends State<StageCard> {
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
-            final size = constraints.biggest.shortestSide.clamp(0.0, 85.0);
-            final ratio = size / 85;
+            // 116 = 饼图原始尺寸（中心空洞 18 + 扇区半径 40 的直径），
+            // 图表盒子与绘制范围一致，扇区与分类图标均可命中点击手势
+            final size = constraints.biggest.shortestSide.clamp(0.0, 116.0);
+            final ratio = size / 116;
             final centerRadius = 18 * ratio;
-            // 扇区半径铺满「中心空洞 → 图表边缘」的剩余空间，让扇区与分类图标
-            // 都落在图表自身边界内；超出组件边界的绘制区域无法命中点击手势
             final sectionRadius = size / 2 - centerRadius;
 
             final sections = sortedEntries.asMap().entries.map((indexed) {
@@ -469,7 +470,8 @@ class _StageCardState extends State<StageCard> {
             _touchedIndex! >= 0 &&
             _touchedIndex! < sortedEntries.length)
           Positioned(
-            bottom: -22,
+            // 贴在饼图底部内侧，避免 tooltip 溢出卡片区域
+            bottom: -10,
             left: 0,
             right: 0,
             child: Center(

@@ -721,7 +721,7 @@ class _ReportCardState extends State<ReportCard> {
                 ),
                 if (_touchedIndex != null && _touchedIndex! < entries.length)
                   Positioned(
-                    bottom: -22,
+                    bottom: -8,
                     left: 0,
                     right: 0,
                     child: Center(
