@@ -8,6 +8,7 @@ import 'core/routing/app_router.dart';
 import 'core/settings/settings_service.dart';
 import 'modules/period_tracker/period_module.dart';
 import 'modules/period_book/period_book_module.dart';
+import 'modules/vault/vault_module.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ void main() async {
   await ModuleRegistry.instance.registerAll([
     PeriodTrackerModule(),
     PeriodBookModule(),
+    VaultModule(),
   ]);
 
   debugPrint('[Boot] 4/6 初始化设置...');

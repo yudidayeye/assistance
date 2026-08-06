@@ -18,7 +18,7 @@ class ImportExportService {
   final DatabaseService _db = DatabaseService.instance;
 
   /// 当前导出格式版本号。格式变更时递增以支持迁移。
-  static const int _schemaVersion = 3; // v3 新增大额记录支持
+  static const int _schemaVersion = 4; // v4 新增密码保险箱模块支持
 
   // ═══════════════════════════════════════════════════════════════
   // 导出
@@ -55,7 +55,15 @@ class ImportExportService {
     final bookLargeExpenses = await _db.query('mod_period_book_large_expenses',
         orderBy: 'period_id ASC, sort_order ASC, created_at ASC');
 
-    // 4. 构建导出 payload
+    // 4. 读取密码保险箱数据（分类 + 条目）
+    final vaultCategories = await _db.query(
+        'mod_vault_categories',
+        orderBy: 'sort_order ASC, created_at ASC');
+    final vaultEntries = await _db.query('mod_vault_entries',
+        orderBy: 'category_id ASC, created_at ASC');
+    final vaultMaster = await _db.query('mod_vault_master', limit: 1);
+
+    // 5. 构建导出 payload
     final payload = {
       'version': _schemaVersion,
       'exportedAt': DateTime.now().toIso8601String(),
@@ -70,10 +78,13 @@ class ImportExportService {
         'period_book_expenses': bookExpenses,
         'period_book_large_additions': bookLargeAdditions,
         'period_book_large_expenses': bookLargeExpenses,
+        'vault_master': vaultMaster.isNotEmpty ? vaultMaster.first : null,
+        'vault_categories': vaultCategories,
+        'vault_entries': vaultEntries,
       },
     };
 
-    // 5. 编码为 JSON bytes
+    // 6. 编码为 JSON bytes
     final jsonString = const JsonEncoder.withIndent('  ').convert(payload);
     return Uint8List.fromList(utf8.encode(jsonString));
   }
@@ -150,6 +161,11 @@ class ImportExportService {
       final bookLargeExpenses =
           (data['period_book_large_expenses'] as List<dynamic>?) ?? [];
 
+      final vaultCategories =
+          (data['vault_categories'] as List<dynamic>?) ?? [];
+      final vaultEntries =
+          (data['vault_entries'] as List<dynamic>?) ?? [];
+
       return ImportPreviewResult.ready(
         filePath: filePath,
         settingsCount: settings.length,
@@ -160,6 +176,8 @@ class ImportExportService {
         bookExpensesCount: bookExpenses.length,
         bookLargeAdditionsCount: bookLargeAdditions.length,
         bookLargeExpensesCount: bookLargeExpenses.length,
+        vaultCategoriesCount: vaultCategories.length,
+        vaultEntriesCount: vaultEntries.length,
       );
     } catch (e) {
       if (e is FormatException) {
@@ -190,6 +208,8 @@ class ImportExportService {
       int bookExpensesCount = 0;
       int bookLargeAdditionsCount = 0;
       int bookLargeExpensesCount = 0;
+      int vaultCategoriesCount = 0;
+      int vaultEntriesCount = 0;
 
       await _db.transaction((txn) async {
         // Phase 1: 合并 app_settings
@@ -237,6 +257,11 @@ class ImportExportService {
         bookExpensesCount = bookResult['expenses']!;
         bookLargeAdditionsCount = bookResult['largeAdditions']!;
         bookLargeExpensesCount = bookResult['largeExpenses']!;
+
+        // Phase 5: 合并密码保险箱数据
+        final vaultResult = await _importVaultData(txn, data);
+        vaultCategoriesCount = vaultResult['categories']!;
+        vaultEntriesCount = vaultResult['entries']!;
       });
 
       // 导入后刷新运行时缓存
@@ -256,6 +281,8 @@ class ImportExportService {
         bookExpensesCount: bookExpensesCount,
         bookLargeAdditionsCount: bookLargeAdditionsCount,
         bookLargeExpensesCount: bookLargeExpensesCount,
+        vaultCategoriesCount: vaultCategoriesCount,
+        vaultEntriesCount: vaultEntriesCount,
       );
     } catch (e, stack) {
       debugPrint('Import error: $e\n$stack');
@@ -439,6 +466,118 @@ class ImportExportService {
     };
   }
 
+  /// 导入密码保险箱数据
+  Future<Map<String, int>> _importVaultData(
+      dynamic txn, Map<String, dynamic> data) async {
+    int categoriesCount = 0;
+    int entriesCount = 0;
+
+    // 确保保险箱表存在（兼容旧数据库）
+    await txn.execute('''
+      CREATE TABLE IF NOT EXISTS mod_vault_master (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        salt TEXT NOT NULL,
+        verify_cipher TEXT NOT NULL,
+        verify_iv TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await txn.execute('''
+      CREATE TABLE IF NOT EXISTS mod_vault_categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        icon TEXT NOT NULL DEFAULT 'folder',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+    await txn.execute('''
+      CREATE TABLE IF NOT EXISTS mod_vault_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        encrypted_password TEXT NOT NULL,
+        password_iv TEXT NOT NULL,
+        note TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (category_id) REFERENCES mod_vault_categories(id) ON DELETE CASCADE
+      )
+    ''');
+    await txn.execute(
+      'CREATE INDEX IF NOT EXISTS idx_vault_entries_category ON mod_vault_entries(category_id)',
+    );
+
+    // 导入主密码数据（仅当备份中有且本地没有时写入，避免覆盖已有密码）
+    final vaultMaster = data['vault_master'] as Map<String, dynamic>?;
+    if (vaultMaster != null) {
+      final existing = await txn.query('mod_vault_master', limit: 1);
+      if (existing.isEmpty) {
+        await txn.rawInsert(
+          '''INSERT OR REPLACE INTO mod_vault_master
+             (id, salt, verify_cipher, verify_iv, created_at)
+             VALUES (?, ?, ?, ?, ?)''',
+          [
+            vaultMaster['id'] ?? 1,
+            vaultMaster['salt'],
+            vaultMaster['verify_cipher'],
+            vaultMaster['verify_iv'],
+            vaultMaster['created_at'],
+          ],
+        );
+      }
+    }
+
+    // 导入分类
+    final categories =
+        (data['vault_categories'] as List<dynamic>?) ?? [];
+    for (final cat in categories) {
+      final map = Map<String, dynamic>.from(cat as Map);
+      await txn.rawInsert(
+        '''INSERT OR REPLACE INTO mod_vault_categories
+           (id, name, icon, sort_order, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)''',
+        [
+          map['id'],
+          map['name'],
+          map['icon'] ?? 'folder',
+          map['sort_order'] ?? 0,
+          map['created_at'],
+          map['updated_at'],
+        ],
+      );
+      categoriesCount++;
+    }
+
+    // 导入条目
+    final entries = (data['vault_entries'] as List<dynamic>?) ?? [];
+    for (final entry in entries) {
+      final map = Map<String, dynamic>.from(entry as Map);
+      await txn.rawInsert(
+        '''INSERT OR REPLACE INTO mod_vault_entries
+           (id, category_id, title, encrypted_password, password_iv, note, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+        [
+          map['id'],
+          map['category_id'],
+          map['title'],
+          map['encrypted_password'],
+          map['password_iv'],
+          map['note'],
+          map['created_at'],
+          map['updated_at'],
+        ],
+      );
+      entriesCount++;
+    }
+
+    return {
+      'categories': categoriesCount,
+      'entries': entriesCount,
+    };
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // 周期长度重算（事务内执行）
   // ═══════════════════════════════════════════════════════════════
@@ -516,6 +655,17 @@ class ImportExportService {
         data['period_book_large_expenses'] is! List) {
       return '大额支出数据格式不正确';
     }
+    if (data['vault_master'] != null && data['vault_master'] is! Map) {
+      return '密码保险箱主密码数据格式不正确';
+    }
+    if (data['vault_categories'] != null &&
+        data['vault_categories'] is! List) {
+      return '密码保险箱分类数据格式不正确';
+    }
+    if (data['vault_entries'] != null &&
+        data['vault_entries'] is! List) {
+      return '密码保险箱条目数据格式不正确';
+    }
 
     return null;
   }
@@ -573,6 +723,8 @@ class ImportPreviewResult {
   final int bookExpensesCount;
   final int bookLargeAdditionsCount;
   final int bookLargeExpensesCount;
+  final int vaultCategoriesCount;
+  final int vaultEntriesCount;
 
   const ImportPreviewResult._({
     this.isReady = false,
@@ -587,6 +739,8 @@ class ImportPreviewResult {
     this.bookExpensesCount = 0,
     this.bookLargeAdditionsCount = 0,
     this.bookLargeExpensesCount = 0,
+    this.vaultCategoriesCount = 0,
+    this.vaultEntriesCount = 0,
   });
 
   factory ImportPreviewResult.ready({
@@ -599,6 +753,8 @@ class ImportPreviewResult {
     int bookExpensesCount = 0,
     int bookLargeAdditionsCount = 0,
     int bookLargeExpensesCount = 0,
+    int vaultCategoriesCount = 0,
+    int vaultEntriesCount = 0,
   }) =>
       ImportPreviewResult._(
         isReady: true,
@@ -611,6 +767,8 @@ class ImportPreviewResult {
         bookExpensesCount: bookExpensesCount,
         bookLargeAdditionsCount: bookLargeAdditionsCount,
         bookLargeExpensesCount: bookLargeExpensesCount,
+        vaultCategoriesCount: vaultCategoriesCount,
+        vaultEntriesCount: vaultEntriesCount,
       );
 
   factory ImportPreviewResult.userCancelled() =>
@@ -631,6 +789,8 @@ class ImportResult {
   final int bookExpensesCount;
   final int bookLargeAdditionsCount;
   final int bookLargeExpensesCount;
+  final int vaultCategoriesCount;
+  final int vaultEntriesCount;
 
   const ImportResult._({
     this.isSuccess = false,
@@ -643,6 +803,8 @@ class ImportResult {
     this.bookExpensesCount = 0,
     this.bookLargeAdditionsCount = 0,
     this.bookLargeExpensesCount = 0,
+    this.vaultCategoriesCount = 0,
+    this.vaultEntriesCount = 0,
   });
 
   factory ImportResult.success({
@@ -654,6 +816,8 @@ class ImportResult {
     int bookExpensesCount = 0,
     int bookLargeAdditionsCount = 0,
     int bookLargeExpensesCount = 0,
+    int vaultCategoriesCount = 0,
+    int vaultEntriesCount = 0,
   }) =>
       ImportResult._(
         isSuccess: true,
@@ -665,6 +829,8 @@ class ImportResult {
         bookExpensesCount: bookExpensesCount,
         bookLargeAdditionsCount: bookLargeAdditionsCount,
         bookLargeExpensesCount: bookLargeExpensesCount,
+        vaultCategoriesCount: vaultCategoriesCount,
+        vaultEntriesCount: vaultEntriesCount,
       );
 
   factory ImportResult.error(String message) =>

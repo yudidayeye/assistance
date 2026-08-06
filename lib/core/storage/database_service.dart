@@ -9,7 +9,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 12;
+  static const int _currentVersion = 13;
 
   /// 注入数据库实例（仅测试用，绕过依赖 path_provider 的默认初始化）
   @visibleForTesting
@@ -186,6 +186,47 @@ class DatabaseService {
     await db.execute('DROP TABLE IF EXISTS mod_accounting_categories');
   }
 
+  static Future<void> _createV13Schema(Database db) async {
+    // 密码保险箱 - 主密码验证表（仅一行）
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS mod_vault_master (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        salt TEXT NOT NULL,
+        verify_cipher TEXT NOT NULL,
+        verify_iv TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    // 密码保险箱 - 分类表
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS mod_vault_categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        icon TEXT NOT NULL DEFAULT 'folder',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+    // 密码保险箱 - 密码条目表
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS mod_vault_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        encrypted_password TEXT NOT NULL,
+        password_iv TEXT NOT NULL,
+        note TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (category_id) REFERENCES mod_vault_categories(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_vault_entries_category ON mod_vault_entries(category_id)',
+    );
+  }
+
   // --- Lifecycle ---
 
   Future<void> _onCreate(Database db, int version) async {
@@ -199,6 +240,8 @@ class DatabaseService {
       await _createV4Schema(db);
       // v5 删除旧 accounting 模块表
       await _createV5Schema(db);
+      // v13 密码保险箱模块表
+      await _createV13Schema(db);
       await batch.commit(noResult: true);
     });
   }
@@ -234,6 +277,11 @@ class DatabaseService {
       await _migrateToV11(db);
     }
 
+    // 如果从 v12 升级到 v13，添加密码保险箱模块表
+    if (oldVersion < 13 && newVersion >= 13) {
+      await _createV13Schema(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
@@ -243,6 +291,7 @@ class DatabaseService {
       if (v == 10) continue; // 已经在上面处理了
       if (v == 11) continue; // 已经在上面处理了
       if (v == 12) continue; // 已经在上面处理了
+      if (v == 13) continue; // 已经在上面处理了
 
       await db.transaction((txn) async {
         if (v == 2) {
