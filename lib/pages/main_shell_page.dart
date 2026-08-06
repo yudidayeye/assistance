@@ -88,7 +88,7 @@ class _MainShellPageState extends State<MainShellPage> {
           ],
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,

@@ -108,7 +108,7 @@ class _FeaturedCardState extends State<FeaturedCard> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: appTheme.earth,
+                color: color,
                 letterSpacing: -0.2,
               ),
               textAlign: TextAlign.center,
