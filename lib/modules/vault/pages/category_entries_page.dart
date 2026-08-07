@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
@@ -707,13 +706,12 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
 /// 成功时返回派生密钥的 hex 字符串，失败返回 null
 String? _unlockIsolate(Map<String, String> params) {
   final crypto = VaultCryptoService.instance;
-  final valid = crypto.verifyMasterPassword(
+  final key = crypto.verifyAndDeriveKey(
     params['password']!,
     params['saltHex']!,
     params['verifyCipherHex']!,
     params['verifyIvHex']!,
   );
-  if (!valid) return null;
-  final key = crypto.deriveKey(params['password']!, params['saltHex']!);
+  if (key == null) return null;
   return key.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 }

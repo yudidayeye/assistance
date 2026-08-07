@@ -38,16 +38,15 @@ class VaultSession {
     required String verifyCipherHex,
     required String verifyIvHex,
   }) {
-    final valid = VaultCryptoService.instance.verifyMasterPassword(
+    final key = VaultCryptoService.instance.verifyAndDeriveKey(
       masterPassword,
       saltHex,
       verifyCipherHex,
       verifyIvHex,
     );
-    if (!valid) return false;
+    if (key == null) return false;
 
-    _derivedKey =
-        VaultCryptoService.instance.deriveKey(masterPassword, saltHex);
+    _derivedKey = key;
     return true;
   }
 

@@ -141,4 +141,24 @@ class VaultCryptoService {
       return false;
     }
   }
+
+  /// 验证主密码并返回派生密钥（只派生一次）
+  ///
+  /// 验证成功返回派生密钥，失败返回 null。
+  /// 相比「verifyMasterPassword + deriveKey」可避免重复派生，解锁更快。
+  Uint8List? verifyAndDeriveKey(
+    String masterPassword,
+    String saltHex,
+    String verifyCipherHex,
+    String verifyIvHex,
+  ) {
+    try {
+      final key = deriveKey(masterPassword, saltHex);
+      final result = decryptAesGcm(verifyCipherHex, verifyIvHex, key);
+      if (result != _verifyPlaintext) return null;
+      return key;
+    } catch (_) {
+      return null;
+    }
+  }
 }

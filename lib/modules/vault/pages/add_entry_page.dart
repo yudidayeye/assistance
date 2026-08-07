@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:typed_data';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -528,13 +527,12 @@ class _AddEntryPageState extends State<AddEntryPage> {
 /// Isolate 入口：在后台线程执行 Argon2id 验证 + 密钥派生
 String? _unlockIsolate(Map<String, String> params) {
   final crypto = VaultCryptoService.instance;
-  final valid = crypto.verifyMasterPassword(
+  final key = crypto.verifyAndDeriveKey(
     params['password']!,
     params['saltHex']!,
     params['verifyCipherHex']!,
     params['verifyIvHex']!,
   );
-  if (!valid) return null;
-  final key = crypto.deriveKey(params['password']!, params['saltHex']!);
+  if (key == null) return null;
   return key.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 }
