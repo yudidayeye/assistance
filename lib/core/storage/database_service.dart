@@ -9,7 +9,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 16;
+  static const int _currentVersion = 15;
 
   /// 注入数据库实例（仅测试用，绕过依赖 path_provider 的默认初始化）
   @visibleForTesting
@@ -219,7 +219,6 @@ class DatabaseService {
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
         note TEXT,
-        sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (category_id) REFERENCES mod_vault_categories(id) ON DELETE CASCADE
@@ -295,11 +294,6 @@ class DatabaseService {
       await _migrateToV15(db);
     }
 
-    // 如果从 v15 升级到 v16，为密码条目添加排序字段
-    if (oldVersion < 16 && newVersion >= 16) {
-      await _migrateToV16(db);
-    }
-
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
@@ -312,7 +306,6 @@ class DatabaseService {
       if (v == 13) continue; // 已经在上面处理了
       if (v == 14) continue; // 已经在上面处理了
       if (v == 15) continue; // 已经在上面处理了
-      if (v == 16) continue; // 已经在上面处理了
 
       await db.transaction((txn) async {
         if (v == 2) {
@@ -339,13 +332,6 @@ class DatabaseService {
   Future<void> _migrateToV15(Database db) async {
     await db.execute(
       'ALTER TABLE mod_vault_categories ADD COLUMN is_encrypted INTEGER NOT NULL DEFAULT 1',
-    );
-  }
-
-  /// v16 迁移：为密码条目表添加排序字段（默认 0，兼容旧数据）
-  Future<void> _migrateToV16(Database db) async {
-    await db.execute(
-      'ALTER TABLE mod_vault_entries ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
     );
   }
 
