@@ -96,6 +96,11 @@ class VaultService extends ChangeNotifier {
   /// 删除分类（级联删除条目）
   Future<void> deleteCategory(int categoryId) async {
     await _db.delete(
+      'mod_vault_entries',
+      where: 'category_id = ?',
+      whereArgs: [categoryId],
+    );
+    await _db.delete(
       'mod_vault_categories',
       where: 'id = ?',
       whereArgs: [categoryId],
@@ -220,8 +225,10 @@ class VaultService extends ChangeNotifier {
 
   /// 获取所有条目数量（用于摘要）
   Future<int> getTotalEntryCount() async {
-    final result =
-        await _db.rawQuery('SELECT COUNT(*) as cnt FROM mod_vault_entries');
+    final result = await _db.rawQuery('''
+      SELECT COUNT(*) as cnt FROM mod_vault_entries
+      WHERE category_id IN (SELECT id FROM mod_vault_categories)
+    ''');
     return result.first['cnt'] as int;
   }
 }
