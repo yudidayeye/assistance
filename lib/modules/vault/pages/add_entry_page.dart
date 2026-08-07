@@ -84,14 +84,14 @@ class _AddEntryPageState extends State<AddEntryPage> {
 
   /// 确保会话已解锁，如果未解锁则弹窗让用户输入主密码
   /// 返回 true 表示已解锁
-  Future<bool> _ensureUnlocked() async {
+  Future<bool> _ensureUnlocked({String? hint}) async {
     if (!VaultSession.instance.isLocked) return true;
-    final result = await _showUnlockDialog();
+    final result = await _showUnlockDialog(hint: hint);
     return result == true;
   }
 
   /// 弹窗输入主密码解锁
-  Future<bool?> _showUnlockDialog() async {
+  Future<bool?> _showUnlockDialog({String? hint}) async {
     final appTheme = Theme.of(context).appTheme;
     final passwordController = TextEditingController();
     bool obscure = true;
@@ -122,6 +122,17 @@ class _AddEntryPageState extends State<AddEntryPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (hint != null) ...[
+                      Text(
+                        hint,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: appTheme.earthMedium,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     TextField(
                       controller: passwordController,
                       obscureText: obscure,
@@ -275,9 +286,13 @@ class _AddEntryPageState extends State<AddEntryPage> {
       return;
     }
 
-    // 新增时如果未解锁，先弹窗解锁
-    if (_existingEntry == null && VaultSession.instance.isLocked) {
-      final unlocked = await _ensureUnlocked();
+    // 保存前如果未解锁，先弹窗解锁
+    if (VaultSession.instance.isLocked) {
+      final unlocked = await _ensureUnlocked(
+        hint: _existingEntry == null
+            ? '请先解锁后再新增密码！'
+            : '请先解锁后再修改密码！',
+      );
       if (!unlocked) return;
     }
 
