@@ -529,7 +529,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusMd),
         border: Border.all(
-          color: appTheme.earthMedium.withValues(alpha: 0.2),
+          color: appTheme.earthMedium.withValues(alpha: 0.15),
           width: 0.5,
         ),
       ),
@@ -544,13 +544,18 @@ class _AddEntryPageState extends State<AddEntryPage> {
               appTheme: appTheme,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              suffixIcon: GestureDetector(
-                onTap: () => _pickNoteTitle(index),
-                child: Icon(
+              suffixIcon: IconButton(
+                icon: Icon(
                   Icons.arrow_drop_down_rounded,
-                  size: 22,
+                  size: 20,
                   color: appTheme.earthMedium,
                 ),
+                onPressed: () => _pickNoteTitle(index),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 32, minHeight: 32),
+                tooltip: '选择标题类型',
               ),
             ),
           ),
@@ -566,17 +571,20 @@ class _AddEntryPageState extends State<AddEntryPage> {
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             ),
           ),
-          IconButton(
-            icon: Icon(
-              Icons.delete_outline_rounded,
-              size: 18,
-              color: appTheme.rose,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: IconButton(
+              icon: Icon(
+                Icons.delete_outline_rounded,
+                size: 20,
+                color: appTheme.rose,
+              ),
+              onPressed: () => _removeNote(index),
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(),
+              padding: EdgeInsets.zero,
+              tooltip: '删除该条备注',
             ),
-            onPressed: () => _removeNote(index),
-            visualDensity: VisualDensity.compact,
-            constraints: const BoxConstraints(),
-            padding: EdgeInsets.zero,
-            tooltip: '删除该条备注',
           ),
         ],
       ),
@@ -604,9 +612,19 @@ class _AddEntryPageState extends State<AddEntryPage> {
           borderRadius: BorderRadius.circular(appTheme.radiusMd),
           borderSide: BorderSide.none,
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          borderSide: BorderSide(color: appTheme.primary, width: 1),
+        ),
         contentPadding: contentPadding ??
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         suffixIcon: suffixIcon,
+        suffixIconConstraints:
+            const BoxConstraints(minWidth: 32, minHeight: 32),
       ),
     );
   }
