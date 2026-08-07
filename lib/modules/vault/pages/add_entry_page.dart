@@ -380,7 +380,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
             const SizedBox(height: 6),
             for (var i = 0; i < _notes.length; i++) ...[
               _buildNoteItemEditor(i, appTheme),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
             ],
             OutlinedButton.icon(
               onPressed: _addNote,
@@ -459,11 +459,72 @@ class _AddEntryPageState extends State<AddEntryPage> {
     setState(() => _notes.removeAt(index).dispose());
   }
 
+  /// 从系统已添加的类型中下拉选择备注标题（也可直接自定义输入）
+  Future<void> _pickNoteTitle(int index) async {
+    final titles = await VaultService.instance.getNoteTitles();
+    if (!mounted) return;
+    if (titles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('暂无可选类型，可直接输入'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final appTheme = Theme.of(context).appTheme;
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: appTheme.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+            top: Radius.circular(appTheme.radiusLg)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                '选择备注标题',
+                style: AppTypography.bodyLg.copyWith(
+                  color: appTheme.earth,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: titles.length,
+                itemBuilder: (ctx, i) => ListTile(
+                  dense: true,
+                  title: Text(
+                    titles[i],
+                    style: AppTypography.bodyMd
+                        .copyWith(color: appTheme.earth),
+                  ),
+                  onTap: () => Navigator.pop(ctx, titles[i]),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (selected != null && mounted) {
+      setState(() => _notes[index].title.text = selected);
+    }
+  }
+
   /// 单条备注编辑卡片：标题 + 描述 + 删除
   Widget _buildNoteItemEditor(int index, AppThemeExtension appTheme) {
     final input = _notes[index];
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(10, 6, 2, 6),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusMd),
@@ -472,37 +533,50 @@ class _AddEntryPageState extends State<AddEntryPage> {
           width: 0.5,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  controller: input.title,
-                  hint: '备注标题（如：账号）',
-                  appTheme: appTheme,
+          Expanded(
+            flex: 2,
+            child: _buildTextField(
+              controller: input.title,
+              hint: '标题',
+              appTheme: appTheme,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              suffixIcon: GestureDetector(
+                onTap: () => _pickNoteTitle(index),
+                child: Icon(
+                  Icons.arrow_drop_down_rounded,
+                  size: 22,
+                  color: appTheme.earthMedium,
                 ),
               ),
-              const SizedBox(width: 4),
-              IconButton(
-                icon: Icon(
-                  Icons.delete_outline_rounded,
-                  size: 20,
-                  color: appTheme.rose,
-                ),
-                onPressed: () => _removeNote(index),
-                tooltip: '删除该条备注',
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 8),
-          _buildTextField(
-            controller: input.content,
-            hint: '备注描述（如：手机号、邮箱等）',
-            appTheme: appTheme,
-            maxLines: 2,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 5,
+            child: _buildTextField(
+              controller: input.content,
+              hint: '描述',
+              appTheme: appTheme,
+              maxLines: 1,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.delete_outline_rounded,
+              size: 18,
+              color: appTheme.rose,
+            ),
+            onPressed: () => _removeNote(index),
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(),
+            padding: EdgeInsets.zero,
+            tooltip: '删除该条备注',
           ),
         ],
       ),
@@ -514,6 +588,8 @@ class _AddEntryPageState extends State<AddEntryPage> {
     required String hint,
     required AppThemeExtension appTheme,
     int maxLines = 1,
+    EdgeInsetsGeometry? contentPadding,
+    Widget? suffixIcon,
   }) {
     return TextField(
       controller: controller,
@@ -528,8 +604,9 @@ class _AddEntryPageState extends State<AddEntryPage> {
           borderRadius: BorderRadius.circular(appTheme.radiusMd),
           borderSide: BorderSide.none,
         ),
-        contentPadding:
+        contentPadding: contentPadding ??
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        suffixIcon: suffixIcon,
       ),
     );
   }

@@ -5,6 +5,8 @@ import 'dart:ffi';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_assistant/core/storage/database_service.dart';
 import 'package:my_assistant/modules/vault/models/vault_category.dart';
+import 'package:my_assistant/modules/vault/models/vault_entry.dart';
+import 'package:my_assistant/modules/vault/models/vault_note_item.dart';
 import 'package:my_assistant/modules/vault/services/vault_service.dart';
 import 'package:my_assistant/modules/vault/services/vault_session.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -118,5 +120,35 @@ void main() {
     });
 
     expect(await vault.getTotalEntryCount(), 1);
+  });
+
+  test('getNoteTitles 返回去重的历史备注标题', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '测试分类',
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    await vault.insertEntry(
+      categoryId: catId,
+      title: '条目A',
+      plainPassword: 'p1',
+      note: VaultEntry.encodeNotes(
+          const [VaultNoteItem(title: '账号', content: 'a@b.com')]),
+    );
+    await vault.insertEntry(
+      categoryId: catId,
+      title: '条目B',
+      plainPassword: 'p2',
+      note: VaultEntry.encodeNotes(const [
+        VaultNoteItem(title: '手机号', content: '138'),
+        VaultNoteItem(title: '账号', content: 'c@d.com'),
+      ]),
+    );
+
+    final titles = await vault.getNoteTitles();
+    expect(titles, containsAll(['账号', '手机号']));
   });
 }

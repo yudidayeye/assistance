@@ -231,4 +231,20 @@ class VaultService extends ChangeNotifier {
     ''');
     return result.first['cnt'] as int;
   }
+
+  /// 获取系统中已使用过的备注标题（用于下拉选择，去重排序）
+  Future<List<String>> getNoteTitles() async {
+    final rows = await _db.query('mod_vault_entries');
+    final titles = <String>{};
+    for (final row in rows) {
+      final note = row['note'] as String?;
+      if (note == null || note.isEmpty) continue;
+      for (final item in VaultEntry.fromMap(row).noteItems) {
+        final title = item.title.trim();
+        if (title.isNotEmpty) titles.add(title);
+      }
+    }
+    final list = titles.toList()..sort();
+    return list;
+  }
 }
