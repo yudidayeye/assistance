@@ -54,6 +54,7 @@ void main() {
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
         note TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (category_id) REFERENCES mod_vault_categories(id) ON DELETE CASCADE
@@ -68,6 +69,10 @@ void main() {
     testDb = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
     DatabaseService.instance.useDatabaseForTesting(testDb);
     await createVaultSchema(testDb);
+    // 内存库在测试间可能复用，建表后清理历史数据保证用例独立
+    await testDb.execute('DELETE FROM mod_vault_master');
+    await testDb.execute('DELETE FROM mod_vault_entries');
+    await testDb.execute('DELETE FROM mod_vault_categories');
     return VaultService.instance;
   }
 
@@ -332,5 +337,76 @@ void main() {
       vault.decryptEntryPassword(entry, isEncrypted: category.isEncrypted),
       'plain-123',
     );
+  });
+
+  test('reorderCategories 持久化分类顺序，查询按新顺序返回', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final idA = await vault.insertCategory(VaultCategory(
+      name: '分类A',
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final idB = await vault.insertCategory(VaultCategory(
+      name: '分类B',
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final idC = await vault.insertCategory(VaultCategory(
+      name: '分类C',
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+
+    await vault.reorderCategories([idC, idA, idB]);
+
+    final categories = await vault.getAllCategories();
+    expect(categories.map((c) => c.id).toList(), [idC, idA, idB]);
+  });
+
+  test('reorderEntries 持久化条目顺序，查询按新顺序返回', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '测试分类',
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final idA = await vault.insertEntry(
+        categoryId: catId, title: '条目A', plainPassword: 'p1');
+    final idB = await vault.insertEntry(
+        categoryId: catId, title: '条目B', plainPassword: 'p2');
+    final idC = await vault.insertEntry(
+        categoryId: catId, title: '条目C', plainPassword: 'p3');
+
+    await vault.reorderEntries(catId, [idC, idA, idB]);
+
+    final entries = await vault.getEntriesByCategory(catId);
+    expect(entries.map((e) => e.id).toList(), [idC, idA, idB]);
+  });
+
+  test('VaultEntry 读写 sort_order 字段保持一致', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '测试分类',
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final entryId = await vault.insertEntry(
+        categoryId: catId, title: '条目A', plainPassword: 'p1');
+    await testDb.update(
+      'mod_vault_entries',
+      {'sort_order': 7},
+      where: 'id = ?',
+      whereArgs: [entryId],
+    );
+
+    final entry = await vault.getEntry(entryId);
+    expect(entry, isNotNull);
+    expect(entry!.sortOrder, 7);
   });
 }

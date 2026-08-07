@@ -198,7 +198,7 @@ class VaultService extends ChangeNotifier {
       'mod_vault_entries',
       where: 'category_id = ?',
       whereArgs: [categoryId],
-      orderBy: 'created_at ASC',
+      orderBy: 'sort_order ASC, created_at ASC',
     );
     return rows.map(VaultEntry.fromMap).toList();
   }
@@ -217,8 +217,7 @@ class VaultService extends ChangeNotifier {
   /// 解密条目的密码字段
   ///
   /// 加密分类需要会话已解锁；未加密分类直接返回明文存储的密码
-  String? decryptEntryPassword(VaultEntry entry,
-      {required bool isEncrypted}) {
+  String? decryptEntryPassword(VaultEntry entry, {required bool isEncrypted}) {
     if (!isEncrypted) return entry.encryptedPassword;
     final key = VaultSession.instance.key;
     if (key == null) return null;
@@ -321,6 +320,36 @@ class VaultService extends ChangeNotifier {
       where: 'id = ?',
       whereArgs: [entryId],
     );
+    _notifyChanged();
+  }
+
+  /// 批量更新分类排序（按传入 id 顺序写入 sort_order 0..n-1）
+  Future<void> reorderCategories(List<int> orderedIds) async {
+    await _db.transaction((txn) async {
+      for (var i = 0; i < orderedIds.length; i++) {
+        await txn.update(
+          'mod_vault_categories',
+          {'sort_order': i},
+          where: 'id = ?',
+          whereArgs: [orderedIds[i]],
+        );
+      }
+    });
+    _notifyChanged();
+  }
+
+  /// 批量更新某分类下条目的排序（按传入 id 顺序写入 sort_order 0..n-1）
+  Future<void> reorderEntries(int categoryId, List<int> orderedIds) async {
+    await _db.transaction((txn) async {
+      for (var i = 0; i < orderedIds.length; i++) {
+        await txn.update(
+          'mod_vault_entries',
+          {'sort_order': i},
+          where: 'id = ? AND category_id = ?',
+          whereArgs: [orderedIds[i], categoryId],
+        );
+      }
+    });
     _notifyChanged();
   }
 

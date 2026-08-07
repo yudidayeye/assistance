@@ -10,6 +10,7 @@ class VaultEntry {
   final String encryptedPassword;
   final String passwordIv;
   final String? note;
+  final int sortOrder;
   final String createdAt;
   final String updatedAt;
 
@@ -21,6 +22,7 @@ class VaultEntry {
     required this.encryptedPassword,
     required this.passwordIv,
     this.note,
+    this.sortOrder = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -34,6 +36,7 @@ class VaultEntry {
       encryptedPassword: map['encrypted_password'] as String,
       passwordIv: map['password_iv'] as String,
       note: map['note'] as String?,
+      sortOrder: map['sort_order'] as int? ?? 0,
       createdAt: map['created_at'] as String,
       updatedAt: map['updated_at'] as String,
     );
@@ -48,6 +51,7 @@ class VaultEntry {
       'encrypted_password': encryptedPassword,
       'password_iv': passwordIv,
       'note': note,
+      'sort_order': sortOrder,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
@@ -77,8 +81,7 @@ class VaultEntry {
   /// 将多条备注编码为 JSON 字符串（空列表返回 null）
   static String? encodeNotes(List<VaultNoteItem> items) {
     final valid = items
-        .where(
-            (i) => i.title.trim().isNotEmpty || i.content.trim().isNotEmpty)
+        .where((i) => i.title.trim().isNotEmpty || i.content.trim().isNotEmpty)
         .toList();
     if (valid.isEmpty) return null;
     return jsonEncode(valid.map((i) => i.toJson()).toList());
@@ -92,6 +95,7 @@ class VaultEntry {
     String? encryptedPassword,
     String? passwordIv,
     String? note,
+    int? sortOrder,
     String? createdAt,
     String? updatedAt,
   }) {
@@ -103,6 +107,7 @@ class VaultEntry {
       encryptedPassword: encryptedPassword ?? this.encryptedPassword,
       passwordIv: passwordIv ?? this.passwordIv,
       note: note ?? this.note,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

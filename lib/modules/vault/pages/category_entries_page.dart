@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
@@ -85,10 +85,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
       orElse: () => categories.isNotEmpty
           ? categories.first
           : VaultCategory(
-              id: widget.categoryId,
-              name: '未知',
-              createdAt: '',
-              updatedAt: ''),
+              id: widget.categoryId, name: '未知', createdAt: '', updatedAt: ''),
     );
     final entries =
         await VaultService.instance.getEntriesByCategory(widget.categoryId);
@@ -188,14 +185,15 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                         filled: true,
                         fillColor: appTheme.cardBackground,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                          borderRadius:
+                              BorderRadius.circular(appTheme.radiusSm),
                           borderSide: BorderSide(
                             color: appTheme.earthMedium.withValues(alpha: 0.25),
                             width: 1,
                           ),
                         ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                         suffixIcon: IconButton(
                           icon: Icon(
                             obscure
@@ -261,8 +259,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                               color: appTheme.primary,
                             ),
                           )
-                        : Text('解锁',
-                            style: TextStyle(color: appTheme.primary)),
+                        : Text('解锁', style: TextStyle(color: appTheme.primary)),
                   ),
                 ],
               ),
@@ -379,7 +376,8 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('取消',
-                style: AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
+                style:
+                    AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -402,8 +400,8 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
       context: context,
       backgroundColor: appTheme.cardBackground,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(appTheme.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(appTheme.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -428,16 +426,14 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                 // 编辑前先确认已解锁，未解锁弹窗输入主密码
                 if (VaultSession.instance.isLocked) {
                   if (_isUnlocked) _syncLockedState();
-                  final unlocked =
-                      await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
+                  final unlocked = await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
                   if (unlocked != true || !mounted) return;
                 }
                 context.push('/vault/edit/${entry.id}').then((_) => _load());
               },
             ),
             ListTile(
-              leading:
-                  Icon(Icons.delete_outline_rounded, color: appTheme.rose),
+              leading: Icon(Icons.delete_outline_rounded, color: appTheme.rose),
               title: Text('删除',
                   style: AppTypography.bodyMd.copyWith(color: appTheme.rose)),
               onTap: () {
@@ -565,26 +561,45 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
   }
 
   Widget _buildEntryList(AppThemeExtension appTheme) {
-    return ListView.builder(
+    return ReorderableListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
       itemCount: _entries.length,
+      buildDefaultDragHandles: false,
+      onReorderItem: _handleEntryReorder,
       itemBuilder: (context, index) {
         final entry = _entries[index];
-        return _buildEntryCard(entry, appTheme);
+        return _buildEntryCard(entry, appTheme, index: index);
       },
     );
   }
 
-  Widget _buildEntryCard(VaultEntry entry, AppThemeExtension appTheme) {
+  /// 密码条目拖动排序：更新本地顺序并持久化
+  void _handleEntryReorder(int oldIndex, int newIndex) {
+    setState(() {
+      final item = _entries.removeAt(oldIndex);
+      _entries.insert(newIndex, item);
+    });
+    final categoryId = _category?.id;
+    if (categoryId != null) {
+      VaultService.instance
+          .reorderEntries(categoryId, _entries.map((e) => e.id!).toList());
+    }
+  }
+
+  Widget _buildEntryCard(
+    VaultEntry entry,
+    AppThemeExtension appTheme, {
+    required int index,
+  }) {
     final decryptedPwd = _decryptedPasswords[entry.id!];
     final noteItems = entry.noteItems;
     final title = entry.title.trim();
     final username = entry.username?.trim() ?? '';
-    final displayTitle = title.isNotEmpty
-        ? title
-        : (username.isNotEmpty ? username : '未命名');
+    final displayTitle =
+        title.isNotEmpty ? title : (username.isNotEmpty ? username : '未命名');
 
     return Padding(
+      key: ValueKey('entry-${entry.id}'),
       padding: const EdgeInsets.only(bottom: AppSpacing.xs),
       child: Dismissible(
         key: ValueKey(entry.id),
@@ -602,193 +617,221 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
           await _confirmDeleteEntry(entry);
           return false;
         },
-        child: Material(
-          color: appTheme.cardBackground,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(appTheme.radiusMd),
-            side: BorderSide(
-              color: appTheme.earthMedium.withValues(alpha: 0.15),
-              width: 0.5,
-            ),
-          ),
-          child: InkWell(
-            customBorder: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(appTheme.radiusMd),
-            ),
-            hoverColor: Colors.transparent,
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            onLongPress: () => _showEntryActions(entry),
-            onTap: () => _openEntryDetail(entry),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.sm,
-                AppSpacing.sm,
-                AppSpacing.sm,
-                AppSpacing.sm,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── 标题行 + 复制标题 ──
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Row(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Material(
+                color: appTheme.cardBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                  side: BorderSide(
+                    color: appTheme.earthMedium.withValues(alpha: 0.15),
+                    width: 0.5,
+                  ),
+                ),
+                child: InkWell(
+                  customBorder: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                  ),
+                  hoverColor: Colors.transparent,
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  onLongPress: () => _showEntryActions(entry),
+                  onTap: () => _openEntryDetail(entry),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.sm,
+                      AppSpacing.sm,
+                      AppSpacing.sm,
+                      AppSpacing.sm,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── 标题行 + 复制标题 ──
+                        Row(
                           children: [
-                            Flexible(
-                              child: Text(
-                                displayTitle,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: appTheme.earth,
-                                  letterSpacing: -0.1,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      displayTitle,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: appTheme.earth,
+                                        letterSpacing: -0.1,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (title.isNotEmpty)
+                                    _buildSmallAction(
+                                      icon: Icons.copy_rounded,
+                                      appTheme: appTheme,
+                                      onTap: () =>
+                                          _copyToClipboard(title, '标题'),
+                                    ),
+                                ],
                               ),
                             ),
-                            if (title.isNotEmpty)
-                              _buildSmallAction(
-                                icon: Icons.copy_rounded,
-                                appTheme: appTheme,
-                                onTap: () => _copyToClipboard(title, '标题'),
+                            GestureDetector(
+                              onTap: () => _openEntryDetail(entry),
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 4),
+                                child: Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 22,
+                                  color: appTheme.earthMedium
+                                      .withValues(alpha: 0.36),
+                                ),
                               ),
+                            ),
                           ],
                         ),
-                      ),
-                      GestureDetector(
-                        onTap: () => _openEntryDetail(entry),
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: Icon(
-                            Icons.chevron_right_rounded,
-                            size: 22,
-                            color: appTheme.earthMedium.withValues(alpha: 0.36),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // ── 凭据区（用户名 + 密码） ──
-                  const SizedBox(height: 8),
-                  if (username.isNotEmpty && title.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 5),
-                      child: Row(
-                        children: [
-                          _buildCredentialIcon(
-                            icon: Icons.person_outline_rounded,
-                            color: appTheme.primary,
-                            appTheme: appTheme,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              username,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: appTheme.earth,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                        // ── 凭据区（用户名 + 密码） ──
+                        const SizedBox(height: 8),
+                        if (username.isNotEmpty && title.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Row(
+                              children: [
+                                _buildCredentialIcon(
+                                  icon: Icons.person_outline_rounded,
+                                  color: appTheme.primary,
+                                  appTheme: appTheme,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    username,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: appTheme.earth,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                _buildCopyBadge(
+                                  () => _copyToClipboard(username, '用户名'),
+                                  appTheme,
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          _buildCopyBadge(
-                            () => _copyToClipboard(username, '用户名'),
-                            appTheme,
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12),
+                            child: Divider(
+                              height: 1,
+                              thickness: 0.5,
+                              color:
+                                  appTheme.earthMedium.withValues(alpha: 0.10),
+                            ),
                           ),
                         ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12),
-                      child: Divider(
-                        height: 1,
-                        thickness: 0.5,
-                        color: appTheme.earthMedium.withValues(alpha: 0.10),
-                      ),
-                    ),
-                  ],
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
-                      children: [
-                        _buildCredentialIcon(
-                          icon: decryptedPwd != null
-                              ? Icons.lock_open_rounded
-                              : Icons.lock_outline_rounded,
-                          color: decryptedPwd != null
-                              ? appTheme.sage
-                              : appTheme.earthMedium,
-                          appTheme: appTheme,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            decryptedPwd ?? '••••••••',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: decryptedPwd != null
-                                  ? appTheme.earth
-                                  : appTheme.earthMedium,
-                              letterSpacing:
-                                  decryptedPwd != null ? 0.5 : 2.5,
-                              fontFamily:
-                                  decryptedPwd != null ? 'monospace' : null,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          child: Row(
+                            children: [
+                              _buildCredentialIcon(
+                                icon: decryptedPwd != null
+                                    ? Icons.lock_open_rounded
+                                    : Icons.lock_outline_rounded,
+                                color: decryptedPwd != null
+                                    ? appTheme.sage
+                                    : appTheme.earthMedium,
+                                appTheme: appTheme,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  decryptedPwd ?? '••••••••',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: decryptedPwd != null
+                                        ? appTheme.earth
+                                        : appTheme.earthMedium,
+                                    letterSpacing:
+                                        decryptedPwd != null ? 0.5 : 2.5,
+                                    fontFamily: decryptedPwd != null
+                                        ? 'monospace'
+                                        : null,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (decryptedPwd != null) ...[
+                                const SizedBox(width: 6),
+                                _buildCopyBadge(
+                                  () => _copyToClipboard(decryptedPwd, '密码'),
+                                  appTheme,
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        if (decryptedPwd != null) ...[
-                          const SizedBox(width: 6),
-                          _buildCopyBadge(
-                            () => _copyToClipboard(decryptedPwd, '密码'),
-                            appTheme,
+                        // ── 备注（多条，每条可复制） ──
+                        if (noteItems.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color:
+                                  appTheme.earthMedium.withValues(alpha: 0.02),
+                              border: Border.all(
+                                color: appTheme.earthMedium
+                                    .withValues(alpha: 0.15),
+                              ),
+                              borderRadius:
+                                  BorderRadius.circular(appTheme.radiusMd),
+                            ),
+                            child: Column(
+                              children: [
+                                for (var i = 0; i < noteItems.length; i++) ...[
+                                  if (i > 0)
+                                    Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      color: appTheme.earthMedium
+                                          .withValues(alpha: 0.12),
+                                    ),
+                                  _buildNoteItem(
+                                    noteItems[i],
+                                    appTheme,
+                                    titleWidth:
+                                        _measureNoteTitleWidth(noteItems),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ],
                       ],
                     ),
                   ),
-                  // ── 备注（多条，每条可复制） ──
-                  if (noteItems.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: appTheme.earthMedium.withValues(alpha: 0.02),
-                        border: Border.all(
-                          color: appTheme.earthMedium.withValues(alpha: 0.15),
-                        ),
-                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      ),
-                      child: Column(
-                        children: [
-                          for (var i = 0; i < noteItems.length; i++) ...[
-                            if (i > 0)
-                              Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: appTheme.earthMedium
-                                    .withValues(alpha: 0.12),
-                              ),
-                            _buildNoteItem(
-                              noteItems[i],
-                              appTheme,
-                              titleWidth: _measureNoteTitleWidth(noteItems),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
-          ),
+            // 拖拽排序手柄
+            ReorderableDragStartListener(
+              index: index,
+              child: Container(
+                width: 32,
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.drag_indicator_rounded,
+                  size: 20,
+                  color: appTheme.earthMedium.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -796,11 +839,9 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
 
   /// 进入密码详情（编辑页），未解锁时先弹主密码输入框
   Future<void> _openEntryDetail(VaultEntry entry) async {
-    if ((_category?.isEncrypted ?? true) &&
-        VaultSession.instance.isLocked) {
+    if ((_category?.isEncrypted ?? true) && VaultSession.instance.isLocked) {
       if (_isUnlocked) _syncLockedState();
-      final unlocked =
-          await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
+      final unlocked = await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
       if (unlocked != true || !mounted) return;
     }
     await context.push('/vault/edit/${entry.id}');
@@ -937,7 +978,6 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
       ),
     );
   }
-
 }
 
 /// Isolate 入口：在后台线程执行 Argon2id 验证 + 密钥派生

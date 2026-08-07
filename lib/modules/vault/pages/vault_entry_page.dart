@@ -154,7 +154,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                   const SizedBox(height: 16),
                   Text(
                     '选择图标',
-                    style: AppTypography.bodySm.copyWith(color: appTheme.earthLight),
+                    style: AppTypography.bodySm
+                        .copyWith(color: appTheme.earthLight),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -163,8 +164,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                     children: _presetIcons.entries.map((e) {
                       final isSelected = e.key == selectedIcon;
                       return GestureDetector(
-                        onTap: () =>
-                            setDialogState(() => selectedIcon = e.key),
+                        onTap: () => setDialogState(() => selectedIcon = e.key),
                         child: Container(
                           width: 40,
                           height: 40,
@@ -175,7 +175,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                             borderRadius:
                                 BorderRadius.circular(appTheme.radiusSm),
                             border: isSelected
-                                ? Border.all(color: appTheme.primary, width: 1.5)
+                                ? Border.all(
+                                    color: appTheme.primary, width: 1.5)
                                 : null,
                           ),
                           child: Icon(
@@ -192,14 +193,13 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                   const SizedBox(height: 8),
                   SwitchListTile(
                     value: isEncrypted,
-                    onChanged: (v) =>
-                        setDialogState(() => isEncrypted = v),
+                    onChanged: (v) => setDialogState(() => isEncrypted = v),
                     contentPadding: EdgeInsets.zero,
                     activeThumbColor: appTheme.primary,
                     title: Text(
                       '加密存储',
-                      style: AppTypography.bodyMd
-                          .copyWith(color: appTheme.earth),
+                      style:
+                          AppTypography.bodyMd.copyWith(color: appTheme.earth),
                     ),
                     subtitle: Text(
                       isEncrypted ? '密码将加密保存' : '密码将明文保存',
@@ -213,12 +213,14 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
                   child: Text('取消',
-                      style: AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
+                      style: AppTypography.bodyMd
+                          .copyWith(color: appTheme.earthLight)),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: Text('确定',
-                      style: AppTypography.bodyMd.copyWith(color: appTheme.primary)),
+                      style: AppTypography.bodyMd
+                          .copyWith(color: appTheme.primary)),
                 ),
               ],
             );
@@ -281,7 +283,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                   const SizedBox(height: 16),
                   Text(
                     '选择图标',
-                    style: AppTypography.bodySm.copyWith(color: appTheme.earthLight),
+                    style: AppTypography.bodySm
+                        .copyWith(color: appTheme.earthLight),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -290,8 +293,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                     children: _presetIcons.entries.map((e) {
                       final isSelected = e.key == selectedIcon;
                       return GestureDetector(
-                        onTap: () =>
-                            setDialogState(() => selectedIcon = e.key),
+                        onTap: () => setDialogState(() => selectedIcon = e.key),
                         child: Container(
                           width: 40,
                           height: 40,
@@ -302,7 +304,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                             borderRadius:
                                 BorderRadius.circular(appTheme.radiusSm),
                             border: isSelected
-                                ? Border.all(color: appTheme.primary, width: 1.5)
+                                ? Border.all(
+                                    color: appTheme.primary, width: 1.5)
                                 : null,
                           ),
                           child: Icon(
@@ -319,14 +322,13 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                   const SizedBox(height: 8),
                   SwitchListTile(
                     value: isEncrypted,
-                    onChanged: (v) =>
-                        setDialogState(() => isEncrypted = v),
+                    onChanged: (v) => setDialogState(() => isEncrypted = v),
                     contentPadding: EdgeInsets.zero,
                     activeThumbColor: appTheme.primary,
                     title: Text(
                       '加密存储',
-                      style: AppTypography.bodyMd
-                          .copyWith(color: appTheme.earth),
+                      style:
+                          AppTypography.bodyMd.copyWith(color: appTheme.earth),
                     ),
                     subtitle: Text(
                       isEncrypted ? '密码将加密保存' : '密码将明文保存',
@@ -340,12 +342,14 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
                   child: Text('取消',
-                      style: AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
+                      style: AppTypography.bodyMd
+                          .copyWith(color: appTheme.earthLight)),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: Text('确定',
-                      style: AppTypography.bodyMd.copyWith(color: appTheme.primary)),
+                      style: AppTypography.bodyMd
+                          .copyWith(color: appTheme.primary)),
                 ),
               ],
             );
@@ -357,8 +361,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
     if (result == true && nameController.text.trim().isNotEmpty) {
       // 切换加密状态且有密码条目时，需要会话已解锁才能迁移存储格式
       if (category.isEncrypted != isEncrypted) {
-        final count = await VaultService.instance
-            .getCategoryEntryCount(category.id!);
+        final count =
+            await VaultService.instance.getCategoryEntryCount(category.id!);
         if (count > 0 && VaultSession.instance.isLocked) {
           if (!mounted) return;
           AppSnackBar.show(context, '请先解锁后再修改分类的加密状态');
@@ -376,7 +380,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   }
 
   Future<void> _confirmDeleteCategory(VaultCategory category) async {
-    final count = await VaultService.instance.getCategoryEntryCount(category.id!);
+    final count =
+        await VaultService.instance.getCategoryEntryCount(category.id!);
     if (!mounted) return;
 
     final appTheme = Theme.of(context).appTheme;
@@ -399,7 +404,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('取消',
-                style: AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
+                style:
+                    AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -534,7 +540,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.folder_open_rounded, size: 56, color: appTheme.earthMedium),
+          Icon(Icons.folder_open_rounded,
+              size: 56, color: appTheme.earthMedium),
           const SizedBox(height: 12),
           Text(
             '还没有分类',
@@ -582,18 +589,35 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   }
 
   Widget _buildCategoryList(AppThemeExtension appTheme) {
-    return ListView.builder(
+    return ReorderableListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
       itemCount: _categories.length,
+      buildDefaultDragHandles: false,
+      onReorderItem: _handleCategoryReorder,
       itemBuilder: (context, index) {
         final category = _categories[index];
-        return _buildCategoryCard(category, appTheme);
+        return _buildCategoryCard(category, appTheme, index: index);
       },
     );
   }
 
-  Widget _buildCategoryCard(VaultCategory category, AppThemeExtension appTheme) {
+  /// 分类拖动排序：更新本地顺序并持久化
+  void _handleCategoryReorder(int oldIndex, int newIndex) {
+    setState(() {
+      final item = _categories.removeAt(oldIndex);
+      _categories.insert(newIndex, item);
+    });
+    VaultService.instance
+        .reorderCategories(_categories.map((c) => c.id!).toList());
+  }
+
+  Widget _buildCategoryCard(
+    VaultCategory category,
+    AppThemeExtension appTheme, {
+    required int index,
+  }) {
     return Padding(
+      key: ValueKey('category-${category.id}'),
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: appTheme.cardBackground,
@@ -635,7 +659,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                 ),
                 // 条目数
                 FutureBuilder<int>(
-                  future: VaultService.instance.getCategoryEntryCount(category.id!),
+                  future:
+                      VaultService.instance.getCategoryEntryCount(category.id!),
                   builder: (context, snapshot) {
                     final count = snapshot.data ?? 0;
                     if (count > 0) {
@@ -650,6 +675,18 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                     }
                     return const SizedBox.shrink();
                   },
+                ),
+                // 拖拽排序手柄
+                ReorderableDragStartListener(
+                  index: index,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Icon(
+                      Icons.drag_indicator_rounded,
+                      size: 20,
+                      color: appTheme.earthMedium.withValues(alpha: 0.5),
+                    ),
+                  ),
                 ),
                 // 箭头
                 Icon(
@@ -671,8 +708,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       context: context,
       backgroundColor: appTheme.cardBackground,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(appTheme.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(appTheme.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
