@@ -27,7 +27,8 @@ class CategoryEntriesPage extends StatefulWidget {
   State<CategoryEntriesPage> createState() => _CategoryEntriesPageState();
 }
 
-class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
+class _CategoryEntriesPageState extends State<CategoryEntriesPage>
+    with WidgetsBindingObserver {
   VaultCategory? _category;
   List<VaultEntry> _entries = [];
   Map<int, String?> _decryptedPasswords = {};
@@ -37,7 +38,31 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // App 回到前台时，若会话已在后台锁定，同步页面解锁状态
+    if (state == AppLifecycleState.resumed && VaultSession.instance.isLocked) {
+      _syncLockedState();
+    }
+  }
+
+  /// 同步页面解锁显示与真实会话状态（后台锁定后页面仍显示已解锁的场景）
+  void _syncLockedState() {
+    if (!mounted) return;
+    setState(() {
+      _isUnlocked = false;
+      _decryptedPasswords = {};
+    });
   }
 
   /// 用户真正返回（非向前导航）时锁定
@@ -443,6 +468,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
           onTap: () async {
             // 跳转新增页面前先确认已解锁，未解锁弹窗输入主密码
             if (VaultSession.instance.isLocked) {
+              if (_isUnlocked) _syncLockedState();
               final unlocked = await _showUnlockDialog(hint: '请先解锁后再新增密码！');
               if (unlocked != true || !mounted) return;
             }
@@ -518,6 +544,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
             onTap: () async {
               // 编辑前先确认已解锁，未解锁弹窗输入主密码
               if (VaultSession.instance.isLocked) {
+                if (_isUnlocked) _syncLockedState();
                 final unlocked =
                     await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
                 if (unlocked != true || !mounted) return;
@@ -719,6 +746,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
                 Navigator.pop(ctx);
                 // 编辑前先确认已解锁，未解锁弹窗输入主密码
                 if (VaultSession.instance.isLocked) {
+                  if (_isUnlocked) _syncLockedState();
                   final unlocked =
                       await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
                   if (unlocked != true || !mounted) return;
