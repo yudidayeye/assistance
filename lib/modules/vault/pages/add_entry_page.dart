@@ -5,6 +5,7 @@ import '../../../core/theme/theme_extension.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../models/vault_entry.dart';
+import '../models/vault_note_item.dart';
 import '../services/vault_crypto_service.dart';
 import '../services/vault_service.dart';
 import '../services/vault_session.dart';
@@ -23,7 +24,7 @@ class AddEntryPage extends StatefulWidget {
 class _AddEntryPageState extends State<AddEntryPage> {
   final _titleController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _noteController = TextEditingController();
+  final List<_NoteInput> _notes = [];
 
   bool _obscurePassword = true;
   bool _loading = false;
@@ -50,7 +51,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('请先解锁后再编辑'),
+              content: Text('请先解锁后再编辑密码！'),
               duration: Duration(seconds: 2),
             ),
           );
@@ -68,7 +69,14 @@ class _AddEntryPageState extends State<AddEntryPage> {
       _selectedCategoryId = entry.categoryId;
       _titleController.text = entry.title;
       _passwordController.text = plainPassword ?? '';
-      _noteController.text = entry.note ?? '';
+      _notes
+        ..clear()
+        ..addAll(entry.noteItems.map((item) {
+          final input = _NoteInput();
+          input.title.text = item.title;
+          input.content.text = item.content;
+          return input;
+        }));
     });
   }
 
@@ -279,6 +287,11 @@ class _AddEntryPageState extends State<AddEntryPage> {
       _error = null;
     });
 
+    final note = VaultEntry.encodeNotes(_notes
+        .map((n) => VaultNoteItem(
+            title: n.title.text.trim(), content: n.content.text.trim()))
+        .toList());
+
     try {
       if (_existingEntry != null) {
         await VaultService.instance.updateEntry(
@@ -286,18 +299,14 @@ class _AddEntryPageState extends State<AddEntryPage> {
           categoryId: _selectedCategoryId!,
           title: title,
           plainPassword: password,
-          note: _noteController.text.trim().isNotEmpty
-              ? _noteController.text.trim()
-              : null,
+          note: note,
         );
       } else {
         await VaultService.instance.insertEntry(
           categoryId: _selectedCategoryId!,
           title: title,
           plainPassword: password,
-          note: _noteController.text.trim().isNotEmpty
-              ? _noteController.text.trim()
-              : null,
+          note: note,
         );
       }
       if (mounted) Navigator.of(context).pop(true);
@@ -313,7 +322,9 @@ class _AddEntryPageState extends State<AddEntryPage> {
   void dispose() {
     _titleController.dispose();
     _passwordController.dispose();
-    _noteController.dispose();
+    for (final note in _notes) {
+      note.dispose();
+    }
     super.dispose();
   }
 
@@ -364,14 +375,28 @@ class _AddEntryPageState extends State<AddEntryPage> {
             const SizedBox(height: 6),
             _buildPasswordField(appTheme),
             const SizedBox(height: 20),
-            // 备注
+            // 备注（多条：标题 + 描述）
             _buildLabel('备注（可选）', appTheme),
             const SizedBox(height: 6),
-            _buildTextField(
-              controller: _noteController,
-              hint: '可填写账号、邮箱等信息',
-              appTheme: appTheme,
-              maxLines: 3,
+            for (var i = 0; i < _notes.length; i++) ...[
+              _buildNoteItemEditor(i, appTheme),
+              const SizedBox(height: 12),
+            ],
+            OutlinedButton.icon(
+              onPressed: _addNote,
+              icon: Icon(Icons.add_rounded, size: 18, color: appTheme.primary),
+              label: Text(
+                '添加备注',
+                style: TextStyle(color: appTheme.primary),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: appTheme.primary.withValues(alpha: 0.4),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                ),
+              ),
             ),
             // 错误提示
             if (_error != null) ...[
@@ -423,6 +448,64 @@ class _AddEntryPageState extends State<AddEntryPage> {
     return Text(
       text,
       style: AppTypography.label.copyWith(color: appTheme.earth),
+    );
+  }
+
+  void _addNote() {
+    setState(() => _notes.add(_NoteInput()));
+  }
+
+  void _removeNote(int index) {
+    setState(() => _notes.removeAt(index).dispose());
+  }
+
+  /// 单条备注编辑卡片：标题 + 描述 + 删除
+  Widget _buildNoteItemEditor(int index, AppThemeExtension appTheme) {
+    final input = _notes[index];
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        border: Border.all(
+          color: appTheme.earthMedium.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: input.title,
+                  hint: '备注标题（如：账号）',
+                  appTheme: appTheme,
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 20,
+                  color: appTheme.rose,
+                ),
+                onPressed: () => _removeNote(index),
+                tooltip: '删除该条备注',
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildTextField(
+            controller: input.content,
+            hint: '备注描述（如：手机号、邮箱等）',
+            appTheme: appTheme,
+            maxLines: 2,
+          ),
+        ],
+      ),
     );
   }
 
@@ -521,6 +604,17 @@ class _AddEntryPageState extends State<AddEntryPage> {
       await VaultService.instance.deleteEntry(_existingEntry!.id!);
       if (mounted) Navigator.of(context).pop(true);
     }
+  }
+}
+
+/// 单条备注的输入状态（标题 + 描述）
+class _NoteInput {
+  final TextEditingController title = TextEditingController();
+  final TextEditingController content = TextEditingController();
+
+  void dispose() {
+    title.dispose();
+    content.dispose();
   }
 }
 

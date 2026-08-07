@@ -7,6 +7,7 @@ import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../models/vault_category.dart';
 import '../models/vault_entry.dart';
+import '../models/vault_note_item.dart';
 import '../services/vault_crypto_service.dart';
 import '../services/vault_service.dart';
 import '../services/vault_session.dart';
@@ -442,7 +443,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
           onTap: () async {
             // 跳转新增页面前先确认已解锁，未解锁弹窗输入主密码
             if (VaultSession.instance.isLocked) {
-              final unlocked = await _showUnlockDialog(hint: '新增密码前请先解锁！');
+              final unlocked = await _showUnlockDialog(hint: '请先解锁后再新增密码！');
               if (unlocked != true || !mounted) return;
             }
             await context.push('/vault/add?categoryId=${widget.categoryId}');
@@ -489,7 +490,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
   Widget _buildEntryCard(VaultEntry entry, AppThemeExtension appTheme) {
     final decryptedPwd =
         _isUnlocked ? _decryptedPasswords[entry.id!] : null;
-    final hasNote = entry.note != null && entry.note!.isNotEmpty;
+    final noteItems = entry.noteItems;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -515,14 +516,11 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
           child: InkWell(
             borderRadius: BorderRadius.circular(appTheme.radiusLg),
             onTap: () async {
-              if (!_isUnlocked) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('请先解锁后再编辑'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-                return;
+              // 编辑前先确认已解锁，未解锁弹窗输入主密码
+              if (VaultSession.instance.isLocked) {
+                final unlocked =
+                    await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
+                if (unlocked != true || !mounted) return;
               }
               await context.push('/vault/edit/${entry.id}');
               _load();
@@ -631,16 +629,10 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
                       ],
                     ),
                   ),
-                  // ── 备注（放在最下面） ──
-                  if (hasNote) ...[
+                  // ── 备注（多条，每条可复制） ──
+                  if (noteItems.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    Text(
-                      entry.note!,
-                      style: AppTypography.bodySm
-                          .copyWith(color: appTheme.earthMedium),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    ...noteItems.map((item) => _buildNoteItem(item, appTheme)),
                   ],
                 ],
               ),
@@ -661,6 +653,37 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Icon(icon, size: 16, color: appTheme.earthMedium),
+      ),
+    );
+  }
+
+  /// 单条备注：标题 + 描述 + 复制
+  Widget _buildNoteItem(VaultNoteItem item, AppThemeExtension appTheme) {
+    final label = item.title.trim().isEmpty ? '备注' : item.title;
+    final text = item.content.trim().isEmpty
+        ? label
+        : '$label：${item.content}';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(Icons.notes_rounded, size: 14, color: appTheme.earthMedium),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.bodySm
+                  .copyWith(color: appTheme.earthMedium),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          _buildSmallAction(
+            icon: Icons.copy_rounded,
+            appTheme: appTheme,
+            onTap: () => _copyToClipboard(item.copyText, '备注'),
+          ),
+        ],
       ),
     );
   }
@@ -692,16 +715,13 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
               leading: Icon(Icons.edit_rounded, color: appTheme.primary),
               title: Text('编辑',
                   style: AppTypography.bodyMd.copyWith(color: appTheme.earth)),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(ctx);
-                if (!_isUnlocked) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('请先解锁后再编辑'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                  return;
+                // 编辑前先确认已解锁，未解锁弹窗输入主密码
+                if (VaultSession.instance.isLocked) {
+                  final unlocked =
+                      await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
+                  if (unlocked != true || !mounted) return;
                 }
                 context.push('/vault/edit/${entry.id}').then((_) => _load());
               },

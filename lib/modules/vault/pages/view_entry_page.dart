@@ -202,16 +202,16 @@ class _ViewEntryPageState extends State<ViewEntryPage> {
             // 密码卡片
             _buildPasswordCard(appTheme),
             const SizedBox(height: 14),
-            // 备注卡片
-            if (_entry!.note != null && _entry!.note!.isNotEmpty)
+            // 备注卡片（多条）
+            for (final item in _entry!.noteItems) ...[
               _buildInfoCard(
-                label: '备注',
-                value: _entry!.note!,
+                label: item.title.trim().isEmpty ? '备注' : item.title,
+                value: item.content,
                 icon: Icons.notes_rounded,
                 appTheme: appTheme,
               ),
-            if (_entry!.note != null && _entry!.note!.isNotEmpty)
               const SizedBox(height: 14),
+            ],
             // 创建/更新时间
             _buildInfoCard(
               label: '创建时间',

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'vault_note_item.dart';
+
 /// 密码保险箱条目
 class VaultEntry {
   final int? id;
@@ -44,6 +47,37 @@ class VaultEntry {
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
+  }
+
+  /// 解析备注为多条结构（兼容旧数据：普通文本视为「其他」标题的单项）
+  List<VaultNoteItem> get noteItems {
+    final raw = note;
+    if (raw == null || raw.trim().isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        final items = <VaultNoteItem>[];
+        for (final item in decoded) {
+          if (item is Map) {
+            items.add(VaultNoteItem.fromJson(Map<String, dynamic>.from(item)));
+          }
+        }
+        return items;
+      }
+    } catch (_) {
+      // 非 JSON 数组，按旧数据兼容处理
+    }
+    return [VaultNoteItem(title: '其他', content: raw)];
+  }
+
+  /// 将多条备注编码为 JSON 字符串（空列表返回 null）
+  static String? encodeNotes(List<VaultNoteItem> items) {
+    final valid = items
+        .where(
+            (i) => i.title.trim().isNotEmpty || i.content.trim().isNotEmpty)
+        .toList();
+    if (valid.isEmpty) return null;
+    return jsonEncode(valid.map((i) => i.toJson()).toList());
   }
 
   VaultEntry copyWith({
