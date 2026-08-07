@@ -395,6 +395,62 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
     }
   }
 
+  void _showEntryActions(VaultEntry entry) {
+    final appTheme = Theme.of(context).appTheme;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: appTheme.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+            top: Radius.circular(appTheme.radiusLg)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: appTheme.earthMedium.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: Icon(Icons.edit_rounded, color: appTheme.primary),
+              title: Text('编辑',
+                  style: AppTypography.bodyMd.copyWith(color: appTheme.earth)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                // 编辑前先确认已解锁，未解锁弹窗输入主密码
+                if (VaultSession.instance.isLocked) {
+                  if (_isUnlocked) _syncLockedState();
+                  final unlocked =
+                      await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
+                  if (unlocked != true || !mounted) return;
+                }
+                context.push('/vault/edit/${entry.id}').then((_) => _load());
+              },
+            ),
+            ListTile(
+              leading:
+                  Icon(Icons.delete_outline_rounded, color: appTheme.rose),
+              title: Text('删除',
+                  style: AppTypography.bodyMd.copyWith(color: appTheme.rose)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _confirmDeleteEntry(entry);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -551,6 +607,9 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
           child: InkWell(
             borderRadius: BorderRadius.circular(appTheme.radiusLg),
             hoverColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onLongPress: () => _showEntryActions(entry),
             onTap: () async {
               // 编辑前先确认已解锁，未解锁弹窗输入主密码
               if ((_category?.isEncrypted ?? true) &&
@@ -563,7 +622,6 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
               await context.push('/vault/edit/${entry.id}');
               _load();
             },
-            onLongPress: () => _showEntryActions(entry),
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
@@ -589,145 +647,98 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                         ),
                     ],
                   ),
-                  // ── 用户名行 ──
-                  if (username.isNotEmpty && title.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: appTheme.cream,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.person_outline_rounded,
-                            size: 14,
-                            color: appTheme.earthMedium,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              username,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: appTheme.earth,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () => _copyToClipboard(username, '用户名'),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: appTheme.primary
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.copy_rounded,
-                                      size: 12,
-                                      color: appTheme.primary),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    '复制',
-                                    style: AppTypography.caption
-                                        .copyWith(color: appTheme.primary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  // ── 凭据区（用户名 + 密码） ──
                   const SizedBox(height: 10),
-                  // ── 密码行 ──
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 8),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: appTheme.cream,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(appTheme.radiusMd),
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        Icon(
-                          decryptedPwd != null
-                              ? Icons.lock_open_rounded
-                              : Icons.lock_outline_rounded,
-                          size: 14,
-                          color: decryptedPwd != null
-                              ? appTheme.sage
-                              : appTheme.earthMedium,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            decryptedPwd ?? '••••••••',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: decryptedPwd != null
-                                  ? appTheme.earth
-                                  : appTheme.earthMedium,
-                              letterSpacing:
-                                  decryptedPwd != null
-                                      ? 0.5
-                                      : 2.5,
-                              fontFamily:
-                                  decryptedPwd != null
-                                      ? 'monospace'
-                                      : null,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (decryptedPwd != null) ...[
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () => _copyToClipboard(
-                                decryptedPwd, '密码'),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: appTheme.primary
-                                    .withValues(alpha: 0.1),
-                                borderRadius:
-                                    BorderRadius.circular(6),
+                        if (username.isNotEmpty && title.isNotEmpty) ...[
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.person_outline_rounded,
+                                size: 16,
+                                color: appTheme.earthMedium,
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.copy_rounded,
-                                      size: 12,
-                                      color: appTheme.primary),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    '复制',
-                                    style: AppTypography.caption
-                                        .copyWith(
-                                            color: appTheme.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  username,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: appTheme.earth,
                                   ),
-                                ],
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              _buildCopyBadge(
+                                () => _copyToClipboard(username, '用户名'),
+                                appTheme,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        Row(
+                          children: [
+                            Icon(
+                              decryptedPwd != null
+                                  ? Icons.lock_open_rounded
+                                  : Icons.lock_outline_rounded,
+                              size: 16,
+                              color: decryptedPwd != null
+                                  ? appTheme.sage
+                                  : appTheme.earthMedium,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                decryptedPwd ?? '••••••••',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: decryptedPwd != null
+                                      ? appTheme.earth
+                                      : appTheme.earthMedium,
+                                  letterSpacing:
+                                      decryptedPwd != null
+                                          ? 0.5
+                                          : 2.5,
+                                  fontFamily:
+                                      decryptedPwd != null
+                                          ? 'monospace'
+                                          : null,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          ),
-                        ],
+                            if (decryptedPwd != null) ...[
+                              const SizedBox(width: 6),
+                              _buildCopyBadge(
+                                () => _copyToClipboard(decryptedPwd, '密码'),
+                                appTheme,
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                   ),
                   // ── 备注（多条，每条可复制） ──
                   if (noteItems.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    ...noteItems.map((item) => _buildNoteItem(item, appTheme)),
+                    const SizedBox(height: 12),
+                    ...noteItems.map(
+                      (item) => _buildNoteItem(
+                        item,
+                        appTheme,
+                        titleWidth: _measureNoteTitleWidth(noteItems),
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -752,60 +763,32 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
     );
   }
 
-  /// 单条备注：标题 + 描述 + 复制
-  Widget _buildNoteItem(VaultNoteItem item, AppThemeExtension appTheme) {
-    final label = item.title.trim().isEmpty ? '备注' : item.title;
-    final text = item.content.trim().isEmpty
-        ? label
-        : '$label：${item.content}';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+  /// 复制胶囊按钮（subtle 为 true 时使用次级弱化样式）
+  Widget _buildCopyBadge(
+    VoidCallback onTap,
+    AppThemeExtension appTheme, {
+    bool subtle = false,
+  }) {
+    final color = subtle ? appTheme.earthMedium : appTheme.primary;
+    final background = subtle
+        ? appTheme.earthMedium.withValues(alpha: 0.08)
+        : appTheme.primary.withValues(alpha: 0.1);
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: appTheme.cream,
-          borderRadius: BorderRadius.circular(8),
+          color: background,
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.notes_rounded, size: 14, color: appTheme.earthMedium),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                text,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: appTheme.earthMedium,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 6),
-            GestureDetector(
-              onTap: () => _copyToClipboard(item.copyText, '备注'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: appTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.copy_rounded,
-                        size: 12,
-                        color: appTheme.primary),
-                    const SizedBox(width: 3),
-                    Text(
-                      '复制',
-                      style: AppTypography.caption
-                          .copyWith(color: appTheme.primary),
-                    ),
-                  ],
-                ),
-              ),
+            Icon(Icons.copy_rounded, size: 12, color: color),
+            const SizedBox(width: 3),
+            Text(
+              '复制',
+              style: AppTypography.caption.copyWith(color: color),
             ),
           ],
         ),
@@ -813,61 +796,81 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
     );
   }
 
-  void _showEntryActions(VaultEntry entry) {
-    final appTheme = Theme.of(context).appTheme;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: appTheme.cardBackground,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(appTheme.radiusLg)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
+  /// 计算备注标题标签的最大宽度，保证多条备注的描述起点对齐
+  double _measureNoteTitleWidth(List<VaultNoteItem> items) {
+    double maxWidth = 40;
+    for (final item in items) {
+      final label = item.title.trim().isEmpty ? '备注' : item.title;
+      final painter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.w500),
+        ),
+        maxLines: 1,
+        textDirection: TextDirection.ltr,
+      )..layout();
+      if (painter.width > maxWidth) maxWidth = painter.width;
+    }
+    // 加上标签左右内边距（8 + 8）
+    return maxWidth + 16;
+  }
+
+  /// 单条备注：标题 + 描述 + 复制（纯文本行，弱化层级）
+  Widget _buildNoteItem(
+    VaultNoteItem item,
+    AppThemeExtension appTheme, {
+    required double titleWidth,
+  }) {
+    final label = item.title.trim().isEmpty ? '备注' : item.title;
+    final content = item.content.trim();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标题（浅灰小标签，统一列宽，允许换行）
+          SizedBox(
+            width: titleWidth,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: appTheme.earthMedium.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
+                color: appTheme.earthMedium.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                label,
+                style: AppTypography.bodySm.copyWith(
+                  color: appTheme.earth,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: Icon(Icons.edit_rounded, color: appTheme.primary),
-              title: Text('编辑',
-                  style: AppTypography.bodyMd.copyWith(color: appTheme.earth)),
-              onTap: () async {
-                Navigator.pop(ctx);
-                // 编辑前先确认已解锁，未解锁弹窗输入主密码
-                if (VaultSession.instance.isLocked) {
-                  if (_isUnlocked) _syncLockedState();
-                  final unlocked =
-                      await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
-                  if (unlocked != true || !mounted) return;
-                }
-                context.push('/vault/edit/${entry.id}').then((_) => _load());
-              },
+          ),
+          const SizedBox(width: 8),
+          // 描述（占满剩余空间，允许换行）
+          Expanded(
+            child: Text(
+              content,
+              style: AppTypography.bodySm.copyWith(
+                color: appTheme.earth,
+                height: 1.5,
+              ),
             ),
-            ListTile(
-              leading:
-                  Icon(Icons.delete_outline_rounded, color: appTheme.rose),
-              title: Text('删除',
-                  style: AppTypography.bodyMd.copyWith(color: appTheme.rose)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _confirmDeleteEntry(entry);
-              },
+          ),
+          // 复制（固定最右侧）
+          if (content.isNotEmpty) ...[
+            const SizedBox(width: 6),
+            _buildCopyBadge(
+              () => _copyToClipboard(item.copyText, '备注'),
+              appTheme,
+              subtle: true,
             ),
-            const SizedBox(height: 8),
           ],
-        ),
+        ],
       ),
     );
   }
+
 }
 
 /// Isolate 入口：在后台线程执行 Argon2id 验证 + 密钥派生

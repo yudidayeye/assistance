@@ -600,6 +600,9 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
         borderRadius: BorderRadius.circular(appTheme.radiusLg),
         child: InkWell(
           borderRadius: BorderRadius.circular(appTheme.radiusLg),
+          hoverColor: Colors.transparent,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
           onTap: () {
             context.push('/vault/category/${category.id}');
           },
