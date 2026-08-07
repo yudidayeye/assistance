@@ -45,6 +45,19 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   void initState() {
     super.initState();
     _checkAndLoad();
+    VaultService.instance.addListener(_onVaultChanged);
+  }
+
+  @override
+  void dispose() {
+    VaultService.instance.removeListener(_onVaultChanged);
+    super.dispose();
+  }
+
+  void _onVaultChanged() {
+    if (mounted) {
+      _loadCategories();
+    }
   }
 
   Future<void> _checkAndLoad() async {

@@ -542,6 +542,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
           borderRadius: BorderRadius.circular(appTheme.radiusLg),
           child: InkWell(
             borderRadius: BorderRadius.circular(appTheme.radiusLg),
+            hoverColor: Colors.transparent,
             onTap: () async {
               // 编辑前先确认已解锁，未解锁弹窗输入主密码
               if (VaultSession.instance.isLocked) {
