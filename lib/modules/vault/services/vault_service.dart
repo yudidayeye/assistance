@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../../core/storage/database_service.dart';
 import '../models/vault_category.dart';
 import '../models/vault_entry.dart';
@@ -5,11 +6,16 @@ import 'vault_crypto_service.dart';
 import 'vault_session.dart';
 
 /// 密码保险箱数据服务 — CRUD 操作
-class VaultService {
+class VaultService extends ChangeNotifier {
   static final VaultService instance = VaultService._();
   VaultService._();
 
   final _db = DatabaseService.instance;
+
+  void _notifyChanged() => notifyListeners();
+
+  /// 外部通知数据已变更（如清除业务数据后刷新首页卡片）
+  void notifyChanged() => notifyListeners();
 
   // ─── 主密码 ───
 
@@ -42,6 +48,7 @@ class VaultService {
     // 设置会话密钥
     final key = VaultCryptoService.instance.deriveKey(masterPassword, salt);
     VaultSession.instance.setKey(key);
+    _notifyChanged();
   }
 
   /// 验证主密码并解锁
@@ -70,7 +77,9 @@ class VaultService {
 
   /// 新增分类
   Future<int> insertCategory(VaultCategory category) async {
-    return _db.insert('mod_vault_categories', category.toMap());
+    final id = await _db.insert('mod_vault_categories', category.toMap());
+    _notifyChanged();
+    return id;
   }
 
   /// 更新分类
@@ -81,6 +90,7 @@ class VaultService {
       where: 'id = ?',
       whereArgs: [category.id],
     );
+    _notifyChanged();
   }
 
   /// 删除分类（级联删除条目）
@@ -90,6 +100,7 @@ class VaultService {
       where: 'id = ?',
       whereArgs: [categoryId],
     );
+    _notifyChanged();
   }
 
   /// 获取分类下条目数量
@@ -153,7 +164,7 @@ class VaultService {
     final (encryptedPassword, passwordIv) =
         VaultCryptoService.instance.encryptAesGcm(plainPassword, key);
 
-    return _db.insert('mod_vault_entries', {
+    final id = await _db.insert('mod_vault_entries', {
       'category_id': categoryId,
       'title': title,
       'encrypted_password': encryptedPassword,
@@ -162,6 +173,8 @@ class VaultService {
       'created_at': now,
       'updated_at': now,
     });
+    _notifyChanged();
+    return id;
   }
 
   /// 更新条目
@@ -192,6 +205,7 @@ class VaultService {
       where: 'id = ?',
       whereArgs: [entryId],
     );
+    _notifyChanged();
   }
 
   /// 删除条目
@@ -201,6 +215,7 @@ class VaultService {
       where: 'id = ?',
       whereArgs: [entryId],
     );
+    _notifyChanged();
   }
 
   /// 获取所有条目数量（用于摘要）

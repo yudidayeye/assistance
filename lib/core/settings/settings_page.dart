@@ -16,6 +16,7 @@ import 'update_service.dart';
 import '../../modules/period_book/services/period_book_settings.dart';
 import '../../modules/period_book/services/period_book_service.dart';
 import '../../modules/period_tracker/services/period_service.dart';
+import '../../modules/vault/services/vault_service.dart';
 import '../../modules/vault/services/vault_session.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/settings_list_item.dart';
@@ -967,6 +968,7 @@ class _SettingsPageState extends State<SettingsPage> {
               // 通知各模块刷新首页卡片
               PeriodBookService.instance.notifyChanged();
               PeriodService.instance.notifyChanged();
+              VaultService.instance.notifyChanged();
               // 清除保险箱会话密钥
               VaultSession.instance.lock();
               _showSnackBar('业务数据已清除');
