@@ -182,7 +182,7 @@ class _ViewEntryPageState extends State<ViewEntryPage> {
         titleSpacing: 0,
         automaticallyImplyLeading: true,
         title: Text(
-          _entry!.title,
+          _entry!.title.trim().isEmpty ? '密码详情' : _entry!.title,
           style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
         ),
       ),
@@ -194,11 +194,21 @@ class _ViewEntryPageState extends State<ViewEntryPage> {
             // 标题卡片
             _buildInfoCard(
               label: '标题',
-              value: _entry!.title,
+              value: _entry!.title.trim().isEmpty ? '未命名' : _entry!.title,
               icon: Icons.label_outline_rounded,
               appTheme: appTheme,
             ),
             const SizedBox(height: 14),
+            // 用户名卡片
+            if (_entry!.username?.trim().isNotEmpty == true) ...[
+              _buildInfoCard(
+                label: '用户名',
+                value: _entry!.username!.trim(),
+                icon: Icons.person_outline_rounded,
+                appTheme: appTheme,
+              ),
+              const SizedBox(height: 14),
+            ],
             // 密码卡片
             _buildPasswordCard(appTheme),
             const SizedBox(height: 14),

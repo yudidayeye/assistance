@@ -49,6 +49,7 @@ void main() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         category_id INTEGER NOT NULL,
         title TEXT NOT NULL,
+        username TEXT,
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
         note TEXT,
@@ -150,5 +151,46 @@ void main() {
 
     final titles = await vault.getNoteTitles();
     expect(titles, containsAll(['账号', '手机号']));
+  });
+
+  test('插入带用户名的条目，读取后用户名保持一致', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '测试分类',
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final entryId = await vault.insertEntry(
+      categoryId: catId,
+      title: '条目A',
+      username: 'admin@example.com',
+      plainPassword: 'p1',
+    );
+
+    final entry = await vault.getEntry(entryId);
+    expect(entry, isNotNull);
+    expect(entry!.username, 'admin@example.com');
+  });
+
+  test('用户名可选：不传 username 也可正常新增', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '测试分类',
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final entryId = await vault.insertEntry(
+      categoryId: catId,
+      title: '条目B',
+      plainPassword: 'p1',
+    );
+
+    final entry = await vault.getEntry(entryId);
+    expect(entry, isNotNull);
+    expect(entry!.username, isNull);
   });
 }

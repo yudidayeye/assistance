@@ -396,7 +396,10 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       body: _categories.isEmpty
           ? _buildEmptyState(appTheme)
           : _buildCategoryList(appTheme),
-      floatingActionButton: _buildFab(appTheme),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 40),
+        child: _buildFab(appTheme),
+      ),
     );
   }
 

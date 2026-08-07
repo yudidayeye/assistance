@@ -9,7 +9,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 13;
+  static const int _currentVersion = 14;
 
   /// 注入数据库实例（仅测试用，绕过依赖 path_provider 的默认初始化）
   @visibleForTesting
@@ -214,6 +214,7 @@ class DatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         category_id INTEGER NOT NULL,
         title TEXT NOT NULL,
+        username TEXT,
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
         note TEXT,
@@ -282,6 +283,11 @@ class DatabaseService {
       await _createV13Schema(db);
     }
 
+    // 如果从 v13 升级到 v14，为密码条目添加用户名字段
+    if (oldVersion < 14 && newVersion >= 14) {
+      await _migrateToV14(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
@@ -292,6 +298,7 @@ class DatabaseService {
       if (v == 11) continue; // 已经在上面处理了
       if (v == 12) continue; // 已经在上面处理了
       if (v == 13) continue; // 已经在上面处理了
+      if (v == 14) continue; // 已经在上面处理了
 
       await db.transaction((txn) async {
         if (v == 2) {
@@ -305,6 +312,13 @@ class DatabaseService {
         }
       });
     }
+  }
+
+  /// v14 迁移：为密码条目表添加用户名字段
+  Future<void> _migrateToV14(Database db) async {
+    await db.execute(
+      'ALTER TABLE mod_vault_entries ADD COLUMN username TEXT',
+    );
   }
 
   /// v6 迁移：引入阶段概念，保留旧数据

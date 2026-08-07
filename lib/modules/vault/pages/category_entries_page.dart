@@ -434,7 +434,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                 ? _buildEmpty(appTheme)
                 : _buildEntryList(appTheme),
         floatingActionButton: Padding(
-          padding: EdgeInsets.only(bottom: appTheme.spaceLg),
+          padding: const EdgeInsets.only(bottom: 40),
           child: _buildFab(appTheme),
         ),
       ),
@@ -517,6 +517,11 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
     final decryptedPwd =
         _isUnlocked ? _decryptedPasswords[entry.id!] : null;
     final noteItems = entry.noteItems;
+    final title = entry.title.trim();
+    final username = entry.username?.trim() ?? '';
+    final displayTitle = title.isNotEmpty
+        ? title
+        : (username.isNotEmpty ? username : '未命名');
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -563,21 +568,50 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                     children: [
                       Expanded(
                         child: Text(
-                          entry.title,
+                          displayTitle,
                           style: AppTypography.bodyLg
                               .copyWith(color: appTheme.earth),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      _buildSmallAction(
-                        icon: Icons.copy_rounded,
-                        appTheme: appTheme,
-                        onTap: () =>
-                            _copyToClipboard(entry.title, '标题'),
-                      ),
+                      if (title.isNotEmpty)
+                        _buildSmallAction(
+                          icon: Icons.copy_rounded,
+                          appTheme: appTheme,
+                          onTap: () => _copyToClipboard(title, '标题'),
+                        ),
                     ],
                   ),
+                  // ── 用户名行 ──
+                  if (username.isNotEmpty && title.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline_rounded,
+                          size: 14,
+                          color: appTheme.earthMedium,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            username,
+                            style: AppTypography.bodySm
+                                .copyWith(color: appTheme.earthMedium),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        _buildSmallAction(
+                          icon: Icons.copy_rounded,
+                          appTheme: appTheme,
+                          onTap: () =>
+                              _copyToClipboard(username, '用户名'),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   // ── 密码行 ──
                   Container(

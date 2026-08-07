@@ -499,6 +499,7 @@ class ImportExportService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         category_id INTEGER NOT NULL,
         title TEXT NOT NULL,
+        username TEXT,
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
         note TEXT,
@@ -558,12 +559,13 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(entry as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_vault_entries
-           (id, category_id, title, encrypted_password, password_iv, note, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+           (id, category_id, title, username, encrypted_password, password_iv, note, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['category_id'],
           map['title'],
+          map['username'],
           map['encrypted_password'],
           map['password_iv'],
           map['note'],

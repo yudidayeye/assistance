@@ -23,6 +23,7 @@ class AddEntryPage extends StatefulWidget {
 
 class _AddEntryPageState extends State<AddEntryPage> {
   final _titleController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final List<_NoteInput> _notes = [];
 
@@ -68,6 +69,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
       _existingEntry = entry;
       _selectedCategoryId = entry.categoryId;
       _titleController.text = entry.title;
+      _usernameController.text = entry.username ?? '';
       _passwordController.text = plainPassword ?? '';
       _notes
         ..clear()
@@ -261,12 +263,9 @@ class _AddEntryPageState extends State<AddEntryPage> {
 
   Future<void> _handleSave() async {
     final title = _titleController.text.trim();
+    final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (title.isEmpty) {
-      setState(() => _error = '请输入标题');
-      return;
-    }
     if (password.isEmpty) {
       setState(() => _error = '请输入密码');
       return;
@@ -298,6 +297,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
           entryId: _existingEntry!.id!,
           categoryId: _selectedCategoryId!,
           title: title,
+          username: username,
           plainPassword: password,
           note: note,
         );
@@ -305,6 +305,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
         await VaultService.instance.insertEntry(
           categoryId: _selectedCategoryId!,
           title: title,
+          username: username,
           plainPassword: password,
           note: note,
         );
@@ -321,6 +322,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
   @override
   void dispose() {
     _titleController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     for (final note in _notes) {
       note.dispose();
@@ -361,8 +363,8 @@ class _AddEntryPageState extends State<AddEntryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 标题
-            _buildLabel('标题', appTheme),
+            // 标题（可选）
+            _buildLabel('标题（可选）', appTheme),
             const SizedBox(height: 6),
             _buildTextField(
               controller: _titleController,
@@ -370,8 +372,17 @@ class _AddEntryPageState extends State<AddEntryPage> {
               appTheme: appTheme,
             ),
             const SizedBox(height: 20),
-            // 密码
-            _buildLabel('密码', appTheme),
+            // 用户名（可选）
+            _buildLabel('用户名（可选）', appTheme),
+            const SizedBox(height: 6),
+            _buildTextField(
+              controller: _usernameController,
+              hint: '例：admin@example.com',
+              appTheme: appTheme,
+            ),
+            const SizedBox(height: 20),
+            // 密码（必填）
+            _buildLabel('密码（必填）', appTheme),
             const SizedBox(height: 6),
             _buildPasswordField(appTheme),
             const SizedBox(height: 20),

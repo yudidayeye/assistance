@@ -160,6 +160,7 @@ class VaultService extends ChangeNotifier {
     required int categoryId,
     required String title,
     required String plainPassword,
+    String? username,
     String? note,
   }) async {
     final key = VaultSession.instance.key;
@@ -172,6 +173,7 @@ class VaultService extends ChangeNotifier {
     final id = await _db.insert('mod_vault_entries', {
       'category_id': categoryId,
       'title': title,
+      'username': username,
       'encrypted_password': encryptedPassword,
       'password_iv': passwordIv,
       'note': note,
@@ -188,6 +190,7 @@ class VaultService extends ChangeNotifier {
     required int categoryId,
     required String title,
     required String plainPassword,
+    String? username,
     String? note,
   }) async {
     final key = VaultSession.instance.key;
@@ -202,6 +205,7 @@ class VaultService extends ChangeNotifier {
       {
         'category_id': categoryId,
         'title': title,
+        'username': username,
         'encrypted_password': encryptedPassword,
         'password_iv': passwordIv,
         'note': note,

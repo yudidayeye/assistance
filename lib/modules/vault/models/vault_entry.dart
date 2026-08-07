@@ -6,6 +6,7 @@ class VaultEntry {
   final int? id;
   final int categoryId;
   final String title;
+  final String? username;
   final String encryptedPassword;
   final String passwordIv;
   final String? note;
@@ -16,6 +17,7 @@ class VaultEntry {
     this.id,
     required this.categoryId,
     required this.title,
+    this.username,
     required this.encryptedPassword,
     required this.passwordIv,
     this.note,
@@ -28,6 +30,7 @@ class VaultEntry {
       id: map['id'] as int?,
       categoryId: map['category_id'] as int,
       title: map['title'] as String,
+      username: map['username'] as String?,
       encryptedPassword: map['encrypted_password'] as String,
       passwordIv: map['password_iv'] as String,
       note: map['note'] as String?,
@@ -41,6 +44,7 @@ class VaultEntry {
       if (id != null) 'id': id,
       'category_id': categoryId,
       'title': title,
+      'username': username,
       'encrypted_password': encryptedPassword,
       'password_iv': passwordIv,
       'note': note,
@@ -84,6 +88,7 @@ class VaultEntry {
     int? id,
     int? categoryId,
     String? title,
+    String? username,
     String? encryptedPassword,
     String? passwordIv,
     String? note,
@@ -94,6 +99,7 @@ class VaultEntry {
       id: id ?? this.id,
       categoryId: categoryId ?? this.categoryId,
       title: title ?? this.title,
+      username: username ?? this.username,
       encryptedPassword: encryptedPassword ?? this.encryptedPassword,
       passwordIv: passwordIv ?? this.passwordIv,
       note: note ?? this.note,
