@@ -95,7 +95,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
   }
 
   /// 弹窗输入主密码解锁（与编辑余额弹窗样式一致）
-  Future<bool?> _showUnlockDialog() async {
+  Future<bool?> _showUnlockDialog({String? hint}) async {
     final appTheme = Theme.of(context).appTheme;
     final passwordController = TextEditingController();
     bool obscure = true;
@@ -126,6 +126,20 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (hint != null) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          hint,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: appTheme.rose,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                     TextField(
                       controller: passwordController,
                       obscureText: obscure,
@@ -393,7 +407,10 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
             : _entries.isEmpty
                 ? _buildEmpty(appTheme)
                 : _buildEntryList(appTheme),
-        floatingActionButton: _buildFab(appTheme),
+        floatingActionButton: Padding(
+          padding: EdgeInsets.only(bottom: appTheme.spaceLg),
+          child: _buildFab(appTheme),
+        ),
       ),
     );
   }
@@ -423,6 +440,11 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage> {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () async {
+            // 跳转新增页面前先确认已解锁，未解锁弹窗输入主密码
+            if (VaultSession.instance.isLocked) {
+              final unlocked = await _showUnlockDialog(hint: '新增密码前请先解锁！');
+              if (unlocked != true || !mounted) return;
+            }
             await context.push('/vault/add?categoryId=${widget.categoryId}');
             _load();
           },
