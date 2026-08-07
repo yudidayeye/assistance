@@ -7,6 +7,7 @@ import '../theme/theme_provider.dart';
 import 'settings_service.dart';
 import '../../modules/period_book/services/period_book_service.dart';
 import '../../modules/period_tracker/services/period_service.dart';
+import '../../modules/vault/services/vault_service.dart';
 
 /// 数据导入导出服务 — 支持 JSON 和纯文本格式
 /// - JSON: 完整备份（设置 + 生理期记录 + 周期记账）
@@ -271,6 +272,7 @@ class ImportExportService {
       // 通知模块服务数据已变更，刷新首页卡片
       PeriodBookService.instance.notifyChanged();
       PeriodService.instance.notifyChanged();
+      VaultService.instance.notifyChanged();
 
       return ImportResult.success(
         settingsCount: settingsCount,
