@@ -4,6 +4,7 @@ import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../services/period_book_service.dart';
 
 /// 编辑周期页
@@ -472,16 +473,8 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
 
       if (hasOverlap) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('日期与已有周期重叠，请调整'),
-              backgroundColor: Theme.of(context).appTheme.rose,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(Theme.of(context).appTheme.radiusSm),
-              ),
-            ),
-          );
+          AppSnackBar.show(context, '日期与已有周期重叠，请调整',
+              type: AppSnackBarType.error);
         }
         return;
       }
@@ -501,16 +494,8 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('保存失败: $e'),
-            backgroundColor: Theme.of(context).appTheme.rose,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(Theme.of(context).appTheme.radiusSm),
-            ),
-          ),
-        );
+        AppSnackBar.show(context, '保存失败: $e',
+            type: AppSnackBarType.error);
       }
       debugPrint('Save period error: $e');
     } finally {
@@ -518,4 +503,3 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
     }
   }
 }
-

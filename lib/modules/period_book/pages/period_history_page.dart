@@ -6,6 +6,7 @@ import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../../../shared/utils/format_utils.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../models/period_record.dart';
 import '../models/expense_record.dart';
 import '../models/stage_record.dart';
@@ -415,23 +416,13 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
         _stagesMap.remove(period.id);
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('删除成功'),
-            backgroundColor: Theme.of(context).appTheme.sage,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppSnackBar.show(context, '删除成功',
+            type: AppSnackBarType.success);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('删除失败: $e'),
-            backgroundColor: Theme.of(context).appTheme.rose,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppSnackBar.show(context, '删除失败: $e',
+            type: AppSnackBarType.error);
       }
       _loadData();
     }

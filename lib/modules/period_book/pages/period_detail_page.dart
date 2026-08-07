@@ -5,6 +5,7 @@ import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../models/period_record.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
@@ -610,15 +611,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               final val = double.tryParse(controller.text.trim());
               if (val != null && val > maxBalance) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}'),
-                    backgroundColor: appTheme.rose,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                  ),
+                AppSnackBar.show(
+                  context,
+                  '余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}',
+                  type: AppSnackBarType.error,
                 );
                 return;
               }

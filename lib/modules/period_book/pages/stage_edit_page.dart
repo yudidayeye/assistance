@@ -5,6 +5,7 @@ import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/app_segmented_tab.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
 import '../models/expense_record.dart';
@@ -163,16 +164,8 @@ class _StageEditPageState extends State<StageEditPage> {
     } catch (e) {
       debugPrint('Save stage dates error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('保存失败: $e'),
-            backgroundColor: Theme.of(context).appTheme.rose,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(Theme.of(context).appTheme.radiusSm),
-            ),
-          ),
-        );
+        AppSnackBar.show(context, '保存失败: $e',
+            type: AppSnackBarType.error);
       }
     }
   }
@@ -594,32 +587,17 @@ class _StageEditPageState extends State<StageEditPage> {
               final val = double.tryParse(controller.text.trim());
               if (val != null && val > maxBalance) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}'),
-                    backgroundColor: appTheme.rose,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                  ),
+                AppSnackBar.show(
+                  context,
+                  '余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}',
+                  type: AppSnackBarType.error,
                 );
                 return;
               }
               if (val == null || val < 0) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('请输入有效的余额金额'),
-                    backgroundColor: appTheme.rose,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                  ),
-                );
+                AppSnackBar.show(context, '请输入有效的余额金额',
+                    type: AppSnackBarType.error);
                 return;
               }
               await _service.updateStageBalance(widget.stageId, val);
@@ -1512,4 +1490,3 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 }
-

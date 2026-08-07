@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../models/vault_entry.dart';
 import '../models/vault_note_item.dart';
 import '../services/vault_crypto_service.dart';
@@ -50,12 +51,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
       if (mounted) {
         Navigator.of(context).pop();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('请先解锁后再编辑密码！'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          AppSnackBar.show(context, '请先解锁后再编辑密码！');
         }
       }
       return;
@@ -490,12 +486,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
     final titles = await VaultService.instance.getNoteTitles();
     if (!mounted) return;
     if (titles.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('暂无可选类型，可直接输入'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      AppSnackBar.show(context, '暂无可选类型，可直接输入');
       return;
     }
     final appTheme = Theme.of(context).appTheme;

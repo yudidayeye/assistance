@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../models/vault_entry.dart';
 import '../services/vault_service.dart';
 import '../services/vault_session.dart';
@@ -346,12 +347,7 @@ class _ViewEntryPageState extends State<ViewEntryPage> {
                     if (_plainPassword != null) {
                       Clipboard.setData(
                           ClipboardData(text: _plainPassword!));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('密码已复制'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
+                      AppSnackBar.show(context, '密码已复制');
                     }
                   },
                   child: Container(

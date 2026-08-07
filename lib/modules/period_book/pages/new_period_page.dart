@@ -4,6 +4,7 @@ import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../services/period_book_service.dart';
 import '../services/period_book_settings.dart';
 
@@ -481,16 +482,8 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
     } catch (e) {
       if (mounted) {
         // 显示错误提示
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('日期与已有周期重叠，请调整'),
-            backgroundColor: Theme.of(context).appTheme.rose,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(Theme.of(context).appTheme.radiusSm),
-            ),
-          ),
-        );
+        AppSnackBar.show(context, '日期与已有周期重叠，请调整',
+            type: AppSnackBarType.error);
       }
       debugPrint('Save period error: $e');
     } finally {
@@ -498,4 +491,3 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
     }
   }
 }
-

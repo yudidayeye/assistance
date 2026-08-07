@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/theme_extension.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 
 /// 密码遮罩显示组件
 ///
@@ -56,12 +57,7 @@ class _MaskedPasswordState extends State<MaskedPassword> {
         GestureDetector(
           onTap: () {
             Clipboard.setData(ClipboardData(text: widget.plainText));
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('密码已复制'),
-                duration: Duration(seconds: 2),
-              ),
-            );
+            AppSnackBar.show(context, '密码已复制');
           },
           child: Padding(
             padding: const EdgeInsets.all(4),

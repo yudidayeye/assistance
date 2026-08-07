@@ -13,6 +13,7 @@ import '../theme/theme_provider.dart';
 import 'import_export_service.dart';
 import 'update_dialog.dart';
 import 'update_service.dart';
+import '../../shared/widgets/app_snack_bar.dart';
 import '../../modules/period_book/services/period_book_settings.dart';
 import '../../modules/period_book/services/period_book_service.dart';
 import '../../modules/period_tracker/services/period_service.dart';
@@ -981,16 +982,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showSnackBar(String message) {
-    final appTheme = Theme.of(context).appTheme;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message,
-          style: AppTypography.bodyMd.copyWith(
-              color: appTheme.earth, fontWeight: FontWeight.w500)),
-      backgroundColor: appTheme.primaryLight,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusMd)),
-      margin: const EdgeInsets.all(AppSpacing.md),
-    ));
+    AppSnackBar.show(context, message);
   }
 }
 
