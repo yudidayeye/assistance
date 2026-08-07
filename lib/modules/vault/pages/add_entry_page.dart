@@ -422,10 +422,13 @@ class _AddEntryPageState extends State<AddEntryPage> {
             ],
             OutlinedButton.icon(
               onPressed: _addNote,
-              icon: Icon(Icons.add_rounded, size: 18, color: appTheme.primary),
+              icon: Icon(Icons.add_rounded, size: 16, color: appTheme.primary),
               label: Text(
                 '添加备注',
-                style: TextStyle(color: appTheme.primary),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: appTheme.primary,
+                ),
               ),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(
@@ -433,6 +436,11 @@ class _AddEntryPageState extends State<AddEntryPage> {
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                ),
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
                 ),
               ),
             ),
@@ -557,7 +565,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
   Widget _buildNoteItemEditor(int index, AppThemeExtension appTheme) {
     final input = _notes[index];
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 6, 2, 6),
+      padding: const EdgeInsets.fromLTRB(8, 4, 2, 4),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusMd),
@@ -575,8 +583,14 @@ class _AddEntryPageState extends State<AddEntryPage> {
               controller: input.title,
               hint: '标题',
               appTheme: appTheme,
+              textStyle: AppTypography.bodySm.copyWith(
+                color: appTheme.earth,
+                fontWeight: FontWeight.w400,
+              ),
+              hintStyle: AppTypography.caption
+                  .copyWith(color: appTheme.earthMedium),
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               suffixIcon: IconButton(
                 icon: Icon(
                   Icons.arrow_drop_down_rounded,
@@ -600,8 +614,14 @@ class _AddEntryPageState extends State<AddEntryPage> {
               hint: '描述',
               appTheme: appTheme,
               maxLines: 1,
+              textStyle: AppTypography.bodySm.copyWith(
+                color: appTheme.earth,
+                fontWeight: FontWeight.w400,
+              ),
+              hintStyle: AppTypography.caption
+                  .copyWith(color: appTheme.earthMedium),
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             ),
           ),
           Padding(
@@ -609,7 +629,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
             child: IconButton(
               icon: Icon(
                 Icons.delete_outline_rounded,
-                size: 20,
+                size: 18,
                 color: appTheme.rose,
               ),
               onPressed: () => _removeNote(index),
@@ -629,16 +649,19 @@ class _AddEntryPageState extends State<AddEntryPage> {
     required String hint,
     required AppThemeExtension appTheme,
     int maxLines = 1,
+    TextStyle? textStyle,
+    TextStyle? hintStyle,
     EdgeInsetsGeometry? contentPadding,
     Widget? suffixIcon,
   }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: AppTypography.bodyLg.copyWith(color: appTheme.earth),
+      style: textStyle ?? AppTypography.bodyLg.copyWith(color: appTheme.earth),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTypography.bodyMd.copyWith(color: appTheme.earthMedium),
+        hintStyle:
+            hintStyle ?? AppTypography.bodyMd.copyWith(color: appTheme.earthMedium),
         filled: true,
         fillColor: appTheme.cardBackground,
         border: OutlineInputBorder(
