@@ -24,6 +24,7 @@ class ViewEntryPage extends StatefulWidget {
 class _ViewEntryPageState extends State<ViewEntryPage> {
   VaultEntry? _entry;
   String? _plainPassword;
+  bool _isEncrypted = true;
   bool _loading = true;
   bool _needVerify = false;
 
@@ -39,6 +40,15 @@ class _ViewEntryPageState extends State<ViewEntryPage> {
 
     setState(() => _entry = entry);
 
+    // 未加密分类直接显示明文，无需验证主密码
+    final category =
+        await VaultService.instance.getCategory(entry.categoryId);
+    _isEncrypted = category?.isEncrypted ?? true;
+    if (!_isEncrypted) {
+      _decryptPassword();
+      return;
+    }
+
     // 检查会话是否已解锁
     if (VaultSession.instance.isLocked) {
       setState(() {
@@ -53,7 +63,8 @@ class _ViewEntryPageState extends State<ViewEntryPage> {
 
   void _decryptPassword() {
     if (_entry == null) return;
-    final plain = VaultService.instance.decryptEntryPassword(_entry!);
+    final plain = VaultService.instance
+        .decryptEntryPassword(_entry!, isEncrypted: _isEncrypted);
     setState(() {
       _plainPassword = plain;
       _loading = false;

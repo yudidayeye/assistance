@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../models/vault_category.dart';
 import '../services/vault_service.dart';
+import '../services/vault_session.dart';
 import 'master_password_page.dart';
 
 /// 密码保险箱入口页 — 分类列表
@@ -114,6 +116,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   Future<void> _showAddCategoryDialog() async {
     final nameController = TextEditingController();
     String selectedIcon = 'folder';
+    bool isEncrypted = true;
 
     final result = await showDialog<bool>(
       context: context,
@@ -186,6 +189,24 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                       );
                     }).toList(),
                   ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    value: isEncrypted,
+                    onChanged: (v) =>
+                        setDialogState(() => isEncrypted = v),
+                    contentPadding: EdgeInsets.zero,
+                    activeThumbColor: appTheme.primary,
+                    title: Text(
+                      '加密存储',
+                      style: AppTypography.bodyMd
+                          .copyWith(color: appTheme.earth),
+                    ),
+                    subtitle: Text(
+                      isEncrypted ? '密码将加密保存' : '密码将明文保存',
+                      style: AppTypography.bodySm
+                          .copyWith(color: appTheme.earthLight),
+                    ),
+                  ),
                 ],
               ),
               actions: [
@@ -211,6 +232,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       await VaultService.instance.insertCategory(VaultCategory(
         name: nameController.text.trim(),
         icon: selectedIcon,
+        isEncrypted: isEncrypted,
         sortOrder: _categories.length,
         createdAt: now,
         updatedAt: now,
@@ -222,6 +244,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   Future<void> _showEditCategoryDialog(VaultCategory category) async {
     final nameController = TextEditingController(text: category.name);
     String selectedIcon = category.icon;
+    bool isEncrypted = category.isEncrypted;
 
     final result = await showDialog<bool>(
       context: context,
@@ -293,6 +316,24 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                       );
                     }).toList(),
                   ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    value: isEncrypted,
+                    onChanged: (v) =>
+                        setDialogState(() => isEncrypted = v),
+                    contentPadding: EdgeInsets.zero,
+                    activeThumbColor: appTheme.primary,
+                    title: Text(
+                      '加密存储',
+                      style: AppTypography.bodyMd
+                          .copyWith(color: appTheme.earth),
+                    ),
+                    subtitle: Text(
+                      isEncrypted ? '密码将加密保存' : '密码将明文保存',
+                      style: AppTypography.bodySm
+                          .copyWith(color: appTheme.earthLight),
+                    ),
+                  ),
                 ],
               ),
               actions: [
@@ -314,9 +355,20 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
     );
 
     if (result == true && nameController.text.trim().isNotEmpty) {
+      // 切换加密状态且有密码条目时，需要会话已解锁才能迁移存储格式
+      if (category.isEncrypted != isEncrypted) {
+        final count = await VaultService.instance
+            .getCategoryEntryCount(category.id!);
+        if (count > 0 && VaultSession.instance.isLocked) {
+          if (!mounted) return;
+          AppSnackBar.show(context, '请先解锁后再修改分类的加密状态');
+          return;
+        }
+      }
       await VaultService.instance.updateCategory(category.copyWith(
         name: nameController.text.trim(),
         icon: selectedIcon,
+        isEncrypted: isEncrypted,
         updatedAt: DateTime.now().toIso8601String(),
       ));
       await _loadCategories();

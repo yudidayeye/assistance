@@ -75,6 +75,17 @@ class VaultService extends ChangeNotifier {
     return rows.map(VaultCategory.fromMap).toList();
   }
 
+  /// 获取单个分类
+  Future<VaultCategory?> getCategory(int categoryId) async {
+    final rows = await _db.query(
+      'mod_vault_categories',
+      where: 'id = ?',
+      whereArgs: [categoryId],
+      limit: 1,
+    );
+    return rows.isNotEmpty ? VaultCategory.fromMap(rows.first) : null;
+  }
+
   /// 新增分类
   Future<int> insertCategory(VaultCategory category) async {
     final id = await _db.insert('mod_vault_categories', category.toMap());
@@ -84,13 +95,75 @@ class VaultService extends ChangeNotifier {
 
   /// 更新分类
   Future<void> updateCategory(VaultCategory category) async {
+    final old = await getCategory(category.id!);
+    final oldIsEncrypted = old?.isEncrypted ?? true;
+
     await _db.update(
       'mod_vault_categories',
       category.toMap(),
       where: 'id = ?',
       whereArgs: [category.id],
     );
+
+    // 加密状态变化时，迁移已有条目的密码存储格式
+    if (oldIsEncrypted != category.isEncrypted) {
+      await _migrateEntriesEncryption(category.id!,
+          fromEncrypted: oldIsEncrypted, toEncrypted: category.isEncrypted);
+    }
     _notifyChanged();
+  }
+
+  /// 分类加密状态变化时，迁移该分类下条目的密码存储格式
+  ///
+  /// 加密 → 非加密：解密后明文存储；非加密 → 加密：明文加密后存储。
+  /// 会话未解锁导致无法解密时跳过对应条目。
+  Future<void> _migrateEntriesEncryption(
+    int categoryId, {
+    required bool fromEncrypted,
+    required bool toEncrypted,
+  }) async {
+    final entries = await getEntriesByCategory(categoryId);
+    if (entries.isEmpty) return;
+    for (final entry in entries) {
+      final String plain;
+      if (fromEncrypted) {
+        final key = VaultSession.instance.key;
+        if (key == null) continue;
+        try {
+          plain = VaultCryptoService.instance
+              .decryptAesGcm(entry.encryptedPassword, entry.passwordIv, key);
+        } catch (_) {
+          continue;
+        }
+      } else {
+        plain = entry.encryptedPassword;
+      }
+
+      final String newCipher;
+      final String newIv;
+      if (toEncrypted) {
+        final key = VaultSession.instance.key;
+        if (key == null) continue;
+        final (cipher, iv) =
+            VaultCryptoService.instance.encryptAesGcm(plain, key);
+        newCipher = cipher;
+        newIv = iv;
+      } else {
+        newCipher = plain;
+        newIv = '';
+      }
+
+      await _db.update(
+        'mod_vault_entries',
+        {
+          'encrypted_password': newCipher,
+          'password_iv': newIv,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [entry.id],
+      );
+    }
   }
 
   /// 删除分类（级联删除条目）
@@ -143,8 +216,10 @@ class VaultService extends ChangeNotifier {
 
   /// 解密条目的密码字段
   ///
-  /// 需要会话已解锁
-  String? decryptEntryPassword(VaultEntry entry) {
+  /// 加密分类需要会话已解锁；未加密分类直接返回明文存储的密码
+  String? decryptEntryPassword(VaultEntry entry,
+      {required bool isEncrypted}) {
+    if (!isEncrypted) return entry.encryptedPassword;
     final key = VaultSession.instance.key;
     if (key == null) return null;
     try {
@@ -155,7 +230,7 @@ class VaultService extends ChangeNotifier {
     }
   }
 
-  /// 新增条目（自动加密密码字段）
+  /// 新增条目（加密分类自动加密密码字段，未加密分类明文保存）
   Future<int> insertEntry({
     required int categoryId,
     required String title,
@@ -163,12 +238,23 @@ class VaultService extends ChangeNotifier {
     String? username,
     String? note,
   }) async {
-    final key = VaultSession.instance.key;
-    if (key == null) throw StateError('Vault is locked');
+    final category = await getCategory(categoryId);
+    final isEncrypted = category?.isEncrypted ?? true;
 
     final now = DateTime.now().toIso8601String();
-    final (encryptedPassword, passwordIv) =
-        VaultCryptoService.instance.encryptAesGcm(plainPassword, key);
+    final String encryptedPassword;
+    final String passwordIv;
+    if (isEncrypted) {
+      final key = VaultSession.instance.key;
+      if (key == null) throw StateError('Vault is locked');
+      final (cipher, iv) =
+          VaultCryptoService.instance.encryptAesGcm(plainPassword, key);
+      encryptedPassword = cipher;
+      passwordIv = iv;
+    } else {
+      encryptedPassword = plainPassword;
+      passwordIv = '';
+    }
 
     final id = await _db.insert('mod_vault_entries', {
       'category_id': categoryId,
@@ -184,7 +270,7 @@ class VaultService extends ChangeNotifier {
     return id;
   }
 
-  /// 更新条目
+  /// 更新条目（加密分类自动加密密码字段，未加密分类明文保存）
   Future<void> updateEntry({
     required int entryId,
     required int categoryId,
@@ -193,12 +279,23 @@ class VaultService extends ChangeNotifier {
     String? username,
     String? note,
   }) async {
-    final key = VaultSession.instance.key;
-    if (key == null) throw StateError('Vault is locked');
+    final category = await getCategory(categoryId);
+    final isEncrypted = category?.isEncrypted ?? true;
 
     final now = DateTime.now().toIso8601String();
-    final (encryptedPassword, passwordIv) =
-        VaultCryptoService.instance.encryptAesGcm(plainPassword, key);
+    final String encryptedPassword;
+    final String passwordIv;
+    if (isEncrypted) {
+      final key = VaultSession.instance.key;
+      if (key == null) throw StateError('Vault is locked');
+      final (cipher, iv) =
+          VaultCryptoService.instance.encryptAesGcm(plainPassword, key);
+      encryptedPassword = cipher;
+      passwordIv = iv;
+    } else {
+      encryptedPassword = plainPassword;
+      passwordIv = '';
+    }
 
     await _db.update(
       'mod_vault_entries',

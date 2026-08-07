@@ -33,11 +33,13 @@ class _AddEntryPageState extends State<AddEntryPage> {
   String? _error;
   VaultEntry? _existingEntry;
   int? _selectedCategoryId;
+  bool _isEncrypted = true;
 
   @override
   void initState() {
     super.initState();
     _selectedCategoryId = widget.categoryId;
+    _loadCategoryInfo();
     if (widget.entryId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadEntry();
@@ -45,9 +47,25 @@ class _AddEntryPageState extends State<AddEntryPage> {
     }
   }
 
+  Future<void> _loadCategoryInfo() async {
+    final categoryId = _selectedCategoryId;
+    if (categoryId == null) return;
+    final category = await VaultService.instance.getCategory(categoryId);
+    if (mounted && category != null) {
+      setState(() => _isEncrypted = category.isEncrypted);
+    }
+  }
+
   Future<void> _loadEntry() async {
-    // 编辑模式需要解锁
-    if (VaultSession.instance.isLocked) {
+    final entry = await VaultService.instance.getEntry(widget.entryId!);
+    if (entry == null || !mounted) return;
+
+    final category =
+        await VaultService.instance.getCategory(entry.categoryId);
+    _isEncrypted = category?.isEncrypted ?? true;
+
+    // 编辑模式需要解锁（仅加密分类）
+    if (_isEncrypted && VaultSession.instance.isLocked) {
       if (mounted) {
         Navigator.of(context).pop();
         if (mounted) {
@@ -57,10 +75,8 @@ class _AddEntryPageState extends State<AddEntryPage> {
       return;
     }
 
-    final entry = await VaultService.instance.getEntry(widget.entryId!);
-    if (entry == null || !mounted) return;
-
-    final plainPassword = VaultService.instance.decryptEntryPassword(entry);
+    final plainPassword = VaultService.instance
+        .decryptEntryPassword(entry, isEncrypted: _isEncrypted);
     setState(() {
       _existingEntry = entry;
       _selectedCategoryId = entry.categoryId;
@@ -282,8 +298,8 @@ class _AddEntryPageState extends State<AddEntryPage> {
       return;
     }
 
-    // 保存前如果未解锁，先弹窗解锁
-    if (VaultSession.instance.isLocked) {
+    // 保存前如果未解锁，先弹窗解锁（仅加密分类）
+    if (_isEncrypted && VaultSession.instance.isLocked) {
       final unlocked = await _ensureUnlocked(
         hint: _existingEntry == null
             ? '请先解锁后再新增密码！'

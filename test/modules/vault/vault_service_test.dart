@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 import 'dart:io';
 import 'dart:ffi';
 
@@ -40,6 +40,7 @@ void main() {
         name TEXT NOT NULL,
         icon TEXT NOT NULL DEFAULT 'folder',
         sort_order INTEGER NOT NULL DEFAULT 0,
+        is_encrypted INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -192,5 +193,144 @@ void main() {
     final entry = await vault.getEntry(entryId);
     expect(entry, isNotNull);
     expect(entry!.username, isNull);
+  });
+
+  test('未加密分类的密码明文存储，锁定后仍可读取', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '明文分类',
+      isEncrypted: false,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final entryId = await vault.insertEntry(
+      categoryId: catId,
+      title: '普通网站',
+      plainPassword: 'plain-123',
+    );
+
+    final entry = await vault.getEntry(entryId);
+    if (entry == null) {
+      fail('条目不存在');
+    }
+    expect(entry.encryptedPassword, 'plain-123');
+
+    // 锁定会话后仍能直接读取明文
+    VaultSession.instance.lock();
+    final category = await vault.getCategory(catId);
+    if (category == null) {
+      fail('分类不存在');
+    }
+    final plain =
+        vault.decryptEntryPassword(entry, isEncrypted: category.isEncrypted);
+    expect(plain, 'plain-123');
+  });
+
+  test('加密分类的密码密文存储并可解密', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '加密分类',
+      isEncrypted: true,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final entryId = await vault.insertEntry(
+      categoryId: catId,
+      title: '银行',
+      plainPassword: 'secret',
+    );
+
+    final entry = await vault.getEntry(entryId);
+    if (entry == null) {
+      fail('条目不存在');
+    }
+    expect(entry.encryptedPassword, isNot('secret'));
+    expect(entry.passwordIv, isNotNull);
+
+    final category = await vault.getCategory(catId);
+    if (category == null) {
+      fail('分类不存在');
+    }
+    expect(
+      vault.decryptEntryPassword(entry, isEncrypted: category.isEncrypted),
+      'secret',
+    );
+  });
+
+  test('分类从加密切换为不加密时，已有条目迁移为明文存储', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '加密分类',
+      isEncrypted: true,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final entryId = await vault.insertEntry(
+      categoryId: catId,
+      title: '银行',
+      plainPassword: 'secret',
+    );
+
+    await vault.updateCategory(VaultCategory(
+      id: catId,
+      name: '加密分类',
+      isEncrypted: false,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+
+    final entry = await vault.getEntry(entryId);
+    if (entry == null) {
+      fail('条目不存在');
+    }
+    expect(entry.encryptedPassword, 'secret');
+    expect(entry.passwordIv, '');
+  });
+
+  test('分类从不加密切换为加密时，已有条目迁移为密文存储', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '明文分类',
+      isEncrypted: false,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final entryId = await vault.insertEntry(
+      categoryId: catId,
+      title: '普通网站',
+      plainPassword: 'plain-123',
+    );
+
+    await vault.updateCategory(VaultCategory(
+      id: catId,
+      name: '明文分类',
+      isEncrypted: true,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+
+    final entry = await vault.getEntry(entryId);
+    if (entry == null) {
+      fail('条目不存在');
+    }
+    expect(entry.encryptedPassword, isNot('plain-123'));
+    expect(entry.passwordIv, isNotEmpty);
+
+    final category = await vault.getCategory(catId);
+    if (category == null) {
+      fail('分类不存在');
+    }
+    expect(
+      vault.decryptEntryPassword(entry, isEncrypted: category.isEncrypted),
+      'plain-123',
+    );
   });
 }

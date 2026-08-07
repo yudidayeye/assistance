@@ -9,7 +9,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 14;
+  static const int _currentVersion = 15;
 
   /// 注入数据库实例（仅测试用，绕过依赖 path_provider 的默认初始化）
   @visibleForTesting
@@ -204,6 +204,7 @@ class DatabaseService {
         name TEXT NOT NULL,
         icon TEXT NOT NULL DEFAULT 'folder',
         sort_order INTEGER NOT NULL DEFAULT 0,
+        is_encrypted INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -288,6 +289,11 @@ class DatabaseService {
       await _migrateToV14(db);
     }
 
+    // 如果从 v14 升级到 v15，为分类添加是否加密字段
+    if (oldVersion < 15 && newVersion >= 15) {
+      await _migrateToV15(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
@@ -299,6 +305,7 @@ class DatabaseService {
       if (v == 12) continue; // 已经在上面处理了
       if (v == 13) continue; // 已经在上面处理了
       if (v == 14) continue; // 已经在上面处理了
+      if (v == 15) continue; // 已经在上面处理了
 
       await db.transaction((txn) async {
         if (v == 2) {
@@ -318,6 +325,13 @@ class DatabaseService {
   Future<void> _migrateToV14(Database db) async {
     await db.execute(
       'ALTER TABLE mod_vault_entries ADD COLUMN username TEXT',
+    );
+  }
+
+  /// v15 迁移：为密码分类表添加是否加密字段（默认加密，兼容旧数据）
+  Future<void> _migrateToV15(Database db) async {
+    await db.execute(
+      'ALTER TABLE mod_vault_categories ADD COLUMN is_encrypted INTEGER NOT NULL DEFAULT 1',
     );
   }
 

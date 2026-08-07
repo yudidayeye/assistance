@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
@@ -60,10 +60,14 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
   /// 同步页面解锁显示与真实会话状态（后台锁定后页面仍显示已解锁的场景）
   void _syncLockedState() {
     if (!mounted) return;
-    setState(() {
-      _isUnlocked = false;
-      _decryptedPasswords = {};
-    });
+    if (_category?.isEncrypted ?? true) {
+      setState(() {
+        _isUnlocked = false;
+        _decryptedPasswords = {};
+      });
+    } else {
+      _load();
+    }
   }
 
   /// 用户真正返回（非向前导航）时锁定
@@ -88,13 +92,15 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
     final entries =
         await VaultService.instance.getEntriesByCategory(widget.categoryId);
 
+    final isEncrypted = category.isEncrypted;
     Map<int, String?> decrypted = {};
-    if (!VaultSession.instance.isLocked) {
+    if (!VaultSession.instance.isLocked || !isEncrypted) {
       for (final entry in entries) {
-        final plain = VaultService.instance.decryptEntryPassword(entry);
+        final plain = VaultService.instance
+            .decryptEntryPassword(entry, isEncrypted: isEncrypted);
         decrypted[entry.id!] = plain;
       }
-      if (decrypted.isNotEmpty && mounted) {
+      if (isEncrypted && decrypted.isNotEmpty && mounted) {
         _isUnlocked = true;
       }
     }
@@ -330,7 +336,8 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
   void _decryptAllEntries() {
     final Map<int, String?> decrypted = {};
     for (final entry in _entries) {
-      final plain = VaultService.instance.decryptEntryPassword(entry);
+      final plain = VaultService.instance.decryptEntryPassword(entry,
+          isEncrypted: _category?.isEncrypted ?? true);
       decrypted[entry.id!] = plain;
     }
     setState(() {
@@ -408,20 +415,21 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: IconButton(
-                onPressed: _isUnlocked ? _handleLock : _handleUnlock,
-                icon: Icon(
-                  _isUnlocked
-                      ? Icons.lock_open_rounded
-                      : Icons.lock_outline_rounded,
+            if (_category?.isEncrypted ?? true)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: IconButton(
+                  onPressed: _isUnlocked ? _handleLock : _handleUnlock,
+                  icon: Icon(
+                    _isUnlocked
+                        ? Icons.lock_open_rounded
+                        : Icons.lock_outline_rounded,
+                  ),
+                  color: _isUnlocked ? appTheme.sage : appTheme.earth,
+                  iconSize: 20,
+                  tooltip: _isUnlocked ? '锁定密码' : '解锁查看密码',
                 ),
-                color: _isUnlocked ? appTheme.sage : appTheme.earth,
-                iconSize: 20,
-                tooltip: _isUnlocked ? '锁定密码' : '解锁查看密码',
               ),
-            ),
           ],
         ),
         body: _loading
@@ -463,7 +471,8 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
         child: InkWell(
           onTap: () async {
             // 跳转新增页面前先确认已解锁，未解锁弹窗输入主密码
-            if (VaultSession.instance.isLocked) {
+            if ((_category?.isEncrypted ?? true) &&
+                VaultSession.instance.isLocked) {
               if (_isUnlocked) _syncLockedState();
               final unlocked = await _showUnlockDialog(hint: '请先解锁后再新增密码！');
               if (unlocked != true || !mounted) return;
@@ -510,8 +519,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
   }
 
   Widget _buildEntryCard(VaultEntry entry, AppThemeExtension appTheme) {
-    final decryptedPwd =
-        _isUnlocked ? _decryptedPasswords[entry.id!] : null;
+    final decryptedPwd = _decryptedPasswords[entry.id!];
     final noteItems = entry.noteItems;
     final title = entry.title.trim();
     final username = entry.username?.trim() ?? '';
@@ -545,7 +553,8 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
             hoverColor: Colors.transparent,
             onTap: () async {
               // 编辑前先确认已解锁，未解锁弹窗输入主密码
-              if (VaultSession.instance.isLocked) {
+              if ((_category?.isEncrypted ?? true) &&
+                  VaultSession.instance.isLocked) {
                 if (_isUnlocked) _syncLockedState();
                 final unlocked =
                     await _showUnlockDialog(hint: '请先解锁后再编辑密码！');
@@ -651,38 +660,36 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                     child: Row(
                       children: [
                         Icon(
-                          _isUnlocked && decryptedPwd != null
+                          decryptedPwd != null
                               ? Icons.lock_open_rounded
                               : Icons.lock_outline_rounded,
                           size: 14,
-                          color: _isUnlocked && decryptedPwd != null
+                          color: decryptedPwd != null
                               ? appTheme.sage
                               : appTheme.earthMedium,
                         ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            _isUnlocked && decryptedPwd != null
-                                ? decryptedPwd
-                                : '••••••••',
+                            decryptedPwd ?? '••••••••',
                             style: TextStyle(
                               fontSize: 14,
-                              color: _isUnlocked && decryptedPwd != null
+                              color: decryptedPwd != null
                                   ? appTheme.earth
                                   : appTheme.earthMedium,
                               letterSpacing:
-                                  _isUnlocked && decryptedPwd != null
+                                  decryptedPwd != null
                                       ? 0.5
                                       : 2.5,
                               fontFamily:
-                                  _isUnlocked && decryptedPwd != null
+                                  decryptedPwd != null
                                       ? 'monospace'
                                       : null,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (_isUnlocked && decryptedPwd != null) ...[
+                        if (decryptedPwd != null) ...[
                           const SizedBox(width: 6),
                           GestureDetector(
                             onTap: () => _copyToClipboard(
