@@ -46,11 +46,11 @@ void main() {
     );
   });
 
-  test('copyText 拼接标题与描述', () {
+  test('copyText 只返回描述内容', () {
     expect(
       const VaultNoteItem(title: '账号', content: 'abc').copyText,
-      '账号：abc',
+      'abc',
     );
-    expect(const VaultNoteItem(title: '账号').copyText, '账号');
+    expect(const VaultNoteItem(title: '账号').copyText, '');
   });
 }

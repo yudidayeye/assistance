@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../models/vault_category.dart';
 import '../models/vault_entry.dart';
 import '../models/vault_note_item.dart';
@@ -348,12 +349,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
 
   void _copyToClipboard(String text, String label) {
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$label 已复制'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    AppSnackBar.show(context, '$label 已复制');
   }
 
   Future<void> _confirmDeleteEntry(VaultEntry entry) async {
@@ -586,30 +582,60 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                   // ── 用户名行 ──
                   if (username.isNotEmpty && title.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline_rounded,
-                          size: 14,
-                          color: appTheme.earthMedium,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            username,
-                            style: AppTypography.bodySm
-                                .copyWith(color: appTheme.earthMedium),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: appTheme.cream,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.person_outline_rounded,
+                            size: 14,
+                            color: appTheme.earthMedium,
                           ),
-                        ),
-                        _buildSmallAction(
-                          icon: Icons.copy_rounded,
-                          appTheme: appTheme,
-                          onTap: () =>
-                              _copyToClipboard(username, '用户名'),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              username,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: appTheme.earth,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () => _copyToClipboard(username, '用户名'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: appTheme.primary
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.copy_rounded,
+                                      size: 12,
+                                      color: appTheme.primary),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '复制',
+                                    style: AppTypography.caption
+                                        .copyWith(color: appTheme.primary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                   const SizedBox(height: 10),
@@ -725,26 +751,56 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
         ? label
         : '$label：${item.content}';
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Icon(Icons.notes_rounded, size: 14, color: appTheme.earthMedium),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              text,
-              style: AppTypography.bodySm
-                  .copyWith(color: appTheme.earthMedium),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: appTheme.cream,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.notes_rounded, size: 14, color: appTheme.earthMedium),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: appTheme.earthMedium,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          _buildSmallAction(
-            icon: Icons.copy_rounded,
-            appTheme: appTheme,
-            onTap: () => _copyToClipboard(item.copyText, '备注'),
-          ),
-        ],
+            const SizedBox(width: 6),
+            GestureDetector(
+              onTap: () => _copyToClipboard(item.copyText, '备注'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.copy_rounded,
+                        size: 12,
+                        color: appTheme.primary),
+                    const SizedBox(width: 3),
+                    Text(
+                      '复制',
+                      style: AppTypography.caption
+                          .copyWith(color: appTheme.primary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -14,6 +14,6 @@ class VaultNoteItem {
 
   Map<String, dynamic> toJson() => {'title': title, 'content': content};
 
-  /// 复制到剪贴板的文本：标题 + 描述
-  String get copyText => content.isEmpty ? title : '$title：$content';
+  /// 复制到剪贴板的文本：仅描述内容
+  String get copyText => content;
 }
