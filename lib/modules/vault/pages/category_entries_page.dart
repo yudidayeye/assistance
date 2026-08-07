@@ -648,95 +648,99 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                     ],
                   ),
                   // ── 凭据区（用户名 + 密码） ──
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: appTheme.cream,
-                      borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                    ),
-                    child: Column(
+                  const SizedBox(height: 12),
+                  if (username.isNotEmpty && title.isNotEmpty) ...[
+                    Row(
                       children: [
-                        if (username.isNotEmpty && title.isNotEmpty) ...[
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.person_outline_rounded,
-                                size: 16,
-                                color: appTheme.earthMedium,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  username,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: appTheme.earth,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              _buildCopyBadge(
-                                () => _copyToClipboard(username, '用户名'),
-                                appTheme,
-                              ),
-                            ],
+                        _buildCredentialIcon(
+                          icon: Icons.person_outline_rounded,
+                          color: appTheme.primary,
+                          appTheme: appTheme,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            username,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: appTheme.earth,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 10),
-                        ],
-                        Row(
-                          children: [
-                            Icon(
-                              decryptedPwd != null
-                                  ? Icons.lock_open_rounded
-                                  : Icons.lock_outline_rounded,
-                              size: 16,
-                              color: decryptedPwd != null
-                                  ? appTheme.sage
-                                  : appTheme.earthMedium,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                decryptedPwd ?? '••••••••',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: decryptedPwd != null
-                                      ? appTheme.earth
-                                      : appTheme.earthMedium,
-                                  letterSpacing:
-                                      decryptedPwd != null
-                                          ? 0.5
-                                          : 2.5,
-                                  fontFamily:
-                                      decryptedPwd != null
-                                          ? 'monospace'
-                                          : null,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (decryptedPwd != null) ...[
-                              const SizedBox(width: 6),
-                              _buildCopyBadge(
-                                () => _copyToClipboard(decryptedPwd, '密码'),
-                                appTheme,
-                              ),
-                            ],
-                          ],
+                        ),
+                        const SizedBox(width: 6),
+                        _buildCopyBadge(
+                          () => _copyToClipboard(username, '用户名'),
+                          appTheme,
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                  ],
+                  Row(
+                    children: [
+                      _buildCredentialIcon(
+                        icon: decryptedPwd != null
+                            ? Icons.lock_open_rounded
+                            : Icons.lock_outline_rounded,
+                        color: decryptedPwd != null
+                            ? appTheme.sage
+                            : appTheme.earthMedium,
+                        appTheme: appTheme,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          decryptedPwd ?? '••••••••',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: decryptedPwd != null
+                                ? appTheme.earth
+                                : appTheme.earthMedium,
+                            letterSpacing:
+                                decryptedPwd != null ? 0.5 : 2.5,
+                            fontFamily:
+                                decryptedPwd != null ? 'monospace' : null,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (decryptedPwd != null) ...[
+                        const SizedBox(width: 6),
+                        _buildCopyBadge(
+                          () => _copyToClipboard(decryptedPwd, '密码'),
+                          appTheme,
+                        ),
+                      ],
+                    ],
                   ),
                   // ── 备注（多条，每条可复制） ──
                   if (noteItems.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    ...noteItems.map(
-                      (item) => _buildNoteItem(
-                        item,
-                        appTheme,
-                        titleWidth: _measureNoteTitleWidth(noteItems),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: appTheme.earthMedium.withValues(alpha: 0.15),
+                        ),
+                        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                      ),
+                      child: Column(
+                        children: [
+                          for (var i = 0; i < noteItems.length; i++) ...[
+                            if (i > 0)
+                              Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: appTheme.earthMedium
+                                    .withValues(alpha: 0.12),
+                              ),
+                            _buildNoteItem(
+                              noteItems[i],
+                              appTheme,
+                              titleWidth: _measureNoteTitleWidth(noteItems),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ],
@@ -746,6 +750,23 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
           ),
         ),
       ),
+    );
+  }
+
+  /// 凭据区图标徽章（浅色小圆角底）
+  Widget _buildCredentialIcon({
+    required IconData icon,
+    required Color color,
+    required AppThemeExtension appTheme,
+  }) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(icon, size: 16, color: color),
     );
   }
 
@@ -798,24 +819,23 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
 
   /// 计算备注标题标签的最大宽度，保证多条备注的描述起点对齐
   double _measureNoteTitleWidth(List<VaultNoteItem> items) {
-    double maxWidth = 40;
+    double maxWidth = 24;
     for (final item in items) {
       final label = item.title.trim().isEmpty ? '备注' : item.title;
       final painter = TextPainter(
         text: TextSpan(
           text: label,
-          style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.w500),
+          style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
         ),
         maxLines: 1,
         textDirection: TextDirection.ltr,
       )..layout();
       if (painter.width > maxWidth) maxWidth = painter.width;
     }
-    // 加上标签左右内边距（8 + 8）
-    return maxWidth + 16;
+    return maxWidth;
   }
 
-  /// 单条备注：标题 + 描述 + 复制（纯文本行，弱化层级）
+  /// 单条备注：表格行（标题列 + 描述 + 复制）
   Widget _buildNoteItem(
     VaultNoteItem item,
     AppThemeExtension appTheme, {
@@ -824,25 +844,18 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
     final label = item.title.trim().isEmpty ? '备注' : item.title;
     final content = item.content.trim();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 标题（浅灰小标签，统一列宽，允许换行）
+          // 标题列（统一宽度，允许换行）
           SizedBox(
             width: titleWidth,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: appTheme.earthMedium.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                label,
-                style: AppTypography.bodySm.copyWith(
-                  color: appTheme.earth,
-                  fontWeight: FontWeight.w500,
-                ),
+            child: Text(
+              label,
+              style: AppTypography.bodySm.copyWith(
+                color: appTheme.earth,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -852,7 +865,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
             child: Text(
               content,
               style: AppTypography.bodySm.copyWith(
-                color: appTheme.earth,
+                color: appTheme.earthMedium,
                 height: 1.5,
               ),
             ),
