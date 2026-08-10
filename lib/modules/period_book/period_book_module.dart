@@ -9,6 +9,7 @@ import 'pages/period_detail_page.dart';
 import 'pages/new_period_page.dart';
 import 'pages/edit_period_page.dart';
 import 'pages/period_history_page.dart';
+import 'pages/large_items_history_page.dart';
 import 'pages/stage_edit_page.dart';
 import 'pages/large_items_edit_page.dart';
 
@@ -60,6 +61,10 @@ class PeriodBookModule implements ToolModule {
         GoRoute(
           path: 'history',
           builder: (context, state) => const PeriodHistoryPage(),
+        ),
+        GoRoute(
+          path: 'large_history',
+          builder: (context, state) => const LargeItemsHistoryPage(),
         ),
         GoRoute(
           path: 'detail/:id',

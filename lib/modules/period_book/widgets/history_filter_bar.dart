@@ -12,7 +12,7 @@ class HistoryFilterBar extends StatelessWidget {
   final List<int> availableStages;
   final ValueChanged<int?> onYearChanged;
   final ValueChanged<int?> onMonthChanged;
-  final ValueChanged<int?> onStageChanged;
+  final ValueChanged<int?>? onStageChanged;
 
   const HistoryFilterBar({
     super.key,
@@ -24,7 +24,7 @@ class HistoryFilterBar extends StatelessWidget {
     required this.availableStages,
     required this.onYearChanged,
     required this.onMonthChanged,
-    required this.onStageChanged,
+    this.onStageChanged,
   });
 
   @override
@@ -60,8 +60,8 @@ class HistoryFilterBar extends StatelessWidget {
               selectedValue: selectedMonth,
               onChanged: onMonthChanged,
             ),
-          // 阶段筛选（仅在选中月份时显示）
-          if (selectedMonth != null) ...[
+          // 阶段筛选（仅在选中月份且传入回调时显示）
+          if (selectedMonth != null && onStageChanged != null) ...[
             AppSpacing.h8,
             _buildChipRow(
               appTheme: appTheme,
@@ -71,7 +71,7 @@ class HistoryFilterBar extends StatelessWidget {
                 label: '第$stage阶段',
               )).toList(),
               selectedValue: selectedStage,
-              onChanged: onStageChanged,
+              onChanged: onStageChanged!,
             ),
           ],
         ],

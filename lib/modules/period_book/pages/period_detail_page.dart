@@ -168,26 +168,56 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
           actions: [
-            if (!_isReadOnly) ...[
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: IconButton(
-                  onPressed: () => context.push('/period_book/history'),
-                  icon: const Icon(Icons.history_rounded),
-                  color: appTheme.earth,
-                  iconSize: 20,
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert_rounded, size: 20, color: appTheme.earth),
+              color: appTheme.cardBackground,
+              onSelected: (value) {
+                switch (value) {
+                  case 'edit_period':
+                    context.push('/period_book/edit/${_period!.id}');
+                    break;
+                  case 'large_history':
+                    context.push('/period_book/large_history');
+                    break;
+                  case 'history':
+                    context.push('/period_book/history');
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                if (!_isReadOnly)
+                  PopupMenuItem(
+                    value: 'edit_period',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit_outlined, size: 18, color: appTheme.earth),
+                        const SizedBox(width: 8),
+                        const Text('编辑周期'),
+                      ],
+                    ),
+                  ),
+                PopupMenuItem(
+                  value: 'large_history',
+                  child: Row(
+                    children: [
+                      Icon(Icons.diamond_outlined, size: 18, color: appTheme.earth),
+                      const SizedBox(width: 8),
+                      const Text('大额记录'),
+                    ],
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: IconButton(
-                  onPressed: () => context.push('/period_book/edit/${_period!.id}'),
-                  icon: const Icon(Icons.edit_outlined),
-                  color: appTheme.earth,
-                  iconSize: 20,
+                PopupMenuItem(
+                  value: 'history',
+                  child: Row(
+                    children: [
+                      Icon(Icons.history_rounded, size: 18, color: appTheme.earth),
+                      const SizedBox(width: 8),
+                      const Text('历史记录'),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ],
         ),
         SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
