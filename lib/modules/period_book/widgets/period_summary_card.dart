@@ -32,10 +32,6 @@ class PeriodSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
     final balance = calc.balance;
-    final spent = calc.totalBase - (balance ?? 0);
-    final balanceRatio = calc.totalBase > 0
-        ? ((balance ?? 0) / calc.totalBase).clamp(0.0, 1.0)
-        : 0.0;
 
     // 支出构成：个人 / 其他 / 杂项（杂项为倒推值，未填余额时未知）
     final shopping = calc.shoppingTotal > 0 ? calc.shoppingTotal : 0.0;
@@ -44,6 +40,14 @@ class PeriodSummaryCard extends StatelessWidget {
         ? calc.livingTotal!
         : 0.0;
     final expenseTotal = shopping + other + living;
+    // 支出 = 真实记录的支出（个人/其他/生活倒推）。
+    // 未填余额时 lifeTotal 为 null，只统计真实支出，避免把本金误当支出。
+    final spent = expenseTotal;
+    // 余额 = 已记录余额；未记录时按 本金 - 已支出 估算，避免新建周期误显示为 0
+    final effectiveBalance = balance ?? (calc.totalBase - spent);
+    final balanceRatio = calc.totalBase > 0
+        ? (effectiveBalance / calc.totalBase).clamp(0.0, 1.0)
+        : 0.0;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -68,7 +72,7 @@ class PeriodSummaryCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildBalanceSection(appTheme, balance),
+                      _buildBalanceSection(appTheme, effectiveBalance),
                       AppSpacing.h10,
                       _buildExpenseLegend(
                           appTheme, shopping, other, living, expenseTotal),
@@ -77,7 +81,7 @@ class PeriodSummaryCard extends StatelessWidget {
                 ),
                 AppSpacing.w16,
                 _buildExpenseDonut(
-                    appTheme, shopping, other, living, expenseTotal),
+                    appTheme, shopping, other, living, spent, calc.totalBase),
               ],
             ),
             AppSpacing.h6,
@@ -153,23 +157,32 @@ class PeriodSummaryCard extends StatelessWidget {
     double shopping,
     double other,
     double living,
-    double total,
+    double spent,
+    double totalBase,
   ) {
+    final spentRatio =
+        totalBase > 0 ? (spent / totalBase).clamp(0.0, 1.0) : 0.0;
+    final remaining = totalBase - spent;
+
     final chart = SizedBox(
       width: 68,
       height: 68,
-      child: total <= 0
-          ? // 空态：与环形等宽的灰色轨道圈
-          Container(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (spent <= 0 || totalBase <= 0)
+            // 空态：与环形等宽的灰色轨道圈
+            Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: appTheme.roseLight.withValues(alpha: 0.35),
+                  color: appTheme.earthMedium.withValues(alpha: 0.35),
                   width: 8,
                 ),
               ),
             )
-          : PieChart(
+          else
+            PieChart(
               PieChartData(
                 sections: [
                   PieChartSectionData(
@@ -191,6 +204,13 @@ class PeriodSummaryCard extends StatelessWidget {
                       radius: 8,
                       showTitle: false,
                     ),
+                  // 剩余（余额）部分
+                  PieChartSectionData(
+                    value: remaining > 0 ? remaining : 0.001,
+                    color: appTheme.earthMedium.withValues(alpha: 0.08),
+                    radius: 8,
+                    showTitle: false,
+                  ),
                 ],
                 centerSpaceRadius: 22,
                 sectionsSpace: 1.5,
@@ -199,6 +219,18 @@ class PeriodSummaryCard extends StatelessWidget {
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeOutCubic,
             ),
+          // 中心：支出占本金的百分比
+          Text(
+            '${(spentRatio * 100).toStringAsFixed(0)}%',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: spent > 0 ? appTheme.rose : appTheme.earthMedium,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
     );
 
     return TweenAnimationBuilder<double>(

@@ -94,13 +94,12 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            padding: AppSpacing.pageH,
             child: Column(
               children: [
-                AppSpacing.h16,
                 // 日期选择
                 _buildDateCard(appTheme),
-                AppSpacing.h16,
+                AppSpacing.h14,
                 // 初始本金
                 _buildAmountCard(
                   appTheme: appTheme,
@@ -109,7 +108,7 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
                   value: _baseAmount,
                   onTap: () => _showAmountKeyboard(),
                 ),
-                AppSpacing.h32,
+                AppSpacing.h20,
                 // 保存按钮
                 _buildSaveButton(appTheme),
                 const SizedBox(height: 40),
@@ -127,10 +126,9 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
 
   Widget _buildDateCard(AppThemeExtension appTheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusXl),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
         boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
@@ -172,7 +170,6 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
             icon: Icons.event_rounded,
             iconColor: appTheme.sage,
             date: _endDate,
-            required: true,
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
@@ -197,17 +194,16 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
     required Color iconColor,
     required DateTime? date,
     required VoidCallback onTap,
-    bool required = false,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(appTheme.radiusMd),
@@ -228,14 +224,6 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
                       color: appTheme.earth,
                     ),
                   ),
-                  if (required)
-                    Text(
-                      '必填',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: appTheme.earthMedium.withValues(alpha: 0.4),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -272,20 +260,19 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(appTheme.radiusXl),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
           boxShadow: appTheme.cardShadow,
           border: Border.all(color: appTheme.cardBorder, width: 0.5),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: appTheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(appTheme.radiusMd),
@@ -340,53 +327,30 @@ class _EditPeriodPageState extends State<EditPeriodPage> {
         _baseAmount.isNotEmpty &&
         !_saving;
 
-    return GestureDetector(
-      onTap: canSave ? _savePeriod : null,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: canSave
-              ? LinearGradient(
-                  colors: [appTheme.primary, appTheme.primaryDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: canSave ? null : appTheme.creamDark,
-          borderRadius: BorderRadius.circular(appTheme.radiusMd),
-          boxShadow: canSave
-              ? [
-                  BoxShadow(
-                    color: appTheme.primary.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
+    return SizedBox(
+      width: double.infinity,
+      height: 38,
+      child: FilledButton(
+        onPressed: canSave ? _savePeriod : null,
+        style: FilledButton.styleFrom(
+          backgroundColor: canSave ? appTheme.primary : appTheme.creamDark,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: appTheme.creamDark,
+          disabledForegroundColor: appTheme.earthMedium.withValues(alpha: 0.4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          ),
         ),
-        child: Center(
-          child: _saving
-              ? SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Text(
-                  '保存修改',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: canSave
-                        ? Colors.white
-                        : appTheme.earthMedium.withValues(alpha: 0.4),
-                    letterSpacing: 0.5,
-                  ),
+        child: _saving
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
                 ),
-        ),
+              )
+            : const Text('保存修改'),
       ),
     );
   }

@@ -90,12 +90,12 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            padding: AppSpacing.pageH,
             child: Column(
               children: [
                 // 日期选择
                 _buildDateCard(appTheme),
-                AppSpacing.h16,
+                AppSpacing.h14,
                 // 初始本金
                 _buildAmountCard(
                   appTheme: appTheme,
@@ -104,7 +104,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
                   value: _baseAmount,
                   onTap: () => _showAmountKeyboard(),
                 ),
-                AppSpacing.h16,
+                AppSpacing.h20,
                 // 保存按钮
                 _buildSaveButton(appTheme),
                 const SizedBox(height: 40),
@@ -125,7 +125,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
     return Container(
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusXl),
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
         boxShadow: appTheme.cardShadow,
         border: Border.all(color: appTheme.cardBorder, width: 0.5),
       ),
@@ -261,7 +261,7 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
       child: Container(
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(appTheme.radiusXl),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
           boxShadow: appTheme.cardShadow,
           border: Border.all(color: appTheme.cardBorder, width: 0.5),
         ),

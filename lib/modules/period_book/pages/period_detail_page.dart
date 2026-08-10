@@ -37,6 +37,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   List<ExpenseRecord> _allExpenses = [];
   double? _largeItemsNet;
   bool _loading = true;
+  bool _hasAnyPeriods = false;
 
   bool get _isReadOnly => false;
 
@@ -77,6 +78,10 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         }).toList();
 
         _largeItemsNet = await _service.getLargeItemsNet(_period!.id!);
+      } else {
+        // 若无进行中周期，检查是否已有历史周期（用于空状态文案区分）
+        final all = await _service.getAllPeriods();
+        _hasAnyPeriods = all.isNotEmpty;
       }
     } catch (e) {
       debugPrint('PeriodDetailPage load error: $e');
@@ -124,23 +129,21 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             ),
           ],
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: EmptyStateWidget(
-                icon: Icons.account_balance_wallet_outlined,
-                title: '还没有记账周期',
-                subtitle: '创建第一个周期，开始记录你的收支',
-                actionLabel: '新建周期',
-                onAction: () async {
-                  await context.push('/period_book/new');
-                  if (mounted) {
-                    _loadData();
-                  }
-                },
-              ),
-            ),
-          ],
+        body: Center(
+          child: EmptyStateWidget(
+            icon: Icons.account_balance_wallet_outlined,
+            title: _hasAnyPeriods ? '当前没有进行中的周期' : '还没有记账周期',
+            subtitle: _hasAnyPeriods
+                ? '新建一个周期开始记账，或查看历史记录'
+                : '创建第一个周期，开始记录你的收支',
+            actionLabel: '新建周期',
+            onAction: () async {
+              await context.push('/period_book/new');
+              if (mounted) {
+                _loadData();
+              }
+            },
+          ),
         ),
       );
     }
