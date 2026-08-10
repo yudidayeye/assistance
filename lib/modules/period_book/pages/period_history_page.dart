@@ -579,32 +579,23 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
               child: Row(
                 children: [
                   // 年份图标（日历内展示年份）
-                  Container(
-                    width: 36,
-                    height: 36,
+                  Stack(
                     alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: appTheme.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Icon(
-                          Icons.calendar_today_rounded,
-                          size: 24,
-                          color: appTheme.primary.withValues(alpha: 0.25),
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 24,
+                        color: appTheme.primary.withValues(alpha: 0.25),
+                      ),
+                      Text(
+                        _fmtYearShort(startDate, endDate),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: appTheme.primary,
                         ),
-                        Text(
-                          _fmtYearShort(startDate, endDate),
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: appTheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   AppSpacing.w8,
                   // 日期范围

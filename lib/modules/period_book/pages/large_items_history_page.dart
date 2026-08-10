@@ -307,7 +307,7 @@ class _LargeItemsHistoryPageState extends State<LargeItemsHistoryPage> {
     final endDate = DateTime.parse(period.endDate);
 
     return GestureDetector(
-      onTap: () => context.push('/period_book/detail/${period.id}'),
+      onTap: () => context.push('/period_book/large_items/${period.id}'),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
@@ -331,32 +331,23 @@ class _LargeItemsHistoryPageState extends State<LargeItemsHistoryPage> {
               child: Row(
                 children: [
                   // 年份图标（日历内展示年份）
-                  Container(
-                    width: 36,
-                    height: 36,
+                  Stack(
                     alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: appTheme.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Icon(
-                          Icons.calendar_today_rounded,
-                          size: 24,
-                          color: appTheme.primary.withValues(alpha: 0.25),
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 24,
+                        color: appTheme.primary.withValues(alpha: 0.25),
+                      ),
+                      Text(
+                        _fmtYearShort(startDate, endDate),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: appTheme.primary,
                         ),
-                        Text(
-                          _fmtYearShort(startDate, endDate),
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: appTheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   AppSpacing.w8,
                   // 日期范围
@@ -433,7 +424,7 @@ class _LargeItemsHistoryPageState extends State<LargeItemsHistoryPage> {
                               return _buildDetailRow(
                                 appTheme,
                                 a.reason,
-                                '+¥${FormatUtils.formatAmount(a.amount)}',
+                                '+${FormatUtils.formatAmount(a.amount)}',
                                 appTheme.sage,
                               );
                             }).toList(),
@@ -469,7 +460,7 @@ class _LargeItemsHistoryPageState extends State<LargeItemsHistoryPage> {
                           _buildDetailGroup(
                             appTheme: appTheme,
                             title: '其他支出',
-                            color: const Color(0xFF4DB6AC),
+                            color: appTheme.rose,
                             children: expenses
                                 .where((e) => e.category == 'other')
                                 .map((e) {
@@ -477,7 +468,7 @@ class _LargeItemsHistoryPageState extends State<LargeItemsHistoryPage> {
                                 appTheme,
                                 e.description,
                                 '-${FormatUtils.formatAmount(e.amount)}',
-                                const Color(0xFF4DB6AC),
+                                appTheme.rose,
                               );
                             }).toList(),
                           ),

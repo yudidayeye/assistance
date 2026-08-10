@@ -168,6 +168,16 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
           actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: IconButton(
+                onPressed: () => context.push('/period_book/history'),
+                icon: const Icon(Icons.history_rounded),
+                color: appTheme.earth,
+                iconSize: 20,
+                tooltip: '历史记录',
+              ),
+            ),
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert_rounded, size: 20, color: appTheme.earth),
               color: appTheme.cardBackground,
@@ -178,9 +188,6 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     break;
                   case 'large_history':
                     context.push('/period_book/large_history');
-                    break;
-                  case 'history':
-                    context.push('/period_book/history');
                     break;
                 }
               },
@@ -206,19 +213,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     ],
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'history',
-                  child: Row(
-                    children: [
-                      Icon(Icons.history_rounded, size: 18, color: appTheme.earth),
-                      const SizedBox(width: 8),
-                      const Text('历史记录'),
-                    ],
-                  ),
-                ),
               ],
             ),
-          ],
+          ]
         ),
         SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
         SliverToBoxAdapter(child: AppSpacing.h8),
