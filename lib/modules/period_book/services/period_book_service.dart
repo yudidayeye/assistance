@@ -98,6 +98,7 @@ class PeriodBookService extends ChangeNotifier {
   }
 
   /// 获取当前进行中的周期（is_closed=0，最新的）
+  /// 如果周期 endDate 已过，自动关闭并返回 null
   Future<PeriodRecord?> getOngoingPeriod() async {
     final rows = await _db.query(
       'mod_period_book_periods',
@@ -106,7 +107,17 @@ class PeriodBookService extends ChangeNotifier {
       limit: 1,
     );
     if (rows.isEmpty) return null;
-    return PeriodRecord.fromMap(rows.first);
+    final period = PeriodRecord.fromMap(rows.first);
+
+    // 检查周期是否已过期（endDate < 今天），过期则自动关闭
+    final endDate = DateTime.parse(period.endDate);
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    if (endDate.isBefore(today)) {
+      await closePeriod(period.id!);
+      return null;
+    }
+
+    return period;
   }
 
   /// 获取所有周期（按 start_date 倒序）

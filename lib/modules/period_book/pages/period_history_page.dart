@@ -361,6 +361,16 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
     return '$startStr ~ $endStr';
   }
 
+  /// 年份标识（图标内展示），按周期开始日期的年份计算
+  String _fmtYearShort(DateTime start, DateTime end) {
+    return (start.year % 100).toString();
+  }
+
+  /// 日期范围 — 仅月份和日期，如 7月10日 ~ 8月9日
+  String _fmtDateRangeShort(DateTime start, DateTime end) {
+    return '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日';
+  }
+
   Future<bool> _showDeleteConfirmDialog(PeriodRecord period) async {
     final result = await showDialog<bool>(
       context: context,
@@ -538,6 +548,8 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
   Widget _buildPeriodCard(AppThemeExtension appTheme, PeriodRecord period) {
     final balance = _balances[period.id];
     final calc = _calcMap[period.id];
+    final startDate = DateTime.parse(period.startDate);
+    final endDate = DateTime.parse(period.endDate);
     final totalExpense = (calc?.totalBase ?? 0) - (balance ?? 0);
     final personalExpense =
         (calc?.shoppingTotal ?? 0) + (calc?.livingTotal ?? 0);
@@ -567,25 +579,39 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
               padding: const EdgeInsets.only(left: 16, top: 14, right: 12, bottom: 10),
               child: Row(
                 children: [
-                  // 日历图标
+                  // 年份图标（日历内展示年份）
                   Container(
-                    width: 28,
-                    height: 28,
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: appTheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(appTheme.radiusSm),
                     ),
-                    child: Icon(
-                      Icons.calendar_today_rounded,
-                      size: 14,
-                      color: appTheme.primary,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 24,
+                          color: appTheme.primary.withValues(alpha: 0.25),
+                        ),
+                        Text(
+                          _fmtYearShort(startDate, endDate),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: appTheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   AppSpacing.w8,
                   // 日期范围
                   Expanded(
                     child: Text(
-                      _fmtDateRange(period.startDate, period.endDate),
+                      _fmtDateRangeShort(startDate, endDate),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

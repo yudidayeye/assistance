@@ -112,6 +112,17 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             overflow: TextOverflow.ellipsis,
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                onPressed: () => context.push('/period_book/history'),
+                icon: const Icon(Icons.history_rounded),
+                color: appTheme.earth,
+                iconSize: 20,
+              ),
+            ),
+          ],
         ),
         body: Column(
           children: [
