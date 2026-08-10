@@ -546,11 +546,10 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
 
   /// 周期卡片 — 参考设计图：日期+金额第一行 + 支出明细第二行
   Widget _buildPeriodCard(AppThemeExtension appTheme, PeriodRecord period) {
-    final balance = _balances[period.id];
     final calc = _calcMap[period.id];
     final startDate = DateTime.parse(period.startDate);
     final endDate = DateTime.parse(period.endDate);
-    final totalExpense = (calc?.totalBase ?? 0) - (balance ?? 0);
+    final totalExpense = (calc?.shoppingTotal ?? 0) + (calc?.livingTotal ?? 0) + (calc?.otherTotal ?? 0);
     final personalExpense =
         (calc?.shoppingTotal ?? 0) + (calc?.livingTotal ?? 0);
     final otherExpense = calc?.otherTotal ?? 0;

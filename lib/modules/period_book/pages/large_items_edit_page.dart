@@ -314,9 +314,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       onCollapse: () => setState(() => _shoppingFormExpanded = false),
       onConfirm: _submitShoppingExpense,
       confirmText: '确认添加',
-      confirmForeground: appTheme.rose,
-      confirmBackground: appTheme.rose,
-      confirmBorder: appTheme.rose,
+      confirmForeground: appTheme.primary,
+      confirmBackground: appTheme.primary,
+      confirmBorder: appTheme.primary,
     );
   }
 
@@ -373,9 +373,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       onCollapse: () => setState(() => _otherFormExpanded = false),
       onConfirm: _submitOtherExpense,
       confirmText: '确认添加',
-      confirmForeground: appTheme.rose,
-      confirmBackground: appTheme.rose,
-      confirmBorder: appTheme.rose,
+      confirmForeground: appTheme.primary,
+      confirmBackground: appTheme.primary,
+      confirmBorder: appTheme.primary,
     );
   }
 
