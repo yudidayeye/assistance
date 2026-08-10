@@ -615,13 +615,14 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                   // 金额 + 箭头
                   Row(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         hasExpense
                             ? '-${FormatUtils.formatAmount(totalExpense)}'
                             : FormatUtils.formatAmount(0),
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: hasExpense
                               ? appTheme.rose
@@ -630,10 +631,14 @@ class _PeriodHistoryPageState extends State<PeriodHistoryPage> {
                         ),
                       ),
                       AppSpacing.w6,
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: 16,
-                        color: appTheme.earthMedium.withValues(alpha: 0.3),
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 16,
+                          color: appTheme.earthMedium.withValues(alpha: 0.3),
+                        ),
                       ),
                     ],
                   ),
