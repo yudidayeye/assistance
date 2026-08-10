@@ -181,6 +181,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert_rounded, size: 20, color: appTheme.earth),
               color: appTheme.cardBackground,
+              position: PopupMenuPosition.under,
               onSelected: (value) {
                 switch (value) {
                   case 'edit_period':
