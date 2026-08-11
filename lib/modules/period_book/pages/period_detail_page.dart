@@ -294,7 +294,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     children: [
                       Icon(Icons.calendar_month_rounded, size: 18, color: appTheme.earth),
                       const SizedBox(width: 8),
-                      Text('发薪日 $_payday号'),
+                      const Text('发薪日设置'),
                     ],
                   ),
                 ),
