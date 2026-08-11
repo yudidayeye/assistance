@@ -40,11 +40,14 @@ if (-not (Test-Path pubspec.yaml)) {
 # --- 更新 pubspec.yaml 版本号 ---
 Write-Host ">>> 更新版本号到 ${VERSION}"
 # 提取当前 build number，并 +1
-$line = (Select-String -Path pubspec.yaml -Pattern '^version:' | Select-Object -First 1).Line
+$utf8 = New-Object System.Text.UTF8Encoding($false)
+$pubspecContent = [System.IO.File]::ReadAllText((Resolve-Path 'pubspec.yaml'), [System.Text.Encoding]::UTF8)
+$line = ($pubspecContent -split "`n" | Where-Object { $_ -match '^version:' } | Select-Object -First 1)
 $versionPart = ($line -replace '^version:\s*', '').Trim()
 $build = [int](($versionPart -split '\+')[1])
 $newBuild = $build + 1
-(Get-Content pubspec.yaml) -replace '^version:.*', "version: $VERSION+$newBuild" | Set-Content pubspec.yaml
+$pubspecContent = [regex]::Replace($pubspecContent, '^version:.*$', "version: $VERSION+$newBuild", [System.Text.RegularExpressions.RegexOptions]::Multiline)
+[System.IO.File]::WriteAllText((Resolve-Path 'pubspec.yaml'), $pubspecContent, $utf8)
 Write-Host "    新版本: $VERSION+$newBuild"
 
 # --- 提交 ---
