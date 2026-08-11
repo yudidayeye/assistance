@@ -37,8 +37,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  msix: ^3.18.0
-
 flutter:
   uses-material-design: true
 
@@ -46,10 +44,3 @@ hooks:
   user_defines:
     sqlite3:
       source: system
-msix_config:
-  display_name: 我的工具箱
-  publisher_display_name: 我的工具箱
-  identity_name: myassistant.desktop
-  logo_path: windows/runner/resources/app_icon.ico
-  install_certificate: false
-  sign_msix: true

@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # Flutter App 发布脚本 (Windows PowerShell 版)
 # 用法: powershell -ExecutionPolicy Bypass -File scripts/release.ps1 <版本号> "<发布说明>"
 # 示例: powershell -ExecutionPolicy Bypass -File scripts/release.ps1 1.0.1 "修复了输入数据后首页卡片不更新的问题"
@@ -21,6 +21,9 @@ $APK_PATHS = @(
   "$APK_DIR/app-arm64-v8a-release.apk",
   "$APK_DIR/app-x86_64-release.apk"
 )
+$ISCC_PATH = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+$INSTALLER_DIR = "build/windows/installer"
+$SETUP_PATH = "$INSTALLER_DIR/my_assistant_setup_$VERSION.exe"
 
 Write-Host "========================================"
 Write-Host "  发布 v$VERSION"
@@ -39,7 +42,6 @@ if (-not (Test-Path pubspec.yaml)) {
 
 # --- 更新 pubspec.yaml 版本号 ---
 Write-Host ">>> 更新版本号到 ${VERSION}"
-# 提取当前 build number，并 +1
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $pubspecContent = [System.IO.File]::ReadAllText((Resolve-Path 'pubspec.yaml'), [System.Text.Encoding]::UTF8)
 $line = ($pubspecContent -split "`n" | Where-Object { $_ -match '^version:' } | Select-Object -First 1)
@@ -65,17 +67,21 @@ flutter build apk --release --split-per-abi
 Write-Host ">>> 构建 Windows 桌面版"
 flutter build windows --release
 
-# --- 创建 MSIX 安装包 ---
-Write-Host ">>> 创建 MSIX 安装包"
-$MSIX_VERSION = "$VERSION.$newBuild"
-$MSIX_DIR = "build/windows/msix"
-$MSIX_NAME = "my_assistant_${VERSION}_x64"
-New-Item -ItemType Directory -Force -Path $MSIX_DIR | Out-Null
-dart run msix:create --build-windows false --version $MSIX_VERSION --output-path $MSIX_DIR --output-name $MSIX_NAME
-$MSIX_PATH = "$MSIX_DIR/$MSIX_NAME.msix"
+# --- 创建 setup.exe 安装包 (Inno Setup) ---
+Write-Host ">>> 创建 setup.exe 安装包 (Inno Setup)"
+if (-not (Test-Path $ISCC_PATH)) {
+  Write-Host "错误: 未找到 Inno Setup 编译器，请安装 https://jrsoftware.org/isinfo.php" -ForegroundColor Red
+  exit 1
+}
+New-Item -ItemType Directory -Force -Path $INSTALLER_DIR | Out-Null
+& $ISCC_PATH /DMyAppVersion=$VERSION scripts/setup_windows.iss
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "错误: Inno Setup 编译失败" -ForegroundColor Red
+  exit 1
+}
 
 # --- 汇总待上传产物 ---
-$RELEASE_FILES = $APK_PATHS + @($MSIX_PATH)
+$RELEASE_FILES = $APK_PATHS + @($SETUP_PATH)
 
 # --- 打 Tag ---
 Write-Host ">>> 打 Tag: ${TAG}"

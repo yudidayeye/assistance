@@ -57,20 +57,22 @@ flutter clean
 flutter pub get
 flutter build apk --release --split-per-abi
 
-# --- 构建 Windows 桌面版与 MSIX 安装包（仅 Windows 环境） ---
+# --- 构建 Windows 桌面版与 setup.exe 安装包（仅 Windows 环境） ---
 RELEASE_FILES=("${APK_PATHS[@]}")
 if [[ "$OS" == "Windows_NT" ]] || [[ "$(uname -s)" == MINGW* ]] || [[ "$(uname -s)" == CYGWIN* ]] || [[ "$(uname -s)" == MSYS* ]]; then
   echo ">>> 构建 Windows 桌面版"
   flutter build windows --release
 
-  echo ">>> 创建 MSIX 安装包"
-  MSIX_VERSION="${VERSION}.${NEW_BUILD}"
-  MSIX_DIR="build/windows/msix"
-  MSIX_NAME="my_assistant_${VERSION}_x64"
-  mkdir -p "$MSIX_DIR"
-  dart run msix:create --build-windows false --version "$MSIX_VERSION" --output-path "$MSIX_DIR" --output-name "$MSIX_NAME"
-  MSIX_PATH="$MSIX_DIR/$MSIX_NAME.msix"
-  RELEASE_FILES+=("$MSIX_PATH")
+  echo ">>> 创建 setup.exe 安装包 (Inno Setup)"
+  ISCC="C:/Program Files (x86)/Inno Setup 6/ISCC.exe"
+  if [ ! -f "$ISCC" ]; then
+    echo "错误: 未找到 Inno Setup 编译器，请安装 https://jrsoftware.org/isinfo.php"
+    exit 1
+  fi
+  mkdir -p build/windows/installer
+  "$ISCC" "/DMyAppVersion=${VERSION}" scripts/setup_windows.iss
+  SETUP_PATH="build/windows/installer/my_assistant_setup_${VERSION}.exe"
+  RELEASE_FILES+=("$SETUP_PATH")
 else
   echo ">>> 跳过 Windows 安装包（当前非 Windows 环境）"
 fi
