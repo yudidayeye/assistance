@@ -61,7 +61,7 @@ class ImportExportService {
         'mod_vault_categories',
         orderBy: 'sort_order ASC, created_at ASC');
     final vaultEntries = await _db.query('mod_vault_entries',
-        orderBy: 'category_id ASC, created_at ASC');
+        orderBy: 'category_id ASC, sort_order ASC, created_at ASC');
     final vaultMaster = await _db.query('mod_vault_master', limit: 1);
 
     // 5. 构建导出 payload
@@ -504,6 +504,7 @@ class ImportExportService {
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
         note TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (category_id) REFERENCES mod_vault_categories(id) ON DELETE CASCADE
@@ -561,8 +562,8 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(entry as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_vault_entries
-           (id, category_id, title, username, encrypted_password, password_iv, note, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+           (id, category_id, title, username, encrypted_password, password_iv, note, sort_order, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['category_id'],
@@ -571,6 +572,7 @@ class ImportExportService {
           map['encrypted_password'],
           map['password_iv'],
           map['note'],
+          map['sort_order'] ?? 0,
           map['created_at'],
           map['updated_at'],
         ],
