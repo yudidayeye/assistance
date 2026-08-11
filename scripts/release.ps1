@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # Flutter App 发布脚本 (Windows PowerShell 版)
 # 用法: powershell -ExecutionPolicy Bypass -File scripts/release.ps1 <版本号> "<发布说明>"
 # 示例: powershell -ExecutionPolicy Bypass -File scripts/release.ps1 1.0.1 "修复了输入数据后首页卡片不更新的问题"
