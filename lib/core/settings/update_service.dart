@@ -173,7 +173,7 @@ class UpdateService {
   /// 挑选最适合 Windows 桌面的安装包（纯函数，便于单元测试）
   ///
   /// 匹配规则：
-  /// - 仅考虑扩展名为 .exe / .msi 的安装包
+  /// - 仅考虑扩展名为 .exe 的安装包
   /// - 优先名称含 setup / installer 的安装包
   /// - 忽略调试符号等非安装产物（如含 debug / symbols / pdb）
   /// - 多个候选时取体积最大的（安装包通常最大且最完整）
@@ -181,7 +181,7 @@ class UpdateService {
   static ReleaseAsset? selectWindowsAsset(List<ReleaseAsset> assets) {
     final candidates = assets.where((a) {
       final name = a.name.toLowerCase();
-      return (name.endsWith('.exe') || name.endsWith('.msi')) &&
+      return name.endsWith('.exe') &&
           !name.contains('debug') &&
           !name.contains('symbols') &&
           !name.contains('.pdb');
@@ -291,9 +291,7 @@ class UpdateService {
         final name = p.basename(entity.path);
         if (entity is File &&
             name.startsWith('update_') &&
-            (name.endsWith('.apk') ||
-                name.endsWith('.exe') ||
-                name.endsWith('.msi'))) {
+            (name.endsWith('.apk') || name.endsWith('.exe'))) {
           entity.deleteSync();
         }
       }
@@ -364,7 +362,7 @@ class UpdateService {
 
   /// 唤起系统安装器安装更新包，返回是否成功唤起
   Future<bool> installUpdate(String filePath) async {
-    // Windows：直接启动安装程序（.exe / .msi），进入系统安装向导
+    // Windows：直接启动安装程序（.exe），进入系统安装向导
     if (Platform.isWindows) {
       try {
         await Process.start(filePath, const [], runInShell: true);

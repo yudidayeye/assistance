@@ -151,11 +151,7 @@ void main() {
         downloadUrl: 'https://example.com/my_assistant_setup_1.2.1.exe',
         size: 60000000,
       ),
-      ReleaseAsset(
-        name: 'my_assistant_setup_1.2.1.msi',
-        downloadUrl: 'https://example.com/my_assistant_setup_1.2.1.msi',
-        size: 55000000,
-      ),
+
       ReleaseAsset(
         name: 'my_assistant-debug.exe',
         downloadUrl: 'https://example.com/my_assistant-debug.exe',
@@ -186,18 +182,6 @@ void main() {
       expect(UpdateService.selectWindowsAsset(assets), isNull);
     });
 
-    test('支持 msi 安装包（无 setup 命名时）', () {
-      const assets = [
-        ReleaseAsset(
-          name: 'my-assistant.msi',
-          downloadUrl: 'https://example.com/my-assistant.msi',
-          size: 50000000,
-        ),
-      ];
-      final asset = UpdateService.selectWindowsAsset(assets);
-      expect(asset, isNotNull);
-      expect(asset!.name, 'my-assistant.msi');
-    });
 
     test('多个候选时取体积最大的', () {
       const assets = [
@@ -217,7 +201,7 @@ void main() {
       expect(asset!.name, 'b.exe');
     });
 
-    test('无 exe/msi 资产返回 null', () {
+    test('无 exe 资产返回 null', () {
       const assets = [
         ReleaseAsset(
           name: 'app-release.apk',
