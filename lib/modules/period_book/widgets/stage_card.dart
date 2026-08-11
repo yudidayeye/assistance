@@ -717,7 +717,7 @@ class _StageCardState extends State<StageCard> {
         padding: const EdgeInsets.fromLTRB(18, 14, 16, 14),
         decoration: BoxDecoration(
           color: appTheme.cardBackground,
-          borderRadius: BorderRadius.circular(appTheme.radiusLg),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
           boxShadow: appTheme.cardShadow,
           border: Border.all(
             color: appTheme.cardBorder.withValues(alpha: 0.7),
