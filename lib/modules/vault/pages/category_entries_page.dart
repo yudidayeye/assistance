@@ -36,6 +36,7 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
   Map<int, String?> _decryptedPasswords = {};
   bool _loading = true;
   bool _isUnlocked = false;
+  bool _isSorting = false;
 
   @override
   void initState() {
@@ -458,8 +459,14 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
     final appTheme = theme.appTheme;
 
     return PopScope(
-      canPop: true,
-      onPopInvokedWithResult: (didPop, _) => _onPopInvoked(didPop),
+      canPop: !_isSorting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _isSorting) {
+          setState(() => _isSorting = false);
+        } else {
+          _onPopInvoked(didPop);
+        }
+      },
       child: AppScaffold(
         appBar: AppBar(
           backgroundColor: appTheme.cream,
@@ -472,6 +479,27 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
           actions: [
+            if (_entries.isNotEmpty)
+              if (_isSorting)
+                TextButton(
+                  onPressed: _exitSorting,
+                  child: Text(
+                    '完成',
+                    style: AppTypography.bodyMd.copyWith(
+                      color: appTheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              else
+                IconButton(
+                  tooltip: '排序',
+                  icon: Icon(
+                    Icons.swap_vert_rounded,
+                    color: appTheme.earthMedium,
+                  ),
+                  onPressed: _enterSorting,
+                ),
             if (_category?.isEncrypted ?? true)
               Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -494,10 +522,12 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
             : _entries.isEmpty
                 ? _buildEmpty(appTheme)
                 : _buildEntryList(appTheme),
-        floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 40),
-          child: _buildFab(appTheme),
-        ),
+        floatingActionButton: _isSorting
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(bottom: 40),
+                child: _buildFab(appTheme),
+              ),
       ),
     );
   }
@@ -565,12 +595,26 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
   }
 
   Widget _buildEntryList(AppThemeExtension appTheme) {
-    return ListView.builder(
+    if (!_isSorting) {
+      return ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        itemCount: _entries.length,
+        itemBuilder: (context, index) {
+          final entry = _entries[index];
+          return _buildEntryCard(entry, appTheme);
+        },
+      );
+    }
+    return ReorderableListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+      buildDefaultDragHandles: false,
+      onReorderItem: _onEntryReorder,
+      proxyDecorator: (child, index, animation) =>
+          _buildSortableDragProxy(index, appTheme),
       itemCount: _entries.length,
       itemBuilder: (context, index) {
         final entry = _entries[index];
-        return _buildEntryCard(entry, appTheme);
+        return _buildSortableEntryCard(entry, index, appTheme);
       },
     );
   }
@@ -788,6 +832,137 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 进入排序模式：收起密码内容，仅保留标题方便拖动
+  void _enterSorting() {
+    setState(() => _isSorting = true);
+  }
+
+  /// 退出排序模式（顺序已在拖拽时实时持久化）
+  void _exitSorting() {
+    setState(() => _isSorting = false);
+  }
+
+  /// 拖拽排序回调 — 更新本地顺序并后台持久化
+  ///
+  /// onReorderItem 传入的 newIndex 已由框架修正（无需再减一）。
+  void _onEntryReorder(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    final updated = List<VaultEntry>.from(_entries);
+    final moved = updated.removeAt(oldIndex);
+    updated.insert(newIndex, moved);
+    setState(() => _entries = updated);
+    VaultService.instance.updateEntriesOrder(updated);
+  }
+
+  /// 排序模式下的条目卡片（收起内容，仅保留标题 + 拖拽手柄）
+  Widget _buildSortableEntryCard(
+    VaultEntry entry,
+    int index,
+    AppThemeExtension appTheme,
+  ) {
+    return KeyedSubtree(
+      key: ValueKey(entry.id),
+      child: _buildCompactEntryCard(entry, index, appTheme),
+    );
+  }
+
+  /// 拖拽手柄
+  Widget _buildDragHandle(int index, AppThemeExtension appTheme) {
+    return ReorderableDragStartListener(
+      index: index,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 2),
+        child: Icon(
+          Icons.drag_indicator_rounded,
+          size: 24,
+          color: appTheme.earthMedium.withValues(alpha: 0.4),
+        ),
+      ),
+    );
+  }
+
+  /// 拖拽代理：仅展示精简卡片本体，去掉底部间距
+  Widget _buildSortableDragProxy(
+    int index,
+    AppThemeExtension appTheme,
+  ) {
+    final entry = _entries[index];
+    return _buildCompactEntryCard(entry, index, appTheme, bottomSpacing: 0);
+  }
+
+  /// 排序模式下的精简条目卡片：仅标题 + 拖拽手柄，收起用户名/密码/备注
+  Widget _buildCompactEntryCard(
+    VaultEntry entry,
+    int index,
+    AppThemeExtension appTheme, {
+    double bottomSpacing = AppSpacing.xs,
+  }) {
+    final title = entry.title.trim();
+    final username = entry.username?.trim() ?? '';
+    final displayTitle = title.isNotEmpty
+        ? title
+        : (username.isNotEmpty ? username : '未命名');
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomSpacing),
+      child: Material(
+        color: appTheme.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          side: BorderSide(
+            color: appTheme.primary.withValues(alpha: 0.35),
+            width: 1.0,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.sm,
+            AppSpacing.sm,
+            AppSpacing.sm,
+            AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              _buildDragHandle(index, appTheme),
+              const SizedBox(width: 4),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                ),
+                child: Icon(
+                  Icons.key_rounded,
+                  color: appTheme.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  displayTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: appTheme.earth,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.unfold_more_rounded,
+                size: 20,
+                color: appTheme.earthMedium.withValues(alpha: 0.4),
+              ),
+            ],
           ),
         ),
       ),

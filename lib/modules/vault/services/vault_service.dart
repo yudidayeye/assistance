@@ -215,9 +215,26 @@ class VaultService extends ChangeNotifier {
       'mod_vault_entries',
       where: 'category_id = ?',
       whereArgs: [categoryId],
-      orderBy: 'created_at ASC',
+      orderBy: 'sort_order ASC, created_at ASC',
     );
     return rows.map(VaultEntry.fromMap).toList();
+  }
+
+  /// 批量更新某分类下条目的排序顺序（按传入列表顺序写入 sort_order）
+  ///
+  /// 拖拽排序完成后统一持久化，幂等可重复调用。
+  Future<void> updateEntriesOrder(List<VaultEntry> entries) async {
+    for (var i = 0; i < entries.length; i++) {
+      final entry = entries[i];
+      if (entry.id == null) continue;
+      await _db.update(
+        'mod_vault_entries',
+        {'sort_order': i},
+        where: 'id = ?',
+        whereArgs: [entry.id],
+      );
+    }
+    _notifyChanged();
   }
 
   /// 获取单个条目
@@ -273,6 +290,13 @@ class VaultService extends ChangeNotifier {
       passwordIv = '';
     }
 
+    // 新条目追加到当前分类末尾
+    final countResult = await _db.rawQuery(
+      'SELECT COUNT(*) as cnt FROM mod_vault_entries WHERE category_id = ?',
+      [categoryId],
+    );
+    final sortOrder = countResult.first['cnt'] as int;
+
     final id = await _db.insert('mod_vault_entries', {
       'category_id': categoryId,
       'title': title,
@@ -280,6 +304,7 @@ class VaultService extends ChangeNotifier {
       'encrypted_password': encryptedPassword,
       'password_iv': passwordIv,
       'note': note,
+      'sort_order': sortOrder,
       'created_at': now,
       'updated_at': now,
     });

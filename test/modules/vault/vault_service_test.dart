@@ -55,6 +55,7 @@ void main() {
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
         note TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (category_id) REFERENCES mod_vault_categories(id) ON DELETE CASCADE
@@ -339,6 +340,38 @@ void main() {
       'plain-123',
     );
   });
+  test('updateEntriesOrder 批量更新条目排序顺序并持久化', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '测试分类',
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    await vault.insertEntry(
+        categoryId: catId, title: '条目A', plainPassword: 'p1');
+    await vault.insertEntry(
+        categoryId: catId, title: '条目B', plainPassword: 'p2');
+    await vault.insertEntry(
+        categoryId: catId, title: '条目C', plainPassword: 'p3');
+
+    // 初始按 sort_order 排序
+    expect(
+      (await vault.getEntriesByCategory(catId)).map((e) => e.title).toList(),
+      ['条目A', '条目B', '条目C'],
+    );
+
+    // 打乱顺序并批量持久化
+    final reordered = await vault.getEntriesByCategory(catId);
+    await vault.updateEntriesOrder(
+        [reordered[2], reordered[0], reordered[1]]);
+
+    final after = await vault.getEntriesByCategory(catId);
+    expect(after.map((e) => e.title).toList(), ['条目C', '条目A', '条目B']);
+    expect(after.map((e) => e.sortOrder).toList(), [0, 1, 2]);
+  });
+
   test('updateCategoriesOrder 批量更新分类排序顺序并持久化', () async {
     final vault = await setUpVault();
     unlockSession();
