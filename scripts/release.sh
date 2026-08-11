@@ -57,14 +57,32 @@ flutter clean
 flutter pub get
 flutter build apk --release --split-per-abi
 
+# --- 构建 Windows 桌面版与 MSIX 安装包（仅 Windows 环境） ---
+RELEASE_FILES=("${APK_PATHS[@]}")
+if [[ "$OS" == "Windows_NT" ]] || [[ "$(uname -s)" == MINGW* ]] || [[ "$(uname -s)" == CYGWIN* ]] || [[ "$(uname -s)" == MSYS* ]]; then
+  echo ">>> 构建 Windows 桌面版"
+  flutter build windows --release
+
+  echo ">>> 创建 MSIX 安装包"
+  MSIX_VERSION="${VERSION}.${NEW_BUILD}"
+  MSIX_DIR="build/windows/msix"
+  MSIX_NAME="my_assistant_${VERSION}_x64"
+  mkdir -p "$MSIX_DIR"
+  dart run msix:create --build-windows false --version "$MSIX_VERSION" --output-path "$MSIX_DIR" --output-name "$MSIX_NAME"
+  MSIX_PATH="$MSIX_DIR/$MSIX_NAME.msix"
+  RELEASE_FILES+=("$MSIX_PATH")
+else
+  echo ">>> 跳过 Windows 安装包（当前非 Windows 环境）"
+fi
+
 # --- 打 Tag ---
 echo ">>> 打 Tag: ${TAG}"
-for APK_PATH in "${APK_PATHS[@]}"; do
-  if [ ! -f "$APK_PATH" ]; then
-    echo "错误: 分包 APK 构建失败，路径: $APK_PATH"
+for FILE in "${RELEASE_FILES[@]}"; do
+  if [ ! -f "$FILE" ]; then
+    echo "错误: 发布产物构建失败，路径: $FILE"
     exit 1
   fi
-  echo "    $(basename "$APK_PATH"): $(du -h "$APK_PATH" | cut -f1)"
+  echo "    $(basename "$FILE"): $(du -h "$FILE" | cut -f1)"
 done
 
 git tag "$TAG"
@@ -82,13 +100,13 @@ if [ -z "$NOTES" ]; then
   gh release create "$TAG" \
     --title "$TAG" \
     --generate-notes \
-    "${APK_PATHS[@]}"
+    "${RELEASE_FILES[@]}"
 else
   # 带自定义说明
   gh release create "$TAG" \
     --title "$TAG" \
     --notes "$NOTES" \
-    "${APK_PATHS[@]}"
+    "${RELEASE_FILES[@]}"
 fi
 
 echo ""

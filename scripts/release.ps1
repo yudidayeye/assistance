@@ -58,15 +58,31 @@ flutter clean
 flutter pub get
 flutter build apk --release --split-per-abi
 
+# --- 构建 Windows 桌面版 ---
+Write-Host ">>> 构建 Windows 桌面版"
+flutter build windows --release
+
+# --- 创建 MSIX 安装包 ---
+Write-Host ">>> 创建 MSIX 安装包"
+$MSIX_VERSION = "$VERSION.$newBuild"
+$MSIX_DIR = "build/windows/msix"
+$MSIX_NAME = "my_assistant_${VERSION}_x64"
+New-Item -ItemType Directory -Force -Path $MSIX_DIR | Out-Null
+dart run msix:create --build-windows false --version $MSIX_VERSION --output-path $MSIX_DIR --output-name $MSIX_NAME
+$MSIX_PATH = "$MSIX_DIR/$MSIX_NAME.msix"
+
+# --- 汇总待上传产物 ---
+$RELEASE_FILES = $APK_PATHS + @($MSIX_PATH)
+
 # --- 打 Tag ---
 Write-Host ">>> 打 Tag: ${TAG}"
-foreach ($APK_PATH in $APK_PATHS) {
-  if (-not (Test-Path $APK_PATH)) {
-    Write-Host "错误: 分包 APK 构建失败，路径: $APK_PATH" -ForegroundColor Red
+foreach ($FILE in $RELEASE_FILES) {
+  if (-not (Test-Path $FILE)) {
+    Write-Host "错误: 发布产物构建失败，路径: $FILE" -ForegroundColor Red
     exit 1
   }
-  $size = (Get-Item $APK_PATH).Length / 1MB
-  Write-Host ("    {0}: {1:N1} MB" -f (Split-Path $APK_PATH -Leaf), $size)
+  $size = (Get-Item $FILE).Length / 1MB
+  Write-Host ("    {0}: {1:N1} MB" -f (Split-Path $FILE -Leaf), $size)
 }
 
 git tag $TAG
@@ -81,9 +97,9 @@ Write-Host ">>> 创建 GitHub Release"
 
 if ([string]::IsNullOrWhiteSpace($NOTES)) {
   # 无自定义说明，生成默认 Release Notes
-  gh release create $TAG --title $TAG --generate-notes @APK_PATHS
+  gh release create $TAG --title $TAG --generate-notes @RELEASE_FILES
 } else {
-  gh release create $TAG --title $TAG --notes $NOTES @APK_PATHS
+  gh release create $TAG --title $TAG --notes $NOTES @RELEASE_FILES
 }
 
 Write-Host ""
