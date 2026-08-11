@@ -255,6 +255,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               position: PopupMenuPosition.under,
               onSelected: (value) {
                 switch (value) {
+                  case 'new_period':
+                    context.push('/period_book/new');
+                    break;
                   case 'edit_period':
                     context.push('/period_book/edit/${_period!.id}');
                     break;
@@ -267,6 +270,16 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 }
               },
               itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'new_period',
+                  child: Row(
+                    children: [
+                      Icon(Icons.add_circle_outline_rounded, size: 18, color: appTheme.earth),
+                      const SizedBox(width: 8),
+                      const Text('新增周期'),
+                    ],
+                  ),
+                ),
                 if (!_isReadOnly)
                   PopupMenuItem(
                     value: 'edit_period',
