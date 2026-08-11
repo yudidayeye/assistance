@@ -618,7 +618,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   Widget _buildCategoryList(AppThemeExtension appTheme) {
     if (!_isSorting) {
       return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
         itemCount: _categories.length,
         itemBuilder: (context, index) {
           final category = _categories[index];
@@ -627,7 +627,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       );
     }
     return ReorderableListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
       buildDefaultDragHandles: false,
       onReorderItem: _onCategoryReorder,
       proxyDecorator: (child, index, animation) =>
@@ -646,15 +646,23 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
     VoidCallback? onTap,
     VoidCallback? onLongPress,
     Widget? leading,
-    double bottomSpacing = 10,
+    double bottomSpacing = 8,
+    bool isSorting = false,
   }) {
+    final borderColor = isSorting
+        ? appTheme.primary.withValues(alpha: 0.35)
+        : appTheme.earthMedium.withValues(alpha: 0.15);
     return Padding(
       padding: EdgeInsets.only(bottom: bottomSpacing),
       child: Material(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          side: BorderSide(color: borderColor, width: isSorting ? 1.2 : 0.5),
+        ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(appTheme.radiusLg),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
           hoverColor: Colors.transparent,
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
@@ -664,22 +672,22 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
               },
           onLongPress: onLongPress ?? () => _showCategoryActions(category),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             child: Row(
               children: [
                 if (leading != null) ...[leading, const SizedBox(width: 8)],
                 // 图标
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: appTheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                    borderRadius: BorderRadius.circular(appTheme.radiusSm),
                   ),
                   child: Icon(
                     _getIcon(category.icon),
                     color: appTheme.primary,
-                    size: 22,
+                    size: 20,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -692,24 +700,17 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                     style: AppTypography.bodyLg.copyWith(color: appTheme.earth),
                   ),
                 ),
-                // 条目数
+                // 条目数徽标
                 FutureBuilder<int>(
-                  future: VaultService.instance.getCategoryEntryCount(category.id!),
+                  future:
+                      VaultService.instance.getCategoryEntryCount(category.id!),
                   builder: (context, snapshot) {
                     final count = snapshot.data ?? 0;
-                    if (count > 0) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Text(
-                          '$count',
-                          style: AppTypography.bodySm
-                              .copyWith(color: appTheme.earthMedium),
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
+                    if (count <= 0) return const SizedBox.shrink();
+                    return _buildCountBadge(count, appTheme);
                   },
                 ),
+                const SizedBox(width: 4),
                 // 箭头
                 Icon(
                   Icons.chevron_right_rounded,
@@ -718,6 +719,27 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 条目数徽标（浅色圆角底 + 主色文字）
+  Widget _buildCountBadge(int count, AppThemeExtension appTheme) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: appTheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(appTheme.radiusPill),
+        ),
+        child: Text(
+          '$count',
+          style: AppTypography.bodySm.copyWith(
+            color: appTheme.primary,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -759,6 +781,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
         appTheme,
         onTap: () {},
         onLongPress: () {},
+        isSorting: true,
         leading: _buildDragHandle(index, appTheme),
       ),
     );
@@ -791,6 +814,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       bottomSpacing: 0,
       onTap: () {},
       onLongPress: () {},
+      isSorting: true,
       leading: _buildDragHandle(index, appTheme),
     );
   }
