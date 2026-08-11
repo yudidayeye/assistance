@@ -482,7 +482,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                   IconButton(
                     tooltip: '排序',
                     icon: Icon(
-                      Icons.sort_rounded,
+                      Icons.swap_vert_rounded,
                       color: appTheme.earthMedium,
                     ),
                     onPressed: _enterSorting,
@@ -630,6 +630,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
       buildDefaultDragHandles: false,
       onReorderItem: _onCategoryReorder,
+      proxyDecorator: (child, index, animation) =>
+          _buildSortableDragProxy(index, appTheme),
       itemCount: _categories.length,
       itemBuilder: (context, index) {
         final category = _categories[index];
@@ -644,9 +646,10 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
     VoidCallback? onTap,
     VoidCallback? onLongPress,
     Widget? leading,
+    double bottomSpacing = 10,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: bottomSpacing),
       child: Material(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusLg),
@@ -684,6 +687,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                 Expanded(
                   child: Text(
                     category.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTypography.bodyLg.copyWith(color: appTheme.earth),
                   ),
                 ),
@@ -747,26 +752,46 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
     int index,
     AppThemeExtension appTheme,
   ) {
-    return Padding(
+    return KeyedSubtree(
       key: ValueKey(category.id),
-      padding: const EdgeInsets.only(bottom: 10),
       child: _buildCategoryCard(
         category,
         appTheme,
         onTap: () {},
         onLongPress: () {},
-        leading: ReorderableDragStartListener(
-          index: index,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 2),
-            child: Icon(
-              Icons.drag_indicator_rounded,
-              size: 24,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
-            ),
-          ),
+        leading: _buildDragHandle(index, appTheme),
+      ),
+    );
+  }
+
+  /// 拖拽手柄
+  Widget _buildDragHandle(int index, AppThemeExtension appTheme) {
+    return ReorderableDragStartListener(
+      index: index,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 2),
+        child: Icon(
+          Icons.drag_indicator_rounded,
+          size: 24,
+          color: appTheme.earthMedium.withValues(alpha: 0.4),
         ),
       ),
+    );
+  }
+
+  /// 拖拽代理：仅展示卡片本体，去掉底部间距
+  Widget _buildSortableDragProxy(
+    int index,
+    AppThemeExtension appTheme,
+  ) {
+    final category = _categories[index];
+    return _buildCategoryCard(
+      category,
+      appTheme,
+      bottomSpacing: 0,
+      onTap: () {},
+      onLongPress: () {},
+      leading: _buildDragHandle(index, appTheme),
     );
   }
 
