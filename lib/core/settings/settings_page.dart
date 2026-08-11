@@ -14,7 +14,6 @@ import 'import_export_service.dart';
 import 'update_dialog.dart';
 import 'update_service.dart';
 import '../../shared/widgets/app_snack_bar.dart';
-import '../../modules/period_book/services/period_book_settings.dart';
 import '../../modules/period_book/services/period_book_service.dart';
 import '../../modules/period_tracker/services/period_service.dart';
 import '../../modules/vault/services/vault_service.dart';
@@ -42,10 +41,8 @@ class _SettingsPageState extends State<SettingsPage> {
   final SettingsController _controller = SettingsController.instance;
   final DatabaseService _db = DatabaseService.instance;
   final ImportExportService _importExport = ImportExportService.instance;
-  final PeriodBookSettings _periodSettings = PeriodBookSettings.instance;
   final UpdateService _updateService = UpdateService.instance;
 
-  int _payday = 10;
   String _currentVersion = '';
   bool _isCheckingUpdate = false;
   UpdateInfo? _updateInfo;
@@ -53,7 +50,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    _loadPayday();
     _loadVersion();
     _checkUpdate();
   }
@@ -86,13 +82,6 @@ class _SettingsPageState extends State<SettingsPage> {
         _updateInfo = info;
         _currentVersion = info.currentVersion;
       });
-    }
-  }
-
-  Future<void> _loadPayday() async {
-    final payday = await _periodSettings.getPayday();
-    if (mounted) {
-      setState(() => _payday = payday);
     }
   }
 
@@ -146,12 +135,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
               ),
-
-              const SizedBox(height: 10),
-
-              // ── 周期记账 ──
-              const SectionLabel(title: '周期记账'),
-              SectionCard(child: _buildPeriodSettings(appTheme)),
 
               const SizedBox(height: 10),
 
@@ -371,115 +354,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
         child: child,
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // 周期记账设置 — 发薪日配置
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildPeriodSettings(AppThemeExtension appTheme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: GestureDetector(
-        onTap: _showPaydayPicker,
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: appTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              ),
-              child: Icon(Icons.calendar_month_rounded,
-                  color: appTheme.primary, size: 18),
-            ),
-            AppSpacing.w12,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '发薪日',
-                    style: AppTypography.bodySm.copyWith(color: appTheme.earth),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '每月$_payday号（新建周期默认使用）',
-                    style: AppTypography.caption.copyWith(
-                      color: appTheme.earthMedium.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right_rounded,
-                size: 18, color: appTheme.earthMedium.withValues(alpha: 0.4)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showPaydayPicker() {
-    final appTheme = Theme.of(context).appTheme;
-    showDialog(
-      context: context,
-      barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: appTheme.cream,
-        icon: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: appTheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(appTheme.radiusMd),
-          ),
-          child: Icon(Icons.calendar_month_rounded,
-              color: appTheme.primary, size: 26),
-        ),
-        title: Text(
-          '设置发薪日',
-          style: AppTypography.displayMd.copyWith(
-            color: appTheme.earth,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '每月几号发薪？（1~31）',
-              style: AppTypography.bodyMd.copyWith(
-                color: appTheme.earthMedium,
-              ),
-            ),
-            AppSpacing.h24,
-            _PaydayPicker(
-              initialValue: _payday,
-              onChanged: (value) {
-                setState(() => _payday = value);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
-          ),
-          TextButton(
-            onPressed: () async {
-              await _periodSettings.setPayday(_payday);
-              if (!ctx.mounted) return;
-              Navigator.pop(ctx);
-              _showSnackBar('发薪日已设置为每月$_payday号');
-            },
-            child: Text('确认', style: TextStyle(color: appTheme.primary)),
-          ),
-        ],
       ),
     );
   }
@@ -988,96 +862,4 @@ class _SettingsPageState extends State<SettingsPage> {
     AppSnackBar.show(context, message);
   }
 }
-
-/// 发薪日选择器 — 数字滚轮
-class _PaydayPicker extends StatefulWidget {
-  final int initialValue;
-  final ValueChanged<int> onChanged;
-
-  const _PaydayPicker({
-    required this.initialValue,
-    required this.onChanged,
-  });
-
-  @override
-  State<_PaydayPicker> createState() => _PaydayPickerState();
-}
-
-class _PaydayPickerState extends State<_PaydayPicker> {
-  late int _value;
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.initialValue;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appTheme = Theme.of(context).appTheme;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () {
-            if (_value > 1) {
-              setState(() {
-                _value--;
-                widget.onChanged(_value);
-              });
-            }
-          },
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: appTheme.creamDark,
-              borderRadius: BorderRadius.circular(appTheme.radiusMd),
-            ),
-            child: Icon(Icons.remove_rounded,
-                color: _value > 1
-                    ? appTheme.earth
-                    : appTheme.earthMedium.withValues(alpha: 0.3),
-                size: 22),
-          ),
-        ),
-        AppSpacing.w20,
-        Text(
-          '$_value',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: appTheme.earth,
-          ),
-        ),
-        AppSpacing.w20,
-        GestureDetector(
-          onTap: () {
-            if (_value < 31) {
-              setState(() {
-                _value++;
-                widget.onChanged(_value);
-              });
-            }
-          },
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: appTheme.creamDark,
-              borderRadius: BorderRadius.circular(appTheme.radiusMd),
-            ),
-            child: Icon(Icons.add_rounded,
-                color: _value < 31
-                    ? appTheme.earth
-                    : appTheme.earthMedium.withValues(alpha: 0.3),
-                size: 22),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 

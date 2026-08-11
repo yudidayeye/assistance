@@ -11,6 +11,7 @@ import '../models/stage_record.dart';
 import '../models/addition_record.dart';
 import '../models/expense_record.dart';
 import '../services/period_book_service.dart';
+import '../services/period_book_settings.dart';
 import '../widgets/stage_card.dart';
 import '../widgets/period_summary_card.dart';
 
@@ -38,6 +39,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   double? _largeItemsNet;
   bool _loading = true;
   bool _hasAnyPeriods = false;
+  int _payday = 10;
 
   bool get _isReadOnly => false;
 
@@ -45,6 +47,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   void initState() {
     super.initState();
     _loadData();
+    _loadPayday();
     _service.addListener(_onDataChanged);
   }
 
@@ -57,6 +60,74 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   void _onDataChanged() {
     if (mounted) _loadData();
+  }
+
+  Future<void> _loadPayday() async {
+    final payday = await PeriodBookSettings.instance.getPayday();
+    if (mounted) {
+      setState(() => _payday = payday);
+    }
+  }
+
+  void _showPaydayPicker() {
+    final appTheme = Theme.of(context).appTheme;
+    showDialog(
+      context: context,
+      barrierColor: appTheme.surfaceOverlay,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: appTheme.cream,
+        icon: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: appTheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          ),
+          child: Icon(Icons.calendar_month_rounded,
+              color: appTheme.primary, size: 26),
+        ),
+        title: Text(
+          '设置发薪日',
+          style: AppTypography.displayMd.copyWith(
+            color: appTheme.earth,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '每月几号发薪？（1~31）',
+              style: AppTypography.bodyMd.copyWith(
+                color: appTheme.earthMedium,
+              ),
+            ),
+            AppSpacing.h24,
+            _PaydayPicker(
+              initialValue: _payday,
+              onChanged: (value) {
+                setState(() => _payday = value);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+          ),
+          TextButton(
+            onPressed: () async {
+              await PeriodBookSettings.instance.setPayday(_payday);
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              AppSnackBar.show(ctx, '发薪日已设置为每月$_payday号');
+            },
+            child: Text('确认', style: TextStyle(color: appTheme.primary)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadData() async {
@@ -190,6 +261,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   case 'large_history':
                     context.push('/period_book/large_history');
                     break;
+                  case 'payday':
+                    _showPaydayPicker();
+                    break;
                 }
               },
               itemBuilder: (context) => [
@@ -211,6 +285,16 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                       Icon(Icons.diamond_outlined, size: 18, color: appTheme.earth),
                       const SizedBox(width: 8),
                       const Text('大额记录'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'payday',
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_month_rounded, size: 18, color: appTheme.earth),
+                      const SizedBox(width: 8),
+                      Text('发薪日 $_payday号'),
                     ],
                   ),
                 ),
@@ -684,6 +768,97 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 发薪日选择器 — 数字滚轮
+class _PaydayPicker extends StatefulWidget {
+  final int initialValue;
+  final ValueChanged<int> onChanged;
+
+  const _PaydayPicker({
+    required this.initialValue,
+    required this.onChanged,
+  });
+
+  @override
+  State<_PaydayPicker> createState() => _PaydayPickerState();
+}
+
+class _PaydayPickerState extends State<_PaydayPicker> {
+  late int _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initialValue;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).appTheme;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () {
+            if (_value > 1) {
+              setState(() {
+                _value--;
+                widget.onChanged(_value);
+              });
+            }
+          },
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: appTheme.creamDark,
+              borderRadius: BorderRadius.circular(appTheme.radiusMd),
+            ),
+            child: Icon(Icons.remove_rounded,
+                color: _value > 1
+                    ? appTheme.earth
+                    : appTheme.earthMedium.withValues(alpha: 0.3),
+                size: 22),
+          ),
+        ),
+        AppSpacing.w20,
+        Text(
+          '$_value',
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            color: appTheme.earth,
+          ),
+        ),
+        AppSpacing.w20,
+        GestureDetector(
+          onTap: () {
+            if (_value < 31) {
+              setState(() {
+                _value++;
+                widget.onChanged(_value);
+              });
+            }
+          },
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: appTheme.creamDark,
+              borderRadius: BorderRadius.circular(appTheme.radiusMd),
+            ),
+            child: Icon(Icons.add_rounded,
+                color: _value < 31
+                    ? appTheme.earth
+                    : appTheme.earthMedium.withValues(alpha: 0.3),
+                size: 22),
+          ),
+        ),
+      ],
     );
   }
 }
