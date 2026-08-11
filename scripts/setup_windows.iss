@@ -2,7 +2,7 @@
   #define MyAppVersion "1.2.1"
 #endif
 
-#define MyAppName "我的工具箱"
+#define MyAppName "理解"
 #define MyAppPublisher "我的工具箱"
 #define MyAppExeName "my_assistant.exe"
 #define MyAppSrcDir "..\build\windows\x64\runner\Release"

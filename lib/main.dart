@@ -51,7 +51,7 @@ class ToolboxApp extends StatelessWidget {
       animation: ThemeProvider.instance,
       builder: (context, child) {
         return MaterialApp.router(
-          title: '我的工具箱',
+          title: '理解',
           theme: ThemeProvider.instance.themeData,
           routerConfig: router,
           debugShowCheckedModeBanner: false,

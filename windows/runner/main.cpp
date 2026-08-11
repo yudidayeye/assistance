@@ -27,7 +27,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(405, 820);
-  if (!window.Create(L"my_assistant", origin, size)) {
+  if (!window.Create(L"理解", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
