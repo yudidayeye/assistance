@@ -121,7 +121,7 @@ class SyncService {
 
   /// 停止接收服务
   Future<void> stopServer() async {
-    _stopBroadcast();
+    await _stopBroadcast();
     await _server?.close(force: true);
     _server = null;
     _httpPort = 0;
@@ -279,9 +279,15 @@ class SyncService {
     }
   }
 
-  void _stopBroadcast() {
+  Future<void> _stopBroadcast() async {
     _broadcastTimer?.cancel();
     _broadcastTimer = null;
+
+    // 先发送离线广播，让对端立即移除本设备
+    if (_broadcastSocket != null && _httpPort != 0) {
+      await _sendOfflineBroadcast();
+    }
+
     _broadcastSocket?.close();
     _broadcastSocket = null;
   }
@@ -305,6 +311,33 @@ class SyncService {
       InternetAddress('255.255.255.255'),
       _discoveryPort,
     );
+  }
+
+  Future<void> _sendOfflineBroadcast() async {
+    final ip = _localIp ?? await getLocalIp();
+    if (ip == null) return;
+
+    final message = jsonEncode({
+      'magic': 'my_assistant_sync',
+      'name': Platform.localHostname,
+      'ip': ip,
+      'port': _httpPort,
+      'offline': true,
+    });
+
+    final data = utf8.encode(message);
+    try {
+      _broadcastSocket!.send(
+        data,
+        InternetAddress('255.255.255.255'),
+        _discoveryPort,
+      );
+    } catch (_) {
+      // 忽略发送失败
+    }
+
+    // 等待消息发出后再关闭 socket
+    await Future<void>.delayed(const Duration(milliseconds: 100));
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -331,6 +364,15 @@ class SyncService {
       if (ip == _localIp && port == _httpPort) return;
 
       final key = '$ip:$port';
+
+      // 离线消息：立即移除该设备
+      if (json['offline'] == true) {
+        if (_devices.containsKey(key)) {
+          _devices.remove(key);
+          _devicesController.add(devices);
+        }
+        return;
+      }
 
       if (_devices.containsKey(key)) {
         _devices[key]!.lastSeen = DateTime.now();
