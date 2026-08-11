@@ -652,6 +652,9 @@ class _SettingsPageState extends State<SettingsPage> {
     if (Platform.isAndroid) {
       final abis = await _updateService.getSupportedAbis();
       asset = UpdateService.selectAsset(info.assets, abis);
+    } else if (Platform.isWindows) {
+      // Windows 桌面版：匹配 .exe / .msi 安装包
+      asset = UpdateService.selectWindowsAsset(info.assets);
     }
 
     if (!mounted) return;

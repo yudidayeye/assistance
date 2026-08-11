@@ -23,5 +23,8 @@ approval_mode = "approve"
 [mcp_servers.codegraph.tools.codegraph_status]
 approval_mode = "approve"
 
+[mcp_servers.codegraph.tools.codegraph_files]
+approval_mode = "approve"
+
 [sandbox_workspace_write]
 network_access = true

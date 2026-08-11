@@ -170,28 +170,55 @@ class UpdateService {
   }
 
   /// 获取设备支持的 ABI 列表（按优先级排序）
+  /// 挑选最适合 Windows 桌面的安装包（纯函数，便于单元测试）
+  ///
+  /// 匹配规则：
+  /// - 仅考虑扩展名为 .exe / .msi 的安装包
+  /// - 优先名称含 setup / installer 的安装包
+  /// - 忽略调试符号等非安装产物（如含 debug / symbols / pdb）
+  /// - 多个候选时取体积最大的（安装包通常最大且最完整）
+  /// 返回 null 表示没有可用的 Windows 安装包。
+  static ReleaseAsset? selectWindowsAsset(List<ReleaseAsset> assets) {
+    final candidates = assets.where((a) {
+      final name = a.name.toLowerCase();
+      return (name.endsWith('.exe') || name.endsWith('.msi')) &&
+          !name.contains('debug') &&
+          !name.contains('symbols') &&
+          !name.contains('.pdb');
+    }).toList();
+    if (candidates.isEmpty) return null;
+
+    final preferred = candidates
+        .where((a) {
+          final name = a.name.toLowerCase();
+          return name.contains('setup') || name.contains('installer');
+        })
+        .toList();
+    final pool = preferred.isNotEmpty ? preferred : candidates;
+
+    pool.sort((a, b) => b.size.compareTo(a.size));
+    return pool.first;
+  }
+
   Future<List<String>> getSupportedAbis() async {
     if (!Platform.isAndroid) return const [];
     final info = await DeviceInfoPlugin().androidInfo;
     return info.supportedAbis;
   }
 
-  /// 下载 APK 到应用私有目录，返回本地路径；用户取消时返回 null
+  /// 下载更新安装包到本地，返回本地路径；用户取消时返回 null
   ///
   /// [onProgress] 的 total 在服务端未返回 Content-Length 时回退为 asset.size。
   /// 已存在且大小一致的完整安装包会被直接复用。
-  Future<String?> downloadApk({
+  Future<String?> downloadUpdate({
     required ReleaseAsset asset,
     required String version,
     void Function(int received, int total)? onProgress,
     CancelToken? cancelToken,
   }) async {
-    final dir = await getExternalStorageDirectory();
-    if (dir == null) {
-      throw const UpdateException('无法访问应用存储目录');
-    }
-
-    final savePath = p.join(dir.path, 'update_v$version.apk');
+    final dir = await _getDownloadDir();
+    final ext = p.extension(asset.name).toLowerCase();
+    final savePath = p.join(dir.path, 'update_v$version$ext');
     final target = File(savePath);
 
     // 已存在完整安装包则直接复用
@@ -244,14 +271,29 @@ class UpdateService {
     throw _mapDownloadError(lastError);
   }
 
-  /// 清理应用私有目录下的历史更新包
+  /// 获取本次更新下载的存储目录（按平台选择）
+  Future<Directory> _getDownloadDir() async {
+    if (Platform.isAndroid) {
+      final dir = await getExternalStorageDirectory();
+      if (dir == null) {
+        throw const UpdateException('无法访问应用存储目录');
+      }
+      return dir;
+    }
+    // Windows / 其他桌面平台：应用支持目录
+    final dir = await getApplicationSupportDirectory();
+    return dir;
+  }
+
   void _cleanupUpdateFiles(Directory dir) {
     try {
       for (final entity in dir.listSync()) {
         final name = p.basename(entity.path);
         if (entity is File &&
             name.startsWith('update_') &&
-            name.endsWith('.apk')) {
+            (name.endsWith('.apk') ||
+                name.endsWith('.exe') ||
+                name.endsWith('.msi'))) {
           entity.deleteSync();
         }
       }
@@ -320,8 +362,18 @@ class UpdateService {
     return InstallPermissionResult.denied;
   }
 
-  /// 唤起系统安装器安装 APK，返回是否成功唤起
-  Future<bool> installApk(String filePath) async {
+  /// 唤起系统安装器安装更新包，返回是否成功唤起
+  Future<bool> installUpdate(String filePath) async {
+    // Windows：直接启动安装程序（.exe / .msi），进入系统安装向导
+    if (Platform.isWindows) {
+      try {
+        await Process.start(filePath, const [], runInShell: true);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    // 其他平台：通过系统打开方式唤起安装器
     final result = await OpenFilex.open(filePath);
     return result.type == ResultType.done;
   }

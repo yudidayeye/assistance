@@ -118,7 +118,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     });
 
     try {
-      final path = await _updateService.downloadApk(
+      final path = await _updateService.downloadUpdate(
         asset: widget.asset,
         version: widget.info.latestVersion ?? '',
         cancelToken: token,
@@ -153,7 +153,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     final path = _downloadedPath;
     if (path == null) return;
 
-    final launched = await _updateService.installApk(path);
+    final launched = await _updateService.installUpdate(path);
     if (!mounted) return;
     if (!launched) {
       setState(() {
