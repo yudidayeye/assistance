@@ -38,12 +38,13 @@ class _NewPeriodPageState extends State<NewPeriodPage> {
     DateTime end;
 
     if (ongoingPeriod != null) {
-      // 如果有当前周期，默认从当前周期结束日期的下一天开始
+      // 如果有当前周期，新周期从当前周期结束日之后的下一个发薪日开始，
+      // 结束日期为再下一个发薪日前一天（跟随发薪日设置）
       final currentEnd = DateTime.parse(ongoingPeriod.endDate);
-      start = currentEnd.add(const Duration(days: 1));
-      end = start.add(const Duration(days: 29)); // 默认一个月
+      start = await _settings.getNextPayday(currentEnd);
+      end = await _settings.getPeriodEndDate(start);
     } else {
-      // 没有当前周期，使用默认值
+      // 没有当前周期，使用发薪日计算的默认值
       start = await _settings.getDefaultStartDate();
       end = await _settings.getDefaultEndDate();
     }

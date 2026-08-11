@@ -39,26 +39,41 @@ class PeriodBookSettings {
     _cachedPayday = null;
   }
 
-  /// 当月发薪日
+  /// 计算 year 年 month 月的实际发薪日
+  /// （发薪日超过当月天数时，取当月最后一天，如 31 号在 2/4/6/9/11 月）
+  DateTime _paydayInMonth(int year, int month, int payday) {
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final day = payday > daysInMonth ? daysInMonth : payday;
+    return DateTime(year, month, day);
+  }
+
+  /// 获取自 from 之后（不含）最近的一个发薪日
+  Future<DateTime> getNextPayday(DateTime from) async {
+    final payday = await getPayday();
+    final base = DateTime(from.year, from.month, from.day);
+    var candidate = _paydayInMonth(base.year, base.month, payday);
+    if (!candidate.isAfter(base)) {
+      candidate = _paydayInMonth(base.year, base.month + 1, payday);
+    }
+    return candidate;
+  }
+
+  /// 根据开始日期计算对应周期的结束日期（下一个发薪日前一天）
+  Future<DateTime> getPeriodEndDate(DateTime start) async {
+    final nextPayday = await getNextPayday(start);
+    return nextPayday.subtract(const Duration(days: 1));
+  }
+
+  /// 当月发薪日（默认开始日期）
   Future<DateTime> getDefaultStartDate() async {
     final payday = await getPayday();
     final now = DateTime.now();
-    return DateTime(now.year, now.month, payday);
+    return _paydayInMonth(now.year, now.month, payday);
   }
 
   /// 下月发薪日前一天（默认结束日期）
   Future<DateTime> getDefaultEndDate() async {
-    final payday = await getPayday();
-    final now = DateTime.now();
-    // 下月发薪日
-    var nextMonth = now.month + 1;
-    var nextYear = now.year;
-    if (nextMonth > 12) {
-      nextMonth = 1;
-      nextYear++;
-    }
-    // 下月发薪日前一天
-    final nextPayday = DateTime(nextYear, nextMonth, payday);
-    return nextPayday.subtract(const Duration(days: 1));
+    final start = await getDefaultStartDate();
+    return getPeriodEndDate(start);
   }
 }
