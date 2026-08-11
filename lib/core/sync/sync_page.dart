@@ -316,7 +316,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
         children: [
           // ── Tab 切换 ──
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: AppSegmentedTab(
               items: const [
                 AppSegmentedTabItem(label: '接收', icon: Icons.download_rounded),
