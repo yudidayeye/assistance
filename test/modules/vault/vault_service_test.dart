@@ -22,6 +22,7 @@ void main() {
   });
 
   late Database testDb;
+  bool dbInitialized = false;
 
   /// 仅创建密码保险箱相关表（绕过 createSchemaForTesting 的事务建表）
   Future<void> createVaultSchema(Database db) async {
@@ -65,7 +66,12 @@ void main() {
   }
 
   Future<VaultService> setUpVault() async {
+    // 关闭上一个内存库，避免 sqflite 按路径缓存导致测试间数据残留
+    if (dbInitialized) {
+      await testDb.close();
+    }
     testDb = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+    dbInitialized = true;
     DatabaseService.instance.useDatabaseForTesting(testDb);
     await createVaultSchema(testDb);
     return VaultService.instance;
@@ -332,5 +338,43 @@ void main() {
       vault.decryptEntryPassword(entry, isEncrypted: category.isEncrypted),
       'plain-123',
     );
+  });
+  test('updateCategoriesOrder 批量更新分类排序顺序并持久化', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    await vault.insertCategory(VaultCategory(
+      name: '分类A',
+      sortOrder: 0,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    await vault.insertCategory(VaultCategory(
+      name: '分类B',
+      sortOrder: 1,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    await vault.insertCategory(VaultCategory(
+      name: '分类C',
+      sortOrder: 2,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+
+    // 初始按 sort_order 排序
+    expect(
+      (await vault.getAllCategories()).map((c) => c.name).toList(),
+      ['分类A', '分类B', '分类C'],
+    );
+
+    // 打乱顺序并批量持久化
+    final reordered = await vault.getAllCategories();
+    await vault.updateCategoriesOrder(
+        [reordered[2], reordered[0], reordered[1]]);
+
+    final after = await vault.getAllCategories();
+    expect(after.map((c) => c.name).toList(), ['分类C', '分类A', '分类B']);
+    expect(after.map((c) => c.sortOrder).toList(), [0, 1, 2]);
   });
 }

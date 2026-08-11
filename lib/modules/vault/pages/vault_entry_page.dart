@@ -23,6 +23,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   bool _needSetup = false;
   bool _isSetup = false;
   bool _navigating = false;
+  bool _isSorting = false;
 
   // 预置分类图标映射
   static const _presetIcons = <String, IconData>{
@@ -445,25 +446,58 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       );
     }
 
-    return AppScaffold(
-      appBar: AppBar(
-        backgroundColor: appTheme.cream,
-        elevation: 0,
-        centerTitle: false,
-        titleSpacing: 0,
-        automaticallyImplyLeading: true,
-        title: Text(
-          '密码保险箱',
-          style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
-        ),
-        actions: [],
-      ),
-      body: _categories.isEmpty
-          ? _buildEmptyState(appTheme)
-          : _buildCategoryList(appTheme),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 40),
-        child: _buildFab(appTheme),
+    return PopScope(
+      canPop: !_isSorting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _isSorting) {
+          setState(() => _isSorting = false);
+        }
+      },
+      child: AppScaffold(
+        appBar: AppBar(
+          backgroundColor: appTheme.cream,
+          elevation: 0,
+          centerTitle: false,
+          titleSpacing: 0,
+          automaticallyImplyLeading: true,
+          title: Text(
+            '密码保险箱',
+            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+          ),
+          actions: _categories.isEmpty
+            ? []
+            : [
+                if (_isSorting)
+                  TextButton(
+                    onPressed: _exitSorting,
+                    child: Text(
+                      '完成',
+                      style: AppTypography.bodyMd.copyWith(
+                        color: appTheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                else
+                  IconButton(
+                    tooltip: '排序',
+                    icon: Icon(
+                      Icons.sort_rounded,
+                      color: appTheme.earthMedium,
+                    ),
+                    onPressed: _enterSorting,
+                  ),
+              ],
+          ),
+          body: _categories.isEmpty
+              ? _buildEmptyState(appTheme)
+              : _buildCategoryList(appTheme),
+          floatingActionButton: _isSorting
+              ? null
+              : Padding(
+                  padding: const EdgeInsets.only(bottom: 40),
+                  child: _buildFab(appTheme),
+                ),
       ),
     );
   }
@@ -582,17 +616,35 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   }
 
   Widget _buildCategoryList(AppThemeExtension appTheme) {
-    return ListView.builder(
+    if (!_isSorting) {
+      return ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+        itemCount: _categories.length,
+        itemBuilder: (context, index) {
+          final category = _categories[index];
+          return _buildCategoryCard(category, appTheme);
+        },
+      );
+    }
+    return ReorderableListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+      buildDefaultDragHandles: false,
+      onReorderItem: _onCategoryReorder,
       itemCount: _categories.length,
       itemBuilder: (context, index) {
         final category = _categories[index];
-        return _buildCategoryCard(category, appTheme);
+        return _buildSortableCategoryCard(category, index, appTheme);
       },
     );
   }
 
-  Widget _buildCategoryCard(VaultCategory category, AppThemeExtension appTheme) {
+  Widget _buildCategoryCard(
+    VaultCategory category,
+    AppThemeExtension appTheme, {
+    VoidCallback? onTap,
+    VoidCallback? onLongPress,
+    Widget? leading,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
@@ -603,14 +655,16 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
           hoverColor: Colors.transparent,
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
-          onTap: () {
-            context.push('/vault/category/${category.id}');
-          },
-          onLongPress: () => _showCategoryActions(category),
+          onTap: onTap ??
+              () {
+                context.push('/vault/category/${category.id}');
+              },
+          onLongPress: onLongPress ?? () => _showCategoryActions(category),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
+                if (leading != null) ...[leading, const SizedBox(width: 8)],
                 // 图标
                 Container(
                   width: 44,
@@ -658,6 +712,57 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                   size: 22,
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 进入排序模式
+  void _enterSorting() {
+    setState(() => _isSorting = true);
+  }
+
+  /// 退出排序模式（顺序已在拖拽时实时持久化）
+  void _exitSorting() {
+    setState(() => _isSorting = false);
+  }
+
+  /// 拖拽排序回调 — 更新本地顺序并后台持久化
+  ///
+  /// onReorderItem 传入的 newIndex 已由框架修正（无需再减一）。
+  void _onCategoryReorder(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    final updated = List<VaultCategory>.from(_categories);
+    final moved = updated.removeAt(oldIndex);
+    updated.insert(newIndex, moved);
+    setState(() => _categories = updated);
+    VaultService.instance.updateCategoriesOrder(updated);
+  }
+
+  /// 排序模式下的分类卡片（带拖拽手柄，点击不响应）
+  Widget _buildSortableCategoryCard(
+    VaultCategory category,
+    int index,
+    AppThemeExtension appTheme,
+  ) {
+    return Padding(
+      key: ValueKey(category.id),
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _buildCategoryCard(
+        category,
+        appTheme,
+        onTap: () {},
+        onLongPress: () {},
+        leading: ReorderableDragStartListener(
+          index: index,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: Icon(
+              Icons.drag_indicator_rounded,
+              size: 24,
+              color: appTheme.earthMedium.withValues(alpha: 0.4),
             ),
           ),
         ),

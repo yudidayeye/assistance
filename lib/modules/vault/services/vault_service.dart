@@ -181,6 +181,23 @@ class VaultService extends ChangeNotifier {
     _notifyChanged();
   }
 
+  /// 批量更新分类排序顺序（按传入列表顺序写入 sort_order）
+  ///
+  /// 拖拽排序完成后统一持久化，幂等可重复调用。
+  Future<void> updateCategoriesOrder(List<VaultCategory> categories) async {
+    for (var i = 0; i < categories.length; i++) {
+      final category = categories[i];
+      if (category.id == null) continue;
+      await _db.update(
+        'mod_vault_categories',
+        {'sort_order': i},
+        where: 'id = ?',
+        whereArgs: [category.id],
+      );
+    }
+    _notifyChanged();
+  }
+
   /// 获取分类下条目数量
   Future<int> getCategoryEntryCount(int categoryId) async {
     final result = await _db.rawQuery(
