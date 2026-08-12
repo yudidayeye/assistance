@@ -181,19 +181,19 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
               ),
             ],
           ),
-          AppSpacing.h12,
+          AppSpacing.h10,
           Container(
             height: 1,
             color: appTheme.earthMedium.withValues(alpha: 0.08),
           ),
-          AppSpacing.h12,
+          AppSpacing.h8,
 
           // 开关行
           Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 26,
+                height: 26,
                 decoration: BoxDecoration(
                   color: appTheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(appTheme.radiusMd),
@@ -220,8 +220,10 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                       ),
                     )
                   : Transform.scale(
-                      scale: 0.8,
+                      scale: 0.7,
+                      alignment: Alignment.centerRight,
                       child: Switch(
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         value: _isInActualPeriod,
                         onChanged: _togglePeriod,
                         activeTrackColor: appTheme.rose.withValues(alpha: 0.12),
@@ -242,15 +244,15 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                     ),
             ],
           ),
-          AppSpacing.h10,
+          AppSpacing.h8,
 
           // 备注行
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 26,
+                height: 26,
                 decoration: BoxDecoration(
                   color: appTheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(appTheme.radiusMd),
