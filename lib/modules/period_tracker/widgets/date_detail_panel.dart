@@ -1,4 +1,5 @@
 import '../../../shared/foundation/app_spacing.dart';
+import '../../../shared/foundation/app_typography.dart';
 import 'package:flutter/material.dart';
 import '../models/period_record.dart';
 import '../services/prediction_service.dart';
@@ -147,52 +148,64 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
     final appTheme = Theme.of(context).appTheme;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, AppSpacing.xs),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusLg),
-        boxShadow: appTheme.cardShadow,
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        border: Border.all(
+          color: appTheme.earthMedium.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 日期类型标签 + 日期
+          // 日期类型标题 + 日期
           Row(
             children: [
               Text(
                 _getDayTypeLabel(),
-                style: TextStyle(
-                  fontSize: 13,
+                style: AppTypography.bodySm.copyWith(
+                  color: appTheme.earth,
                   fontWeight: FontWeight.w500,
-                  color: appTheme.earthMedium.withValues(alpha: 0.7),
                 ),
               ),
               const Spacer(),
               Text(
                 AppDateUtils.formatFullDate(widget.selectedDate),
-                style: TextStyle(
-                  fontSize: 12,
+                style: AppTypography.caption.copyWith(
                   color: appTheme.earthMedium,
                 ),
               ),
             ],
           ),
           AppSpacing.h12,
+          Container(
+            height: 1,
+            color: appTheme.earthMedium.withValues(alpha: 0.08),
+          ),
+          AppSpacing.h12,
 
           // 开关行
           Row(
             children: [
-              Icon(Icons.local_fire_department_rounded,
-                  size: 18, color: appTheme.rose.withAlpha(200)),
-              const SizedBox(width: 10),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                ),
+                child: Icon(Icons.local_fire_department_rounded,
+                    size: 17, color: appTheme.primary),
+              ),
+              AppSpacing.w12,
               Expanded(
                 child: Text(
                   '姨妈来了',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                  style: AppTypography.bodySm.copyWith(
                     color: appTheme.earth,
                   ),
                 ),
@@ -206,46 +219,63 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                         color: appTheme.primary,
                       ),
                     )
-                  : Switch(
-                      value: _isInActualPeriod,
-                      onChanged: _togglePeriod,
-                      activeTrackColor: appTheme.rose.withValues(alpha: 0.2),
-                      activeThumbColor: appTheme.rose,
-                      inactiveThumbColor:
-                          appTheme.earthMedium.withValues(alpha: 0.4),
-                      inactiveTrackColor:
-                          appTheme.earthMedium.withValues(alpha: 0.2),
-                      trackOutlineColor:
-                          const WidgetStatePropertyAll(Colors.transparent),
+                  : Transform.scale(
+                      scale: 0.8,
+                      child: Switch(
+                        value: _isInActualPeriod,
+                        onChanged: _togglePeriod,
+                        activeTrackColor: appTheme.rose.withValues(alpha: 0.12),
+                        activeThumbColor: appTheme.rose,
+                        inactiveThumbColor:
+                            appTheme.earthMedium.withValues(alpha: 0.45),
+                        inactiveTrackColor:
+                            appTheme.earthMedium.withValues(alpha: 0.12),
+                        trackOutlineColor: WidgetStateProperty.resolveWith(
+                          (states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Colors.transparent;
+                            }
+                            return appTheme.earthMedium.withValues(alpha: 0.25);
+                          },
+                        ),
+                      ),
                     ),
             ],
           ),
-          const SizedBox(height: 6),
+          AppSpacing.h10,
 
           // 备注行
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(Icons.sticky_note_2_rounded,
-                  size: 18, color: appTheme.primary.withAlpha(200)),
-              const SizedBox(width: 10),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: appTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                ),
+                child: Icon(Icons.sticky_note_2_rounded,
+                    size: 17, color: appTheme.primary),
+              ),
+              AppSpacing.w12,
               Expanded(
                 child: TextField(
                   controller: _noteController,
                   decoration: InputDecoration(
                     hintText: '备注…',
                     hintStyle: TextStyle(
-                      color: appTheme.earthMedium.withAlpha(120),
+                      color: appTheme.earthMedium.withValues(alpha: 0.6),
                       fontSize: 13,
                     ),
                     filled: true,
-                    fillColor: appTheme.creamDark.withAlpha(100),
+                    fillColor: appTheme.creamDark.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                      borderRadius: BorderRadius.circular(appTheme.radiusMd),
                       borderSide: BorderSide.none,
                     ),
                     contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                     isDense: true,
                   ),
                   style: TextStyle(

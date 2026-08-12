@@ -1,4 +1,5 @@
 import '../../../shared/foundation/app_spacing.dart';
+import '../../../shared/foundation/app_typography.dart';
 import 'package:flutter/material.dart';
 import '../services/prediction_service.dart';
 import '../models/period_record.dart';
@@ -44,11 +45,15 @@ class PeriodCalendar extends StatelessWidget {
         DateTime(displayedMonth.year, displayedMonth.month + 1, 0).day;
 
     return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusLg),
-        boxShadow: appTheme.cardShadow,
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        border: Border.all(
+          color: appTheme.earthMedium.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -162,12 +167,10 @@ class PeriodCalendar extends StatelessWidget {
         fontWeight = FontWeight.w600;
         break;
       case CalendarDayType.periodPredicted:
-        bgColor = appTheme.roseLight;
-        borderWidth = 1.5;
-        borderColor = appTheme.rose;
+        bgColor = appTheme.roseLight.withValues(alpha: 0.55);
         break;
       case CalendarDayType.fertileWindow:
-        bgColor = appTheme.sageLight.withValues(alpha: 0.6);
+        bgColor = appTheme.sageLight.withValues(alpha: 0.55);
         break;
       case CalendarDayType.ovulationDay:
         bgColor = appTheme.sage;
@@ -181,25 +184,31 @@ class PeriodCalendar extends StatelessWidget {
 
     // 今日 overlay
     if (isToday) {
-      borderWidth = borderWidth > 0 ? borderWidth : 2;
+      borderWidth = borderWidth > 0 ? borderWidth : 1.5;
       borderColor =
           borderColor == Colors.transparent ? appTheme.sage : borderColor;
-      fontWeight = FontWeight.w700;
+      fontWeight = FontWeight.w600;
     }
 
-    // 选中 overlay
+    // 选中 overlay — 普通日填充主色，特殊日保留底色并加主色描边
     if (isSelected) {
-      borderWidth = 2;
-      borderColor = appTheme.primary;
+      if (bgColor == null) {
+        bgColor = appTheme.primary;
+        textColor = Colors.white;
+      } else {
+        borderWidth = 2;
+        borderColor = appTheme.primary;
+      }
       fontWeight = FontWeight.w700;
     }
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onDateSelected != null ? () => onDateSelected!(date) : null,
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(appTheme.radiusSm),
+          shape: BoxShape.circle,
           border: borderWidth > 0
               ? Border.all(color: borderColor, width: borderWidth)
               : null,
@@ -208,7 +217,7 @@ class PeriodCalendar extends StatelessWidget {
         child: Text(
           '${date.day}',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             color: textColor,
             fontWeight: fontWeight,
           ),
@@ -221,62 +230,61 @@ class PeriodCalendar extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        GestureDetector(
-          onTap: () => onMonthChanged?.call(
+        _buildNavButton(
+          appTheme,
+          Icons.chevron_left_rounded,
+          () => onMonthChanged?.call(
             DateTime(displayedMonth.year, displayedMonth.month - 1, 1),
-          ),
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: appTheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(appTheme.radiusSm),
-            ),
-            child: Icon(
-              Icons.chevron_left_rounded,
-              color: appTheme.earthMedium,
-              size: 18,
-            ),
           ),
         ),
         Text(
           '${displayedMonth.year}年${displayedMonth.month}月',
           style: TextStyle(
-            fontSize: 15,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: appTheme.earth,
+            letterSpacing: -0.2,
           ),
         ),
-        GestureDetector(
-          onTap: () => onMonthChanged?.call(
+        _buildNavButton(
+          appTheme,
+          Icons.chevron_right_rounded,
+          () => onMonthChanged?.call(
             DateTime(displayedMonth.year, displayedMonth.month + 1, 1),
-          ),
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: appTheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(appTheme.radiusSm),
-            ),
-            child: Icon(
-              Icons.chevron_right_rounded,
-              color: appTheme.earthMedium,
-              size: 18,
-            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildLegendSection(AppThemeExtension appTheme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+  Widget _buildNavButton(
+    AppThemeExtension appTheme,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: appTheme.primary.withValues(alpha: 0.07),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: appTheme.earth, size: 20),
+        ),
       ),
+    );
+  }
+
+  Widget _buildLegendSection(AppThemeExtension appTheme) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildLegend(appTheme, appTheme.rose, '经期'),
           _buildLegend(appTheme, appTheme.roseLight, '预测经期'),
@@ -292,18 +300,17 @@ class PeriodCalendar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 9,
+          height: 9,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(4),
+            shape: BoxShape.circle,
           ),
         ),
-        AppSpacing.w4,
+        AppSpacing.w6,
         Text(
           label,
-          style: TextStyle(
-            fontSize: 10,
+          style: AppTypography.caption.copyWith(
             color: appTheme.earthMedium,
             fontWeight: FontWeight.w500,
           ),
