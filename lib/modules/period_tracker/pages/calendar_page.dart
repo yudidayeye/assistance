@@ -33,8 +33,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _loading = true);
-
+    // ?????? _loading ??? true???????? loading?????
     final records = await PeriodService.instance.getAllRecords();
     final prediction = PredictionService.instance.predict(records);
 
@@ -73,7 +72,8 @@ class _CalendarPageState extends State<CalendarPage> {
                     '生理期记录',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
+                    style: AppTypography.headerTitle
+                        .copyWith(color: appTheme.earth),
                   ),
                   actions: [
                     IconButton(
@@ -123,7 +123,6 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
     );
   }
-
 
   Widget _buildPredictionCard(AppThemeExtension appTheme) {
     return Container(
@@ -187,17 +186,17 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
           AppSpacing.h8,
           Text(
-            value,
-            style: AppTypography.bodyLg.copyWith(color: appTheme.earth),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          AppSpacing.h2,
-          Text(
             label,
             style: AppTypography.caption.copyWith(color: appTheme.earthMedium),
             textAlign: TextAlign.center,
+          ),
+          AppSpacing.h2,
+          Text(
+            value,
+            style: AppTypography.bodyMd.copyWith(color: appTheme.earth),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -250,4 +249,3 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 }
-

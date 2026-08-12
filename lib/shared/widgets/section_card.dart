@@ -22,7 +22,10 @@ class SectionLabel extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppTypography.label.copyWith(color: appTheme.earthMedium),
+            style: AppTypography.label.copyWith(
+              color: appTheme.earthMedium,
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ],
       ),
@@ -47,7 +50,8 @@ class SectionCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusMd), // Apple 风格：更紧凑圆角
+        borderRadius:
+            BorderRadius.circular(appTheme.radiusMd), // Apple 风格：更紧凑圆角
         border: Border.all(
           color: appTheme.earthMedium.withValues(alpha: 0.15),
           width: 0.5,

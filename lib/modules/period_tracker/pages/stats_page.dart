@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../models/period_record.dart';
 import '../services/period_service.dart';
 import '../services/prediction_service.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
+import '../../../shared/widgets/section_card.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
@@ -29,8 +29,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _loading = true);
-
+    // ?????? _loading ??? true???????? loading?????
     final records = await PeriodService.instance.getAllRecords();
     PredictionService.instance.predict(records);
 
@@ -99,11 +98,14 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
         ),
+        const SliverToBoxAdapter(
+          child: SectionLabel(title: '周期概况'),
+        ),
         SliverToBoxAdapter(
           child: _buildStatsCard(appTheme, avgCycle, avgDuration, regularity),
         ),
-        SliverToBoxAdapter(
-          child: _buildSectionHeader(appTheme, '历史记录'),
+        const SliverToBoxAdapter(
+          child: SectionLabel(title: '历史记录'),
         ),
         if (_records.isEmpty)
           SliverFillRemaining(
@@ -126,46 +128,33 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
   Widget _buildStatsCard(AppThemeExtension appTheme, int avgCycle,
       int avgDuration, String regularity) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, AppSpacing.xs),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusLg),
-        boxShadow: appTheme.cardShadow,
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        border: Border.all(
+          color: appTheme.earthMedium.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Text(
-            '周期概况',
-            style: TextStyle(
-                fontSize: 14,
-                color: appTheme.earthMedium,
-                fontWeight: FontWeight.w500),
+          Expanded(
+            child: _buildStatItem(appTheme,
+                icon: Icons.repeat_rounded, label: '平均周期', value: '$avgCycle天'),
           ),
-          AppSpacing.h24,
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(appTheme,
-                    icon: Icons.repeat_rounded,
-                    label: '平均周期',
-                    value: '$avgCycle天'),
-              ),
-              _buildDivider(appTheme),
-              Expanded(
-                child: _buildStatItem(appTheme,
-                    icon: Icons.calendar_today_rounded,
-                    label: '经期天数',
-                    value: '$avgDuration天'),
-              ),
-              _buildDivider(appTheme),
-              Expanded(
-                child: _buildStatItem(appTheme,
-                    icon: Icons.insights_rounded,
-                    label: '规律性',
-                    value: regularity),
-              ),
-            ],
+          _buildDivider(appTheme),
+          Expanded(
+            child: _buildStatItem(appTheme,
+                icon: Icons.calendar_today_rounded,
+                label: '经期天数',
+                value: '$avgDuration天'),
+          ),
+          _buildDivider(appTheme),
+          Expanded(
+            child: _buildStatItem(appTheme,
+                icon: Icons.insights_rounded, label: '规律性', value: regularity),
           ),
         ],
       ),
@@ -175,7 +164,7 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
   Widget _buildDivider(AppThemeExtension appTheme) {
     return Container(
       width: 1,
-      height: 60,
+      height: 34,
       color: appTheme.earthMedium.withValues(alpha: 0.12),
     );
   }
@@ -189,48 +178,30 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
     return Column(
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 34,
+          height: 34,
           decoration: BoxDecoration(
-            color: appTheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(appTheme.radiusSm),
+            color: appTheme.primary.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Icon(icon, color: appTheme.primary, size: 20),
+          child: Icon(icon, color: appTheme.primary, size: 18),
         ),
-        AppSpacing.h12,
-        Text(label,
-            style: TextStyle(fontSize: 12, color: appTheme.earthMedium)),
-        const SizedBox(height: 4),
+        AppSpacing.h8,
+        Text(
+          label,
+          style: AppTypography.caption.copyWith(color: appTheme.earthMedium),
+        ),
+        AppSpacing.h2,
         Text(
           value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: appTheme.earth,
-          ),
+          style: AppTypography.bodyMd.copyWith(color: appTheme.earth),
         ),
       ],
     );
   }
 
-  Widget _buildSectionHeader(AppThemeExtension appTheme, String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: appTheme.earth,
-        ),
-      ),
-    );
-  }
-
   Widget _buildRecordsList(AppThemeExtension appTheme) {
-    final headerStyle = TextStyle(
-      fontSize: 13,
-      fontWeight: FontWeight.w500,
+    final headerStyle = AppTypography.bodySm.copyWith(
       color: appTheme.earthMedium.withValues(alpha: 0.7),
     );
 
@@ -238,10 +209,13 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusLg),
-        boxShadow: appTheme.cardShadow,
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        border: Border.all(
+          color: appTheme.earthMedium.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: Column(
         children: [
           // 表头
@@ -284,10 +258,8 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                           flex: 3,
                           child: Text(
                             _formatShortDate(record.startDate),
-                            style: TextStyle(
-                              fontSize: 14,
+                            style: AppTypography.bodyMd.copyWith(
                               color: appTheme.earth,
-                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -296,10 +268,8 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                           child: Center(
                             child: Text(
                               record.durationDays?.toString() ?? '-',
-                              style: TextStyle(
-                                fontSize: 14,
+                              style: AppTypography.bodyMd.copyWith(
                                 color: appTheme.earth,
-                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
@@ -309,10 +279,8 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
                           child: Center(
                             child: Text(
                               record.cycleLength?.toString() ?? '-',
-                              style: TextStyle(
-                                fontSize: 14,
+                              style: AppTypography.bodyMd.copyWith(
                                 color: appTheme.earth,
-                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
@@ -397,4 +365,3 @@ class _PeriodStatsPageState extends State<PeriodStatsPage> {
     );
   }
 }
-

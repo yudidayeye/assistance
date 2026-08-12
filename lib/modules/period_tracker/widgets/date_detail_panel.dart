@@ -30,6 +30,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
   static const int _defaultPeriodDays = 4;
   late TextEditingController _noteController;
   bool _saving = false;
+  bool? _pendingActive; // Switch ???????????null ????????
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
     super.didUpdateWidget(old);
     if (old.selectedDate != widget.selectedDate) {
       _loadNote();
+      _pendingActive = null;
     }
   }
 
@@ -72,9 +74,15 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
 
   bool get _isInActualPeriod => _findRecordForDate(widget.selectedDate) != null;
 
+  /// Switch ????????????????????????????
+  bool get _switchValue => _pendingActive ?? _isInActualPeriod;
+
   Future<void> _togglePeriod(bool on) async {
     if (_saving) return;
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _pendingActive = on;
+    });
     try {
       if (on) {
         final start = AppDateUtils.dateOnly(widget.selectedDate);
@@ -91,7 +99,12 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
       }
       widget.onChanged();
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _pendingActive = null;
+        });
+      }
     }
   }
 
@@ -210,38 +223,29 @@ class _DateDetailPanelState extends State<DateDetailPanel> {
                   ),
                 ),
               ),
-              _saving
-                  ? SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: appTheme.primary,
-                      ),
-                    )
-                  : Transform.scale(
-                      scale: 0.7,
-                      alignment: Alignment.centerRight,
-                      child: Switch(
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        value: _isInActualPeriod,
-                        onChanged: _togglePeriod,
-                        activeTrackColor: appTheme.rose.withValues(alpha: 0.12),
-                        activeThumbColor: appTheme.rose,
-                        inactiveThumbColor:
-                            appTheme.earthMedium.withValues(alpha: 0.45),
-                        inactiveTrackColor:
-                            appTheme.earthMedium.withValues(alpha: 0.12),
-                        trackOutlineColor: WidgetStateProperty.resolveWith(
-                          (states) {
-                            if (states.contains(WidgetState.selected)) {
-                              return Colors.transparent;
-                            }
-                            return appTheme.earthMedium.withValues(alpha: 0.25);
-                          },
-                        ),
-                      ),
-                    ),
+              Transform.scale(
+                scale: 0.7,
+                alignment: Alignment.centerRight,
+                child: Switch(
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  value: _switchValue,
+                  onChanged: _saving ? null : _togglePeriod,
+                  activeTrackColor: appTheme.rose.withValues(alpha: 0.12),
+                  activeThumbColor: appTheme.rose,
+                  inactiveThumbColor:
+                      appTheme.earthMedium.withValues(alpha: 0.45),
+                  inactiveTrackColor:
+                      appTheme.earthMedium.withValues(alpha: 0.12),
+                  trackOutlineColor: WidgetStateProperty.resolveWith(
+                    (states) {
+                      if (states.contains(WidgetState.selected)) {
+                        return Colors.transparent;
+                      }
+                      return appTheme.earthMedium.withValues(alpha: 0.25);
+                    },
+                  ),
+                ),
+              ),
             ],
           ),
           AppSpacing.h8,
