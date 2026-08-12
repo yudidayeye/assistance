@@ -25,35 +25,60 @@ class FeaturedCard extends StatefulWidget {
 class _FeaturedCardState extends State<FeaturedCard> {
   ModuleSummary? _summary;
   bool _refreshing = false;
+  String? _boundModuleId;
 
   @override
   void initState() {
     super.initState();
+    _bindModuleListeners();
     _loadSummary();
-    // 监听模块数据变更，自动刷新卡片
-    if (widget.module.moduleId == 'period_book') {
-      PeriodBookService.instance.addListener(_onDataChanged);
-    }
-    if (widget.module.moduleId == 'period_tracker') {
-      PeriodService.instance.addListener(_onDataChanged);
-    }
-    if (widget.module.moduleId == 'vault') {
-      VaultService.instance.addListener(_onDataChanged);
+  }
+
+  @override
+  void didUpdateWidget(FeaturedCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 模块变化（如启用/停用导致卡片 State 复用）时，重绑监听并加载新摘要
+    if (oldWidget.module.moduleId != widget.module.moduleId) {
+      _unbindModuleListeners();
+      _bindModuleListeners();
+      _summary = null;
+      _loadSummary();
     }
   }
 
   @override
   void dispose() {
-    if (widget.module.moduleId == 'period_book') {
+    _unbindModuleListeners();
+    super.dispose();
+  }
+
+  /// 绑定当前模块的数据变更监听
+  void _bindModuleListeners() {
+    _boundModuleId = widget.module.moduleId;
+    if (_boundModuleId == 'period_book') {
+      PeriodBookService.instance.addListener(_onDataChanged);
+    }
+    if (_boundModuleId == 'period_tracker') {
+      PeriodService.instance.addListener(_onDataChanged);
+    }
+    if (_boundModuleId == 'vault') {
+      VaultService.instance.addListener(_onDataChanged);
+    }
+  }
+
+  /// 解绑当前模块的数据变更监听
+  void _unbindModuleListeners() {
+    if (_boundModuleId == null) return;
+    if (_boundModuleId == 'period_book') {
       PeriodBookService.instance.removeListener(_onDataChanged);
     }
-    if (widget.module.moduleId == 'period_tracker') {
+    if (_boundModuleId == 'period_tracker') {
       PeriodService.instance.removeListener(_onDataChanged);
     }
-    if (widget.module.moduleId == 'vault') {
+    if (_boundModuleId == 'vault') {
       VaultService.instance.removeListener(_onDataChanged);
     }
-    super.dispose();
+    _boundModuleId = null;
   }
 
   void _onDataChanged() {
@@ -61,8 +86,10 @@ class _FeaturedCardState extends State<FeaturedCard> {
   }
 
   Future<void> _loadSummary() async {
+    final moduleId = widget.module.moduleId;
     final s = await widget.module.getSummary();
-    if (mounted) {
+    // 防止异步期间模块已切换，旧摘要串到新卡片上
+    if (mounted && widget.module.moduleId == moduleId) {
       setState(() => _summary = s);
     }
   }

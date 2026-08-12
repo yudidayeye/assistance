@@ -99,7 +99,10 @@ class _MainShellPageState extends State<MainShellPage> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final module = enabledModules[index];
-                return FeaturedCard(module: module);
+                return FeaturedCard(
+                  key: ValueKey(module.moduleId),
+                  module: module,
+                );
               },
               childCount: enabledModules.length,
             ),
