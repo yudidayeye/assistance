@@ -33,6 +33,7 @@ dependencies:
   device_info_plus: ^12.4.0
   encrypt: ^5.0.3           # AES-256-GCM 加解密封装
   pointycastle: ^3.9.1      # Argon2id 实现
+  flutter_markdown: ^0.7.7+1
 dev_dependencies:
   flutter_test:
     sdk: flutter

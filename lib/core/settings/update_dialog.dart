@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:my_assistant/core/settings/update_service.dart';
@@ -314,16 +315,25 @@ class _UpdateDialogState extends State<UpdateDialog> {
           AppSpacing.h16,
           Container(
             width: double.infinity,
+            constraints: BoxConstraints(
+              // 最长约 40% 屏高，超出部分弹窗内滚动，完整展示变更内容
+              maxHeight: MediaQuery.sizeOf(context).height * 0.4,
+            ),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: appTheme.cardBackground,
               borderRadius: BorderRadius.circular(appTheme.radiusMd),
             ),
-            child: Text(
-              notes.length > 200 ? '${notes.substring(0, 200)}...' : notes,
-              style: AppTypography.caption.copyWith(
-                color: appTheme.earthMedium,
-                height: 1.5,
+            child: SingleChildScrollView(
+              child: MarkdownBody(
+                data: notes,
+                selectable: true,
+                styleSheet: _buildMarkdownStyle(appTheme),
+                onTapLink: (url, title, _) {
+                  if (url.startsWith('http')) {
+                    _updateService.openReleasePage(url);
+                  }
+                },
               ),
             ),
           ),
@@ -338,6 +348,95 @@ class _UpdateDialogState extends State<UpdateDialog> {
         ),
         _buildGithubLink(appTheme),
       ],
+    );
+  }
+
+  /// 变更内容 Markdown 样式：沿用设计系统（系统字体、语义色、紧凑间距）
+  MarkdownStyleSheet _buildMarkdownStyle(AppThemeExtension appTheme) {
+    final base = MarkdownStyleSheet.fromTheme(Theme.of(context));
+    final body = AppTypography.bodySm.copyWith(
+      color: appTheme.earthMedium,
+      height: 1.55,
+    );
+    return base.copyWith(
+      p: body,
+      strong: body.copyWith(color: appTheme.earth, fontWeight: FontWeight.w700),
+      em: body.copyWith(fontStyle: FontStyle.italic),
+      h1: body.copyWith(
+        color: appTheme.earth,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.4,
+        height: 1.4,
+      ),
+      h2: body.copyWith(
+        color: appTheme.earth,
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.4,
+        height: 1.4,
+      ),
+      h3: body.copyWith(
+        color: appTheme.earth,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.4,
+        height: 1.4,
+      ),
+      h4: body.copyWith(color: appTheme.earth, fontWeight: FontWeight.w700),
+      h5: body.copyWith(color: appTheme.earth, fontWeight: FontWeight.w700),
+      h6: body.copyWith(color: appTheme.earth, fontWeight: FontWeight.w700),
+      h1Padding:
+          EdgeInsets.only(top: appTheme.spaceMd, bottom: appTheme.spaceSm),
+      h2Padding:
+          EdgeInsets.only(top: appTheme.spaceMd, bottom: appTheme.spaceSm),
+      h3Padding:
+          EdgeInsets.only(top: appTheme.spaceMd, bottom: appTheme.spaceSm),
+      h4Padding:
+          EdgeInsets.only(top: appTheme.spaceMd, bottom: appTheme.spaceSm),
+      h5Padding:
+          EdgeInsets.only(top: appTheme.spaceMd, bottom: appTheme.spaceSm),
+      h6Padding:
+          EdgeInsets.only(top: appTheme.spaceMd, bottom: appTheme.spaceSm),
+      listBullet: body.copyWith(color: appTheme.earthLight),
+      listIndent: 20,
+      a: body.copyWith(
+        color: appTheme.primary,
+        decoration: TextDecoration.underline,
+        decorationColor: appTheme.primary,
+      ),
+      code: body.copyWith(
+        color: appTheme.earth,
+        backgroundColor: appTheme.earthLight.withValues(alpha: 0.12),
+      ),
+      codeblockDecoration: BoxDecoration(
+        color: appTheme.earthLight.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(appTheme.radiusSm),
+      ),
+      codeblockPadding: const EdgeInsets.all(10),
+      blockquote: body.copyWith(color: appTheme.earthLight),
+      blockquoteDecoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(
+            color: appTheme.earthLight.withValues(alpha: 0.5),
+            width: 2,
+          ),
+        ),
+      ),
+      blockquotePadding: const EdgeInsets.only(left: 8),
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: appTheme.earthLight.withValues(alpha: 0.4)),
+        ),
+      ),
+      tableHead: body.copyWith(
+        color: appTheme.earth,
+        fontWeight: FontWeight.w700,
+      ),
+      tableBody: body.copyWith(fontSize: 12),
+      tableBorder: TableBorder.all(
+        color: appTheme.earthLight.withValues(alpha: 0.3),
+      ),
     );
   }
 
