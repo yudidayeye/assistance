@@ -368,7 +368,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
               ),
               content: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(ctx).size.height * 0.62,
+                  maxHeight: MediaQuery.of(ctx).size.height * 0.56,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -398,52 +398,63 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                       autofocus: initialName.isEmpty,
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Text(
-                          '选择图标',
-                          style: AppTypography.bodyMd.copyWith(color: appTheme.earth),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${_iconGroups.fold<int>(0, (sum, g) => sum + g.choices.length)} 种可选',
-                          style: AppTypography.caption.copyWith(color: appTheme.earthMedium),
-                        ),
-                      ],
+                    Text(
+                      '选择图标',
+                      style: AppTypography.bodyMd.copyWith(color: appTheme.earth),
                     ),
-                    const SizedBox(height: 10),
-                    // 图标分组选择（可滚动，避免小屏溢出）
+                    const SizedBox(height: 8),
+                    // 图标分组选择（固定高度可滚动，小屏亦不溢出）
                     Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (final group in _iconGroups)
-                              _buildIconGroup(
-                                group: group,
-                                selectedIcon: selectedIcon,
-                                appTheme: appTheme,
-                                onSelect: (key) =>
-                                    setDialogState(() => selectedIcon = key),
-                              ),
-                          ],
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 160),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final group in _iconGroups)
+                                _buildIconGroup(
+                                  group: group,
+                                  selectedIcon: selectedIcon,
+                                  appTheme: appTheme,
+                                  onSelect: (key) =>
+                                      setDialogState(() => selectedIcon = key),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    SwitchListTile(
-                      value: isEncrypted,
-                      onChanged: (v) => setDialogState(() => isEncrypted = v),
-                      contentPadding: EdgeInsets.zero,
-                      activeThumbColor: appTheme.primary,
-                      title: Text(
-                        '加密存储',
-                        style: AppTypography.bodyMd.copyWith(color: appTheme.earth),
-                      ),
-                      subtitle: Text(
-                        isEncrypted ? '密码将加密保存' : '密码将明文保存',
-                        style: AppTypography.bodySm
-                            .copyWith(color: appTheme.earthLight),
+                    // 加密存储开关（行点击切换，Switch 缩小展示）
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () =>
+                          setDialogState(() => isEncrypted = !isEncrypted),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            Text(
+                              '加密存储',
+                              style: AppTypography.bodyMd
+                                  .copyWith(color: appTheme.earth),
+                            ),
+                            const Spacer(),
+                            SizedBox(
+                              width: 48,
+                              height: 28,
+                              child: FittedBox(
+                                fit: BoxFit.contain,
+                                child: Switch(
+                                  value: isEncrypted,
+                                  onChanged: (v) =>
+                                      setDialogState(() => isEncrypted = v),
+                                  activeThumbColor: appTheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -452,6 +463,13 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
+                  style: ButtonStyle(
+                    overlayColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.hovered)
+                          ? Colors.transparent
+                          : null,
+                    ),
+                  ),
                   child: Text('取消',
                       style: AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
                 ),
@@ -464,6 +482,13 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                       encrypted: isEncrypted,
                     ));
                   },
+                  style: ButtonStyle(
+                    overlayColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.hovered)
+                          ? Colors.transparent
+                          : null,
+                    ),
+                  ),
                   child: Text('确定',
                       style: AppTypography.bodyMd.copyWith(color: appTheme.primary)),
                 ),
@@ -524,7 +549,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
     );
   }
 
-  /// 图标分组区块（组标题 + 图标列表）
+  /// 图标分组区块（组标题 + 紧凑图标网格）
   Widget _buildIconGroup({
     required _IconGroup group,
     required String selectedIcon,
@@ -532,24 +557,24 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
     required ValueChanged<String> onSelect,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 2, bottom: 8),
+            padding: const EdgeInsets.only(left: 2, bottom: 6),
             child: Text(
               group.label,
-              style: AppTypography.label.copyWith(color: appTheme.earthMedium),
+              style: AppTypography.caption.copyWith(color: appTheme.earthMedium),
             ),
           ),
           Wrap(
-            spacing: 4,
-            runSpacing: 4,
+            spacing: 2,
+            runSpacing: 2,
             children: [
               for (final choice in group.choices)
                 _buildIconTile(
-                  choice: choice,
+                  iconKey: choice.key,
                   isSelected: choice.key == selectedIcon,
                   appTheme: appTheme,
                   onTap: () => onSelect(choice.key),
@@ -561,9 +586,9 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
     );
   }
 
-  /// 单个图标选项（图标 + 文字标签，选中态带主色边框与对勾角标）
+  /// 单个图标选项（紧凑网格，纯图标展示，无悬浮提示）
   Widget _buildIconTile({
-    required _IconChoice choice,
+    required String iconKey,
     required bool isSelected,
     required AppThemeExtension appTheme,
     required VoidCallback onTap,
@@ -572,63 +597,45 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 60,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        width: 40,
+        height: 40,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            SizedBox(
-              width: 48,
-              height: 48,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? appTheme.primary.withValues(alpha: 0.14)
-                          : appTheme.cream,
-                      borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                      border: Border.all(
-                        color: isSelected ? appTheme.primary : appTheme.cardBorder,
-                        width: isSelected ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Icon(
-                      _getIcon(choice.key),
-                      size: 24,
-                      color: isSelected ? appTheme.primary : appTheme.earthMedium,
-                    ),
-                  ),
-                  if (isSelected)
-                    Positioned(
-                      right: -3,
-                      top: -3,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: appTheme.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: appTheme.cardBackground, width: 1.5),
-                        ),
-                        child: const Icon(Icons.check_rounded, size: 11, color: Colors.white),
-                      ),
-                    ),
-                ],
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? appTheme.primary.withValues(alpha: 0.14)
+                    : appTheme.cream,
+                borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                border: Border.all(
+                  color: isSelected ? appTheme.primary : appTheme.cardBorder,
+                  width: isSelected ? 1.5 : 1,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              choice.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(
+              child: Icon(
+                _getIcon(iconKey),
+                size: 20,
                 color: isSelected ? appTheme.primary : appTheme.earthMedium,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
+            if (isSelected)
+              Positioned(
+                right: -2,
+                top: -2,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: appTheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: appTheme.cardBackground, width: 1.5),
+                  ),
+                  child: const Icon(Icons.check_rounded, size: 9, color: Colors.white),
+                ),
+              ),
           ],
         ),
       ),
