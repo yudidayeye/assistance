@@ -47,6 +47,10 @@ class _AggPageState extends State<AggPage>
   List<Map<String, dynamic>> _largeMonthlyData = [];
   Map<String, double> _largeExpenseTypeData = {};
 
+  // 合计统计（日常 + 大额）
+  List<Map<String, dynamic>> _summaryMonthlyData = [];
+  Map<String, double> _summaryExpenseTypeData = {};
+
   int? _selectedYear;
   int? _selectedMonth;
   int? _selectedStage;
@@ -620,104 +624,70 @@ class _AggPageState extends State<AggPage>
   }
 
   Widget _buildSummaryView(AppThemeExtension appTheme) {
-    return SingleChildScrollView(
+    if (_periods.isEmpty) {
+      return const EmptyStateWidget(
+        icon: Icons.history_rounded,
+        title: '暂无历史记录',
+        subtitle: '删除的周期记录不会出现在这里',
+      );
+    }
+
+    return CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Container(
+      slivers: [
+        // 筛选 + 报表
+        SliverToBoxAdapter(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: appTheme.cardBackground,
               borderRadius: BorderRadius.circular(appTheme.radiusMd),
               boxShadow: appTheme.cardShadow,
               border: Border.all(color: appTheme.cardBorder, width: 0.5),
             ),
-            padding: const EdgeInsets.all(20),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '汇总统计',
-                  style: AppTypography.headerTitle.copyWith(
-                    color: appTheme.earth,
-                    fontSize: 18,
-                  ),
-                ),
-                AppSpacing.h16,
-                _buildSummaryItem(
-                  appTheme: appTheme,
-                  label: '总日常消费',
-                  value: _totalExpense,
-                  icon: Icons.shopping_cart_outlined,
-                  color: appTheme.rose,
-                ),
-                AppSpacing.h12,
-                _buildSummaryItem(
-                  appTheme: appTheme,
-                  label: '总大额追加',
-                  value: _totalLargeAddition,
-                  icon: Icons.add_circle_outline,
-                  color: appTheme.sage,
-                ),
-                AppSpacing.h12,
-                _buildSummaryItem(
-                  appTheme: appTheme,
-                  label: '总大额支出',
-                  value: _totalLargeExpense,
-                  icon: Icons.remove_circle_outline,
-                  color: appTheme.rose,
+                HistoryFilterBar(
+                  selectedYear: _selectedYear,
+                  selectedMonth: _selectedMonth,
+                  selectedStage: null,
+                  availableYears: _availableYears,
+                  availableMonths: _availableMonths,
+                  availableStages: const [],
+                  onYearChanged: _onYearChanged,
+                  onMonthChanged: _onMonthChanged,
+                  onStageChanged: null,
                 ),
                 Divider(
-                  height: 24,
-                  color: appTheme.earthMedium.withValues(alpha: 0.15),
+                  height: 1,
+                  color: appTheme.earthMedium.withValues(alpha: 0.08),
                 ),
-                _buildSummaryItem(
-                  appTheme: appTheme,
-                  label: '大额净额',
-                  value: _totalNet,
-                  icon: Icons.account_balance_outlined,
-                  color: _totalNet >= 0 ? appTheme.sage : appTheme.rose,
-                  isTotal: true,
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.h16,
-          Container(
-            decoration: BoxDecoration(
-              color: appTheme.cardBackground,
-              borderRadius: BorderRadius.circular(appTheme.radiusMd),
-              boxShadow: appTheme.cardShadow,
-              border: Border.all(color: appTheme.cardBorder, width: 0.5),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '统计信息',
-                  style: AppTypography.headerTitle.copyWith(
-                    color: appTheme.earth,
-                    fontSize: 18,
+                if (_summaryMonthlyData.isNotEmpty ||
+                    _summaryExpenseTypeData.values.any((v) => v > 0))
+                  ReportCard(
+                    monthlyData: _summaryMonthlyData,
+                    stageData: const [],
+                    expenseTypeData: _summaryExpenseTypeData,
+                    stageExpenseTypeData: null,
                   ),
-                ),
-                AppSpacing.h16,
-                _buildInfoRow(appTheme, '总周期数', '${_periods.length} 个'),
-                AppSpacing.h8,
-                _buildInfoRow(appTheme, '总天数', '${_periods.fold<int>(0, (sum, p) => sum + p.totalDays)} 天'),
-                AppSpacing.h8,
-                _buildInfoRow(appTheme, '平均每周期消费', 
-                  _periods.isNotEmpty 
-                    ? FormatUtils.formatAmount(_totalExpense / _periods.length)
-                    : '0.00'),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        // 周期列表
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final period = _filteredPeriods[index];
+              return _buildSummaryPeriodCard(appTheme, period);
+            },
+            childCount: _filteredPeriods.length,
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+      ],
     );
   }
-
   Widget _buildSummaryItem({
     required AppThemeExtension appTheme,
     required String label,
@@ -1112,6 +1082,165 @@ class _AggPageState extends State<AggPage>
                         ],
                       ],
                     ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _buildSummaryPeriodCard(AppThemeExtension appTheme, PeriodRecord period) {
+    final calc = _calcMap[period.id];
+    final balance = _balances[period.id];
+    final startDate = DateTime.parse(period.startDate);
+    final endDate = DateTime.parse(period.endDate);
+
+    // 日常消费
+    final dailyExpense = calc != null ? calc.totalBase - (balance ?? 0) : 0.0;
+    final personalExpense = (calc?.shoppingTotal ?? 0) + (calc?.livingTotal ?? 0);
+    final otherExpense = calc?.otherTotal ?? 0;
+
+    // 大额消费
+    final additions = _additionsMap[period.id] ?? [];
+    final largeExpenses = _largeExpensesMap[period.id] ?? [];
+    final additionsTotal = additions.fold<double>(0, (sum, a) => sum + a.amount);
+    final largeExpenseTotal = largeExpenses.fold<double>(0, (sum, e) => sum + e.amount);
+
+    // 合计
+    final totalExpense = dailyExpense + largeExpenseTotal;
+    final hasExpense = totalExpense > 0;
+
+    return GestureDetector(
+      onTap: () => context.push('/period_book/detail/${period.id}'),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: appTheme.cardBackground,
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          boxShadow: [
+            BoxShadow(
+              color: appTheme.earth.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 标题行：年份图标 + 起止日期 | 总金额 + 箭头
+            Padding(
+              padding: const EdgeInsets.only(left: 16, top: 14, right: 12, bottom: 10),
+              child: Row(
+                children: [
+                  // 年份图标（日历内展示年份）
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 24,
+                        color: appTheme.primary.withValues(alpha: 0.25),
+                      ),
+                      Text(
+                        _fmtYearShort(startDate, endDate),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: appTheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  AppSpacing.w8,
+                  // 日期范围
+                  Expanded(
+                    child: Text(
+                      _fmtDateRangeShort(startDate, endDate),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: appTheme.earthLight,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+                  // 总金额（日常 + 大额）+ 箭头
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        hasExpense
+                            ? '-${FormatUtils.formatAmount(totalExpense)}'
+                            : FormatUtils.formatAmount(0),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: hasExpense
+                              ? appTheme.rose
+                              : appTheme.earthMedium.withValues(alpha: 0.4),
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      AppSpacing.w6,
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 16,
+                          color: appTheme.earthMedium.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // 分隔线
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                height: 0.5,
+                color: appTheme.creamDark,
+              ),
+            ),
+            // 内容区：日常消费 + 大额消费
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 日常消费明细
+                  _buildDetailGroup(
+                    appTheme: appTheme,
+                    title: '日常消费',
+                    color: appTheme.rose,
+                    children: [
+                      _buildDetailRow(appTheme, '个人消费', '-${FormatUtils.formatAmount(personalExpense)}', appTheme.rose),
+                      if (otherExpense > 0)
+                        _buildDetailRow(appTheme, '其他消费', '-${FormatUtils.formatAmount(otherExpense)}', appTheme.rose),
+                    ],
+                  ),
+                  // 大额消费明细
+                  if (additions.isNotEmpty || largeExpenses.isNotEmpty) ...[
+                    AppSpacing.h6,
+                    _buildDetailGroup(
+                      appTheme: appTheme,
+                      title: '大额记录',
+                      color: appTheme.sage,
+                      children: [
+                        if (additions.isNotEmpty)
+                          _buildDetailRow(appTheme, '大额追加', '+${FormatUtils.formatAmount(additionsTotal)}', appTheme.sage),
+                        if (largeExpenseTotal > 0)
+                          _buildDetailRow(appTheme, '大额支出', '-${FormatUtils.formatAmount(largeExpenseTotal)}', appTheme.rose),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         ),
