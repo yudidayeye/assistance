@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -127,6 +127,45 @@ class _StageEditPageState extends State<StageEditPage> {
       debugPrint('Load data error: $e');
     }
     if (mounted) setState(() => _loading = false);
+  }
+
+
+  /// 刷新数据（不显示加载指示器，保持滚动位置）
+  Future<void> _refreshData() async {
+    try {
+      _stage = await _service.getStageById(widget.stageId);
+      if (_stage != null) {
+        // 如果 currentDate 为空，默认设为 endDate
+        if (_stage!.currentDate == null || _stage!.currentDate!.isEmpty) {
+          _stage = _stage!.copyWith(currentDate: _stage!.endDate);
+        }
+        _additions = await _service.getAdditionsByStage(widget.stageId);
+        _expenses = await _service.getExpensesByStage(widget.stageId);
+
+        // 计算上一阶段余额（用于 StageCard 展示）
+        final period = await _service.getPeriodById(_stage!.periodId);
+        if (period != null) {
+          final stages = await _service.getStagesByPeriod(period.id!);
+          final stageIndex = stages.indexWhere((s) => s.id == widget.stageId);
+          if (stageIndex == 0) {
+            _previousBalance = period.baseAmount;
+          } else if (stageIndex > 0) {
+            final prevStage = stages[stageIndex - 1];
+            final prevCalc = await _service.getStageCalculations(
+                prevStage.id!, stageIndex == 1 ? period.baseAmount : 0);
+            _previousBalance = prevCalc.balance ??
+                (prevCalc.baseAmount -
+                    prevCalc.shoppingTotal -
+                    prevCalc.otherTotal);
+          }
+          _stageCalc = await _service.getStageCalculations(
+              widget.stageId, _previousBalance);
+        }
+      }
+    } catch (e) {
+      debugPrint('Refresh data error: ');
+    }
+    if (mounted) setState(() {});
   }
 
   /// 加载数据并保持滚动位置
@@ -259,7 +298,7 @@ class _StageEditPageState extends State<StageEditPage> {
               AppSpacing.md,
               0,
               AppSpacing.md,
-              80, // ToolboxBottomNav 高度
+              20, // ToolboxBottomNav 高度
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,7 +484,7 @@ class _StageEditPageState extends State<StageEditPage> {
       prefix: '+¥',
       showAddButton: !_additionFormExpanded,
       form: _additionFormExpanded ? _buildAdditionForm(appTheme) : null,
-      onAdd: () => setState(() => _additionFormExpanded = true),
+      onAdd: () { setState(() => _additionFormExpanded = true); WidgetsBinding.instance.addPostFrameCallback((_) { if (_scrollController.hasClients) { _scrollController.animateTo( _scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut, ); } }); },
       onEdit: (data) {
         final addition = _additions.firstWhere((a) => '${a.id}' == data.id);
         _showEditAdditionSheet(appTheme, addition);
@@ -740,7 +779,7 @@ class _StageEditPageState extends State<StageEditPage> {
         );
       },
     );
-    if (mounted) await _loadData();
+    if (mounted) await _refreshData();
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -762,7 +801,7 @@ class _StageEditPageState extends State<StageEditPage> {
       color: appTheme.rose,
       showAddButton: !_shoppingFormExpanded,
       form: _shoppingFormExpanded ? _buildShoppingForm(appTheme) : null,
-      onAdd: () => setState(() => _shoppingFormExpanded = true),
+      onAdd: () { setState(() => _shoppingFormExpanded = true); WidgetsBinding.instance.addPostFrameCallback((_) { if (_scrollController.hasClients) { _scrollController.animateTo( _scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut, ); } }); },
       onEdit: (data) {
         final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
         _showEditExpenseSheet(appTheme, expense);
@@ -811,7 +850,7 @@ class _StageEditPageState extends State<StageEditPage> {
       isOther: true,
       showAddButton: !_otherFormExpanded,
       form: _otherFormExpanded ? _buildOtherForm(appTheme) : null,
-      onAdd: () => setState(() => _otherFormExpanded = true),
+      onAdd: () { setState(() => _otherFormExpanded = true); WidgetsBinding.instance.addPostFrameCallback((_) { if (_scrollController.hasClients) { _scrollController.animateTo( _scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut, ); } }); },
       onEdit: (data) {
         final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
         _showEditExpenseSheet(appTheme, expense);
@@ -860,7 +899,7 @@ class _StageEditPageState extends State<StageEditPage> {
         _service.addExpense(widget.stageId, '生活', amount, desc).then((_) {
           _shoppingAmountController.clear();
           _shoppingDescController.clear();
-          _loadDataPreserveScroll();
+          _refreshData();
         });
       },
       confirmForeground: appTheme.primary,
@@ -930,7 +969,7 @@ class _StageEditPageState extends State<StageEditPage> {
                   .then((_) {
                 _otherAmountController.clear();
                 _otherDescController.clear();
-                _loadData();
+                _refreshData();
               });
             },
             decoration: InputDecoration(
@@ -982,7 +1021,7 @@ class _StageEditPageState extends State<StageEditPage> {
                         .then((_) {
                       _otherAmountController.clear();
                       _otherDescController.clear();
-                      _loadDataPreserveScroll();
+                      _refreshData();
                     });
                   },
                   icon: const Icon(Icons.check_rounded, size: 16),
@@ -1293,7 +1332,7 @@ class _StageEditPageState extends State<StageEditPage> {
   },
 );
     // 编辑已实时保存，关闭弹窗后刷新列表
-    if (mounted) await _loadData();
+    if (mounted) await _refreshData();
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -1348,12 +1387,12 @@ class _StageEditPageState extends State<StageEditPage> {
 
   Future<void> _deleteAddition(AdditionRecord addition) async {
     await _service.deleteAddition(addition.id!);
-    await _loadData();
+    await _refreshData();
   }
 
   Future<void> _deleteExpense(ExpenseRecord expense) async {
     await _service.deleteExpense(expense.id!);
-    await _loadData();
+    await _refreshData();
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -1368,7 +1407,7 @@ class _StageEditPageState extends State<StageEditPage> {
     _service.addAddition(widget.stageId, amount, reason).then((_) {
       _additionReasonController.clear();
       _additionAmountController.clear();
-      _loadDataPreserveScroll();
+      _refreshData();
     });
   }
 
