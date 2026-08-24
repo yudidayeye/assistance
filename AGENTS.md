@@ -13,6 +13,12 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 3. 修改前端视觉、调颜色、调间距时 → 必读 `./docs/UI.md`
 4. 生成的需求文档和开发计划默认保存到 `./.Codex/plans` 目录下，命名规则分别为`requirement-<日期>-<标题>.md`和`plan-<日期>-<标题>.md`
 
+## 编码铁律
+- 读文件：`Get-Content -Raw -Encoding UTF8`
+- 写文件：`| Out-File -Encoding UTF8`
+- 禁用：`Set-Content`、`Add-Content`（会破坏UTF-
+  8）
+- 新文件：Here-String + Out-File -Encoding UTF8
 ## 常用命令
 
 ```bash
