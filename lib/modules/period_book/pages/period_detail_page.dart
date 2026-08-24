@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
@@ -13,6 +13,7 @@ import '../models/expense_record.dart';
 import '../services/period_book_service.dart';
 import '../services/period_book_settings.dart';
 import '../widgets/stage_card.dart';
+import '../widgets/edit_balance_dialog.dart';
 import '../widgets/period_summary_card.dart';
 
 /// 当前周期详情页（入口页）
@@ -674,113 +675,29 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   // ═══════════════════════════════════════════════════════════
 
   void _showEditStageBalanceDialog(StageRecord stage) {
-    final appTheme = Theme.of(context).appTheme;
-    final currentBalanceText = stage.balance?.toStringAsFixed(2);
-    final controller = TextEditingController();
-
     final stageIndex = _stages.indexWhere((s) => s.id == stage.id);
     final stageCalc = stageIndex >= 0 ? _calc!.stages[stageIndex] : null;
     final maxBalance = stageCalc?.baseAmount ?? 0;
 
-    showDialog(
+    EditBalanceDialog.show(
       context: context,
-      barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: appTheme.cream,
-        title: Text(
-          '编辑余额',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: appTheme.earth,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '最大余额: ¥${maxBalance.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.6),
-              ),
-            ),
-            AppSpacing.h12,
-            TextField(
-              controller: controller,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              autofocus: true,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: appTheme.earth,
-              ),
-              decoration: InputDecoration(
-                prefixText: '¥ ',
-                prefixStyle: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earthMedium.withValues(alpha: 0.6),
-                ),
-                hintText: currentBalanceText ?? '未设置',
-                hintStyle: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: appTheme.earthMedium.withValues(alpha: 0.4),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final val = double.tryParse(controller.text.trim());
-              if (val != null && val > maxBalance) {
-                if (!mounted) return;
-                AppSnackBar.show(
-                  context,
-                  '余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}',
-                  type: AppSnackBarType.error,
-                );
-                return;
-              }
-              await _service.updateStageBalance(
-                stage.id!,
-                val,
-              );
-              _savedScrollOffset = _scrollController.hasClients
-                  ? _scrollController.offset
-                  : null;
-              await _loadData();
-              if (mounted) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_savedScrollOffset != null &&
-                      _scrollController.hasClients) {
-                    _scrollController.jumpTo(_savedScrollOffset!);
-                  }
-                });
-              }
-              if (mounted) {
-                Navigator.of(context).pop();
-              }
-            },
-            child: Text('确定', style: TextStyle(color: appTheme.primary)),
-          ),
-        ],
-      ),
+      currentBalance: stage.balance,
+      maxBalance: maxBalance,
+      onSave: (val) async {
+        await _service.updateStageBalance(stage.id!, val);
+        _savedScrollOffset = _scrollController.hasClients
+            ? _scrollController.offset
+            : null;
+        await _loadData();
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_savedScrollOffset != null &&
+                _scrollController.hasClients) {
+              _scrollController.jumpTo(_savedScrollOffset!);
+            }
+          });
+        }
+      },
     );
   }
 }

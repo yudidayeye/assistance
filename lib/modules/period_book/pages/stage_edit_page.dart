@@ -15,6 +15,7 @@ import '../widgets/expense_category_helper.dart';
 import '../widgets/expense_section_card.dart';
 import '../widgets/addition_section_card.dart';
 import '../widgets/add_form.dart';
+import '../widgets/edit_balance_dialog.dart';
 
 /// 阶段编辑页（单阶段编辑 + 批量记账）
 class StageEditPage extends StatefulWidget {
@@ -560,95 +561,16 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   Future<void> _showEditBalanceSheet() async {
-    final appTheme = Theme.of(context).appTheme;
-    final currentBalanceText = _stage!.balance?.toStringAsFixed(2);
-    final controller = TextEditingController(text: currentBalanceText ?? '');
     final maxBalance = _stageCalc?.baseAmount ?? 0;
-
-    await showDialog(
+    
+    await EditBalanceDialog.show(
       context: context,
-      barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: appTheme.cream,
-        title: Text(
-          '编辑余额',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: appTheme.earth,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                hintText: '请输入余额',
-                hintStyle: TextStyle(
-                  fontSize: 13,
-                  color: appTheme.earthMedium.withValues(alpha: 0.5),
-                ),
-                filled: true,
-                fillColor: appTheme.cardBackground,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                  borderSide: BorderSide(
-                    color: appTheme.earthMedium.withValues(alpha: 0.25),
-                    width: 1,
-                  ),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              ),
-              style: TextStyle(fontSize: 14, color: appTheme.earth),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '本金: ¥${maxBalance.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: appTheme.earthMedium.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final val = double.tryParse(controller.text.trim());
-              if (val != null && val > maxBalance) {
-                if (!mounted) return;
-                AppSnackBar.show(
-                  context,
-                  '余额不能超过本金 ¥${maxBalance.toStringAsFixed(2)}',
-                  type: AppSnackBarType.error,
-                );
-                return;
-              }
-              if (val == null || val < 0) {
-                if (!mounted) return;
-                AppSnackBar.show(context, '请输入有效的余额金额',
-                    type: AppSnackBarType.error);
-                return;
-              }
-              await _service.updateStageBalance(widget.stageId, val);
-              await _loadData();
-              if (mounted) {
-                Navigator.of(context).pop();
-              }
-            },
-            child: Text('确定', style: TextStyle(color: appTheme.primary)),
-          ),
-        ],
-      ),
+      currentBalance: _stage!.balance,
+      maxBalance: maxBalance,
+      onSave: (val) async {
+        await _service.updateStageBalance(widget.stageId, val);
+        await _loadData();
+      },
     );
   }
 
