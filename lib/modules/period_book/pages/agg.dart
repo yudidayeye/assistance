@@ -322,6 +322,63 @@ class _AggPageState extends State<AggPage>
       });
 
     _largeExpenseTypeData = {...largeCategoryTotals};
+    // 计算合计数据（日常 + 大额）
+    final Map<String, double> summaryMonthlyMap = {};
+    final Map<String, double> summaryCategoryTotals = {};
+
+    for (final period in _filteredPeriods) {
+      final calc = _calcMap[period.id];
+      if (calc == null) continue;
+
+      final balance = _balances[period.id];
+      final startDate = DateTime.parse(period.startDate);
+      final monthKey = '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}';
+
+      // 日常消费
+      final dailyExpense = calc.totalBase - (balance ?? 0);
+      
+      // 大额消费
+      final largeExpenses = _largeExpensesMap[period.id] ?? [];
+      final largeExpense = largeExpenses.fold<double>(0, (sum, e) => sum + e.amount);
+
+      // 合计月度消费
+      summaryMonthlyMap[monthKey] = (summaryMonthlyMap[monthKey] ?? 0) + dailyExpense + largeExpense;
+
+      // 按分类汇总日常消费
+      final expenses = _expenseMap[period.id] ?? [];
+      for (final e in expenses) {
+        final cat = _normalizeCategory(e.category);
+        summaryCategoryTotals[cat] = (summaryCategoryTotals[cat] ?? 0) + e.amount;
+      }
+
+      // 杂项
+      final livingTotal = calc.stages.fold<double>(0, (sum, s) => sum + (s.livingTotal ?? 0));
+      if (livingTotal > 0) {
+        summaryCategoryTotals['杂项'] = (summaryCategoryTotals['杂项'] ?? 0) + livingTotal;
+      }
+
+      // 大额消费按分类汇总
+      for (final e in largeExpenses) {
+        final cat = _normalizeCategory(e.category);
+        summaryCategoryTotals['大额-$cat'] = (summaryCategoryTotals['大额-$cat'] ?? 0) + e.amount;
+      }
+    }
+
+    _summaryMonthlyData = summaryMonthlyMap.entries.map((e) {
+      final parts = e.key.split('-');
+      return {
+        'month': int.parse(parts[1]),
+        'year': int.parse(parts[0]),
+        'expense': e.value,
+      };
+    }).toList()
+      ..sort((a, b) {
+        final aKey = (a['year']! as int) * 100 + (a['month']! as int);
+        final bKey = (b['year']! as int) * 100 + (b['month']! as int);
+        return aKey.compareTo(bKey);
+      });
+
+    _summaryExpenseTypeData = {...summaryCategoryTotals};
   }
 
   void _calculateSummary() {
