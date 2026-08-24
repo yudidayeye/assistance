@@ -792,313 +792,332 @@ class _AggPageState extends State<AggPage>
 
   Widget _buildPeriodCard(AppThemeExtension appTheme, PeriodRecord period) {
     final calc = _calcMap[period.id];
-    final balance = _balances[period.id];
     final startDate = DateTime.parse(period.startDate);
     final endDate = DateTime.parse(period.endDate);
-
-    double totalExpense = 0;
-    if (calc != null) {
-      totalExpense = calc.totalBase - (balance ?? 0);
-    }
-
-    final personalExpense = calc?.stages.fold<double>(
-            0, (sum, s) => sum + s.shoppingTotal) ?? 0;
-    final otherExpense = calc?.stages.fold<double>(
-            0, (sum, s) => sum + s.otherTotal + (s.livingTotal ?? 0)) ?? 0;
-
+    final totalExpense = (calc?.shoppingTotal ?? 0) + (calc?.livingTotal ?? 0) + (calc?.otherTotal ?? 0);
+    final personalExpense = (calc?.shoppingTotal ?? 0) + (calc?.livingTotal ?? 0);
+    final otherExpense = calc?.otherTotal ?? 0;
     final hasExpense = totalExpense > 0;
 
     return GestureDetector(
-      onTap: () => context.push('/period_book/large_items/${period.id}'),
+      onTap: () => context.push('/period_book/detail/${period.id}'),
       child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-        boxShadow: appTheme.cardShadow,
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 12, 0),
-            child: Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: period.isClosed
-                        ? appTheme.earthMedium.withValues(alpha: 0.3)
-                        : appTheme.primary,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: appTheme.cardBackground,
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          boxShadow: [
+            BoxShadow(
+              color: appTheme.earth.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 第一行：日历图标 + 日期范围 | 大金额 + 箭头
+            Padding(
+              padding: const EdgeInsets.only(left: 16, top: 14, right: 12, bottom: 10),
+              child: Row(
+                children: [
+                  // 年份图标（日历内展示年份）
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 24,
+                        color: appTheme.primary.withValues(alpha: 0.25),
+                      ),
+                      Text(
+                        _fmtYearShort(startDate, endDate),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: appTheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                AppSpacing.w8,
-                Expanded(
-                  child: Text(
-                    _fmtDateRangeShort(startDate, endDate),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: appTheme.earthLight,
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      hasExpense
-                          ? '-${FormatUtils.formatAmount(totalExpense)}'
-                          : FormatUtils.formatAmount(0),
+                  AppSpacing.w8,
+                  // 日期范围
+                  Expanded(
+                    child: Text(
+                      _fmtDateRangeShort(startDate, endDate),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: hasExpense
-                            ? appTheme.rose
-                            : appTheme.earthMedium.withValues(alpha: 0.4),
+                        fontWeight: FontWeight.w500,
+                        color: appTheme.earthLight,
                         fontFeatures: [FontFeature.tabularFigures()],
                       ),
                     ),
-                    AppSpacing.w6,
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 16,
+                  ),
+                  // 金额 + 箭头
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        hasExpense
+                            ? '-${FormatUtils.formatAmount(totalExpense)}'
+                            : FormatUtils.formatAmount(0),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: hasExpense
+                              ? appTheme.rose
+                              : appTheme.earthMedium.withValues(alpha: 0.4),
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      AppSpacing.w6,
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 16,
+                          color: appTheme.earthMedium.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // 分隔线
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                height: 0.5,
+                color: appTheme.creamDark,
+              ),
+            ),
+            // 第二行：支出明细
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 12, 12),
+              child: Row(
+                children: [
+                  // 个人消费
+                  _buildExpenseItem(
+                    appTheme: appTheme,
+                    label: '个人消费',
+                    value: personalExpense,
+                  ),
+                  // 分隔符
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      '|',
+                      style: TextStyle(
+                        fontSize: 11,
                         color: appTheme.earthMedium.withValues(alpha: 0.3),
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              height: 0.5,
-              color: appTheme.creamDark,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 12, 12),
-            child: Row(
-              children: [
-                _buildExpenseItem(
-                  appTheme: appTheme,
-                  label: '个人消费',
-                  value: personalExpense,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    '|',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: appTheme.earthMedium.withValues(alpha: 0.3),
-                    ),
                   ),
-                ),
-                _buildExpenseItem(
-                  appTheme: appTheme,
-                  label: '其他消费',
-                  value: otherExpense,
-                ),
-                const Spacer(),
-              ],
+                  // 其他消费
+                  _buildExpenseItem(
+                    appTheme: appTheme,
+                    label: '其他消费',
+                    value: otherExpense,
+                  ),
+                  const Spacer(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
-
   Widget _buildLargePeriodCard(AppThemeExtension appTheme, PeriodRecord period) {
     final additions = _additionsMap[period.id] ?? [];
     final expenses = _largeExpensesMap[period.id] ?? [];
+    final additionsTotal = additions.fold<double>(0, (sum, a) => sum + a.amount);
+    final expensesTotal = expenses.fold<double>(0, (sum, e) => sum + e.amount);
+    final net = additionsTotal - expensesTotal;
+    final hasItems = additions.isNotEmpty || expenses.isNotEmpty;
+
     final startDate = DateTime.parse(period.startDate);
     final endDate = DateTime.parse(period.endDate);
-
-    double additionsTotal = 0;
-    for (final a in additions) {
-      additionsTotal += a.amount;
-    }
-
-    double expensesTotal = 0;
-    for (final e in expenses) {
-      expensesTotal += e.amount;
-    }
-
-    final net = additionsTotal - expensesTotal;
-    final hasData = additions.isNotEmpty || expenses.isNotEmpty;
 
     return GestureDetector(
       onTap: () => context.push('/period_book/large_items/${period.id}'),
       child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-        boxShadow: appTheme.cardShadow,
-        border: Border.all(color: appTheme.cardBorder, width: 0.5),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 12, 0),
-            child: Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: period.isClosed
-                        ? appTheme.earthMedium.withValues(alpha: 0.3)
-                        : appTheme.primary,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: appTheme.cardBackground,
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          boxShadow: [
+            BoxShadow(
+              color: appTheme.earth.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 标题行：年份图标 + 起止日期 | 总金额 + 箭头
+            Padding(
+              padding: const EdgeInsets.only(left: 16, top: 14, right: 12, bottom: 10),
+              child: Row(
+                children: [
+                  // 年份图标（日历内展示年份）
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 24,
+                        color: appTheme.primary.withValues(alpha: 0.25),
+                      ),
+                      Text(
+                        _fmtYearShort(startDate, endDate),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: appTheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                AppSpacing.w8,
-                Expanded(
-                  child: Text(
-                    _fmtDateRangeShort(startDate, endDate),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: appTheme.earthLight,
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      _formatNet(net),
+                  AppSpacing.w8,
+                  // 日期范围
+                  Expanded(
+                    child: Text(
+                      _fmtDateRangeShort(startDate, endDate),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: net > 0
-                            ? appTheme.sage
-                            : net < 0
-                                ? appTheme.rose
-                                : appTheme.earthMedium.withValues(alpha: 0.4),
+                        fontWeight: FontWeight.w500,
+                        color: appTheme.earthLight,
                         fontFeatures: [FontFeature.tabularFigures()],
                       ),
                     ),
-                    AppSpacing.w6,
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 16,
-                        color: appTheme.earthMedium.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              height: 0.5,
-              color: appTheme.creamDark,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 12, 12),
-            child: hasData
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (additions.isNotEmpty)
-                        _buildDetailGroup(
-                          appTheme: appTheme,
-                          title: '大额追加',
-                          color: appTheme.sage,
-                          children: additions.map((a) {
-                            return _buildDetailRow(
-                              appTheme,
-                              a.reason,
-                              '+${FormatUtils.formatAmount(a.amount)}',
-                              appTheme.sage,
-                            );
-                          }).toList(),
-                        ),
-                      if (expenses
-                          .where((e) => e.category != 'other')
-                          .isNotEmpty) ...[
-                        if (additions.isNotEmpty) AppSpacing.h6,
-                        _buildDetailGroup(
-                          appTheme: appTheme,
-                          title: '个人支出',
-                          color: appTheme.rose,
-                          children: expenses
-                              .where((e) => e.category != 'other')
-                              .map((e) {
-                            return _buildDetailRow(
-                              appTheme,
-                              e.description,
-                              '-${FormatUtils.formatAmount(e.amount)}',
-                              appTheme.rose,
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                      if (expenses
-                          .where((e) => e.category == 'other')
-                          .isNotEmpty) ...[
-                        if (additions.isNotEmpty ||
-                            expenses
-                                .where((e) => e.category != 'other')
-                                .isNotEmpty)
-                          AppSpacing.h6,
-                        _buildDetailGroup(
-                          appTheme: appTheme,
-                          title: '其他支出',
-                          color: appTheme.rose,
-                          children: expenses
-                              .where((e) => e.category == 'other')
-                              .map((e) {
-                            return _buildDetailRow(
-                              appTheme,
-                              e.description,
-                              '-${FormatUtils.formatAmount(e.amount)}',
-                              appTheme.rose,
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ],
-                  )
-                : Text(
-                    '暂无大额记录',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: appTheme.earthMedium.withValues(alpha: 0.5),
-                    ),
                   ),
-          ),
-        ],
+                  // 总金额（净额）+ 箭头
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        _formatNet(net),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: hasItems
+                              ? (net >= 0 ? appTheme.sage : appTheme.rose)
+                              : appTheme.earthMedium.withValues(alpha: 0.4),
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      AppSpacing.w6,
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 16,
+                          color: appTheme.earthMedium.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // 分隔线
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                height: 0.5,
+                color: appTheme.creamDark,
+              ),
+            ),
+            // 内容区：大额记录明细
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              child: !hasItems
+                  ? Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '暂无大额记录',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: appTheme.earthMedium.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (additions.isNotEmpty)
+                          _buildDetailGroup(
+                            appTheme: appTheme,
+                            title: '大额追加',
+                            color: appTheme.sage,
+                            children: additions.map((a) {
+                              return _buildDetailRow(
+                                appTheme,
+                                a.reason,
+                                '+${FormatUtils.formatAmount(a.amount)}',
+                                appTheme.sage,
+                              );
+                            }).toList(),
+                          ),
+                        if (expenses.where((e) => e.category != 'other').isNotEmpty) ...[
+                          if (additions.isNotEmpty) AppSpacing.h6,
+                          _buildDetailGroup(
+                            appTheme: appTheme,
+                            title: '个人支出',
+                            color: appTheme.rose,
+                            children: expenses
+                                .where((e) => e.category != 'other')
+                                .map((e) {
+                              return _buildDetailRow(
+                                appTheme,
+                                e.description,
+                                '-${FormatUtils.formatAmount(e.amount)}',
+                                appTheme.rose,
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                        if (expenses.where((e) => e.category == 'other').isNotEmpty) ...[
+                          if (additions.isNotEmpty ||
+                              expenses.where((e) => e.category != 'other').isNotEmpty)
+                            AppSpacing.h6,
+                          _buildDetailGroup(
+                            appTheme: appTheme,
+                            title: '其他支出',
+                            color: appTheme.rose,
+                            children: expenses
+                                .where((e) => e.category == 'other')
+                                .map((e) {
+                              return _buildDetailRow(
+                                appTheme,
+                                e.description,
+                                '-${FormatUtils.formatAmount(e.amount)}',
+                                appTheme.rose,
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
-
   Widget _buildExpenseItem({
     required AppThemeExtension appTheme,
     required String label,
@@ -1192,6 +1211,10 @@ class _AggPageState extends State<AggPage>
     );
   }
 
+  /// 年份标识（图标内展示），按周期开始日期的年份计算
+  String _fmtYearShort(DateTime start, DateTime end) {
+    return (start.year % 100).toString();
+  }
   String _fmtDateRangeShort(DateTime start, DateTime end) {
     final startStr = '${start.month}/${start.day}';
     final endStr = '${end.month}/${end.day}';
