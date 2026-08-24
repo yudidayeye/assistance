@@ -14,7 +14,7 @@ import '../services/period_book_service.dart';
 import '../widgets/history_filter_bar.dart';
 import '../widgets/report_card.dart';
 
-/// 聚合历史记录页面 — 日常/大额/合计 三个视图切换
+/// Aggregated history page - Daily/Large/Summary view switching
 class AggPage extends StatefulWidget {
   const AggPage({super.key});
 
@@ -176,7 +176,7 @@ class _AggPageState extends State<AggPage>
       final livingTotal = calc.stages.fold<double>(
           0, (sum, s) => sum + (s.livingTotal ?? 0));
       if (livingTotal > 0) {
-        categoryTotals['杂项'] = (categoryTotals['杂项'] ?? 0) + livingTotal;
+        categoryTotals['misc'] = (categoryTotals['misc'] ?? 0) + livingTotal;
       }
 
       final startDate = DateTime.parse(period.startDate);
@@ -275,8 +275,8 @@ class _AggPageState extends State<AggPage>
 
         final stageLiving = targetStageCalc.livingTotal ?? 0;
         if (stageLiving > 0) {
-          stageCategoryTotals['杂项'] =
-              (stageCategoryTotals['杂项'] ?? 0) + stageLiving;
+          stageCategoryTotals['misc'] =
+              (stageCategoryTotals['misc'] ?? 0) + stageLiving;
         }
       }
 
@@ -353,8 +353,8 @@ class _AggPageState extends State<AggPage>
   }
 
   String _normalizeCategory(String dbCategory) {
-    if (dbCategory == 'shopping') return '购物';
-    if (dbCategory == 'other') return '其他';
+    if (dbCategory == 'shopping') return 'Shopping';
+    if (dbCategory == 'other') return 'Other';
     return dbCategory;
   }
 
@@ -410,7 +410,7 @@ class _AggPageState extends State<AggPage>
         titleSpacing: 0,
         automaticallyImplyLeading: true,
         title: Text(
-          '历史记录',
+          'History',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
@@ -422,15 +422,15 @@ class _AggPageState extends State<AggPage>
               segments: [
                 ButtonSegment<int>(
                   value: 0,
-                  label: Text('日常', style: TextStyle(fontSize: 12)),
+                  label: Text('Daily', style: TextStyle(fontSize: 12)),
                 ),
                 ButtonSegment<int>(
                   value: 1,
-                  label: Text('大额', style: TextStyle(fontSize: 12)),
+                  label: Text('Large', style: TextStyle(fontSize: 12)),
                 ),
                 ButtonSegment<int>(
                   value: 2,
-                  label: Text('合计', style: TextStyle(fontSize: 12)),
+                  label: Text('Summary', style: TextStyle(fontSize: 12)),
                 ),
               ],
               selected: {_selectedIndex},
@@ -493,8 +493,8 @@ class _AggPageState extends State<AggPage>
     if (_periods.isEmpty) {
       return const EmptyStateWidget(
         icon: Icons.history_rounded,
-        title: '暂无历史记录',
-        subtitle: '删除的周期记录不会出现在这里',
+        title: 'No History',
+        subtitle: 'Deleted period records will not appear here',
       );
     }
 
@@ -560,8 +560,8 @@ class _AggPageState extends State<AggPage>
     if (_periods.isEmpty) {
       return const EmptyStateWidget(
         icon: Icons.diamond_outlined,
-        title: '暂无大额记录',
-        subtitle: '创建周期后可在大额记录中追加与支出',
+        title: 'No Large Records',
+        subtitle: 'Create a period to add large items',
       );
     }
 
@@ -638,7 +638,7 @@ class _AggPageState extends State<AggPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '汇总统计',
+                  'Summary',
                   style: AppTypography.headerTitle.copyWith(
                     color: appTheme.earth,
                     fontSize: 18,
@@ -647,7 +647,7 @@ class _AggPageState extends State<AggPage>
                 AppSpacing.h16,
                 _buildSummaryItem(
                   appTheme: appTheme,
-                  label: '总日常消费',
+                  label: 'Total Daily',
                   value: _totalExpense,
                   icon: Icons.shopping_cart_outlined,
                   color: appTheme.rose,
@@ -655,7 +655,7 @@ class _AggPageState extends State<AggPage>
                 AppSpacing.h12,
                 _buildSummaryItem(
                   appTheme: appTheme,
-                  label: '总大额追加',
+                  label: 'Total Large Additions',
                   value: _totalLargeAddition,
                   icon: Icons.add_circle_outline,
                   color: appTheme.sage,
@@ -663,7 +663,7 @@ class _AggPageState extends State<AggPage>
                 AppSpacing.h12,
                 _buildSummaryItem(
                   appTheme: appTheme,
-                  label: '总大额支出',
+                  label: 'Total Large Expenses',
                   value: _totalLargeExpense,
                   icon: Icons.remove_circle_outline,
                   color: appTheme.rose,
@@ -674,7 +674,7 @@ class _AggPageState extends State<AggPage>
                 ),
                 _buildSummaryItem(
                   appTheme: appTheme,
-                  label: '大额净额',
+                  label: 'Large Net',
                   value: _totalNet,
                   icon: Icons.account_balance_outlined,
                   color: _totalNet >= 0 ? appTheme.sage : appTheme.rose,
@@ -696,21 +696,21 @@ class _AggPageState extends State<AggPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '统计信息',
+                  'Statistics',
                   style: AppTypography.headerTitle.copyWith(
                     color: appTheme.earth,
                     fontSize: 18,
                   ),
                 ),
                 AppSpacing.h16,
-                _buildInfoRow(appTheme, '总周期数', '${_periods.length} 个'),
+                _buildInfoRow(appTheme, 'Total Periods', '${_periods.length}'),
                 AppSpacing.h8,
-                _buildInfoRow(appTheme, '总天数', '${_periods.fold<int>(0, (sum, p) => sum + p.totalDays)} 天'),
+                _buildInfoRow(appTheme, 'Total Days', '${_periods.fold<int>(0, (sum, p) => sum + p.totalDays)} days'),
                 AppSpacing.h8,
-                _buildInfoRow(appTheme, '平均每周期消费', 
+                _buildInfoRow(appTheme, 'Avg per Period', 
                   _periods.isNotEmpty 
                     ? FormatUtils.formatAmount(_totalExpense / _periods.length)
-                    : '￥0.00'),
+                    : '0.00'),
               ],
             ),
           ),
@@ -752,7 +752,7 @@ class _AggPageState extends State<AggPage>
               ),
               Text(
                 value >= 0 
-                  ? '+${FormatUtils.formatAmount(value)}'
+                  ? FormatUtils.formatAmount(value)
                   : '-${FormatUtils.formatAmount(value.abs())}',
                 style: TextStyle(
                   fontSize: isTotal ? 20 : 16,
@@ -892,7 +892,7 @@ class _AggPageState extends State<AggPage>
               children: [
                 _buildExpenseItem(
                   appTheme: appTheme,
-                  label: '个人消费',
+                  label: 'Personal',
                   value: personalExpense,
                 ),
                 Padding(
@@ -907,7 +907,7 @@ class _AggPageState extends State<AggPage>
                 ),
                 _buildExpenseItem(
                   appTheme: appTheme,
-                  label: '其他消费',
+                  label: 'Other',
                   value: otherExpense,
                 ),
                 const Spacer(),
@@ -1024,7 +1024,7 @@ class _AggPageState extends State<AggPage>
                       if (additions.isNotEmpty)
                         _buildDetailGroup(
                           appTheme: appTheme,
-                          title: '大额追加',
+                          title: 'Large Additions',
                           color: appTheme.sage,
                           children: additions.map((a) {
                             return _buildDetailRow(
@@ -1041,7 +1041,7 @@ class _AggPageState extends State<AggPage>
                         if (additions.isNotEmpty) AppSpacing.h6,
                         _buildDetailGroup(
                           appTheme: appTheme,
-                          title: '个人支出',
+                          title: 'Personal',
                           color: appTheme.rose,
                           children: expenses
                               .where((e) => e.category != 'other')
@@ -1065,7 +1065,7 @@ class _AggPageState extends State<AggPage>
                           AppSpacing.h6,
                         _buildDetailGroup(
                           appTheme: appTheme,
-                          title: '其他支出',
+                          title: 'Other',
                           color: appTheme.rose,
                           children: expenses
                               .where((e) => e.category == 'other')
@@ -1082,7 +1082,7 @@ class _AggPageState extends State<AggPage>
                     ],
                   )
                 : Text(
-                    '暂无大额记录',
+                    'No large records',
                     style: TextStyle(
                       fontSize: 12,
                       color: appTheme.earthMedium.withValues(alpha: 0.5),
@@ -1114,7 +1114,7 @@ class _AggPageState extends State<AggPage>
         Text(
           hasValue
               ? '-${FormatUtils.formatAmount(value)}'
-              : '￥0',
+              : '0',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w500,
@@ -1197,6 +1197,6 @@ class _AggPageState extends State<AggPage>
     final abs = FormatUtils.formatAmount(net.abs());
     if (net > 0) return '+$abs';
     if (net < 0) return '-$abs';
-    return '￥0.00';
+    return '0.00';
   }
 }
