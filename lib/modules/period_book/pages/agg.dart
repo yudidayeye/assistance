@@ -479,6 +479,7 @@ class _AggPageState extends State<AggPage>
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: SegmentedButton<int>(
+              showSelectedIcon: false,
               segments: [
                 ButtonSegment<int>(
                   value: 0,
