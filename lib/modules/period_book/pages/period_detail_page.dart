@@ -1,4 +1,4 @@
-ï»¿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
@@ -16,9 +16,9 @@ import '../widgets/stage_card.dart';
 import '../widgets/edit_balance_dialog.dart';
 import '../widgets/period_summary_card.dart';
 
-/// å½“å‰å‘¨æœŸè¯¦æƒ…é¡µï¼ˆå…¥å£é¡µï¼‰
+/// µ±Ç°ÖÜÆÚÏêÇéÒ³£¨Èë¿ÚÒ³£©
 class PeriodDetailPage extends StatefulWidget {
-  /// æŒ‡å®šå‘¨æœŸ ID æ—¶ä»¥åªè¯»æ¨¡å¼å±•ç¤ºï¼ˆå†å²å‘¨æœŸï¼‰
+  /// Ö¸¶¨ÖÜÆÚ ID Ê±ÒÔÖ»¶ÁÄ£Ê½Õ¹Ê¾£¨ÀúÊ·ÖÜÆÚ£©
   final int? periodId;
 
   const PeriodDetailPage({super.key, this.periodId});
@@ -88,7 +88,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               color: appTheme.primary, size: 26),
         ),
         title: Text(
-          'è®¾ç½®å‘è–ªæ—¥',
+          'ÉèÖÃ·¢Ğ½ÈÕ',
           style: AppTypography.displayMd.copyWith(
             color: appTheme.earth,
           ),
@@ -98,7 +98,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'æ¯æœˆå‡ å·å‘è–ªï¼Ÿï¼ˆ1~31ï¼‰',
+              'Ã¿ÔÂ¼¸ºÅ·¢Ğ½£¿£¨1~31£©',
               style: AppTypography.bodyMd.copyWith(
                 color: appTheme.earthMedium,
               ),
@@ -115,16 +115,16 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('å–æ¶ˆ', style: TextStyle(color: appTheme.earthMedium)),
+            child: Text('È¡Ïû', style: TextStyle(color: appTheme.earthMedium)),
           ),
           TextButton(
             onPressed: () async {
               await PeriodBookSettings.instance.setPayday(_payday);
               if (!ctx.mounted) return;
               Navigator.pop(ctx);
-              AppSnackBar.show(ctx, 'å‘è–ªæ—¥å·²è®¾ç½®ä¸ºæ¯æœˆ$_paydayå·');
+              AppSnackBar.show(ctx, '·¢Ğ½ÈÕÒÑÉèÖÃÎªÃ¿ÔÂ$_paydayºÅ');
             },
-            child: Text('ç¡®è®¤', style: TextStyle(color: appTheme.primary)),
+            child: Text('È·ÈÏ', style: TextStyle(color: appTheme.primary)),
           ),
         ],
       ),
@@ -151,7 +151,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
         _largeItemsNet = await _service.getLargeItemsNet(_period!.id!);
       } else {
-        // è‹¥æ— è¿›è¡Œä¸­å‘¨æœŸï¼Œæ£€æŸ¥æ˜¯å¦å·²æœ‰å†å²å‘¨æœŸï¼ˆç”¨äºç©ºçŠ¶æ€æ–‡æ¡ˆåŒºåˆ†ï¼‰
+        // ÈôÎŞ½øĞĞÖĞÖÜÆÚ£¬¼ì²éÊÇ·ñÒÑÓĞÀúÊ·ÖÜÆÚ£¨ÓÃÓÚ¿Õ×´Ì¬ÎÄ°¸Çø·Ö£©
         final all = await _service.getAllPeriods();
         _hasAnyPeriods = all.isNotEmpty;
       }
@@ -184,7 +184,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           titleSpacing: 0,
           automaticallyImplyLeading: true,
           title: Text(
-            'å‘¨æœŸè¯¦æƒ…',
+            'ÖÜÆÚÏêÇé',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
@@ -204,11 +204,11 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
         body: Center(
           child: EmptyStateWidget(
             icon: Icons.account_balance_wallet_outlined,
-            title: _hasAnyPeriods ? 'å½“å‰æ²¡æœ‰è¿›è¡Œä¸­çš„å‘¨æœŸ' : 'è¿˜æ²¡æœ‰è®°è´¦å‘¨æœŸ',
+            title: _hasAnyPeriods ? 'µ±Ç°Ã»ÓĞ½øĞĞÖĞµÄÖÜÆÚ' : '»¹Ã»ÓĞ¼ÇÕËÖÜÆÚ',
             subtitle: _hasAnyPeriods
-                ? 'æ–°å»ºä¸€ä¸ªå‘¨æœŸå¼€å§‹è®°è´¦ï¼Œæˆ–æŸ¥çœ‹å†å²è®°å½•'
-                : 'åˆ›å»ºç¬¬ä¸€ä¸ªå‘¨æœŸï¼Œå¼€å§‹è®°å½•ä½ çš„æ”¶æ”¯',
-            actionLabel: 'æ–°å»ºå‘¨æœŸ',
+                ? 'ĞÂ½¨Ò»¸öÖÜÆÚ¿ªÊ¼¼ÇÕË£¬»ò²é¿´ÀúÊ·¼ÇÂ¼'
+                : '´´½¨µÚÒ»¸öÖÜÆÚ£¬¿ªÊ¼¼ÇÂ¼ÄãµÄÊÕÖ§',
+            actionLabel: 'ĞÂ½¨ÖÜÆÚ',
             onAction: () async {
               await context.push('/period_book/new');
               if (mounted) {
@@ -234,7 +234,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           titleSpacing: 0,
           automaticallyImplyLeading: true,
           title: Text(
-            '${start.month}æœˆ${start.day}æ—¥ ~ ${end.month}æœˆ${end.day}æ—¥',
+            '${start.month}ÔÂ${start.day}ÈÕ ~ ${end.month}ÔÂ${end.day}ÈÕ',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
@@ -247,7 +247,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 icon: const Icon(Icons.history_rounded),
                 color: appTheme.earth,
                 iconSize: 20,
-                tooltip: 'å†å²è®°å½•',
+                tooltip: 'ÀúÊ·¼ÇÂ¼',
               ),
             ),
             PopupMenuButton<String>(
@@ -262,9 +262,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   case 'edit_period':
                     context.push('/period_book/edit/${_period!.id}');
                     break;
-                  case 'large_history':
-                    context.push('/period_book/large_history');
-                    break;
+                  
                   case 'payday':
                     _showPaydayPicker();
                     break;
@@ -277,7 +275,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     children: [
                       Icon(Icons.add_circle_outline_rounded, size: 18, color: appTheme.earth),
                       const SizedBox(width: 8),
-                      const Text('æ–°å¢å‘¨æœŸ'),
+                      const Text('ĞÂÔöÖÜÆÚ'),
                     ],
                   ),
                 ),
@@ -288,27 +286,18 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                       children: [
                         Icon(Icons.edit_outlined, size: 18, color: appTheme.earth),
                         const SizedBox(width: 8),
-                        const Text('ç¼–è¾‘å‘¨æœŸ'),
+                        const Text('±à¼­ÖÜÆÚ'),
                       ],
                     ),
                   ),
-                PopupMenuItem(
-                  value: 'large_history',
-                  child: Row(
-                    children: [
-                      Icon(Icons.diamond_outlined, size: 18, color: appTheme.earth),
-                      const SizedBox(width: 8),
-                      const Text('å¤§é¢è®°å½•'),
-                    ],
-                  ),
-                ),
+
                 PopupMenuItem(
                   value: 'payday',
                   child: Row(
                     children: [
                       Icon(Icons.calendar_month_rounded, size: 18, color: appTheme.earth),
                       const SizedBox(width: 8),
-                      const Text('å‘è–ªæ—¥è®¾ç½®'),
+                      const Text('·¢Ğ½ÈÕÉèÖÃ'),
                     ],
                   ),
                 ),
@@ -335,9 +324,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     );
   }
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // æ€»æœ¬é‡‘è¯¦æƒ…æµ®å±‚
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
+  // ×Ü±¾½ğÏêÇé¸¡²ã
+  // ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
 
   void _showTotalBaseDetail() {
     final appTheme = Theme.of(context).appTheme;
@@ -361,7 +350,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               Padding(
                 padding: const EdgeInsets.only(top: 20, bottom: 16),
                 child: Text(
-                  'æ€»æœ¬é‡‘æ„æˆ',
+                  '×Ü±¾½ğ¹¹³É',
                   style: AppTypography.displayMd.copyWith(color: sheetTheme.earth),
                 ),
               ),
@@ -372,7 +361,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   children: [
                     _buildDetailRow(
                       appTheme: appTheme,
-                      label: 'åˆå§‹æœ¬é‡‘',
+                      label: '³õÊ¼±¾½ğ',
                       amount: _period!.baseAmount,
                       isTotal: false,
                     ),
@@ -389,7 +378,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                         children: [
                           _buildDetailRow(
                             appTheme: appTheme,
-                            label: 'ç¬¬${stage.sortOrder}é˜¶æ®µè¿½åŠ ',
+                            label: 'µÚ${stage.sortOrder}½×¶Î×·¼Ó',
                             amount: total,
                             isTotal: false,
                             isEmpty: additions.isEmpty,
@@ -402,7 +391,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                                 child: Row(
                                   children: [
                                     Text(
-                                      'â””',
+                                      '©¸',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: appTheme.earthMedium
@@ -421,7 +410,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                                       ),
                                     ),
                                     Text(
-                                      'Â¥${a.amount.toStringAsFixed(2)}',
+                                      '£¤${a.amount.toStringAsFixed(2)}',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: appTheme.sage,
@@ -438,7 +427,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     const Divider(height: 24),
                     _buildDetailRow(
                       appTheme: appTheme,
-                      label: 'åˆè®¡',
+                      label: 'ºÏ¼Æ',
                       amount: _calc!.totalBase,
                       isTotal: true,
                     ),
@@ -453,9 +442,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     );
   }
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // æ€»æ”¯å‡ºè¯¦æƒ…æµ®å±‚
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
+  // ×ÜÖ§³öÏêÇé¸¡²ã
+  // ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
 
   void _showTotalExpenseDetail() {
     final appTheme = Theme.of(context).appTheme;
@@ -479,7 +468,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               Padding(
                 padding: const EdgeInsets.only(top: 20, bottom: 16),
                 child: Text(
-                  'æ€»æ”¯å‡ºæ„æˆ',
+                  '×ÜÖ§³ö¹¹³É',
                   style: AppTypography.displayMd.copyWith(color: sheetTheme.earth),
                 ),
               ),
@@ -490,7 +479,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   children: [
                     _buildDetailRow(
                       appTheme: appTheme,
-                      label: 'è´­ç‰©',
+                      label: '¹ºÎï',
                       amount: _calc!.shoppingTotal,
                       color: appTheme.rose,
                       isTotal: false,
@@ -498,7 +487,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     const Divider(height: 24),
                     _buildDetailRow(
                       appTheme: appTheme,
-                      label: 'å…¶ä»–',
+                      label: 'ÆäËû',
                       amount: _calc!.otherTotal,
                       color: appTheme.rose,
                       isTotal: false,
@@ -508,7 +497,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                         _calc!.livingTotal! > 0) ...[
                       _buildDetailRow(
                         appTheme: appTheme,
-                        label: 'ç”Ÿæ´»',
+                        label: 'Éú»î',
                         amount: _calc!.livingTotal!,
                         color: appTheme.rose,
                         isTotal: false,
@@ -517,7 +506,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                     ],
                     _buildDetailRow(
                       appTheme: appTheme,
-                      label: 'åˆè®¡',
+                      label: 'ºÏ¼Æ',
                       amount: _calc!.totalBase - (_calc?.balance ?? 0),
                       color: appTheme.rose,
                       isTotal: true,
@@ -565,7 +554,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           ),
           if (isEmpty)
             Text(
-              'Â¥0.00',
+              '£¤0.00',
               style: TextStyle(
                 fontSize: isTotal ? 16 : 14,
                 fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
@@ -575,7 +564,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             )
           else
             Text(
-              'Â¥${amount.toStringAsFixed(2)}',
+              '£¤${amount.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: isTotal ? 16 : 14,
                 fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
@@ -588,9 +577,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     );
   }
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // é˜¶æ®µåˆ—è¡¨
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
+  // ½×¶ÎÁĞ±í
+  // ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
 
   Widget _buildStagesSection(AppThemeExtension appTheme) {
     return SliverPadding(
@@ -646,12 +635,12 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       final display = _categoryDisplayName(e.category);
       map[display] = (map[display] ?? 0) + e.amount;
     }
-    // åŠ å…¥æ‚é¡¹ï¼ˆæ¼è®°æ‚é¡¹ livingTotalï¼‰
+    // ¼ÓÈëÔÓÏî£¨Â©¼ÇÔÓÏî livingTotal£©
     final stageIndex = _stages.indexWhere((s) => s.id == stageId);
     if (stageIndex >= 0 && _calc != null) {
       final living = _calc!.stages[stageIndex].livingTotal ?? 0;
       if (living > 0) {
-        map['æ‚é¡¹'] = (map['æ‚é¡¹'] ?? 0) + living;
+        map['ÔÓÏî'] = (map['ÔÓÏî'] ?? 0) + living;
       }
     }
     return map;
@@ -659,20 +648,20 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   String _categoryDisplayName(String? dbValue) {
     const map = {
-      'shopping': 'è´­ç‰©',
-      'other': 'å…¶ä»–',
-      'ç”Ÿæ´»': 'ç”Ÿæ´»',
-      'è´­ç‰©': 'è´­ç‰©',
-      'å·¥ä½œ': 'å·¥ä½œ',
-      'å¨±ä¹': 'å¨±ä¹',
-      'å¤§é¤': 'å¤§é¤',
+      'shopping': '¹ºÎï',
+      'other': 'ÆäËû',
+      'Éú»î': 'Éú»î',
+      '¹ºÎï': '¹ºÎï',
+      '¹¤×÷': '¹¤×÷',
+      'ÓéÀÖ': 'ÓéÀÖ',
+      '´ó²Í': '´ó²Í',
     };
-    return dbValue != null && map.containsKey(dbValue) ? map[dbValue]! : (dbValue ?? 'å…¶ä»–');
+    return dbValue != null && map.containsKey(dbValue) ? map[dbValue]! : (dbValue ?? 'ÆäËû');
   }
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // å¼¹çª—ï¼šç¼–è¾‘é˜¶æ®µä½™é¢
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
+  // µ¯´°£º±à¼­½×¶ÎÓà¶î
+  // ¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T¨T
 
   void _showEditStageBalanceDialog(StageRecord stage) {
     final stageIndex = _stages.indexWhere((s) => s.id == stage.id);
@@ -702,7 +691,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   }
 }
 
-/// å‘è–ªæ—¥é€‰æ‹©å™¨ â€” æ•°å­—æ»šè½®
+/// ·¢Ğ½ÈÕÑ¡ÔñÆ÷ ¡ª Êı×Ö¹öÂÖ
 class _PaydayPicker extends StatefulWidget {
   final int initialValue;
   final ValueChanged<int> onChanged;
@@ -792,3 +781,5 @@ class _PaydayPickerState extends State<_PaydayPicker> {
     );
   }
 }
+
+

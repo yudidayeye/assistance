@@ -8,28 +8,27 @@ import 'services/period_book_settings.dart';
 import 'pages/period_detail_page.dart';
 import 'pages/new_period_page.dart';
 import 'pages/edit_period_page.dart';
-import 'pages/period_history_page.dart';
-import 'pages/large_items_history_page.dart';
+import 'pages/agg.dart';
 import 'pages/stage_edit_page.dart';
 import 'pages/large_items_edit_page.dart';
 
-/// å‘¨æœŸè®°è´¦æ¨¡å—æ³¨å†Œ
+/// ÖÜÆÚ¼ÇÕËÄ£¿é×¢²á
 class PeriodBookModule implements ToolModule {
   @override
   String get moduleId => 'period_book';
 
   @override
-  String get displayName => 'å‘¨æœŸè®°è´¦';
+  String get displayName => 'ÖÜÆÚ¼ÇÕË';
 
   @override
-  String get description => 'ä»¥å‘è–ªå‘¨æœŸä¸ºå•ä½çš„è½»é‡è®°è´¦å·¥å…·';
+  String get description => 'ÒÔ·¢Ğ½ÖÜÆÚÎªµ¥Î»µÄÇáÁ¿¼ÇÕË¹¤¾ß';
 
   @override
   ModuleIcon get icon =>
       const ModuleIcon.icon(Icons.account_balance_wallet_rounded);
 
   @override
-  Color get themeColor => const Color(0xFF7B8BAA); // æŸ”å¤œè“
+  Color get themeColor => const Color(0xFF7B8BAA); // ÈáÎíÀ¶
 
   @override
   Widget buildEntryPage(BuildContext context) => const PeriodDetailPage();
@@ -60,11 +59,7 @@ class PeriodBookModule implements ToolModule {
         ),
         GoRoute(
           path: 'history',
-          builder: (context, state) => const PeriodHistoryPage(),
-        ),
-        GoRoute(
-          path: 'large_history',
-          builder: (context, state) => const LargeItemsHistoryPage(),
+          builder: (context, state) => const AggPage(),
         ),
         GoRoute(
           path: 'detail/:id',
@@ -81,12 +76,10 @@ class PeriodBookModule implements ToolModule {
             return LargeItemsEditPage(periodId: periodId);
           },
         ),
-        // 'add-expense' è·¯ç”±å·²ç§»é™¤ï¼Œé˜¶æ®µç¼–è¾‘é¡µå·²å†…åµŒæ·»åŠ æ”¯å‡º/è¿½åŠ è¡¨å•
       ];
 
   @override
   Future<void> onRegister(ModuleContext context) async {
-    // åˆå§‹åŒ–é»˜è®¤å‘è–ªæ—¥ï¼ˆé¦–æ¬¡ä½¿ç”¨ï¼‰
     await PeriodBookSettings.instance.getPayday();
   }
 
@@ -100,26 +93,25 @@ class PeriodBookModule implements ToolModule {
   Future<ModuleSummary> getSummary() async {
     final period = await PeriodBookService.instance.getOngoingPeriod();
     if (period == null) {
-      return const ModuleSummary(line1: 'æš‚æ— å‘¨æœŸï¼Œç‚¹å‡»åˆ›å»º');
+      return const ModuleSummary(line1: 'ÔİÎŞÖÜÆÚ£¬µã»÷´´½¨');
     }
     final startFmt = _formatDateShort(period.startDate);
     final endFmt = _formatDateShort(period.endDate);
     final line1 = '$startFmt ~ $endFmt';
 
-    // ä½¿ç”¨ PeriodCalculations è·å–è®¡ç®—åçš„ä½™é¢ï¼ˆä¸è¯¦æƒ…é¡µä¸€è‡´ï¼‰
     final calc =
         await PeriodBookService.instance.getPeriodCalculations(period.id!);
     final balance = calc.balance;
     final totalExpense = calc.totalBase - (balance ?? 0);
     final line2 = balance != null
-        ? 'ä½™é¢ Â¥${balance.toStringAsFixed(2)}'
-        : 'æ”¯å‡º Â¥${totalExpense.toStringAsFixed(2)}';
+        ? 'Óà¶î £¤${balance.toStringAsFixed(2)}'
+        : 'Ö§³ö £¤${totalExpense.toStringAsFixed(2)}';
 
     return ModuleSummary(line1: line1, line2: line2);
   }
 
   String _formatDateShort(String dateStr) {
     final dt = DateTime.parse(dateStr);
-    return '${dt.month.toString().padLeft(2, '0')}æœˆ${dt.day.toString().padLeft(2, '0')}æ—¥';
+    return '${dt.month.toString().padLeft(2, '0')}ÔÂ${dt.day.toString().padLeft(2, '0')}ÈÕ';
   }
 }

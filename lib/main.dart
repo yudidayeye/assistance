@@ -7,15 +7,15 @@ import 'core/theme/theme_provider.dart';
 import 'core/routing/app_router.dart';
 import 'core/settings/settings_service.dart';
 import 'modules/period_tracker/period_module.dart';
-import 'modules/period_book/period_book_module.dart';
+import 'package:my_assistant/modules/period_book/period_book_module.dart';
 import 'modules/vault/vault_module.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  debugPrint('[Boot] 1/6 数据库工厂...');
+  debugPrint('[Boot] 1/6 数据库工�?..');
   await DatabaseService.initializeFactory();
 
-  debugPrint('[Boot] 2/6 打开数据库...');
+  debugPrint('[Boot] 2/6 打开数据�?..');
   await DatabaseService.instance.database;
 
   debugPrint('[Boot] 3/6 注册模块...');
@@ -25,21 +25,21 @@ void main() async {
     VaultModule(),
   ]);
 
-  debugPrint('[Boot] 4/6 初始化设置...');
+  debugPrint('[Boot] 4/6 初始化设�?..');
   await SettingsService.instance.seedDefaultsForModules();
 
   debugPrint('[Boot] 5/6 加载主题...');
   await SettingsService.instance.loadSettings();
   await ThemeProvider.instance.loadTheme();
 
-  debugPrint('[Boot] 6/6 初始化路由...');
+  debugPrint('[Boot] 6/6 初始化路�?..');
   final router = AppRouter.instance.initRouter();
 
   debugPrint('[Boot] 启动完成');
   runApp(ToolboxApp(router: router));
 }
 
-/// 工具集 App
+/// 工具�?App
 class ToolboxApp extends StatelessWidget {
   final GoRouter router;
 
@@ -70,3 +70,4 @@ class ToolboxApp extends StatelessWidget {
     );
   }
 }
+
