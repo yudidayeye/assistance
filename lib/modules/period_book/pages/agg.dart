@@ -4,6 +4,7 @@ import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../../../shared/utils/format_utils.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
 import '../models/period_record.dart';
 import '../models/expense_record.dart';
 import '../models/stage_record.dart';
@@ -12,7 +13,6 @@ import '../models/large_expense_record.dart';
 import '../services/period_book_service.dart';
 import '../widgets/history_filter_bar.dart';
 import '../widgets/report_card.dart';
-import '../widgets/empty_state_widget.dart';
 
 /// 聚合历史记录页面 — 日常/大额/合计 三个视图切换
 class AggPage extends StatefulWidget {
@@ -403,7 +403,6 @@ class _AggPageState extends State<AggPage>
     final appTheme = theme.appTheme;
 
     return AppScaffold(
-      backgroundColor: appTheme.cream,
       appBar: AppBar(
         backgroundColor: appTheme.cream,
         elevation: 0,
@@ -420,7 +419,7 @@ class _AggPageState extends State<AggPage>
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: SegmentedButton<int>(
-              segments: const [
+              segments: [
                 ButtonSegment<int>(
                   value: 0,
                   label: Text('日常', style: TextStyle(fontSize: 12)),
@@ -759,7 +758,7 @@ class _AggPageState extends State<AggPage>
                   fontSize: isTotal ? 20 : 16,
                   fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
                   color: color,
-                  fontFeatures: const [FontFeature.tabularFigures()],
+                  fontFeatures: [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -844,7 +843,7 @@ class _AggPageState extends State<AggPage>
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: appTheme.earthLight,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                      fontFeatures: [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),
@@ -862,7 +861,7 @@ class _AggPageState extends State<AggPage>
                         color: hasExpense
                             ? appTheme.rose
                             : appTheme.earthMedium.withValues(alpha: 0.4),
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                        fontFeatures: [FontFeature.tabularFigures()],
                       ),
                     ),
                     AppSpacing.w6,
@@ -973,7 +972,7 @@ class _AggPageState extends State<AggPage>
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: appTheme.earthLight,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                      fontFeatures: [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),
@@ -991,7 +990,7 @@ class _AggPageState extends State<AggPage>
                             : net < 0
                                 ? appTheme.rose
                                 : appTheme.earthMedium.withValues(alpha: 0.4),
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                        fontFeatures: [FontFeature.tabularFigures()],
                       ),
                     ),
                     AppSpacing.w6,
@@ -1122,7 +1121,7 @@ class _AggPageState extends State<AggPage>
             color: hasValue
                 ? appTheme.earth
                 : appTheme.earthMedium.withValues(alpha: 0.35),
-            fontFeatures: const [FontFeature.tabularFigures()],
+            fontFeatures: [FontFeature.tabularFigures()],
           ),
         ),
       ],
@@ -1180,7 +1179,7 @@ class _AggPageState extends State<AggPage>
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
-              fontFeatures: const [FontFeature.tabularFigures()],
+              fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
         ],
