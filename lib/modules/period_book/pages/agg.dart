@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
@@ -807,7 +808,9 @@ class _AggPageState extends State<AggPage>
 
     final hasExpense = totalExpense > 0;
 
-    return Container(
+    return GestureDetector(
+      onTap: () => context.push('/period_book/detail/${period.id}'),
+      child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
@@ -914,6 +917,7 @@ class _AggPageState extends State<AggPage>
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -1198,3 +1202,6 @@ class _AggPageState extends State<AggPage>
     return '0.00';
   }
 }
+
+
+
