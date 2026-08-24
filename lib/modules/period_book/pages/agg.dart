@@ -1145,7 +1145,7 @@ class _AggPageState extends State<AggPage>
       ),
     );
   }
-  Widget _buildSummaryPeriodCard(AppThemeExtension appTheme, PeriodRecord period) {
+    Widget _buildSummaryPeriodCard(AppThemeExtension appTheme, PeriodRecord period) {
     final calc = _calcMap[period.id];
     final balance = _balances[period.id];
     final startDate = DateTime.parse(period.startDate);
@@ -1153,13 +1153,9 @@ class _AggPageState extends State<AggPage>
 
     // 日常消费
     final dailyExpense = calc != null ? calc.totalBase - (balance ?? 0) : 0.0;
-    final personalExpense = (calc?.shoppingTotal ?? 0) + (calc?.livingTotal ?? 0);
-    final otherExpense = calc?.otherTotal ?? 0;
 
     // 大额消费
-    final additions = _additionsMap[period.id] ?? [];
     final largeExpenses = _largeExpensesMap[period.id] ?? [];
-    final additionsTotal = additions.fold<double>(0, (sum, a) => sum + a.amount);
     final largeExpenseTotal = largeExpenses.fold<double>(0, (sum, e) => sum + e.amount);
 
     // 合计
@@ -1223,7 +1219,7 @@ class _AggPageState extends State<AggPage>
                       ),
                     ),
                   ),
-                  // 总金额（日常 + 大额）+ 箭头
+                  // 总金额 + 箭头
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -1264,38 +1260,35 @@ class _AggPageState extends State<AggPage>
                 color: appTheme.creamDark,
               ),
             ),
-            // 内容区：日常消费 + 大额消费
+            // 内容区：日常消费 + 大额消费总额
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.fromLTRB(16, 10, 12, 12),
+              child: Row(
                 children: [
-                  // 日常消费明细
-                  _buildDetailGroup(
+                  // 日常消费
+                  _buildExpenseItem(
                     appTheme: appTheme,
-                    title: '日常消费',
-                    color: appTheme.rose,
-                    children: [
-                      _buildDetailRow(appTheme, '个人消费', '-${FormatUtils.formatAmount(personalExpense)}', appTheme.rose),
-                      if (otherExpense > 0)
-                        _buildDetailRow(appTheme, '其他消费', '-${FormatUtils.formatAmount(otherExpense)}', appTheme.rose),
-                    ],
+                    label: '日常消费',
+                    value: dailyExpense,
                   ),
-                  // 大额消费明细
-                  if (additions.isNotEmpty || largeExpenses.isNotEmpty) ...[
-                    AppSpacing.h6,
-                    _buildDetailGroup(
-                      appTheme: appTheme,
-                      title: '大额记录',
-                      color: appTheme.sage,
-                      children: [
-                        if (additions.isNotEmpty)
-                          _buildDetailRow(appTheme, '大额追加', '+${FormatUtils.formatAmount(additionsTotal)}', appTheme.sage),
-                        if (largeExpenseTotal > 0)
-                          _buildDetailRow(appTheme, '大额支出', '-${FormatUtils.formatAmount(largeExpenseTotal)}', appTheme.rose),
-                      ],
+                  // 分隔符
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      '|',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: appTheme.earthMedium.withValues(alpha: 0.3),
+                      ),
                     ),
-                  ],
+                  ),
+                  // 大额消费
+                  _buildExpenseItem(
+                    appTheme: appTheme,
+                    label: '大额记录',
+                    value: largeExpenseTotal,
+                  ),
+                  const Spacer(),
                 ],
               ),
             ),
@@ -1304,7 +1297,7 @@ class _AggPageState extends State<AggPage>
       ),
     );
   }
-  Widget _buildExpenseItem({
+Widget _buildExpenseItem({
     required AppThemeExtension appTheme,
     required String label,
     required double value,
