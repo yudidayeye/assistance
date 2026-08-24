@@ -809,7 +809,7 @@ class _AggPageState extends State<AggPage>
     final hasExpense = totalExpense > 0;
 
     return GestureDetector(
-      onTap: () => context.push('/period_book/detail/${period.id}'),
+      onTap: () => context.push('/period_book/large_items/${period.id}'),
       child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
@@ -940,7 +940,9 @@ class _AggPageState extends State<AggPage>
     final net = additionsTotal - expensesTotal;
     final hasData = additions.isNotEmpty || expenses.isNotEmpty;
 
-    return Container(
+    return GestureDetector(
+      onTap: () => context.push('/period_book/large_items/${period.id}'),
+      child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
@@ -1093,6 +1095,7 @@ class _AggPageState extends State<AggPage>
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -1202,6 +1205,10 @@ class _AggPageState extends State<AggPage>
     return '0.00';
   }
 }
+
+
+
+
 
 
 
