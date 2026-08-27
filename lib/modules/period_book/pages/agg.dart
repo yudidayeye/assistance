@@ -70,9 +70,11 @@ class _AggPageState extends State<AggPage>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
+      // 滑动或点击切换后始终与当前 Tab 同步，保证标题按钮高亮一致
+      final currentIndex = _tabController.index;
+      if (currentIndex != _selectedIndex) {
         setState(() {
-          _selectedIndex = _tabController.index;
+          _selectedIndex = currentIndex;
         });
       }
     });
