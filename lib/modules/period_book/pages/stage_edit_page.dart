@@ -356,7 +356,7 @@ class _StageEditPageState extends State<StageEditPage> {
       context: context,
       barrierColor: Theme.of(context).appTheme.surfaceOverlay,
       builder: (ctx) {
-        // 弹窗内实时回显的日期状态（选择后立即更新）
+        // 弹窗内实时回显的日期状态（选择后仅回显，完成时才保存并触发数据变动）
         var currentStart = start;
         var currentEnd = end;
         var currentCurrentDate = displayCurrentDate;
@@ -382,10 +382,6 @@ class _StageEditPageState extends State<StageEditPage> {
                   onDateChanged: (date) {
                     currentStart = date;
                     setDialogState(() {});
-                    setState(() {
-                      _stage = _stage!.copyWith(startDate: _formatDate(date));
-                    });
-                    _saveStageDates();
                   },
                 ),
                 AppSpacing.h12,
@@ -396,10 +392,6 @@ class _StageEditPageState extends State<StageEditPage> {
                   onDateChanged: (date) {
                     currentEnd = date;
                     setDialogState(() {});
-                    setState(() {
-                      _stage = _stage!.copyWith(endDate: _formatDate(date));
-                    });
-                    _saveStageDates();
                   },
                 ),
                 AppSpacing.h12,
@@ -410,10 +402,6 @@ class _StageEditPageState extends State<StageEditPage> {
                   onDateChanged: (date) {
                     currentCurrentDate = date;
                     setDialogState(() {});
-                    setState(() {
-                      _stage = _stage!.copyWith(currentDate: _formatDate(date));
-                    });
-                    _saveStageDates();
                   },
                 ),
               ],
@@ -424,7 +412,18 @@ class _StageEditPageState extends State<StageEditPage> {
                 child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
               ),
               TextButton(
-                onPressed: () => Navigator.pop(ctx),
+                onPressed: () {
+                  // 完成：统一提交日期修改并触发数据变动（保存 + 重算日均）
+                  setState(() {
+                    _stage = _stage!.copyWith(
+                      startDate: _formatDate(currentStart),
+                      endDate: _formatDate(currentEnd),
+                      currentDate: _formatDate(currentCurrentDate),
+                    );
+                  });
+                  _saveStageDates();
+                  Navigator.pop(ctx);
+                },
                 child: Text('完成', style: TextStyle(color: appTheme.primary)),
               ),
             ],
