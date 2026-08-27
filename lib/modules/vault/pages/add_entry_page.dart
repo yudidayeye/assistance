@@ -413,13 +413,25 @@ class _AddEntryPageState extends State<AddEntryPage> {
             const SizedBox(height: 6),
             _buildPasswordField(appTheme),
             const SizedBox(height: 20),
-            // 备注（多条：标题 + 描述）
+            // 备注（多条：标题 + 描述，可拖动排序）
             _buildLabel('备注（可选）', appTheme),
             const SizedBox(height: 6),
-            for (var i = 0; i < _notes.length; i++) ...[
-              _buildNoteItemEditor(i, appTheme),
-              const SizedBox(height: 8),
-            ],
+            ReorderableListView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              onReorderItem: _onNoteReorder,
+              proxyDecorator: (child, index, animation) =>
+                  _buildNoteDragProxy(child, animation, appTheme),
+              children: [
+                for (var i = 0; i < _notes.length; i++)
+                  Padding(
+                    key: ObjectKey(_notes[i]),
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _buildNoteItemEditor(i, appTheme),
+                  ),
+              ],
+            ),
             OutlinedButton.icon(
               onPressed: _addNote,
               icon: Icon(Icons.add_rounded, size: 16, color: appTheme.primary),
@@ -505,11 +517,37 @@ class _AddEntryPageState extends State<AddEntryPage> {
     setState(() => _notes.removeAt(index).dispose());
   }
 
+  /// 备注拖动排序：将条目从旧位置移动到新位置
+  void _onNoteReorder(int oldIndex, int newIndex) {
+    setState(() {
+      final item = _notes.removeAt(oldIndex);
+      _notes.insert(newIndex, item);
+    });
+  }
+
+  /// 拖动中的备注卡片：轻微抬升阴影，保持圆角
+  Widget _buildNoteDragProxy(
+      Widget child, Animation<double> animation, AppThemeExtension appTheme) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        final elevation = Tween<double>(begin: 0, end: 6).evaluate(animation);
+        return Material(
+          color: Colors.transparent,
+          elevation: elevation,
+          shadowColor: appTheme.earth.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          child: child,
+        );
+      },
+    );
+  }
+
   /// 单条备注编辑卡片：标题 + 描述 + 删除
   Widget _buildNoteItemEditor(int index, AppThemeExtension appTheme) {
     final input = _notes[index];
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 4, 2, 4),
+      padding: const EdgeInsets.fromLTRB(4, 4, 2, 4),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
         borderRadius: BorderRadius.circular(appTheme.radiusMd),
@@ -521,6 +559,22 @@ class _AddEntryPageState extends State<AddEntryPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          ReorderableDragStartListener(
+            index: index,
+            child: Tooltip(
+              message: '拖动排序',
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                child: Icon(
+                  Icons.drag_handle_rounded,
+                  size: 18,
+                  color: appTheme.earthLight.withValues(alpha: 0.75),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           Expanded(
             flex: 2,
             child: _buildTextField(
