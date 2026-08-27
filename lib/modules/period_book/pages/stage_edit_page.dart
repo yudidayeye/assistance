@@ -201,6 +201,18 @@ class _StageEditPageState extends State<StageEditPage> {
         'end_date': stage.endDate,
         'current_date': stage.currentDate,
       });
+      // 日期变化后重新计算阶段统计（天数变化 → 杂项日均同步更新）
+      if (mounted) {
+        final updated = await _service.getStageById(id);
+        if (updated != null) {
+          final calc =
+              await _service.getStageCalculations(id, _previousBalance);
+          setState(() {
+            _stage = updated;
+            _stageCalc = calc;
+          });
+        }
+      }
     } catch (e) {
       debugPrint('Save stage dates error: $e');
       if (mounted) {
@@ -343,68 +355,82 @@ class _StageEditPageState extends State<StageEditPage> {
     await showDialog(
       context: context,
       barrierColor: Theme.of(context).appTheme.surfaceOverlay,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: appTheme.cream,
-        title: Text(
-          '编辑阶段日期',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: appTheme.earth,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDialogDateRow(
-              appTheme: appTheme,
-              label: '开始日期',
-              date: start,
-              onDateChanged: (date) {
-                setState(() {
-                  _stage = _stage!.copyWith(startDate: _formatDate(date));
-                });
-                _saveStageDates();
-              },
+      builder: (ctx) {
+        // 弹窗内实时回显的日期状态（选择后立即更新）
+        var currentStart = start;
+        var currentEnd = end;
+        var currentCurrentDate = displayCurrentDate;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            backgroundColor: appTheme.cream,
+            title: Text(
+              '编辑阶段日期',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: appTheme.earth,
+              ),
+              textAlign: TextAlign.center,
             ),
-            AppSpacing.h12,
-            _buildDialogDateRow(
-              appTheme: appTheme,
-              label: '结束日期',
-              date: end,
-              onDateChanged: (date) {
-                setState(() {
-                  _stage = _stage!.copyWith(endDate: _formatDate(date));
-                });
-                _saveStageDates();
-              },
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDialogDateRow(
+                  appTheme: appTheme,
+                  label: '开始日期',
+                  date: currentStart,
+                  onDateChanged: (date) {
+                    currentStart = date;
+                    setDialogState(() {});
+                    setState(() {
+                      _stage = _stage!.copyWith(startDate: _formatDate(date));
+                    });
+                    _saveStageDates();
+                  },
+                ),
+                AppSpacing.h12,
+                _buildDialogDateRow(
+                  appTheme: appTheme,
+                  label: '结束日期',
+                  date: currentEnd,
+                  onDateChanged: (date) {
+                    currentEnd = date;
+                    setDialogState(() {});
+                    setState(() {
+                      _stage = _stage!.copyWith(endDate: _formatDate(date));
+                    });
+                    _saveStageDates();
+                  },
+                ),
+                AppSpacing.h12,
+                _buildDialogDateRow(
+                  appTheme: appTheme,
+                  label: '当前日期',
+                  date: currentCurrentDate,
+                  onDateChanged: (date) {
+                    currentCurrentDate = date;
+                    setDialogState(() {});
+                    setState(() {
+                      _stage = _stage!.copyWith(currentDate: _formatDate(date));
+                    });
+                    _saveStageDates();
+                  },
+                ),
+              ],
             ),
-            AppSpacing.h12,
-            _buildDialogDateRow(
-              appTheme: appTheme,
-              label: '当前日期',
-              date: displayCurrentDate,
-              onDateChanged: (date) {
-                setState(() {
-                  _stage = _stage!.copyWith(currentDate: _formatDate(date));
-                });
-                _saveStageDates();
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('完成', style: TextStyle(color: appTheme.primary)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('完成', style: TextStyle(color: appTheme.primary)),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
