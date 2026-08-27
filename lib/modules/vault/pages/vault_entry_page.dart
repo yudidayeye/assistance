@@ -1001,6 +1001,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 // 条目数徽标
                 FutureBuilder<int>(
                   future:
