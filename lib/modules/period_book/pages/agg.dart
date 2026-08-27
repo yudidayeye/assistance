@@ -357,10 +357,10 @@ class _AggPageState extends State<AggPage>
         summaryCategoryTotals['杂项'] = (summaryCategoryTotals['杂项'] ?? 0) + livingTotal;
       }
 
-      // 大额消费按分类汇总
+      // 大额消费按分类汇总（与日常同分类合并计入合计）
       for (final e in largeExpenses) {
         final cat = _normalizeCategory(e.category);
-        summaryCategoryTotals['大额-$cat'] = (summaryCategoryTotals['大额-$cat'] ?? 0) + e.amount;
+        summaryCategoryTotals[cat] = (summaryCategoryTotals[cat] ?? 0) + e.amount;
       }
     }
 
