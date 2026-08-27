@@ -505,62 +505,6 @@ class _AddEntryPageState extends State<AddEntryPage> {
     setState(() => _notes.removeAt(index).dispose());
   }
 
-  /// 从系统已添加的类型中下拉选择备注标题（也可直接自定义输入）
-  Future<void> _pickNoteTitle(int index) async {
-    final titles = await VaultService.instance.getNoteTitles();
-    if (!mounted) return;
-    if (titles.isEmpty) {
-      AppSnackBar.show(context, '暂无可选类型，可直接输入');
-      return;
-    }
-    final appTheme = Theme.of(context).appTheme;
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: appTheme.cardBackground,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(appTheme.radiusLg)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Text(
-                '选择备注标题',
-                style: AppTypography.bodyLg.copyWith(
-                  color: appTheme.earth,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: titles.length,
-                itemBuilder: (ctx, i) => ListTile(
-                  dense: true,
-                  title: Text(
-                    titles[i],
-                    style: AppTypography.bodyMd
-                        .copyWith(color: appTheme.earth),
-                  ),
-                  onTap: () => Navigator.pop(ctx, titles[i]),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-    if (selected != null && mounted) {
-      setState(() => _notes[index].title.text = selected);
-    }
-  }
-
   /// 单条备注编辑卡片：标题 + 描述 + 删除
   Widget _buildNoteItemEditor(int index, AppThemeExtension appTheme) {
     final input = _notes[index];
@@ -591,19 +535,6 @@ class _AddEntryPageState extends State<AddEntryPage> {
                   .copyWith(color: appTheme.earthMedium),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  Icons.arrow_drop_down_rounded,
-                  size: 20,
-                  color: appTheme.earthMedium,
-                ),
-                onPressed: () => _pickNoteTitle(index),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints:
-                    const BoxConstraints(minWidth: 32, minHeight: 32),
-                tooltip: '选择标题类型',
-              ),
             ),
           ),
           const SizedBox(width: 8),
