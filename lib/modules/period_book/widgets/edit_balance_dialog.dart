@@ -50,9 +50,9 @@ class _EditBalanceDialogState extends State<EditBalanceDialog> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(
-      text: widget.currentBalance?.toStringAsFixed(2) ?? '',
-    );
+    // 输入框初始为空，当前余额仅作 placeholder 展示，
+    // 避免用户输入时需要先删掉预填的金额
+    _controller = TextEditingController();
   }
 
   @override
