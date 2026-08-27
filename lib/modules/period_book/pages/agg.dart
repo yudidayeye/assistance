@@ -132,14 +132,14 @@ class _AggPageState extends State<AggPage>
           .map((p) => DateTime.parse(p.startDate).month)
           .toSet()
           .toList()
-        ..sort();
+        ..sort((a, b) => b.compareTo(a));
       _availableMonths = months;
     } else {
       final months = _periods
           .map((p) => DateTime.parse(p.startDate).month)
           .toSet()
           .toList()
-        ..sort();
+        ..sort((a, b) => b.compareTo(a));
       _availableMonths = months;
     }
 
@@ -152,7 +152,8 @@ class _AggPageState extends State<AggPage>
           maxStages = calc.stages.length;
         }
       }
-      _availableStages = List.generate(maxStages, (i) => i + 1);
+      // 阶段倒序展示：第 N 阶段在最前，第 1 阶段放在最后
+      _availableStages = List.generate(maxStages, (i) => maxStages - i);
     } else {
       _availableStages = [];
       _selectedStage = null;
