@@ -966,6 +966,41 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                     style: AppTypography.bodyLg.copyWith(color: appTheme.earth),
                   ),
                 ),
+                const SizedBox(width: 8),
+                // 加密状态标签：区分加密 / 不加密分类
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: category.isEncrypted
+                        ? appTheme.primary.withValues(alpha: 0.1)
+                        : appTheme.earthMedium.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(appTheme.radiusPill),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        category.isEncrypted
+                            ? Icons.lock_rounded
+                            : Icons.lock_open_rounded,
+                        size: 12,
+                        color: category.isEncrypted
+                            ? appTheme.primary
+                            : appTheme.earthMedium,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        category.isEncrypted ? '加密' : '不加密',
+                        style: AppTypography.caption.copyWith(
+                          color: category.isEncrypted
+                              ? appTheme.primary
+                              : appTheme.earthMedium,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 // 条目数徽标
                 FutureBuilder<int>(
                   future:
