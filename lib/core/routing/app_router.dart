@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../module_system/module_registry.dart';
 import '../../pages/main_shell_page.dart';
@@ -39,9 +39,9 @@ class AppRouter {
   }
 
   /// 初始化路由（在模块注册完成后调用）
-  GoRouter initRouter() {
+  GoRouter initRouter({String initialLocation = '/'}) {
     _router = GoRouter(
-      initialLocation: '/',
+      initialLocation: initialLocation,
       routes: [
         GoRoute(
           path: '/',

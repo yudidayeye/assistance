@@ -1,3 +1,5 @@
+﻿import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
@@ -7,6 +9,7 @@ import '../../../shared/widgets/app_snack_bar.dart';
 import '../models/vault_category.dart';
 import '../services/vault_service.dart';
 import '../services/vault_session.dart';
+import '../services/vault_shortcut_service.dart';
 import 'master_password_page.dart';
 
 /// 图标选项（key 与 _presetIcons 中的键一致，label 用于弹窗展示）
@@ -1144,6 +1147,21 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
               ),
             ),
             const SizedBox(height: 12),
+            if (Platform.isWindows)
+              ListTile(
+                leading: Icon(
+                  Icons.desktop_windows_outlined,
+                  color: appTheme.primary,
+                ),
+                title: Text(
+                  '创建桌面快捷方式',
+                  style: AppTypography.bodyMd.copyWith(color: appTheme.earth),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _createDesktopShortcut(category);
+                },
+              ),
             ListTile(
               leading: Icon(Icons.edit_rounded, color: appTheme.primary),
               title: Text('编辑',
@@ -1167,5 +1185,29 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
         ),
       ),
     );
+  }
+  Future<void> _createDesktopShortcut(VaultCategory category) async {
+    final categoryId = category.id;
+    if (categoryId == null || !mounted) return;
+
+    try {
+      await VaultShortcutService.instance.createDesktopShortcut(
+        categoryId: categoryId,
+        categoryName: category.name,
+      );
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        '已在桌面创建“${category.name}”快捷方式',
+        type: AppSnackBarType.success,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        '创建桌面快捷方式失败，请稍后重试',
+        type: AppSnackBarType.error,
+      );
+    }
   }
 }

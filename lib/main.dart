@@ -9,6 +9,7 @@ import 'core/settings/settings_service.dart';
 import 'modules/period_tracker/period_module.dart';
 import 'modules/period_book/period_book_module.dart';
 import 'modules/vault/vault_module.dart';
+import 'modules/vault/services/vault_shortcut_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +34,11 @@ void main() async {
   await ThemeProvider.instance.loadTheme();
 
   debugPrint('[Boot] 6/6 初始化路由...');
-  final router = AppRouter.instance.initRouter();
+  final startupCategoryId = VaultShortcutService.instance.startupCategoryId;
+  final router = AppRouter.instance.initRouter(
+    initialLocation:
+        startupCategoryId == null ? '/' : '/vault/category/$startupCategoryId',
+  );
 
   debugPrint('[Boot] 启动完成');
   runApp(ToolboxApp(router: router));
