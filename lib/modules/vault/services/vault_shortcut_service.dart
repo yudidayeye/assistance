@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 
@@ -24,12 +24,6 @@ class VaultShortcutService {
       if (categoryId != null && categoryId > 0) return categoryId;
     }
     return null;
-  }
-
-  /// 当前进程是否由指定分类的桌面快捷方式启动。
-  int? get startupCategoryId {
-    if (!Platform.isWindows) return null;
-    return categoryIdFromArguments(Platform.executableArguments);
   }
 
   /// 在 Windows 桌面创建或更新指定分类的快捷方式。

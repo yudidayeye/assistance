@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'core/module_system/module_registry.dart';
@@ -11,7 +11,7 @@ import 'modules/period_book/period_book_module.dart';
 import 'modules/vault/vault_module.dart';
 import 'modules/vault/services/vault_shortcut_service.dart';
 
-void main() async {
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint('[Boot] 1/6 数据库工厂...');
   await DatabaseService.initializeFactory();
@@ -34,7 +34,7 @@ void main() async {
   await ThemeProvider.instance.loadTheme();
 
   debugPrint('[Boot] 6/6 初始化路由...');
-  final startupCategoryId = VaultShortcutService.instance.startupCategoryId;
+  final startupCategoryId = VaultShortcutService.categoryIdFromArguments(args);
   final router = AppRouter.instance.initRouter(
     initialLocation:
         startupCategoryId == null ? '/' : '/vault/category/$startupCategoryId',
