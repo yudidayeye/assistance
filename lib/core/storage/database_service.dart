@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io' show Platform, Directory;
@@ -45,8 +46,13 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = p.join(dbPath, 'toolbox.db');
+    final path = await _resolveDatabasePath();
+
+    // Desktop: keep the database in a fixed path so every launch entry point
+    // (flutter run / desktop shortcut / double-click) hits the same file
+    if (Platform.isWindows || Platform.isLinux) {
+      await Directory(p.dirname(path)).create(recursive: true);
+    }
 
     return openDatabase(
       path,
@@ -54,6 +60,21 @@ class DatabaseService {
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
+  }
+
+  /// Resolve a fixed path for the database file.
+  ///
+  /// On desktop (Windows/Linux) the database lives under %APPDATA%, so every
+  /// launch entry point (flutter run / desktop shortcut / double-click) hits
+  /// the same file. On mobile the default sqflite app-private dir is used.
+  Future<String> _resolveDatabasePath() async {
+    if (Platform.isWindows || Platform.isLinux) {
+      final supportDir = await getApplicationSupportDirectory();
+      final appDir = p.join(supportDir.path, 'my_assistant');
+      return p.join(appDir, 'toolbox.db');
+    }
+    final dbPath = await getDatabasesPath();
+    return p.join(dbPath, 'toolbox.db');
   }
 
   // --- Schema ---
