@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 import 'dart:io';
 import 'dart:ffi';
 
@@ -52,6 +52,7 @@ void main() {
         username TEXT,
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
+        salt TEXT,
         note TEXT,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
@@ -79,8 +80,12 @@ void main() {
   String now() => DateTime.now().toIso8601String();
 
   void unlockSession() {
-    // 仅用于测试：直接注入 32 字节密钥，绕过 Argon2 派生耗时
-    VaultSession.instance.setKey(Uint8List(32));
+    // 仅用于测试：直接注入主密码与主密钥，绕过 Argon2 派生耗时
+    VaultSession.instance.setCredentials(
+      masterPassword: 'test',
+      saltHex: 'test-salt',
+      key: Uint8List(32),
+    );
   }
 
   test('删除分类时同时清理该分类下的条目，统计归零', () async {
@@ -230,6 +235,49 @@ void main() {
     if (category == null) {
       fail('分类不存在');
     }
+    expect(
+      vault.decryptEntryPassword(entry, isEncrypted: category.isEncrypted),
+      'secret',
+    );
+  });
+
+  test('方案C：新增加密条目使用独立盐，主密码盐变化后仍可解密', () async {
+    final vault = await setUpVault();
+    unlockSession();
+
+    final catId = await vault.insertCategory(VaultCategory(
+      name: '加密分类',
+      isEncrypted: true,
+      createdAt: now(),
+      updatedAt: now(),
+    ));
+    final entryId = await vault.insertEntry(
+      categoryId: catId,
+      title: '银行',
+      plainPassword: 'secret',
+    );
+
+    final entry = await vault.getEntry(entryId);
+    if (entry == null) {
+      fail('条目不存在');
+    }
+    // 新条目必须携带独立盐
+    expect(entry.salt, isNotNull);
+    expect(entry.salt!.length, greaterThan(0));
+
+    // 模拟主密码盐被重新初始化（主密码仍为 test）
+    VaultSession.instance.lock();
+    VaultSession.instance.setCredentials(
+      masterPassword: 'test',
+      saltHex: 'another-master-salt',
+      key: Uint8List(32),
+    );
+
+    final category = await vault.getCategory(catId);
+    if (category == null) {
+      fail('分类不存在');
+    }
+    // 只要主密码不变，用条目自身的盐仍能解密
     expect(
       vault.decryptEntryPassword(entry, isEncrypted: category.isEncrypted),
       'secret',

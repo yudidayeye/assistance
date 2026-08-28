@@ -47,7 +47,11 @@ class VaultService extends ChangeNotifier {
 
     // 设置会话密钥
     final key = VaultCryptoService.instance.deriveKey(masterPassword, salt);
-    VaultSession.instance.setKey(key);
+    VaultSession.instance.setCredentials(
+      masterPassword: masterPassword,
+      saltHex: salt,
+      key: key,
+    );
     _notifyChanged();
   }
 
@@ -127,7 +131,7 @@ class VaultService extends ChangeNotifier {
     for (final entry in entries) {
       final String plain;
       if (fromEncrypted) {
-        final key = VaultSession.instance.key;
+        final key = VaultSession.instance.keyForEntry(entry.salt);
         if (key == null) continue;
         try {
           plain = VaultCryptoService.instance
@@ -141,16 +145,17 @@ class VaultService extends ChangeNotifier {
 
       final String newCipher;
       final String newIv;
+      String? newSalt;
       if (toEncrypted) {
-        final key = VaultSession.instance.key;
-        if (key == null) continue;
-        final (cipher, iv) =
-            VaultCryptoService.instance.encryptAesGcm(plain, key);
+        if (VaultSession.instance.key == null) continue;
+        final (salt, cipher, iv) = _encryptPasswordWithNewSalt(plain);
         newCipher = cipher;
         newIv = iv;
+        newSalt = salt;
       } else {
         newCipher = plain;
         newIv = '';
+        newSalt = null;
       }
 
       await _db.update(
@@ -158,6 +163,7 @@ class VaultService extends ChangeNotifier {
         {
           'encrypted_password': newCipher,
           'password_iv': newIv,
+          'salt': newSalt,
           'updated_at': DateTime.now().toIso8601String(),
         },
         where: 'id = ?',
@@ -254,7 +260,7 @@ class VaultService extends ChangeNotifier {
   String? decryptEntryPassword(VaultEntry entry,
       {required bool isEncrypted}) {
     if (!isEncrypted) return entry.encryptedPassword;
-    final key = VaultSession.instance.key;
+    final key = VaultSession.instance.keyForEntry(entry.salt);
     if (key == null) return null;
     try {
       return VaultCryptoService.instance
@@ -262,6 +268,17 @@ class VaultService extends ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  /// 用「新独立盐」加密密码字段（方案 C：每条记录独立盐）
+  ///
+  /// 返回 (saltHex, cipherHex, ivHex)。需会话已解锁。
+  (String, String, String) _encryptPasswordWithNewSalt(String plain) {
+    final salt = VaultCryptoService.instance.generateSalt();
+    final key = VaultSession.instance.keyForEntry(salt);
+    if (key == null) throw StateError('Vault is locked');
+    final (cipher, iv) = VaultCryptoService.instance.encryptAesGcm(plain, key);
+    return (salt, cipher, iv);
   }
 
   /// 新增条目（加密分类自动加密密码字段，未加密分类明文保存）
@@ -278,11 +295,13 @@ class VaultService extends ChangeNotifier {
     final now = DateTime.now().toIso8601String();
     final String encryptedPassword;
     final String passwordIv;
+    String? salt;
     if (isEncrypted) {
-      final key = VaultSession.instance.key;
-      if (key == null) throw StateError('Vault is locked');
-      final (cipher, iv) =
-          VaultCryptoService.instance.encryptAesGcm(plainPassword, key);
+      if (VaultSession.instance.key == null) {
+        throw StateError('Vault is locked');
+      }
+      final (s, cipher, iv) = _encryptPasswordWithNewSalt(plainPassword);
+      salt = s;
       encryptedPassword = cipher;
       passwordIv = iv;
     } else {
@@ -303,6 +322,7 @@ class VaultService extends ChangeNotifier {
       'username': username,
       'encrypted_password': encryptedPassword,
       'password_iv': passwordIv,
+      'salt': salt,
       'note': note,
       'sort_order': sortOrder,
       'created_at': now,
@@ -327,11 +347,13 @@ class VaultService extends ChangeNotifier {
     final now = DateTime.now().toIso8601String();
     final String encryptedPassword;
     final String passwordIv;
+    String? salt;
     if (isEncrypted) {
-      final key = VaultSession.instance.key;
-      if (key == null) throw StateError('Vault is locked');
-      final (cipher, iv) =
-          VaultCryptoService.instance.encryptAesGcm(plainPassword, key);
+      if (VaultSession.instance.key == null) {
+        throw StateError('Vault is locked');
+      }
+      final (s, cipher, iv) = _encryptPasswordWithNewSalt(plainPassword);
+      salt = s;
       encryptedPassword = cipher;
       passwordIv = iv;
     } else {
@@ -347,6 +369,7 @@ class VaultService extends ChangeNotifier {
         'username': username,
         'encrypted_password': encryptedPassword,
         'password_iv': passwordIv,
+        'salt': salt,
         'note': note,
         'updated_at': now,
       },

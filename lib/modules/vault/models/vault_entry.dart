@@ -9,6 +9,9 @@ class VaultEntry {
   final String? username;
   final String encryptedPassword;
   final String passwordIv;
+
+  /// 加密该条目密码时使用的盐（方案 C：每条记录独立盐；旧数据为空用主盐）
+  final String? salt;
   final String? note;
   final int sortOrder;
   final String createdAt;
@@ -21,6 +24,7 @@ class VaultEntry {
     this.username,
     required this.encryptedPassword,
     required this.passwordIv,
+    this.salt,
     this.note,
     this.sortOrder = 0,
     required this.createdAt,
@@ -35,6 +39,7 @@ class VaultEntry {
       username: map['username'] as String?,
       encryptedPassword: map['encrypted_password'] as String,
       passwordIv: map['password_iv'] as String,
+      salt: map['salt'] as String?,
       note: map['note'] as String?,
       sortOrder: map['sort_order'] as int? ?? 0,
       createdAt: map['created_at'] as String,
@@ -50,6 +55,7 @@ class VaultEntry {
       'username': username,
       'encrypted_password': encryptedPassword,
       'password_iv': passwordIv,
+      'salt': salt,
       'note': note,
       'sort_order': sortOrder,
       'created_at': createdAt,
@@ -95,6 +101,7 @@ class VaultEntry {
     String? username,
     String? encryptedPassword,
     String? passwordIv,
+    String? salt,
     String? note,
     int? sortOrder,
     String? createdAt,
@@ -107,6 +114,7 @@ class VaultEntry {
       username: username ?? this.username,
       encryptedPassword: encryptedPassword ?? this.encryptedPassword,
       passwordIv: passwordIv ?? this.passwordIv,
+      salt: salt ?? this.salt,
       note: note ?? this.note,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,

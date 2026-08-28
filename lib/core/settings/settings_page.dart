@@ -708,6 +708,14 @@ class _SettingsPageState extends State<SettingsPage> {
           '${result.bookPeriodsCount}个周期、${result.bookStagesCount}个阶段、'
           '${result.bookAdditionsCount}条追加、${result.bookExpensesCount}条支出、'
           '${result.bookLargeAdditionsCount}条大额追加、${result.bookLargeExpensesCount}条大额支出');
+      if (result.vaultImportSkipped) {
+        _showErrorDialog(
+          '密码保险箱数据未导入',
+          '该备份的加密密钥与当前保险箱不一致（可能来自另一个主密码，或保险箱被重新初始化过）。\n\n'
+              '为避免密码无法解密，本次未导入保险箱数据，其余数据已正常导入。\n'
+              '如需恢复该备份的保险箱数据，请先在设置中「清除业务数据」，再重新导入。',
+        );
+      }
       setState(() {});
     } else {
       _showErrorDialog('导入失败', result.error ?? '未知错误');

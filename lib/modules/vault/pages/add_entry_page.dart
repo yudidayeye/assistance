@@ -277,7 +277,11 @@ class _AddEntryPageState extends State<AddEntryPage> {
           (i) => int.parse(keyHex.substring(i * 2, i * 2 + 2), radix: 16),
         ),
       );
-      VaultSession.instance.setKey(keyBytes);
+      VaultSession.instance.setCredentials(
+        masterPassword: password.trim(),
+        saltHex: data['salt'] as String,
+        key: keyBytes,
+      );
       if (ctx.mounted) Navigator.of(ctx).pop(true);
     } else {
       onError('主密码错误');

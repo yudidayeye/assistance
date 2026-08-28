@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
@@ -312,7 +312,11 @@ class _CategoryEntriesPageState extends State<CategoryEntriesPage>
           (i) => int.parse(keyHex.substring(i * 2, i * 2 + 2), radix: 16),
         ),
       );
-      VaultSession.instance.setKey(keyBytes);
+      VaultSession.instance.setCredentials(
+        masterPassword: password.trim(),
+        saltHex: data['salt'] as String,
+        key: keyBytes,
+      );
       if (ctx.mounted) Navigator.of(ctx).pop(true);
     } else {
       onError('主密码错误');

@@ -211,6 +211,7 @@ class ImportExportService {
       int bookLargeExpensesCount = 0;
       int vaultCategoriesCount = 0;
       int vaultEntriesCount = 0;
+      bool vaultImportSkipped = false;
 
       await _db.transaction((txn) async {
         // Phase 1: 合并 app_settings
@@ -263,6 +264,7 @@ class ImportExportService {
         final vaultResult = await _importVaultData(txn, data);
         vaultCategoriesCount = vaultResult['categories']!;
         vaultEntriesCount = vaultResult['entries']!;
+        vaultImportSkipped = vaultResult['skipped'] ?? false;
       });
 
       // 导入后刷新运行时缓存
@@ -285,6 +287,7 @@ class ImportExportService {
         bookLargeExpensesCount: bookLargeExpensesCount,
         vaultCategoriesCount: vaultCategoriesCount,
         vaultEntriesCount: vaultEntriesCount,
+        vaultImportSkipped: vaultImportSkipped,
       );
     } catch (e, stack) {
       debugPrint('Import error: $e\n$stack');
@@ -469,10 +472,11 @@ class ImportExportService {
   }
 
   /// 导入密码保险箱数据
-  Future<Map<String, int>> _importVaultData(
+  Future<Map<String, dynamic>> _importVaultData(
       dynamic txn, Map<String, dynamic> data) async {
     int categoriesCount = 0;
     int entriesCount = 0;
+    bool vaultSkipped = false;
 
     // 确保保险箱表存在（兼容旧数据库）
     await txn.execute('''
@@ -503,6 +507,7 @@ class ImportExportService {
         username TEXT,
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
+        salt TEXT,
         note TEXT,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
@@ -516,27 +521,42 @@ class ImportExportService {
 
     // 导入主密码数据（仅当备份中有且本地没有时写入，避免覆盖已有密码）
     final vaultMaster = data['vault_master'] as Map<String, dynamic>?;
-    if (vaultMaster != null) {
-      final existing = await txn.query('mod_vault_master', limit: 1);
-      if (existing.isEmpty) {
-        await txn.rawInsert(
-          '''INSERT OR REPLACE INTO mod_vault_master
-             (id, salt, verify_cipher, verify_iv, created_at)
-             VALUES (?, ?, ?, ?, ?)''',
-          [
-            vaultMaster['id'] ?? 1,
-            vaultMaster['salt'],
-            vaultMaster['verify_cipher'],
-            vaultMaster['verify_iv'],
-            vaultMaster['created_at'],
-          ],
-        );
-      }
+    final existing = await txn.query('mod_vault_master', limit: 1);
+
+    // 密钥一致性防护（方案 C 兼容旧数据）：
+    // 若本地已有主密码且与备份的盐不一致，而备份里存在「未携带独立盐」的旧格式条目，
+    // 导入后这些条目将无法解密。此时跳过整个保险箱导入，避免污染本地数据。
+    final entries = (data['vault_entries'] as List<dynamic>?) ?? [];
+    final saltMismatch = existing.isNotEmpty &&
+        vaultMaster != null &&
+        existing.first['salt'] != vaultMaster['salt'];
+    final hasLegacyEntry = entries.any((e) {
+      final m = e as Map;
+      final salt = m['salt'];
+      return salt == null || salt.toString().isEmpty;
+    });
+    if (saltMismatch && hasLegacyEntry) {
+      vaultSkipped = true;
+      return {'categories': 0, 'entries': 0, 'skipped': true};
+    }
+
+    if (vaultMaster != null && existing.isEmpty) {
+      await txn.rawInsert(
+        '''INSERT OR REPLACE INTO mod_vault_master
+           (id, salt, verify_cipher, verify_iv, created_at)
+           VALUES (?, ?, ?, ?, ?)''',
+        [
+          vaultMaster['id'] ?? 1,
+          vaultMaster['salt'],
+          vaultMaster['verify_cipher'],
+          vaultMaster['verify_iv'],
+          vaultMaster['created_at'],
+        ],
+      );
     }
 
     // 导入分类
-    final categories =
-        (data['vault_categories'] as List<dynamic>?) ?? [];
+    final categories = (data['vault_categories'] as List<dynamic>?) ?? [];
     for (final cat in categories) {
       final map = Map<String, dynamic>.from(cat as Map);
       await txn.rawInsert(
@@ -557,13 +577,12 @@ class ImportExportService {
     }
 
     // 导入条目
-    final entries = (data['vault_entries'] as List<dynamic>?) ?? [];
     for (final entry in entries) {
       final map = Map<String, dynamic>.from(entry as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_vault_entries
-           (id, category_id, title, username, encrypted_password, password_iv, note, sort_order, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+           (id, category_id, title, username, encrypted_password, password_iv, salt, note, sort_order, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['category_id'],
@@ -571,6 +590,7 @@ class ImportExportService {
           map['username'],
           map['encrypted_password'],
           map['password_iv'],
+          map['salt'],
           map['note'],
           map['sort_order'] ?? 0,
           map['created_at'],
@@ -583,6 +603,7 @@ class ImportExportService {
     return {
       'categories': categoriesCount,
       'entries': entriesCount,
+      'skipped': vaultSkipped,
     };
   }
 
@@ -799,6 +820,7 @@ class ImportResult {
   final int bookLargeExpensesCount;
   final int vaultCategoriesCount;
   final int vaultEntriesCount;
+  final bool vaultImportSkipped;
 
   const ImportResult._({
     this.isSuccess = false,
@@ -813,6 +835,7 @@ class ImportResult {
     this.bookLargeExpensesCount = 0,
     this.vaultCategoriesCount = 0,
     this.vaultEntriesCount = 0,
+    this.vaultImportSkipped = false,
   });
 
   factory ImportResult.success({
@@ -826,6 +849,7 @@ class ImportResult {
     int bookLargeExpensesCount = 0,
     int vaultCategoriesCount = 0,
     int vaultEntriesCount = 0,
+    bool vaultImportSkipped = false,
   }) =>
       ImportResult._(
         isSuccess: true,
@@ -839,6 +863,7 @@ class ImportResult {
         bookLargeExpensesCount: bookLargeExpensesCount,
         vaultCategoriesCount: vaultCategoriesCount,
         vaultEntriesCount: vaultEntriesCount,
+        vaultImportSkipped: vaultImportSkipped,
       );
 
   factory ImportResult.error(String message) =>

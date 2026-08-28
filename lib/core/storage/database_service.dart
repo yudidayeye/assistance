@@ -9,7 +9,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 16;
+  static const int _currentVersion = 17;
 
   /// 注入数据库实例（仅测试用，绕过依赖 path_provider 的默认初始化）
   @visibleForTesting
@@ -218,6 +218,7 @@ class DatabaseService {
         username TEXT,
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
+        salt TEXT,
         note TEXT,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
@@ -300,6 +301,11 @@ class DatabaseService {
       await _migrateToV16(db);
     }
 
+    // 如果从 v16 升级到 v17，为密码条目添加加密盐字段（方案 C）
+    if (oldVersion < 17 && newVersion >= 17) {
+      await _migrateToV17(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
@@ -313,6 +319,7 @@ class DatabaseService {
       if (v == 14) continue; // 已经在上面处理了
       if (v == 15) continue; // 已经在上面处理了
       if (v == 16) continue; // 已经在上面处理了
+      if (v == 17) continue; // 已经在上面处理了
       await db.transaction((txn) async {
         if (v == 2) {
           await _createV2Schema(db);
@@ -345,6 +352,19 @@ class DatabaseService {
   Future<void> _migrateToV16(Database db) async {
     await db.execute(
       'ALTER TABLE mod_vault_entries ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
+    );
+  }
+
+  /// v17 迁移：方案 C — 密码条目记录「加密时使用的盐」
+  ///
+  /// 每条记录独立存盐后，即使主密码盐被重新初始化，
+  /// 只要主密码不变，仍可用「主密码 + 条目盐」解密。
+  /// 旧条目回填当前主盐，保证其加密所依赖的盐被永久记录。
+  Future<void> _migrateToV17(Database db) async {
+    await db.execute('ALTER TABLE mod_vault_entries ADD COLUMN salt TEXT');
+    // 回填：把现有条目的盐设为当前主密码盐
+    await db.execute(
+      'UPDATE mod_vault_entries SET salt = (SELECT salt FROM mod_vault_master LIMIT 1) WHERE salt IS NULL',
     );
   }
 

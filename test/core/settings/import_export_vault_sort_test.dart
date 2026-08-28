@@ -132,6 +132,7 @@ void main() {
         username TEXT,
         encrypted_password TEXT NOT NULL,
         password_iv TEXT NOT NULL,
+        salt TEXT,
         note TEXT,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
@@ -275,5 +276,225 @@ void main() {
     final rows = await db.query('mod_vault_entries');
     expect(rows, hasLength(1));
     expect(rows.first['sort_order'], 0);
+  });
+
+  test('方案C：导入导出保留条目的独立盐', () async {
+    await setUpDb();
+    final db = DatabaseService.instance;
+
+    final catId = await db.insert('mod_vault_categories', {
+      'name': '邮箱',
+      'icon': 'folder',
+      'sort_order': 0,
+      'is_encrypted': 1,
+      'created_at': now(),
+      'updated_at': now(),
+    });
+    const entrySalt = 'aabbccddeeff00112233445566778899';
+    await db.insert('mod_vault_entries', {
+      'category_id': catId,
+      'title': '邮箱A',
+      'username': 'u1',
+      'encrypted_password': 'p1',
+      'password_iv': 'iv1',
+      'salt': entrySalt,
+      'note': null,
+      'sort_order': 0,
+      'created_at': now(),
+      'updated_at': now(),
+    });
+
+    final bytes = await ImportExportService.instance.generateExportBytes();
+    final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+    final entries =
+        (json['data']['vault_entries'] as List).cast<Map<String, dynamic>>();
+    expect(entries.single['salt'], entrySalt);
+
+    // 清空后导入，salt 应原样保留
+    await db.delete('mod_vault_entries');
+    await db.delete('mod_vault_categories');
+    final file = tempFile();
+    await file.writeAsBytes(bytes);
+    final result = await ImportExportService.instance.executeImport(file.path);
+    await file.delete();
+    expect(result.isSuccess, isTrue);
+    expect(result.vaultEntriesCount, 1);
+
+    final rows = await db.query('mod_vault_entries');
+    expect(rows, hasLength(1));
+    expect(rows.single['salt'], entrySalt);
+  });
+
+  test('方案C：主密码盐不一致且备份为旧格式时，跳过保险箱导入', () async {
+    await setUpDb();
+    final db = DatabaseService.instance;
+
+    // 本地已有主密码（盐 A）与旧格式条目
+    await db.insert('mod_vault_master', {
+      'id': 1,
+      'salt': 'AAAA',
+      'verify_cipher': 'vc',
+      'verify_iv': 'vi',
+      'created_at': now(),
+    });
+    final catId = await db.insert('mod_vault_categories', {
+      'name': '本地分类',
+      'icon': 'folder',
+      'sort_order': 0,
+      'is_encrypted': 1,
+      'created_at': now(),
+      'updated_at': now(),
+    });
+    await db.insert('mod_vault_entries', {
+      'category_id': catId,
+      'title': '本地条目',
+      'username': null,
+      'encrypted_password': 'p1',
+      'password_iv': 'iv1',
+      'salt': null,
+      'note': null,
+      'sort_order': 0,
+      'created_at': now(),
+      'updated_at': now(),
+    });
+
+    // 备份：主密码盐 B（不一致）+ 旧格式条目（无独立盐）
+    final payload = {
+      'version': 4,
+      'exportedAt': now(),
+      'appName': 'my_assistant',
+      'appVersion': '1.0.0',
+      'data': {
+        'app_settings': <String, String>{},
+        'period_tracker_records': <dynamic>[],
+        'period_book_periods': <dynamic>[],
+        'period_book_stages': <dynamic>[],
+        'period_book_additions': <dynamic>[],
+        'period_book_expenses': <dynamic>[],
+        'period_book_large_additions': <dynamic>[],
+        'period_book_large_expenses': <dynamic>[],
+        'vault_master': {
+          'id': 1,
+          'salt': 'BBBB',
+          'verify_cipher': 'vc',
+          'verify_iv': 'vi',
+          'created_at': now(),
+        },
+        'vault_categories': [
+          {
+            'id': 999,
+            'name': '备份分类',
+            'icon': 'folder',
+            'sort_order': 0,
+            'is_encrypted': 1,
+            'created_at': now(),
+            'updated_at': now(),
+          }
+        ],
+        'vault_entries': [
+          {
+            'id': 999,
+            'category_id': 999,
+            'title': '备份条目',
+            'username': null,
+            'encrypted_password': 'p2',
+            'password_iv': 'iv2',
+            'note': null,
+            'created_at': now(),
+            'updated_at': now(),
+          }
+        ],
+      },
+    };
+
+    final file = tempFile();
+    await file.writeAsString(jsonEncode(payload), encoding: utf8);
+    final result = await ImportExportService.instance.executeImport(file.path);
+    await file.delete();
+
+    expect(result.isSuccess, isTrue);
+    expect(result.vaultImportSkipped, isTrue);
+    expect(result.vaultEntriesCount, 0);
+    // 本地条目未被备份覆盖
+    final rows = await db.query('mod_vault_entries');
+    expect(rows, hasLength(1));
+    expect(rows.single['title'], '本地条目');
+  });
+
+  test('方案C：备份条目携带独立盐时，即使主密码盐不一致也正常导入', () async {
+    await setUpDb();
+    final db = DatabaseService.instance;
+
+    // 本地已有主密码（盐 A）
+    await db.insert('mod_vault_master', {
+      'id': 1,
+      'salt': 'AAAA',
+      'verify_cipher': 'vc',
+      'verify_iv': 'vi',
+      'created_at': now(),
+    });
+
+    // 备份：主密码盐 B（不一致），但条目携带独立盐
+    const entrySalt = '11223344556677889900aabbccddeeff';
+    final payload = {
+      'version': 4,
+      'exportedAt': now(),
+      'appName': 'my_assistant',
+      'appVersion': '1.0.0',
+      'data': {
+        'app_settings': <String, String>{},
+        'period_tracker_records': <dynamic>[],
+        'period_book_periods': <dynamic>[],
+        'period_book_stages': <dynamic>[],
+        'period_book_additions': <dynamic>[],
+        'period_book_expenses': <dynamic>[],
+        'period_book_large_additions': <dynamic>[],
+        'period_book_large_expenses': <dynamic>[],
+        'vault_master': {
+          'id': 1,
+          'salt': 'BBBB',
+          'verify_cipher': 'vc',
+          'verify_iv': 'vi',
+          'created_at': now(),
+        },
+        'vault_categories': [
+          {
+            'id': 1,
+            'name': '备份分类',
+            'icon': 'folder',
+            'sort_order': 0,
+            'is_encrypted': 1,
+            'created_at': now(),
+            'updated_at': now(),
+          }
+        ],
+        'vault_entries': [
+          {
+            'id': 1,
+            'category_id': 1,
+            'title': '备份条目',
+            'username': null,
+            'encrypted_password': 'p2',
+            'password_iv': 'iv2',
+            'salt': entrySalt,
+            'note': null,
+            'created_at': now(),
+            'updated_at': now(),
+          }
+        ],
+      },
+    };
+
+    final file = tempFile();
+    await file.writeAsString(jsonEncode(payload), encoding: utf8);
+    final result = await ImportExportService.instance.executeImport(file.path);
+    await file.delete();
+
+    expect(result.isSuccess, isTrue);
+    expect(result.vaultImportSkipped, isFalse);
+    expect(result.vaultEntriesCount, 1);
+    final rows = await db.query('mod_vault_entries');
+    expect(rows, hasLength(1));
+    expect(rows.single['salt'], entrySalt);
   });
 }
