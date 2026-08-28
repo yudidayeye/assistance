@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -10,9 +10,10 @@ import '../models/vault_category.dart';
 import '../services/vault_service.dart';
 import '../services/vault_session.dart';
 import '../services/vault_shortcut_service.dart';
+import '../widgets/vault_category_icons.dart';
 import 'master_password_page.dart';
 
-/// 图标选项（key 与 _presetIcons 中的键一致，label 用于弹窗展示）
+/// 图标选项（key 与 VaultCategoryIcons.presetIcons 中的键一致，label 用于弹窗展示）
 class _IconChoice {
   final String key;
   final String label;
@@ -44,93 +45,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   bool _navigating = false;
   bool _isSorting = false;
 
-  // 预置分类图标映射（key 持久化到数据库，新增图标时在此追加即可）
-  static const _presetIcons = <String, IconData>{
-    // 常用
-    'folder': Icons.folder_rounded,
-    'lock': Icons.lock_rounded,
-    'key': Icons.vpn_key_rounded,
-    'star': Icons.star_rounded,
-    'bookmark': Icons.bookmark_rounded,
-    'favorite': Icons.favorite_rounded,
-    // 账户身份
-    'email': Icons.email_rounded,
-    'contact': Icons.contact_mail_rounded,
-    'badge': Icons.badge_rounded,
-    'fingerprint': Icons.fingerprint_rounded,
-    'person': Icons.person_rounded,
-    // 技术开发
-    'git': Icons.code_rounded,
-    'cloud': Icons.cloud_rounded,
-    'server': Icons.dns_rounded,
-    'database': Icons.storage_rounded,
-    'router': Icons.router_rounded,
-    'wifi': Icons.wifi_rounded,
-    'terminal': Icons.terminal_rounded,
-    'bug': Icons.bug_report_rounded,
-    'memory': Icons.memory_rounded,
-    // 设备
-    'phone': Icons.phone_android_rounded,
-    'phone_iphone': Icons.phone_iphone_rounded,
-    'computer': Icons.computer_rounded,
-    'laptop': Icons.laptop_mac_rounded,
-    'tablet': Icons.tablet_android_rounded,
-    'watch': Icons.watch_rounded,
-    'sim': Icons.sim_card_rounded,
-    'headphones': Icons.headphones_rounded,
-    // 社交
-    'social': Icons.people_rounded,
-    'forum': Icons.forum_rounded,
-    'chat': Icons.chat_rounded,
-    'groups': Icons.groups_rounded,
-    'voice': Icons.record_voice_over_rounded,
-    // 金融
-    'finance': Icons.account_balance_rounded,
-    'credit_card': Icons.credit_card_rounded,
-    'wallet': Icons.wallet_rounded,
-    'savings': Icons.savings_rounded,
-    'currency': Icons.currency_yuan_rounded,
-    'payments': Icons.payments_rounded,
-    // 购物
-    'shopping': Icons.shopping_bag_rounded,
-    'shopping_cart': Icons.shopping_cart_rounded,
-    'storefront': Icons.storefront_rounded,
-    'basket': Icons.shopping_basket_rounded,
-    'mall': Icons.local_mall_rounded,
-    // 娱乐
-    'game': Icons.sports_esports_rounded,
-    'movie': Icons.movie_rounded,
-    'music': Icons.music_note_rounded,
-    'theater': Icons.theater_comedy_rounded,
-    'camera': Icons.photo_camera_rounded,
-    'casino': Icons.casino_rounded,
-    // 工作
-    'work': Icons.work_rounded,
-    'business': Icons.business_center_rounded,
-    'construction': Icons.construction_rounded,
-    'assignment': Icons.assignment_rounded,
-    'event': Icons.event_available_rounded,
-    // 生活
-    'home': Icons.home_rounded,
-    'restaurant': Icons.restaurant_rounded,
-    'cafe': Icons.local_cafe_rounded,
-    'car': Icons.directions_car_rounded,
-    'flight': Icons.flight_rounded,
-    'fitness': Icons.fitness_center_rounded,
-    'pets': Icons.pets_rounded,
-    'school': Icons.school_rounded,
-    'lightbulb': Icons.lightbulb_rounded,
-    'park': Icons.park_rounded,
-    // 其他
-    'extension': Icons.extension_rounded,
-    'public': Icons.public_rounded,
-    'schedule': Icons.schedule_rounded,
-    'science': Icons.science_rounded,
-    'rocket': Icons.rocket_launch_rounded,
-    'translate': Icons.translate_rounded,
-  };
-
-  // 图标分组（弹窗内按组展示，key 与 _presetIcons 保持一致）
+  // 图标分组（弹窗内按组展示，key 与 VaultCategoryIcons.presetIcons 保持一致）
   static const _iconGroups = <_IconGroup>[
     _IconGroup('常用', [
       _IconChoice('folder', '文件夹'),
@@ -294,7 +209,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   }
 
   IconData _getIcon(String iconName) {
-    return _presetIcons[iconName] ?? Icons.folder_rounded;
+    return VaultCategoryIcons.resolve(iconName);
   }
 
   Future<void> _showAddCategoryDialog() async {
@@ -324,8 +239,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
 
     // 切换加密状态且有密码条目时，需要会话已解锁才能迁移存储格式
     if (category.isEncrypted != result.encrypted) {
-      final count = await VaultService.instance
-          .getCategoryEntryCount(category.id!);
+      final count =
+          await VaultService.instance.getCategoryEntryCount(category.id!);
       if (count > 0 && VaultSession.instance.isLocked) {
         if (!mounted) return;
         AppSnackBar.show(context, '请先解锁后再修改分类的加密状态');
@@ -344,7 +259,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   /// 新增 / 编辑分类弹窗（共用表单：实时预览 + 名称输入 + 分组图标选择 + 加密开关）
   ///
   /// 返回 (name, icon, encrypted)；取消或名称为空时返回 null。
-  Future<({String name, String icon, bool encrypted})?> _showCategoryFormDialog({
+  Future<({String name, String icon, bool encrypted})?>
+      _showCategoryFormDialog({
     required String title,
     String initialName = '',
     String initialIcon = 'folder',
@@ -354,7 +270,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
     String selectedIcon = initialIcon;
     bool isEncrypted = initialEncrypted;
 
-    final result = await showDialog<({String name, String icon, bool encrypted})>(
+    final result =
+        await showDialog<({String name, String icon, bool encrypted})>(
       context: context,
       builder: (ctx) {
         final appTheme = Theme.of(ctx).appTheme;
@@ -394,7 +311,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                         filled: true,
                         fillColor: appTheme.cream,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(appTheme.radiusMd),
+                          borderRadius:
+                              BorderRadius.circular(appTheme.radiusMd),
                           borderSide: BorderSide.none,
                         ),
                       ),
@@ -403,7 +321,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                     const SizedBox(height: 16),
                     Text(
                       '选择图标',
-                      style: AppTypography.bodyMd.copyWith(color: appTheme.earth),
+                      style:
+                          AppTypography.bodyMd.copyWith(color: appTheme.earth),
                     ),
                     const SizedBox(height: 8),
                     // 图标分组选择（固定高度可滚动，小屏亦不溢出）
@@ -474,7 +393,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                     ),
                   ),
                   child: Text('取消',
-                      style: AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
+                      style: AppTypography.bodyMd
+                          .copyWith(color: appTheme.earthLight)),
                 ),
                 TextButton(
                   onPressed: () {
@@ -493,7 +413,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                     ),
                   ),
                   child: Text('确定',
-                      style: AppTypography.bodyMd.copyWith(color: appTheme.primary)),
+                      style: AppTypography.bodyMd
+                          .copyWith(color: appTheme.primary)),
                 ),
               ],
             );
@@ -535,7 +456,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
               children: [
                 Text(
                   '分类预览',
-                  style: AppTypography.caption.copyWith(color: appTheme.earthMedium),
+                  style: AppTypography.caption
+                      .copyWith(color: appTheme.earthMedium),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -568,7 +490,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
             padding: const EdgeInsets.only(left: 2, bottom: 6),
             child: Text(
               group.label,
-              style: AppTypography.caption.copyWith(color: appTheme.earthMedium),
+              style:
+                  AppTypography.caption.copyWith(color: appTheme.earthMedium),
             ),
           ),
           Wrap(
@@ -634,9 +557,11 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                   decoration: BoxDecoration(
                     color: appTheme.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(color: appTheme.cardBackground, width: 1.5),
+                    border:
+                        Border.all(color: appTheme.cardBackground, width: 1.5),
                   ),
-                  child: const Icon(Icons.check_rounded, size: 9, color: Colors.white),
+                  child: const Icon(Icons.check_rounded,
+                      size: 9, color: Colors.white),
                 ),
               ),
           ],
@@ -646,7 +571,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   }
 
   Future<void> _confirmDeleteCategory(VaultCategory category) async {
-    final count = await VaultService.instance.getCategoryEntryCount(category.id!);
+    final count =
+        await VaultService.instance.getCategoryEntryCount(category.id!);
     if (!mounted) return;
 
     final appTheme = Theme.of(context).appTheme;
@@ -669,7 +595,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('取消',
-                style: AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
+                style:
+                    AppTypography.bodyMd.copyWith(color: appTheme.earthLight)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -734,39 +661,39 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
           actions: _categories.isEmpty
-            ? []
-            : [
-                if (_isSorting)
-                  TextButton(
-                    onPressed: _exitSorting,
-                    child: Text(
-                      '完成',
-                      style: AppTypography.bodyMd.copyWith(
-                        color: appTheme.primary,
-                        fontWeight: FontWeight.w600,
+              ? []
+              : [
+                  if (_isSorting)
+                    TextButton(
+                      onPressed: _exitSorting,
+                      child: Text(
+                        '完成',
+                        style: AppTypography.bodyMd.copyWith(
+                          color: appTheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
+                    )
+                  else
+                    IconButton(
+                      tooltip: '排序',
+                      icon: Icon(
+                        Icons.swap_vert_rounded,
+                        color: appTheme.earthMedium,
+                      ),
+                      onPressed: _enterSorting,
                     ),
-                  )
-                else
-                  IconButton(
-                    tooltip: '排序',
-                    icon: Icon(
-                      Icons.swap_vert_rounded,
-                      color: appTheme.earthMedium,
-                    ),
-                    onPressed: _enterSorting,
-                  ),
-              ],
-          ),
-          body: _categories.isEmpty
-              ? _buildEmptyState(appTheme)
-              : _buildCategoryList(appTheme),
-          floatingActionButton: _isSorting
-              ? null
-              : Padding(
-                  padding: const EdgeInsets.only(bottom: 40),
-                  child: _buildFab(appTheme),
-                ),
+                ],
+        ),
+        body: _categories.isEmpty
+            ? _buildEmptyState(appTheme)
+            : _buildCategoryList(appTheme),
+        floatingActionButton: _isSorting
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(bottom: 40),
+                child: _buildFab(appTheme),
+              ),
       ),
     );
   }
@@ -837,7 +764,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.folder_open_rounded, size: 56, color: appTheme.earthMedium),
+          Icon(Icons.folder_open_rounded,
+              size: 56, color: appTheme.earthMedium),
           const SizedBox(height: 12),
           Text(
             '还没有分类',
@@ -972,7 +900,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
                 const SizedBox(width: 8),
                 // 加密状态标签：区分加密 / 不加密分类
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: category.isEncrypted
                         ? appTheme.primary.withValues(alpha: 0.1)
@@ -1130,8 +1059,8 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       context: context,
       backgroundColor: appTheme.cardBackground,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(appTheme.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(appTheme.radiusLg)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -1186,6 +1115,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       ),
     );
   }
+
   Future<void> _createDesktopShortcut(VaultCategory category) async {
     final categoryId = category.id;
     if (categoryId == null || !mounted) return;
@@ -1194,6 +1124,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
       await VaultShortcutService.instance.createDesktopShortcut(
         categoryId: categoryId,
         categoryName: category.name,
+        categoryIcon: VaultCategoryIcons.resolve(category.icon),
       );
       if (!mounted) return;
       AppSnackBar.show(

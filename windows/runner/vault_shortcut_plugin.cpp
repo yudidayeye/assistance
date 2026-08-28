@@ -4,10 +4,13 @@
 #include <shlobj.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <cwchar>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <string>
+#include <vector>
 #include <utility>
 
 #include <flutter/method_channel.h>
@@ -85,7 +88,64 @@ std::string ErrorMessage(HRESULT result) {
          std::to_string(static_cast<unsigned long>(result)) + "）";
 }
 
+std::filesystem::path GetShortcutIconDirectory() {
+  PWSTR local_app_data = nullptr;
+  const HRESULT result = ::SHGetKnownFolderPath(
+      FOLDERID_LocalAppData, KF_FLAG_DEFAULT, nullptr, &local_app_data);
+  if (FAILED(result) || local_app_data == nullptr) return {};
+
+  std::filesystem::path directory(local_app_data);
+  ::CoTaskMemFree(local_app_data);
+  directory /= L"理解";
+  directory /= L"shortcut-icons";
+
+  std::error_code error;
+  std::filesystem::create_directories(directory, error);
+  if (error) return {};
+  return directory;
+}
+
+// ICO 文件允许直接嵌入 PNG 数据。这样可以保留 Flutter 渲染出的分类图标，
+// 同时无需引入额外的图片编解码库。
+bool WritePngIco(const std::filesystem::path& icon_path,
+                 const std::vector<uint8_t>& png_data) {
+  if (png_data.empty() || png_data.size() > UINT32_MAX) return false;
+
+  std::ofstream output(icon_path, std::ios::binary | std::ios::trunc);
+  if (!output) return false;
+
+  const auto write16 = [&output](uint16_t value) {
+    const char bytes[2] = {static_cast<char>(value & 0xFF),
+                           static_cast<char>((value >> 8) & 0xFF)};
+    output.write(bytes, sizeof(bytes));
+  };
+  const auto write32 = [&output](uint32_t value) {
+    const char bytes[4] = {static_cast<char>(value & 0xFF),
+                           static_cast<char>((value >> 8) & 0xFF),
+                           static_cast<char>((value >> 16) & 0xFF),
+                           static_cast<char>((value >> 24) & 0xFF)};
+    output.write(bytes, sizeof(bytes));
+  };
+
+  // ICONDIR
+  write16(0);  // reserved
+  write16(1);  // icon type
+  write16(1);  // image count
+  // ICONDIRENTRY，0 表示 256 像素，PNG 数据从偏移 22 开始。
+  output.put(static_cast<char>(0));
+  output.put(static_cast<char>(0));
+  output.put(static_cast<char>(0));
+  output.put(static_cast<char>(0));
+  write16(1);  // color planes
+  write16(32); // bits per pixel
+  write32(static_cast<uint32_t>(png_data.size()));
+  write32(22);
+  output.write(reinterpret_cast<const char*>(png_data.data()),
+               static_cast<std::streamsize>(png_data.size()));
+  return output.good();
+}
 bool CreateDesktopShortcut(int category_id, const std::string& category_name,
+                           const std::vector<uint8_t>& icon_data,
                            std::string* shortcut_path, std::string* error) {
   const std::wstring desktop_path = GetDesktopPath();
   const std::wstring executable_path = GetExecutablePath();
@@ -100,6 +160,19 @@ bool CreateDesktopShortcut(int category_id, const std::string& category_name,
       L"理解 - " + SanitizeFileName(category_name_utf16) + kShortcutExtension;
   const std::filesystem::path link_path =
       std::filesystem::path(desktop_path) / shortcut_name;
+  const std::filesystem::path icon_directory = GetShortcutIconDirectory();
+  if (icon_directory.empty()) {
+    *error = "无法确定快捷方式图标保存路径";
+    return false;
+  }
+  const std::filesystem::path icon_path =
+      icon_directory / (L"vault-category-" + std::to_wstring(category_id) +
+                        L".ico");
+  if (!WritePngIco(icon_path, icon_data)) {
+    *error = "无法生成分类快捷方式图标";
+    return false;
+  }
+
   const std::wstring arguments = L"--vault-category=" +
                                  std::to_wstring(category_id);
 
@@ -114,6 +187,9 @@ bool CreateDesktopShortcut(int category_id, const std::string& category_name,
 
   result = shell_link->SetPath(executable_path.c_str());
   if (SUCCEEDED(result)) result = shell_link->SetArguments(arguments.c_str());
+  if (SUCCEEDED(result)) {
+    result = shell_link->SetIconLocation(icon_path.c_str(), 0);
+  }
   if (SUCCEEDED(result)) {
     result = shell_link->SetDescription(
         (L"打开密码保险箱分类：" + category_name_utf16).c_str());
@@ -170,8 +246,11 @@ void RegisterVaultShortcutPlugin(flutter::PluginRegistry* registry) {
             flutter::EncodableValue("categoryId"));
         const auto category_name_it = arguments->find(
             flutter::EncodableValue("categoryName"));
+        const auto icon_data_it = arguments->find(
+            flutter::EncodableValue("iconBytes"));
         if (category_id_it == arguments->end() ||
-            category_name_it == arguments->end()) {
+            category_name_it == arguments->end() ||
+            icon_data_it == arguments->end()) {
           result->Error("invalid_arguments", "缺少创建快捷方式所需参数");
           return;
         }
@@ -186,15 +265,17 @@ void RegisterVaultShortcutPlugin(flutter::PluginRegistry* registry) {
         }
         const auto* category_name =
             std::get_if<std::string>(&category_name_it->second);
-        if (category_id <= 0 || category_name == nullptr) {
+        const auto* icon_data =
+            std::get_if<std::vector<uint8_t>>(&icon_data_it->second);
+        if (category_id <= 0 || category_name == nullptr || icon_data == nullptr) {
           result->Error("invalid_arguments", "创建快捷方式所需参数无效");
           return;
         }
 
         std::string shortcut_path;
         std::string error;
-        if (!CreateDesktopShortcut(category_id, *category_name, &shortcut_path,
-                                   &error)) {
+        if (!CreateDesktopShortcut(category_id, *category_name, *icon_data,
+                                   &shortcut_path, &error)) {
           result->Error("create_failed", error);
           return;
         }
