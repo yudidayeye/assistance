@@ -345,7 +345,7 @@ class _StageCardState extends State<StageCard> {
                   _buildSoftDivider(appTheme),
                   _buildCategoryRow(
                     appTheme: appTheme,
-                    icon: Icons.more_horiz,
+                    icon: Icons.category_outlined,
                     label: '其他消费',
                     amountText:
                         '-¥${widget.stageCalc.otherTotal.toStringAsFixed(2)}',
@@ -558,7 +558,7 @@ class _StageCardState extends State<StageCard> {
       case '杂项':
         return Icons.wb_sunny_outlined;
       case '其他':
-        return Icons.more_horiz;
+        return Icons.category_outlined;
       default:
         return Icons.category_outlined;
     }
