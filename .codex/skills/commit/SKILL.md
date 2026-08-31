@@ -12,8 +12,8 @@ description: 按 Conventional Commits(约定式提交)规范执行 git 提交。
 
 ## 执行步骤
 
-1. **检查变更**:`git status` 和 `git diff --stat`,确认变更范围完整、无遗漏文件、无调试代码或临时文件。
-2. **运行检查**:涉及 Dart 代码变更时,先执行 `flutter analyze`(必要时加 `flutter test`),通过后再提交。
+1. **检查变更**:`git status` 和 `git diff --stat`,确认变更范围完整、无遗漏文件、无调试代码或临时文件;同时确认暂存区中没有他人预先暂存的无关变更(有则只 `git add` 自己的文件,不动他人暂存内容)。
+2. **运行检查**:涉及 Dart 代码变更时,先执行 `flutter analyze`,并**只运行与本次改动相关的测试**(对应测试文件或模块测试目录,如 `flutter test test/modules/accounting/`);禁止默认全量 `flutter test`。仅当改动 `lib/core/`、`lib/shared/` 等共享层且影响多个模块时,才全量回归。
 3. **生成提交信息**:严格按下方规范构造 message。
 4. **执行提交**:`git add <具体文件>`(避免无差别 `git add -A`)+ `git commit -m "<message>"`。
 5. **验证结果**:`git log -1 --stat` 确认提交内容与信息匹配。
