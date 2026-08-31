@@ -18,6 +18,12 @@
 - `flutter test <路径>` —— 按需运行指定测试(见测试指南)。
 - `flutter build appbundle|apk|ios` —— 构建发布版本(暂不支持iOS)。
 
+## 发布版本规范
+
+- 发布版本必须通过仓库脚本执行：Windows 使用 `powershell -ExecutionPolicy Bypass -File scripts/release.ps1 <版本号> "<发布说明>"`，其他环境使用 `bash scripts/release.sh <版本号> "<发布说明>"`；
+- 用户仅要求“发布版本”但未指定版本号时，默认只递增修订号，例如 `1.2.3` → `1.2.4`；构建号由发布脚本自动递增。
+- 只有用户明确指定目标版本号时，才允许变更主版本号或次版本号，并严格使用用户指定的版本号执行发布脚本。
+
 ## 编码风格与命名约定
 
 - Dart SDK `>=3.0.0 <4.0.0`;格式化用 `dart format`,lint 见 `analysis_options.yaml`。
