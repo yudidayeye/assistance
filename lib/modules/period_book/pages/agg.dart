@@ -12,6 +12,7 @@ import '../models/stage_record.dart';
 import '../models/large_addition_record.dart';
 import '../models/large_expense_record.dart';
 import '../services/period_book_service.dart';
+import '../widgets/expense_category_helper.dart';
 import '../widgets/history_filter_bar.dart';
 import '../widgets/report_card.dart';
 
@@ -416,9 +417,7 @@ class _AggPageState extends State<AggPage>
   }
 
   String _normalizeCategory(String dbCategory) {
-    if (dbCategory == 'shopping') return '购物';
-    if (dbCategory == 'other') return '其他';
-    return dbCategory;
+    return ExpenseCategoryHelper.mapCategoryForDisplay(dbCategory);
   }
 
   List<PeriodRecord> _getFilteredPeriods() {
@@ -1103,14 +1102,14 @@ class _AggPageState extends State<AggPage>
                               );
                             }).toList(),
                           ),
-                        if (expenses.where((e) => e.category != 'other').isNotEmpty) ...[
+                        if (expenses.where((e) => !e.isOther).isNotEmpty) ...[
                           if (additions.isNotEmpty) AppSpacing.h6,
                           _buildDetailGroup(
                             appTheme: appTheme,
                             title: '个人支出',
                             color: appTheme.rose,
                             children: expenses
-                                .where((e) => e.category != 'other')
+                                .where((e) => !e.isOther)
                                 .map((e) {
                               return _buildDetailRow(
                                 appTheme,
@@ -1121,16 +1120,16 @@ class _AggPageState extends State<AggPage>
                             }).toList(),
                           ),
                         ],
-                        if (expenses.where((e) => e.category == 'other').isNotEmpty) ...[
+                        if (expenses.where((e) => e.isOther).isNotEmpty) ...[
                           if (additions.isNotEmpty ||
-                              expenses.where((e) => e.category != 'other').isNotEmpty)
+                              expenses.where((e) => !e.isOther).isNotEmpty)
                             AppSpacing.h6,
                           _buildDetailGroup(
                             appTheme: appTheme,
                             title: '其他支出',
                             color: appTheme.rose,
                             children: expenses
-                                .where((e) => e.category == 'other')
+                                .where((e) => e.isOther)
                                 .map((e) {
                               return _buildDetailRow(
                                 appTheme,

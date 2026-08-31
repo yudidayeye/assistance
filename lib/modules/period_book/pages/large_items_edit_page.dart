@@ -42,6 +42,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
   final _shoppingDescController = TextEditingController();
   final _otherAmountController = TextEditingController();
   final _otherDescController = TextEditingController();
+  String _shoppingCategory = '生活';
+  String _otherCategory = '生活';
 
   bool _loading = true;
 
@@ -76,9 +78,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         final allExpenses =
             await _service.getLargeExpensesByPeriod(widget.periodId);
         _shoppingExpenses =
-            allExpenses.where((e) => e.category != 'other').toList();
+            allExpenses.where((e) => !e.isOther).toList();
         _otherExpenses =
-            allExpenses.where((e) => e.category == 'other').toList();
+            allExpenses.where((e) => e.isOther).toList();
       }
     } catch (e) {
       debugPrint('Load large items error: $e');
@@ -311,6 +313,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       descHint: '请输入描述',
       amountController: _shoppingAmountController,
       descController: _shoppingDescController,
+      categories: ExpenseCategoryHelper.expenseCategories,
+      selectedCategory: _shoppingCategory,
+      onCategoryChanged: (category) =>
+          setState(() => _shoppingCategory = category),
       onCollapse: () => setState(() => _shoppingFormExpanded = false),
       onConfirm: _submitShoppingExpense,
       confirmText: '确认添加',
@@ -370,6 +376,10 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       descHint: '请输入描述',
       amountController: _otherAmountController,
       descController: _otherDescController,
+      categories: ExpenseCategoryHelper.expenseCategories,
+      selectedCategory: _otherCategory,
+      onCategoryChanged: (category) =>
+          setState(() => _otherCategory = category),
       onCollapse: () => setState(() => _otherFormExpanded = false),
       onConfirm: _submitOtherExpense,
       confirmText: '确认添加',
@@ -529,18 +539,16 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
 
   Future<void> _showEditExpenseSheet(
       AppThemeExtension appTheme, LargeExpenseRecord expense) async {
-    final displayCat = ExpenseCategoryHelper.mapCategoryForDisplay(expense.category);
-    final isOther = expense.category == 'other';
-    final initialCategory = isOther ? '其他' : displayCat;
-    final showCategorySelector = !isOther;
+    final isOther = expense.isOther;
 
     await ExpenseCategoryHelper.showEditExpenseSheet(
       context: context,
       appTheme: appTheme,
-      category: initialCategory,
+      category: expense.category,
       amount: expense.amount,
       description: expense.description,
-      showCategorySelector: showCategorySelector,
+      showCategorySelector: true,
+      isOther: isOther,
       onSave: (dbCategory, amount, description) async {
         await _service.updateLargeExpense(
           expense.id!,
@@ -645,7 +653,12 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     if (amount == null || amount <= 0 || desc.isEmpty) return;
 
     _service
-        .addLargeExpense(widget.periodId, 'shopping', amount, desc)
+        .addLargeExpense(
+          widget.periodId,
+          ExpenseCategoryHelper.categoryToDbValue(_shoppingCategory),
+          amount,
+          desc,
+        )
         .then((_) {
       _shoppingAmountController.clear();
       _shoppingDescController.clear();
@@ -658,7 +671,14 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     final desc = _otherDescController.text.trim();
     if (amount == null || amount <= 0 || desc.isEmpty) return;
 
-    _service.addLargeExpense(widget.periodId, 'other', amount, desc).then((_) {
+    _service
+        .addLargeExpense(
+          widget.periodId,
+          ExpenseCategoryHelper.toOtherCategory(_otherCategory),
+          amount,
+          desc,
+        )
+        .then((_) {
       _otherAmountController.clear();
       _otherDescController.clear();
       _loadDataPreserveScroll();

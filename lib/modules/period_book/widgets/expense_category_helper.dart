@@ -183,9 +183,13 @@ class ExpenseCategoryHelper {
     required double amount,
     required String description,
     required bool showCategorySelector,
+    bool isOther = false,
     required Function(String category, double amount, String description) onSave,
   }) async {
-    String selectedCategory = category;
+    final displayCategory = mapCategoryForDisplay(category);
+    String selectedCategory = _categories.contains(displayCategory)
+        ? displayCategory
+        : _categories.first;
     final amountController = TextEditingController(text: amount.toStringAsFixed(2));
     final descController = TextEditingController(text: description);
 
@@ -216,7 +220,7 @@ class ExpenseCategoryHelper {
                   Row(
                     children: [
                       Text(
-                        category == 'other' ? '编辑其他支出' : '编辑支出',
+                        isOther ? '编辑其他支出' : '编辑支出',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -351,9 +355,9 @@ class ExpenseCategoryHelper {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: () {
-                        final dbCategory = showCategorySelector
-                            ? categoryToDbValue(selectedCategory)
-                            : 'other';
+                        final dbCategory = isOther
+                            ? toOtherCategory(selectedCategory)
+                            : categoryToDbValue(selectedCategory);
                         final parsedAmount = double.tryParse(amountController.text) ?? 0;
                         onSave(dbCategory, parsedAmount, descController.text);
                         Navigator.pop(ctx);

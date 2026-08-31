@@ -3,6 +3,9 @@ class LargeExpenseRecord {
   final int? id;
   final int periodId;
   final String category; // 'shopping' / 'other'
+
+  /// 是否属于其他支出（兼容旧数据 `other` 与带分类数据）。
+  bool get isOther => category == 'other' || category.startsWith('other:');
   final double amount;
   final String description;
   final int sortOrder;
