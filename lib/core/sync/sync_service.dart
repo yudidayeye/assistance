@@ -446,6 +446,8 @@ class SyncService {
       await tempFile.delete();
 
       if (result.isSuccess) {
+        // 导入完成后立即广播离线，让发送端及时移除本设备。
+        await _stopBroadcast();
         return shelf.Response.ok(jsonEncode({
           'success': true,
           'settingsCount': result.settingsCount,
