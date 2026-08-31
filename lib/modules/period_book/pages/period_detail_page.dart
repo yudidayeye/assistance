@@ -628,7 +628,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
 
   Map<String, double> _computePersonalBreakdown(int stageId) {
     final stageExpenses = _allExpenses
-        .where((e) => e.stageId == stageId)
+        .where((e) => e.stageId == stageId && !e.isOther)
         .toList();
     final map = <String, double>{};
     for (final e in stageExpenses) {

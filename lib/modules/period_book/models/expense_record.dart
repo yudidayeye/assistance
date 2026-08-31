@@ -8,6 +8,9 @@ class ExpenseRecord {
   final int sortOrder; // 排序序号
   final String createdAt;
 
+  /// 是否属于其他支出（兼容旧数据 `other` 与带分类数据）。
+  bool get isOther => category == 'other' || category.startsWith('other:');
+
   const ExpenseRecord({
     this.id,
     required this.stageId,

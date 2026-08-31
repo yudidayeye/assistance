@@ -24,7 +24,10 @@ class ExpenseCategoryHelper {
   static const _categories = ['生活', '购物', '工作', '娱乐', '大餐'];
 
   static String mapCategoryForDisplay(String dbValue) {
-    return _categoryDisplayMap[dbValue] ?? dbValue;
+    final value = isOtherCategory(dbValue) && dbValue.contains(':')
+        ? dbValue.substring(dbValue.indexOf(':') + 1)
+        : dbValue;
+    return _categoryDisplayMap[value] ?? value;
   }
 
   static String categoryToDbValue(String displayName) {
@@ -34,7 +37,12 @@ class ExpenseCategoryHelper {
   static List<String> get expenseCategories => _categories;
 
   static bool isOtherCategory(String category) {
-    return category == 'other';
+    return category == 'other' || category.startsWith('other:');
+  }
+
+  /// 在现有 category 字段中保留其他支出类型和具体分类。
+  static String toOtherCategory(String displayName) {
+    return 'other:${categoryToDbValue(displayName)}';
   }
 
   static IconData? categoryIcon(String displayName) {

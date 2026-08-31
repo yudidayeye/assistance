@@ -22,6 +22,9 @@ class AddForm extends StatefulWidget {
   final TextEditingController descController;
   final VoidCallback? onCollapse;
   final VoidCallback? onConfirm;
+  final List<String> categories;
+  final String? selectedCategory;
+  final ValueChanged<String>? onCategoryChanged;
 
   /// 确认按钮文字
   final String confirmText;
@@ -45,6 +48,9 @@ class AddForm extends StatefulWidget {
     required this.descController,
     this.onCollapse,
     this.onConfirm,
+    this.categories = const [],
+    this.selectedCategory,
+    this.onCategoryChanged,
     this.confirmText = '确认添加',
     this.confirmForeground = const Color(0xFF8B7EC8),
     this.confirmBackground = const Color(0xFF8B7EC8),
@@ -87,6 +93,48 @@ class _AddFormState extends State<AddForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.categories.isNotEmpty) ...[
+            Text(
+              '分类',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: appTheme.earthMedium.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: widget.categories.map((category) {
+                final selected = widget.selectedCategory == category;
+                return ChoiceChip(
+                  label: Text(category),
+                  selected: selected,
+                  onSelected: (_) => widget.onCategoryChanged?.call(category),
+                  showCheckmark: false,
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: appTheme.cardBackground,
+                  selectedColor: appTheme.primary.withValues(alpha: 0.12),
+                  side: BorderSide(
+                    color: selected
+                        ? appTheme.primary.withValues(alpha: 0.4)
+                        : appTheme.earthMedium.withValues(alpha: 0.1),
+                    width: 0.5,
+                  ),
+                  labelStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    color: selected ? appTheme.primary : appTheme.earthMedium,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(appTheme.radiusPill),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
+          ],
           // 金额输入
           TextField(
             controller: widget.amountController,

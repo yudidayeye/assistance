@@ -53,6 +53,8 @@ class _StageEditPageState extends State<StageEditPage> {
   final _shoppingAmountController = TextEditingController();
   final _otherDescController = TextEditingController();
   final _otherAmountController = TextEditingController();
+  String _shoppingCategory = '生活';
+  String _otherCategory = '生活';
 
   // 焦点节点：金额 → 描述/原因
   final _additionAmountFocusNode = FocusNode();
@@ -734,7 +736,7 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildShoppingSection(AppThemeExtension appTheme) {
-    final shoppingExpenses = _expenses.where((e) => e.category != 'other').toList();
+    final shoppingExpenses = _expenses.where((e) => !e.isOther).toList();
 
     return ExpenseSectionCard(
       title: '个人支出',
@@ -759,12 +761,12 @@ class _StageEditPageState extends State<StageEditPage> {
       },
       onReorder: (oldIndex, newIndex) {
         setState(() {
-          final shoppingExpenses = _expenses.where((e) => e.category != 'other').toList();
+          final shoppingExpenses = _expenses.where((e) => !e.isOther).toList();
           final item = shoppingExpenses.removeAt(oldIndex);
           shoppingExpenses.insert(newIndex, item);
           _expenses = [
             ...shoppingExpenses,
-            ..._expenses.where((e) => e.category == 'other'),
+            ..._expenses.where((e) => e.isOther),
           ];
         });
         _service.updateExpensesOrder(_expenses);
@@ -782,7 +784,7 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildOtherSection(AppThemeExtension appTheme) {
-    final otherExpenses = _expenses.where((e) => e.category == 'other').toList();
+    final otherExpenses = _expenses.where((e) => e.isOther).toList();
 
     return ExpenseSectionCard(
       title: '其他支出',
@@ -808,11 +810,11 @@ class _StageEditPageState extends State<StageEditPage> {
       },
       onReorder: (oldIndex, newIndex) {
         setState(() {
-          final otherExpenses = _expenses.where((e) => e.category == 'other').toList();
+          final otherExpenses = _expenses.where((e) => e.isOther).toList();
           final item = otherExpenses.removeAt(oldIndex);
           otherExpenses.insert(newIndex, item);
           _expenses = [
-            ..._expenses.where((e) => e.category != 'other'),
+            ..._expenses.where((e) => !e.isOther),
             ...otherExpenses,
           ];
         });
@@ -838,165 +840,63 @@ class _StageEditPageState extends State<StageEditPage> {
       descHint: '请输入描述',
       amountController: _shoppingAmountController,
       descController: _shoppingDescController,
+      categories: ExpenseCategoryHelper.expenseCategories,
+      selectedCategory: _shoppingCategory,
+      onCategoryChanged: (category) =>
+          setState(() => _shoppingCategory = category),
       onCollapse: () => setState(() => _shoppingFormExpanded = false),
-      onConfirm: () {
-        final amount = double.tryParse(_shoppingAmountController.text);
-        final desc = _shoppingDescController.text.trim();
-        if (amount == null || amount <= 0 || desc.isEmpty) return;
-        _service.addExpense(widget.stageId, '生活', amount, desc).then((_) {
-          _shoppingAmountController.clear();
-          _shoppingDescController.clear();
-          _refreshData();
-        });
-      },
+      onConfirm: _submitShoppingExpense,
       confirmForeground: appTheme.primary,
       confirmBackground: appTheme.primary,
       confirmBorder: appTheme.primary,
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 其他支出内嵌表单
-  // ═══════════════════════════════════════════════════════════
+  void _submitShoppingExpense() {
+    final amount = double.tryParse(_shoppingAmountController.text);
+    final desc = _shoppingDescController.text.trim();
+    if (amount == null || amount <= 0 || desc.isEmpty) return;
+    final category =
+        ExpenseCategoryHelper.categoryToDbValue(_shoppingCategory);
+    _service.addExpense(widget.stageId, category, amount, desc).then((_) {
+      _shoppingAmountController.clear();
+      _shoppingDescController.clear();
+      _refreshData();
+    });
+  }
 
+  // 其他支出内嵌表单
   Widget _buildOtherForm(AppThemeExtension appTheme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: appTheme.creamDark.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _otherAmountController,
-            focusNode: _otherAmountFocusNode,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textInputAction: TextInputAction.next,
-            onEditingComplete: () {
-              FocusScope.of(context).requestFocus(_otherDescFocusNode);
-            },
-            decoration: InputDecoration(
-              labelText: '金额',
-              hintText: '请输入金额',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              labelStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 14, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _otherDescController,
-            focusNode: _otherDescFocusNode,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) {
-              final amount = double.tryParse(_otherAmountController.text);
-              final desc = _otherDescController.text.trim();
-              if (amount == null || amount <= 0 || desc.isEmpty) return;
-              _service
-                  .addExpense(widget.stageId, 'other', amount, desc)
-                  .then((_) {
-                _otherAmountController.clear();
-                _otherDescController.clear();
-                _refreshData();
-              });
-            },
-            decoration: InputDecoration(
-              labelText: '描述',
-              hintText: '请输入描述',
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              labelStyle: TextStyle(
-                fontSize: 13,
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-              filled: true,
-              fillColor: appTheme.cardBackground,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-                borderSide: BorderSide(
-                  color: appTheme.earthMedium.withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            style: TextStyle(fontSize: 14, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton.icon(
-                  onPressed: () => setState(() => _otherFormExpanded = false),
-                  style: _secondaryButtonStyle(appTheme),
-                  icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 18),
-                  label: const Text('收起'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    final amount = double.tryParse(_otherAmountController.text);
-                    final desc = _otherDescController.text.trim();
-                    if (amount == null || amount <= 0 || desc.isEmpty) return;
-                    _service
-                        .addExpense(widget.stageId, 'other', amount, desc)
-                        .then((_) {
-                      _otherAmountController.clear();
-                      _otherDescController.clear();
-                      _refreshData();
-                    });
-                  },
-                  icon: const Icon(Icons.check_rounded, size: 16),
-                  label: const Text('确认添加'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: appTheme.primary,
-                    backgroundColor: appTheme.primary.withValues(alpha: 0.1),
-                    side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return AddForm(
+      amountLabel: '金额',
+      descLabel: '描述',
+      amountHint: '请输入金额',
+      descHint: '请输入描述',
+      amountController: _otherAmountController,
+      descController: _otherDescController,
+      categories: ExpenseCategoryHelper.expenseCategories,
+      selectedCategory: _otherCategory,
+      onCategoryChanged: (category) =>
+          setState(() => _otherCategory = category),
+      onCollapse: () => setState(() => _otherFormExpanded = false),
+      onConfirm: _submitOtherExpense,
+      confirmForeground: appTheme.primary,
+      confirmBackground: appTheme.primary,
+      confirmBorder: appTheme.primary,
     );
   }
 
-  // 数据库 category 值 → 显示名称（兼容已有数据）
-  static const _categoryDisplayMap = {
-    'shopping': '购物',
-    'other': '其他',
-  };
+  void _submitOtherExpense() {
+    final amount = double.tryParse(_otherAmountController.text);
+    final desc = _otherDescController.text.trim();
+    if (amount == null || amount <= 0 || desc.isEmpty) return;
+    final category = ExpenseCategoryHelper.toOtherCategory(_otherCategory);
+    _service.addExpense(widget.stageId, category, amount, desc).then((_) {
+      _otherAmountController.clear();
+      _otherDescController.clear();
+      _refreshData();
+    });
+  }
 
   // 显示名称 → 数据库存储值（反向映射，新增时用）
   static const _categoryValueMap = {
@@ -1008,7 +908,7 @@ class _StageEditPageState extends State<StageEditPage> {
   };
 
   String _mapCategoryForDisplay(String dbValue) {
-    return _categoryDisplayMap[dbValue] ?? dbValue;
+    return ExpenseCategoryHelper.mapCategoryForDisplay(dbValue);
   }
 
   String _categoryToDbValue(String displayName) {
@@ -1018,7 +918,7 @@ class _StageEditPageState extends State<StageEditPage> {
   /// 计算个人支出分类明细
   Map<String, double> _computePersonalBreakdown() {
     final map = <String, double>{};
-    for (final e in _expenses) {
+    for (final e in _expenses.where((expense) => !expense.isOther)) {
       final display = _mapCategoryForDisplay(e.category);
       map[display] = (map[display] ?? 0) + e.amount;
     }
@@ -1082,15 +982,11 @@ class _StageEditPageState extends State<StageEditPage> {
     final amountController =
         TextEditingController(text: expense.amount.toStringAsFixed(2));
     final descController = TextEditingController(text: expense.description);
-    // 其他支出不显示类型选择，直接使用原 category
-    final isOther = expense.category == 'other';
-    final initialCategory = isOther
-        ? '其他'
-        : _mapCategoryForDisplay(expense.category);
-    final showCategorySelector = !isOther;
-    String selectedCategory = showCategorySelector
-        ? (_expenseCategories.contains(initialCategory) ? initialCategory : '生活')
-        : '其他';
+    final isOther = expense.isOther;
+    final initialCategory = _mapCategoryForDisplay(expense.category);
+    String selectedCategory = _expenseCategories.contains(initialCategory)
+        ? initialCategory
+        : '生活';
 
     await showModalBottomSheet(
       context: context,
@@ -1141,8 +1037,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 ],
               ),
               AppSpacing.h12,
-              if (showCategorySelector) ...[
-                // 类型选择
+              // 类型选择
                 Text(
                   '类型',
                   style: TextStyle(
@@ -1194,9 +1089,7 @@ class _StageEditPageState extends State<StageEditPage> {
                     );
                   }).toList(),
                 ),
-                AppSpacing.h16,
-              ] else
-                AppSpacing.h12,
+              AppSpacing.h16,
               // 金额
               TextField(
                 controller: amountController,
@@ -1254,9 +1147,9 @@ class _StageEditPageState extends State<StageEditPage> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () {
-                    final dbCategory = showCategorySelector
-                        ? _categoryToDbValue(selectedCategory)
-                        : 'other';
+                    final dbCategory = isOther
+                        ? ExpenseCategoryHelper.toOtherCategory(selectedCategory)
+                        : _categoryToDbValue(selectedCategory);
                     _saveExpenseEdit(
                         expense, dbCategory, amountController, descController);
                     Navigator.pop(ctx);

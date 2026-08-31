@@ -740,7 +740,7 @@ class PeriodBookService extends ChangeNotifier {
     double shoppingTotal = 0; // 个人支出（所有非 other 分类）
     double otherTotal = 0; // 其他支出（仅 other）
     for (final e in expenses) {
-      if (e.category == 'other') {
+      if (e.isOther) {
         otherTotal += e.amount;
       } else {
         // shopping / 生活 / 购物 / 工作 / 娱乐 / 大餐 都算个人支出
@@ -815,7 +815,7 @@ class PeriodBookService extends ChangeNotifier {
       double stageShoppingTotal = 0; // 个人支出
       double stageOtherTotal = 0; // 其他支出
       for (final e in stageExpenses) {
-        if (e.category == 'other') {
+        if (e.isOther) {
           stageOtherTotal += e.amount;
         } else {
           // shopping / 生活 / 购物 / 工作 / 娱乐 / 大餐 都算个人支出

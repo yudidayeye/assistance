@@ -176,7 +176,7 @@ class _AggPageState extends State<AggPage>
       totalBalance += balance ?? 0;
 
       final expenses = _expenseMap[period.id] ?? [];
-      for (final e in expenses) {
+      for (final e in expenses.where((expense) => !expense.isOther)) {
         final cat = _normalizeCategory(e.category);
         categoryTotals[cat] = (categoryTotals[cat] ?? 0) + e.amount;
       }
