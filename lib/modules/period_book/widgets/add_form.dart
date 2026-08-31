@@ -94,15 +94,6 @@ class _AddFormState extends State<AddForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.categories.isNotEmpty) ...[
-            Text(
-              '分类',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: appTheme.earthMedium.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,

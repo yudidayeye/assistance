@@ -134,7 +134,7 @@ void main() {
       ),
     );
 
-    expect(find.text('分类'), findsOneWidget);
+    expect(find.text('分类'), findsNothing);
     expect(find.text('生活'), findsOneWidget);
     expect(find.text('购物'), findsOneWidget);
 

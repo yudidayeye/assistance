@@ -2,7 +2,6 @@
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../../shared/widgets/app_segmented_tab.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../../../shared/widgets/app_snack_bar.dart';
@@ -14,6 +13,7 @@ import '../services/period_book_service.dart';
 import '../widgets/expense_category_helper.dart';
 import '../widgets/expense_section_card.dart';
 import '../widgets/addition_section_card.dart';
+import '../widgets/records_tab_card.dart';
 import '../widgets/add_form.dart';
 import '../widgets/edit_balance_dialog.dart';
 
@@ -45,8 +45,6 @@ class _StageEditPageState extends State<StageEditPage> {
   bool _shoppingFormExpanded = false;
   bool _otherFormExpanded = false;
 
-  // Tab 切换（0=追加记录, 1=个人支出, 2=其他支出）
-  int _currentTabIndex = 0;
   final _additionReasonController = TextEditingController();
   final _additionAmountController = TextEditingController();
   final _shoppingDescController = TextEditingController();
@@ -332,9 +330,12 @@ class _StageEditPageState extends State<StageEditPage> {
                     onEditBalance: _showEditBalanceSheet,
                   ),
                 AppSpacing.h8,
-                _buildCardTabBar(appTheme),
-                AppSpacing.h12,
-                _buildUnifiedCard(appTheme),
+                RecordsTabCard(
+                  additionLabel: '追加记录',
+                  personalSection: _buildShoppingSection(appTheme),
+                  otherSection: _buildOtherSection(appTheme),
+                  additionSection: _buildAdditionsSection(appTheme),
+                ),
               ],
             ),
           ),
@@ -534,53 +535,6 @@ class _StageEditPageState extends State<StageEditPage> {
         size: 18,
       ),
     );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 统一记录卡片
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildUnifiedCard(AppThemeExtension appTheme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-        border: Border.all(
-          color: appTheme.earthMedium.withValues(alpha: 0.15),
-          width: 0.5,
-        ),
-      ),
-      child: _buildTabContent(appTheme),
-    );
-  }
-
-  Widget _buildCardTabBar(AppThemeExtension appTheme) {
-    return AppSegmentedTab(
-      items: const [
-        AppSegmentedTabItem(label: '个人支出'),
-        AppSegmentedTabItem(label: '其他支出'),
-        AppSegmentedTabItem(label: '追加记录'),
-      ],
-      selectedIndex: _currentTabIndex,
-      onChanged: (index) => setState(() => _currentTabIndex = index),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // Tab 内容
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildTabContent(AppThemeExtension appTheme) {
-    switch (_currentTabIndex) {
-      case 0:
-        return _buildShoppingSection(appTheme);
-      case 1:
-        return _buildOtherSection(appTheme);
-      case 2:
-        return _buildAdditionsSection(appTheme);
-      default:
-        return _buildShoppingSection(appTheme);
-    }
   }
 
   // ═══════════════════════════════════════════════════════════

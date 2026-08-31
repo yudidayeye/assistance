@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../../shared/widgets/app_segmented_tab.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../models/period_record.dart';
@@ -11,6 +10,7 @@ import '../services/period_book_service.dart';
 import '../widgets/expense_category_helper.dart';
 import '../widgets/expense_section_card.dart';
 import '../widgets/addition_section_card.dart';
+import '../widgets/records_tab_card.dart';
 import '../widgets/add_form.dart';
 
 /// 大额记录编辑页（周期级，不计入总本金和总支出）
@@ -31,8 +31,6 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
   List<LargeExpenseRecord> _shoppingExpenses = [];
   List<LargeExpenseRecord> _otherExpenses = [];
 
-  // Tab 切换（0=大额追加, 1=购物支出, 2=其他支出）
-  int _currentTabIndex = 0;
   bool _additionFormExpanded = false;
   bool _shoppingFormExpanded = false;
   bool _otherFormExpanded = false;
@@ -153,9 +151,12 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCardTabBar(appTheme),
-                AppSpacing.h8,
-                _buildUnifiedCard(appTheme),
+                RecordsTabCard(
+                  additionLabel: '大额追加',
+                  personalSection: _buildShoppingSection(appTheme),
+                  otherSection: _buildOtherSection(appTheme),
+                  additionSection: _buildAdditionsSection(appTheme),
+                ),
                 const SizedBox(height: 40),
               ],
             ),
@@ -163,47 +164,6 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         ),
       ],
     );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 统一记录卡片（Tab 切换）
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildUnifiedCard(AppThemeExtension appTheme) {
-    return Card(
-      color: appTheme.cardBackground,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-        side: BorderSide(color: appTheme.cardBorder, width: 1),
-      ),
-      elevation: 0,
-      child: _buildTabContent(appTheme),
-    );
-  }
-
-  Widget _buildCardTabBar(AppThemeExtension appTheme) {
-    return AppSegmentedTab(
-      items: const [
-        AppSegmentedTabItem(label: '大额追加'),
-        AppSegmentedTabItem(label: '个人支出'),
-        AppSegmentedTabItem(label: '其他支出'),
-      ],
-      selectedIndex: _currentTabIndex,
-      onChanged: (index) => setState(() => _currentTabIndex = index),
-    );
-  }
-
-  Widget _buildTabContent(AppThemeExtension appTheme) {
-    switch (_currentTabIndex) {
-      case 0:
-        return _buildAdditionsSection(appTheme);
-      case 1:
-        return _buildShoppingSection(appTheme);
-      case 2:
-        return _buildOtherSection(appTheme);
-      default:
-        return _buildAdditionsSection(appTheme);
-    }
   }
 
   // ═══════════════════════════════════════════════════════════
