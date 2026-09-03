@@ -32,13 +32,6 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
-/windows/*
-!/windows/setup_sqlite3.bat
-!/windows/runner/
-/windows/runner/*
-!windows/runner/main.cpp
-!windows/runner/win32_window.cpp
-!windows/runner/CMakeLists.txt
 
 # Symbolication related
 app.*.symbols
@@ -56,12 +49,6 @@ app.*.map.json
 
 # Claude Code
 .claude/settings.local.json
-
-# IntelliJ project file
-*.iml
-
-# Flutter metadata
-.metadata
 
 # Gradle
 **/android/.gradle/
