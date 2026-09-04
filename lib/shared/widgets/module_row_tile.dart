@@ -7,22 +7,18 @@ import '../../modules/period_book/services/period_book_service.dart';
 import '../../modules/period_tracker/services/period_service.dart';
 import '../../modules/vault/services/vault_service.dart';
 
-/// 工具箱单列展示的横版模块行 — 整卡内一行：图标色块 + 主题色标题 + 摘要 + 箭头
+/// 工具箱单列展示的横版模块卡片 — 一张圆角卡片内：图标色块 + 主题色标题 + 摘要 + 箭头
 ///
-/// 自身不携带卡片容器（由父级整卡统一提供底色/圆角/描边），仅渲染一行内容与
-/// 可选的底部细分割线，供单列模式下多个模块行在容器内纵向堆叠。
+/// 自带卡片容器（底色/圆角/描边），供单列模式下多个模块卡独立堆叠、
+/// 卡间由父级留出间距。
 class ModuleRowTile extends StatefulWidget {
   final ToolModule module;
   final VoidCallback? onTap;
-
-  /// 是否在行底部绘制分割线（最后一行传 false）
-  final bool showDivider;
 
   const ModuleRowTile({
     super.key,
     required this.module,
     this.onTap,
-    this.showDivider = false,
   });
 
   @override
@@ -114,93 +110,92 @@ class _ModuleRowTileState extends State<ModuleRowTile> {
     final color = widget.module.themeColor;
     final appTheme = Theme.of(context).appTheme;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onTap ?? () => context.push('/${widget.module.moduleId}'),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                // 模块图标
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(appTheme.radiusMd),
-                  ),
-                  child: Center(
-                    child: widget.module.icon.build(size: 20, color: color),
-                  ),
+    return Container(
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground,
+        // 与周期记账「阶段卡片」一致的中等圆角
+        borderRadius: BorderRadius.circular(appTheme.radiusMd),
+        border: Border.all(
+          color: appTheme.earthMedium.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap:
+            widget.onTap ?? () => context.push('/${widget.module.moduleId}'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              // 模块图标
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(appTheme.radiusMd),
                 ),
-                const SizedBox(width: 12),
-                // 标题 + 摘要
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+                child: Center(
+                  child: widget.module.icon.build(size: 20, color: color),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // 标题 + 摘要
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.module.displayName,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (_summary?.line1 != null) ...[
+                      const SizedBox(height: 3),
                       Text(
-                        widget.module.displayName,
+                        _summary!.line1,
                         style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: color,
-                          letterSpacing: -0.2,
+                          fontSize: 11,
+                          color: appTheme.earthMedium,
+                          fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (_summary?.line1 != null) ...[
-                        const SizedBox(height: 3),
-                        Text(
-                          _summary!.line1,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: appTheme.earthMedium,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      if (_summary?.line2 != null) ...[
-                        const SizedBox(height: 1),
-                        Text(
-                          _summary!.line2!,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: appTheme.earthMedium.withValues(alpha: 0.7),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
                     ],
-                  ),
+                    if (_summary?.line2 != null) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        _summary!.line2!,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: appTheme.earthMedium.withValues(alpha: 0.7),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 18,
-                  color: appTheme.earthMedium.withValues(alpha: 0.4),
-                ),
-              ],
-            ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: appTheme.earthMedium.withValues(alpha: 0.4),
+              ),
+            ],
           ),
         ),
-        if (widget.showDivider)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Divider(
-              height: 1,
-              thickness: 0.5,
-              color: appTheme.earthMedium.withValues(alpha: 0.07),
-            ),
-          ),
-      ],
+      ),
     );
   }
 }

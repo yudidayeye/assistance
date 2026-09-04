@@ -23,6 +23,7 @@ class _MainShellPageState extends State<MainShellPage> {
   /// 当前选中 Tab 标识：'toolbox' | 模块 moduleId | 'profile'
   String _selectedId = 'toolbox';
   final SettingsController _settingsController = SettingsController.instance;
+  final MenuController _toolboxMenuController = MenuController();
 
   @override
   void initState() {
@@ -109,53 +110,148 @@ class _MainShellPageState extends State<MainShellPage> {
   static Widget _profileIcon(Color color) =>
       Icon(Icons.person_rounded, size: 22, color: color);
 
-  /// 工具箱右上「设置」下拉菜单选中处理
+  /// 工具箱右上「设置」更多菜单 — 面板首行「展示样式」分段按钮 + 模块管理入口
   ///
-  /// 'cols_1'/'cols_2' → 切换展示样式（经 SettingsController 通知即时重排并持久化）；
-  /// 'manage' → 进入模块管理独立页。
-  void _onToolboxMenuSelected(String value) {
-    if (value == 'cols_1' || value == 'cols_2') {
-      _settingsController.setToolboxColumns(value == 'cols_1' ? '1' : '2');
-    } else if (value == 'manage') {
-      context.push('/module_manage');
-    }
+  /// 用 MenuAnchor 承载可交互内容（PopupMenuButton 无法在面板内放分段按钮）。
+  /// 面板宽度定宽，锚点为 AppBar actions 末位的 ⋮ 按钮，弹出位置自动贴合屏幕右缘。
+  Widget _buildMoreMenu(AppThemeExtension appTheme) {
+    final controller = _toolboxMenuController;
+    return MenuAnchor(
+      controller: controller,
+      style: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll(appTheme.cardBackground),
+        side: WidgetStatePropertyAll(
+          BorderSide(
+            color: appTheme.earthMedium.withValues(alpha: 0.12),
+            width: 0.5,
+          ),
+        ),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(appTheme.radiusMd),
+          ),
+        ),
+        elevation: const WidgetStatePropertyAll(6),
+        padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+      ),
+      menuChildren: [
+        SizedBox(
+          width: 240,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 展示样式：名称 + 右侧分段选择
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                child: Row(
+                  children: [
+                    Text(
+                      '展示样式',
+                      style: AppTypography.bodyMd
+                          .copyWith(color: appTheme.earth),
+                    ),
+                    const Spacer(),
+                    _buildViewStyleSegmented(appTheme),
+                  ],
+                ),
+              ),
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                indent: 16,
+                endIndent: 16,
+                color: appTheme.earthMedium.withValues(alpha: 0.08),
+              ),
+              // 模块管理入口
+              InkWell(
+                onTap: () {
+                  controller.close();
+                  context.push('/module_manage');
+                },
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.apps_rounded,
+                          size: 18, color: appTheme.earth),
+                      const SizedBox(width: 8),
+                      Text(
+                        '模块管理',
+                        style: AppTypography.bodyMd
+                            .copyWith(color: appTheme.earth),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      builder: (context, menuController, _) => IconButton(
+        tooltip: '工具箱设置',
+        onPressed: () {
+          menuController.isOpen
+              ? menuController.close()
+              : menuController.open();
+        },
+        icon: Icon(Icons.more_vert_rounded,
+            size: 20, color: appTheme.earth),
+      ),
+    );
   }
 
-  /// 工具箱展示样式下拉菜单项 — 当前列数前带 ✓（leading 占位保证切选时不错位）
-  List<PopupMenuEntry<String>> _toolboxMenuItems(String columns) {
-    final appTheme = Theme.of(context).appTheme;
-    Widget item(IconData? check, String text) => Row(
-          children: [
-            SizedBox(
-              width: 22,
-              child: check == null
-                  ? null
-                  : Icon(Icons.check_rounded, size: 18, color: appTheme.primary),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                text,
-                style: TextStyle(fontSize: 14, color: appTheme.earth),
-              ),
-            ),
-          ],
-        );
-    return [
-      PopupMenuItem(
-        value: 'cols_2',
-        child: item(columns == '2' ? Icons.check_rounded : null, '双列展示'),
+  /// 工具箱展示样式分段按钮 — 双列/单列
+  ///
+  /// 照历史记录页标题右侧 SegmentedButton 风格：选中主色高亮 + 白字。
+  /// 切换经 SettingsController 持久化并通知即时重排模块网格。
+  Widget _buildViewStyleSegmented(AppThemeExtension appTheme) {
+    final columns = _settingsController.toolboxColumns;
+    return SegmentedButton<String>(
+      showSelectedIcon: false,
+      style: ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+          (states) => states.contains(WidgetState.selected)
+              ? appTheme.primary
+              : appTheme.cardBackground,
+        ),
+        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+          (states) => states.contains(WidgetState.selected)
+              ? Colors.white
+              : appTheme.earth,
+        ),
+        side: WidgetStateProperty.all(
+          BorderSide(color: appTheme.earthMedium.withValues(alpha: 0.2)),
+        ),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(appTheme.radiusSm),
+          ),
+        ),
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        ),
       ),
-      PopupMenuItem(
-        value: 'cols_1',
-        child: item(columns == '1' ? Icons.check_rounded : null, '单列展示'),
-      ),
-      const PopupMenuDivider(),
-      PopupMenuItem(
-        value: 'manage',
-        child: item(null, '模块管理'),
-      ),
-    ];
+      segments: const [
+        ButtonSegment<String>(
+          value: '2',
+          label: Text('双列', style: TextStyle(fontSize: 12)),
+        ),
+        ButtonSegment<String>(
+          value: '1',
+          label: Text('单列', style: TextStyle(fontSize: 12)),
+        ),
+      ],
+      selected: {columns},
+      onSelectionChanged: (selection) {
+        _settingsController.setToolboxColumns(selection.first);
+        // 切换后关闭菜单，让用户立即看到整屏布局效果
+        _toolboxMenuController.close();
+      },
+    );
   }
 
   Widget _buildToolboxPage(AppThemeExtension appTheme) {
@@ -177,25 +273,16 @@ class _MainShellPageState extends State<MainShellPage> {
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: PopupMenuButton<String>(
-                tooltip: '工具箱设置',
-                onSelected: _onToolboxMenuSelected,
-                itemBuilder: (_) =>
-                    _toolboxMenuItems(_settingsController.toolboxColumns),
-                icon: Icon(Icons.settings_outlined,
-                    size: 20, color: appTheme.earth),
-              ),
-            ),
+            // 更多菜单（展示样式 + 模块管理，右上角展开）
+            _buildMoreMenu(appTheme),
           ],
         ),
         if (isSingleColumn)
-          // ── 单列：整卡横版行（图标 + 标题 + 摘要 + 箭头，行间细分隔线）──
+          // ── 单列：独立横版模块卡（图标 + 标题 + 摘要 + 箭头），卡间留间距 ──
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             sliver: SliverToBoxAdapter(
-              child: _buildModuleRowCard(appTheme, enabledModules),
+              child: _buildModuleCards(enabledModules),
             ),
           )
         else
@@ -226,31 +313,15 @@ class _MainShellPageState extends State<MainShellPage> {
     );
   }
 
-  /// 单列模式的模块横版行整卡 — 与 FeaturedCard 同款底色/圆角/描边，
-  /// 内部逐模块一行，行间由 ModuleRowTile.showDivider 绘制分隔线。
-  Widget _buildModuleRowCard(
-      AppThemeExtension appTheme, List<ToolModule> modules) {
+  /// 单列模式的模块横版卡片列表 — 每模块一张独立圆角卡（由 ModuleRowTile 自带），
+  /// 卡间留 10px 间距。
+  Widget _buildModuleCards(List<ToolModule> modules) {
     if (modules.isEmpty) return const SizedBox.shrink();
-    return Container(
-      decoration: BoxDecoration(
-        color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusLg),
-        border: Border.all(
-          color: appTheme.earthMedium.withValues(alpha: 0.15),
-          width: 0.5,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var i = 0; i < modules.length; i++)
-            ModuleRowTile(
-              module: modules[i],
-              showDivider: i < modules.length - 1,
-            ),
-        ],
-      ),
-    );
+    final tiles = <Widget>[];
+    for (var i = 0; i < modules.length; i++) {
+      tiles.add(ModuleRowTile(module: modules[i]));
+      if (i < modules.length - 1) tiles.add(const SizedBox(height: 10));
+    }
+    return Column(mainAxisSize: MainAxisSize.min, children: tiles);
   }
 }
