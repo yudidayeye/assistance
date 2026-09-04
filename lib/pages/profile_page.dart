@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../core/module_system/module_registry.dart';
 import '../core/module_system/module_summary.dart';
@@ -12,10 +11,8 @@ import '../core/module_system/tool_module.dart';
 import '../core/settings/settings_service.dart';
 import '../core/storage/database_service.dart';
 import '../core/theme/theme_extension.dart';
-import '../core/theme/theme_provider.dart';
 import '../modules/period_book/services/period_book_service.dart';
 import '../modules/period_tracker/services/period_service.dart';
-import '../modules/vault/services/vault_session.dart';
 import '../modules/vault/services/vault_service.dart';
 import '../shared/foundation/app_typography.dart';
 import '../shared/widgets/app_scaffold.dart';
@@ -46,7 +43,6 @@ class _ProfilePageContentState extends State<ProfilePageContent>
 
   String _userName = '用户';
   String? _avatarB64;
-  String _version = '';
 
   /// 各工具模块的动态摘要（key = moduleId）
   final Map<String, ModuleSummary> _summaries = {};
@@ -61,7 +57,6 @@ class _ProfilePageContentState extends State<ProfilePageContent>
     VaultService.instance.addListener(_onModuleData);
     // 订阅设置变更（导入 / 模块启停 / 主题重载后刷新身份与摘要）
     SettingsController.instance.addListener(_onSettingsChanged);
-    _loadVersion();
     _loadAll();
   }
 
@@ -98,15 +93,6 @@ class _ProfilePageContentState extends State<ProfilePageContent>
     if (rows.isEmpty) return null;
     final value = rows.first['value'] as String?;
     return (value == null || value.isEmpty) ? null : value;
-  }
-
-  Future<void> _loadVersion() async {
-    try {
-      final info = await PackageInfo.fromPlatform();
-      if (mounted) setState(() => _version = info.version);
-    } catch (_) {
-      // 忽略：无法读取版本号时不展示
-    }
   }
 
   Future<void> _loadAll() async {
@@ -189,7 +175,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
         // ── 页面内容 ──
         SliverToBoxAdapter(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildUserCard(appTheme),
 
@@ -200,16 +186,8 @@ class _ProfilePageContentState extends State<ProfilePageContent>
                 const SizedBox(height: 16),
               ],
 
-              const SectionLabel(title: '快捷操作'),
-              SectionCard(child: _buildQuickActions(appTheme)),
-              const SizedBox(height: 16),
-
-              const SectionLabel(title: '功能'),
+              const SectionLabel(title: '快捷入口'),
               SectionCard(child: _buildFeatureSection()),
-              const SizedBox(height: 16),
-
-              const SectionLabel(title: '设置'),
-              SectionCard(child: _buildSettingsSection(appTheme)),
               const SizedBox(height: 28),
             ],
           ),
@@ -219,73 +197,55 @@ class _ProfilePageContentState extends State<ProfilePageContent>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // ① 用户卡片 — 头像（可换）+ 昵称（可编辑）
+  // ① 用户卡 — 紧凑横排：左头像（可换）＋右昵称（可编辑），占满整行
   // ═══════════════════════════════════════════════════════════
   Widget _buildUserCard(AppThemeExtension appTheme) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: appTheme.cardBackground,
-        borderRadius: BorderRadius.circular(appTheme.radiusXl),
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
         boxShadow: appTheme.cardShadow,
       ),
-      child: Column(
+      child: Row(
         children: [
-          // 头像 — 双层环形渐变；已设头像时内圆展示图片
+          // 头像（点击更换）
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: _onAvatarTap,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    appTheme.primary.withValues(alpha: 0.18),
-                    appTheme.primaryLight.withValues(alpha: 0.3),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            child: _buildAvatar(appTheme),
+          ),
+          const SizedBox(width: 14),
+          // 昵称（点击编辑）
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _editName,
+              child: Text(
+                _userName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: appTheme.earth,
+                  letterSpacing: -0.2,
                 ),
               ),
-              child: Center(child: _buildAvatarInner(appTheme)),
             ),
           ),
-          const SizedBox(height: 18),
-          // 昵称 + 编辑提示
+          // 编辑昵称小按钮
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: _editName,
-            child: Column(
-              children: [
-                Text(
-                  _userName,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: appTheme.earth,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.edit_rounded,
-                        size: 14,
-                        color: appTheme.earthMedium.withValues(alpha: 0.5)),
-                    const SizedBox(width: 6),
-                    Text(
-                      '点击编辑昵称 · 点按头像可更换',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: appTheme.earthMedium.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+                Icons.edit_rounded,
+                size: 16,
+                color: appTheme.earthMedium.withValues(alpha: 0.6),
+              ),
             ),
           ),
         ],
@@ -293,19 +253,39 @@ class _ProfilePageContentState extends State<ProfilePageContent>
     );
   }
 
-  Widget _buildAvatarInner(AppThemeExtension appTheme) {
+  /// 头像圆环 + 内圆头像（已设图片则展示图片，否则默认人形图标）
+  Widget _buildAvatar(AppThemeExtension appTheme) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [
+            appTheme.primary.withValues(alpha: 0.18),
+            appTheme.primaryLight.withValues(alpha: 0.3),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(child: _buildAvatarFace(appTheme)),
+    );
+  }
+
+  Widget _buildAvatarFace(AppThemeExtension appTheme) {
     final avatar = _avatarB64;
     if (avatar != null) {
       try {
         final bytes = base64Decode(avatar);
         return ClipOval(
           child: SizedBox(
-            width: 64,
-            height: 64,
+            width: 48,
+            height: 48,
             child: Image.memory(
               bytes,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildDefaultAvatar(appTheme),
+              errorBuilder: (_, __, ___) => _buildDefaultAvatarFace(appTheme),
             ),
           ),
         );
@@ -313,19 +293,19 @@ class _ProfilePageContentState extends State<ProfilePageContent>
         // base64 数据异常时回退默认头像
       }
     }
-    return _buildDefaultAvatar(appTheme);
+    return _buildDefaultAvatarFace(appTheme);
   }
 
   /// 默认人形头像（无自定义头像 / 头像数据异常时展示）
-  Widget _buildDefaultAvatar(AppThemeExtension appTheme) {
+  Widget _buildDefaultAvatarFace(AppThemeExtension appTheme) {
     return Container(
-      width: 64,
-      height: 64,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: appTheme.primary.withValues(alpha: 0.12),
       ),
-      child: Icon(Icons.person_rounded, color: appTheme.primary, size: 34),
+      child: Icon(Icons.person_rounded, color: appTheme.primary, size: 28),
     );
   }
 
@@ -521,109 +501,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // ③ 快捷操作 — 高频动作按钮组
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildQuickActions(AppThemeExtension appTheme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-      child: Row(
-        children: [
-          _buildQuickAction(
-            appTheme,
-            icon: Icons.favorite_outline_rounded,
-            iconColor: appTheme.rose,
-            label: '记录经期',
-            onTap: () => context.push('/period_tracker'),
-          ),
-          _buildQuickAction(
-            appTheme,
-            icon: Icons.account_balance_wallet_outlined,
-            iconColor: appTheme.sage,
-            label: '记账',
-            onTap: _goToBook,
-          ),
-          _buildQuickAction(
-            appTheme,
-            icon: Icons.shield_outlined,
-            iconColor: appTheme.primary,
-            label: '保险箱',
-            onTap: _handleVaultAction,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickAction(
-    AppThemeExtension appTheme, {
-    required IconData icon,
-    required Color iconColor,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(appTheme.radiusMd),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: AppTypography.caption.copyWith(
-                  color: appTheme.earth,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 记账：有进行中的周期进详情，否则引导新建周期
-  Future<void> _goToBook() async {
-    final period = await PeriodBookService.instance.getOngoingPeriod();
-    if (!mounted) return;
-    if (period == null) {
-      context.push('/period_book/new');
-    } else {
-      context.push('/period_book');
-    }
-  }
-
-  /// 保险箱动作：未设主密码→引导设置；已锁定→引导解锁；已解锁→立即锁定
-  Future<void> _handleVaultAction() async {
-    final hasMaster = await VaultService.instance.hasMasterPassword();
-    if (!mounted) return;
-    if (!hasMaster) {
-      AppSnackBar.show(context, '保险箱尚未设置主密码');
-      context.push('/vault');
-      return;
-    }
-    if (VaultSession.instance.isLocked) {
-      AppSnackBar.show(context, '保险箱已锁定，请先解锁');
-      context.push('/vault');
-      return;
-    }
-    VaultSession.instance.lock();
-    AppSnackBar.show(context, '保险箱已锁定', type: AppSnackBarType.success);
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // ④ 功能 — 统计与数据入口
+  // ④ 快捷入口 — 各模块功能入口
   // ═══════════════════════════════════════════════════════════
   Widget _buildFeatureSection() {
     final items = <SettingsListItem>[
@@ -642,46 +520,6 @@ class _ProfilePageContentState extends State<ProfilePageContent>
         title: '数据同步',
         subtitle: '局域网设备间迁移数据',
         onTap: () => context.push('/sync'),
-      ),
-    ];
-    return _toColumn(items);
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // ⑤ 设置 — 轻量摘要入口（重型配置仍留在 /settings）
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildSettingsSection(AppThemeExtension appTheme) {
-    final theme = ThemeProvider.instance.currentTheme;
-    final items = <SettingsListItem>[
-      SettingsListItem(
-        icon: Icons.palette_outlined,
-        title: '主题外观',
-        subtitle: theme.label,
-        trailing: Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(
-            color: theme.color,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: appTheme.earthMedium.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-        ),
-        onTap: () => context.push('/settings'),
-      ),
-      SettingsListItem(
-        icon: Icons.privacy_tip_outlined,
-        title: '隐私声明',
-        subtitle: '所有数据仅存储在本地',
-        onTap: () => context.push('/settings'),
-      ),
-      SettingsListItem(
-        icon: Icons.info_outline_rounded,
-        title: '关于',
-        subtitle: _version.isEmpty ? null : '版本 $_version',
-        onTap: () => context.push('/settings'),
       ),
     ];
     return _toColumn(items);
