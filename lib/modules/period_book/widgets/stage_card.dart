@@ -20,6 +20,9 @@ class StageCard extends StatefulWidget {
   final bool expandExpenseByDefault;
   /// 个人支出分类明细（用于饼图展示），key 为分类名，value 为金额
   final Map<String, double>? personalExpenseBreakdown;
+  /// 饼图选中/取消分类回调（传 null 表示取消选中）。
+  /// 阶段编辑页用它把选中的分类联动到「个人支出」列表筛选。
+  final ValueChanged<String?>? onBreakdownCategorySelected;
 
   const StageCard({
     super.key,
@@ -32,6 +35,7 @@ class StageCard extends StatefulWidget {
     this.showHeader = true,
     this.expandExpenseByDefault = false,
     this.personalExpenseBreakdown,
+    this.onBreakdownCategorySelected,
   });
 
   @override
@@ -41,7 +45,9 @@ class StageCard extends StatefulWidget {
 class _StageCardState extends State<StageCard> {
   late bool _expenseExpanded;
   late bool _baseExpanded;
-  int? _touchedIndex;
+  /// 当前选中的饼图分类名（null = 未选中）。用名称而非索引，
+  /// 避免数据刷新/排序变化后索引漂移导致 tooltip 与联动筛选错位。
+  String? _touchedCategory;
 
   @override
   void initState() {
@@ -56,6 +62,7 @@ class _StageCardState extends State<StageCard> {
     if (oldWidget.stage.id != widget.stage.id) {
       _expenseExpanded = widget.expandExpenseByDefault || _isCurrentStage;
       _baseExpanded = false;
+      _touchedCategory = null;
     }
   }
 
@@ -381,6 +388,17 @@ class _StageCardState extends State<StageCard> {
 
     final pctMap = {for (final e in sortedEntries) e.key: total > 0 ? e.value / total : 0.0};
 
+    // 当前选中分类对应的明细（数据变化后按名称反查最新金额/占比）
+    MapEntry<String, double>? selectedEntry;
+    if (_touchedCategory != null) {
+      for (final e in sortedEntries) {
+        if (e.key == _touchedCategory) {
+          selectedEntry = e;
+          break;
+        }
+      }
+    }
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -438,25 +456,15 @@ class _StageCardState extends State<StageCard> {
                       touchCallback: (FlTouchEvent event, pieTouchResponse) {
                         // 只响应点击事件，忽略悬浮
                         if (event is! FlTapDownEvent) return;
-                        if (pieTouchResponse == null ||
-                            pieTouchResponse.touchedSection == null) {
-                          if (_touchedIndex != null) {
-                            setState(() => _touchedIndex = null);
-                          }
-                          return;
+                        String? tappedCategory;
+                        final touchedIndex = pieTouchResponse
+                                ?.touchedSection?.touchedSectionIndex ??
+                            -1;
+                        if (touchedIndex >= 0 &&
+                            touchedIndex < sortedEntries.length) {
+                          tappedCategory = sortedEntries[touchedIndex].key;
                         }
-                        final newIndex =
-                            pieTouchResponse.touchedSection!.touchedSectionIndex;
-                        if (newIndex < 0 || newIndex >= sortedEntries.length) {
-                          if (_touchedIndex != null) {
-                            setState(() => _touchedIndex = null);
-                          }
-                        } else if (newIndex == _touchedIndex) {
-                          // 再次点击同一扇区则取消选中
-                          setState(() => _touchedIndex = null);
-                        } else {
-                          setState(() => _touchedIndex = newIndex);
-                        }
+                        _handleBreakdownCategoryTap(tappedCategory);
                       },
                     ),
                   ),
@@ -465,9 +473,7 @@ class _StageCardState extends State<StageCard> {
             );
           },
         ),
-        if (_touchedIndex != null &&
-            _touchedIndex! >= 0 &&
-            _touchedIndex! < sortedEntries.length)
+        if (selectedEntry != null)
           Positioned(
             // 贴在饼图底部内侧，避免 tooltip 溢出卡片区域
             bottom: -10,
@@ -476,15 +482,26 @@ class _StageCardState extends State<StageCard> {
             child: Center(
               child: _buildPieTooltip(
                 appTheme,
-                sortedEntries[_touchedIndex!].key,
-                sortedEntries[_touchedIndex!].value,
-                pctMap[sortedEntries[_touchedIndex!].key]!,
-                colorMap[sortedEntries[_touchedIndex!].key] ?? appTheme.earthMedium,
+                selectedEntry.key,
+                selectedEntry.value,
+                pctMap[selectedEntry.key]!,
+                colorMap[selectedEntry.key] ?? appTheme.earthMedium,
               ),
             ),
           ),
       ],
     );
+  }
+
+  /// 处理饼图扇区点击：点中未选中的分类则选中并回调；点空白或重复点击
+  /// 当前分类则取消选中并回调 null，供外层联动筛选。
+  void _handleBreakdownCategoryTap(String? tappedCategory) {
+    final next = (tappedCategory == null)
+        ? null
+        : (tappedCategory == _touchedCategory ? null : tappedCategory);
+    if (next == _touchedCategory) return;
+    setState(() => _touchedCategory = next);
+    widget.onBreakdownCategorySelected?.call(next);
   }
 
   Widget _buildPieTooltip(

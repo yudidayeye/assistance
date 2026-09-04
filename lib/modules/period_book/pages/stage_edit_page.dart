@@ -64,6 +64,15 @@ class _StageEditPageState extends State<StageEditPage> {
 
   bool _loading = true;
 
+  // 记录分组 Tab 受控索引（顶部饼图选分类时切到「个人支出」）
+  int _recordsTabIndex = 0;
+
+  /// 个人支出分类筛选（来自顶部饼图选中；null = 不筛选）
+  String? _expenseFilter;
+
+  /// 记录分组卡片 Key，用于筛选后滚动到列表区
+  final GlobalKey _recordsTabKey = GlobalKey();
+
   /// 所有追加记录合计金额
   double get _additionsTotal =>
       _additions.fold(0.0, (sum, addition) => sum + addition.amount);
@@ -90,6 +99,29 @@ class _StageEditPageState extends State<StageEditPage> {
     _otherAmountFocusNode.dispose();
     _otherDescFocusNode.dispose();
     super.dispose();
+  }
+
+  /// 顶部饼图分类选中/取消联动：选中切到「个人支出」Tab 并按分类筛选；
+  /// 取消（null）则清空筛选。
+  void _onBreakdownCategoryChanged(String? category) {
+    setState(() {
+      _expenseFilter = category;
+      if (category != null) _recordsTabIndex = 0;
+    });
+    if (category != null) {
+      // 数据更新后把记录 Tab 区滚动到可视范围，展示筛选结果
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _recordsTabKey.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(
+            ctx,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+            alignment: 0.5,
+          );
+        }
+      });
+    }
   }
 
   Future<void> _loadData() async {
@@ -326,12 +358,17 @@ class _StageEditPageState extends State<StageEditPage> {
                     showHeader: false,
                     expandExpenseByDefault: true,
                     personalExpenseBreakdown: _computePersonalBreakdown(),
+                    onBreakdownCategorySelected: _onBreakdownCategoryChanged,
                     onEdit: () => context.pop(),
                     onEditBalance: _showEditBalanceSheet,
                   ),
                 AppSpacing.h8,
                 RecordsTabCard(
+                  key: _recordsTabKey,
                   additionLabel: '追加记录',
+                  selectedIndex: _recordsTabIndex,
+                  onSelectedIndexChanged: (index) =>
+                      setState(() => _recordsTabIndex = index),
                   personalSection: _buildShoppingSection(appTheme),
                   otherSection: _buildOtherSection(appTheme),
                   additionSection: _buildAdditionsSection(appTheme),
@@ -690,21 +727,49 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildShoppingSection(AppThemeExtension appTheme) {
-    final shoppingExpenses = _expenses.where((e) => !e.isOther).toList();
+    final filter = _expenseFilter;
+    final allShopping = _expenses.where((e) => !e.isOther).toList();
+    final shoppingExpenses = filter == null
+        ? allShopping
+        : allShopping
+            .where((e) => _mapCategoryForDisplay(e.category) == filter)
+            .toList();
+    // 有个人支出但被筛选为空（例如饼图点中「杂项」这类无条目分类）
+    final emptyByFilter =
+        filter != null && shoppingExpenses.isEmpty && allShopping.isNotEmpty;
 
     return ExpenseSectionCard(
       title: '个人支出',
-      emptyText: '暂无个人支出',
-      expenses: shoppingExpenses.map((e) => ExpenseItemData(
-        id: '${e.id}',
-        category: e.category,
-        description: e.description,
-        amount: e.amount,
-      )).toList(),
+      emptyText: emptyByFilter ? '「$filter」分类暂无支出条目' : '暂无个人支出',
+      expenses: shoppingExpenses
+          .map((e) => ExpenseItemData(
+                id: '${e.id}',
+                category: e.category,
+                description: e.description,
+                amount: e.amount,
+              ))
+          .toList(),
       color: appTheme.rose,
       showAddButton: !_shoppingFormExpanded,
       form: _shoppingFormExpanded ? _buildShoppingForm(appTheme) : null,
-      onAdd: () { setState(() => _shoppingFormExpanded = true); WidgetsBinding.instance.addPostFrameCallback((_) { if (_scrollController.hasClients) { _scrollController.animateTo( _scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut, ); } }); },
+      onAdd: () {
+        setState(() {
+          _shoppingFormExpanded = true;
+          // 筛选激活时预置新增分类，避免新记录与筛选不符而看不到
+          if (filter != null && _expenseCategories.contains(filter)) {
+            _shoppingCategory = filter;
+          }
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      },
       onEdit: (data) {
         final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
         _showEditExpenseSheet(appTheme, expense);
@@ -713,24 +778,30 @@ class _StageEditPageState extends State<StageEditPage> {
         final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
         _deleteExpense(expense);
       },
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          final shoppingExpenses = _expenses.where((e) => !e.isOther).toList();
-          final item = shoppingExpenses.removeAt(oldIndex);
-          shoppingExpenses.insert(newIndex, item);
-          _expenses = [
-            ...shoppingExpenses,
-            ..._expenses.where((e) => e.isOther),
-          ];
-        });
-        _service.updateExpensesOrder(_expenses);
-      },
-      leading: Icon(
-        Icons.drag_handle_rounded,
-        color: appTheme.earthMedium.withValues(alpha: 0.4),
-        size: 18,
-      ),
+      // 筛选子集时拖动排序会错位，禁用
+      onReorder: filter != null ? null : _onShoppingReorder,
+      leading: filter == null
+          ? Icon(
+              Icons.drag_handle_rounded,
+              color: appTheme.earthMedium.withValues(alpha: 0.4),
+              size: 18,
+            )
+          : null,
     );
+  }
+
+  /// 个人支出拖动排序：仅调整非 other 子集顺序，其他支出保持相对位置
+  void _onShoppingReorder(int oldIndex, int newIndex) {
+    setState(() {
+      final shoppingExpenses = _expenses.where((e) => !e.isOther).toList();
+      final item = shoppingExpenses.removeAt(oldIndex);
+      shoppingExpenses.insert(newIndex, item);
+      _expenses = [
+        ...shoppingExpenses,
+        ..._expenses.where((e) => e.isOther),
+      ];
+    });
+    _service.updateExpensesOrder(_expenses);
   }
 
   // ═══════════════════════════════════════════════════════════
