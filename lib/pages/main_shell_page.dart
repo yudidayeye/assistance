@@ -30,6 +30,13 @@ class _MainShellPageState extends State<MainShellPage> {
   void initState() {
     super.initState();
     _settingsController.addListener(_onSettingsChanged);
+    // 恢复上次选中的底部 Tab：设置已在 main() 中 await 加载完毕，可安全同步读取。
+    // 仅当该 Tab 当前仍有效（固定模块未被取消固定/禁用）时采用，否则保持默认工具箱。
+    final savedTab = _settingsController.lastSelectedTab;
+    if (_tabIds(ModuleRegistry.instance.getPinnedModules())
+        .contains(savedTab)) {
+      _selectedId = savedTab;
+    }
   }
 
   @override
@@ -47,20 +54,27 @@ class _MainShellPageState extends State<MainShellPage> {
     ];
   }
 
+  /// 切换底部 Tab 并持久化，供下次启动恢复（fire-and-forget DB 写入）
+  void _selectTab(String id) {
+    if (_selectedId == id) return;
+    setState(() => _selectedId = id);
+    SettingsService.instance.setLastSelectedTab(id);
+  }
+
   void _onSettingsChanged() {
     final pinned = ModuleRegistry.instance.getPinnedModules();
     final ids = _tabIds(pinned);
-    setState(() {
-      // 当前选中的 Tab 被取消固定/禁用时，安全回落到工具箱
-      if (!ids.contains(_selectedId)) _selectedId = 'toolbox';
-    });
+    if (ids.contains(_selectedId)) {
+      // 无回落需要；但设置变化仍须重建，以刷新列数/固定项等布局
+      setState(() {});
+    } else {
+      // 当前选中的 Tab 被取消固定/禁用时，安全回落到工具箱并同步持久化
+      _selectTab('toolbox');
+    }
   }
 
   /// 点头像切到「我的」底部 Tab（不 push 路由，无返回栈）
-  void _switchToProfileTab() {
-    if (_selectedId == 'profile') return;
-    setState(() => _selectedId = 'profile');
-  }
+  void _switchToProfileTab() => _selectTab('profile');
 
   @override
   Widget build(BuildContext context) {
@@ -103,10 +117,7 @@ class _MainShellPageState extends State<MainShellPage> {
             iconBuilder: _profileIcon,
           ),
         ],
-        onTap: (i) {
-          if (i == index) return;
-          setState(() => _selectedId = tabIds[i]);
-        },
+        onTap: (i) => _selectTab(tabIds[i]),
       ),
     );
   }

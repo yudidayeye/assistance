@@ -78,6 +78,8 @@ class SettingsService {
     await loadPrivacyDisclaimer();
     // 加载用户昵称与头像
     await _loadUserProfile();
+    // 加载上次选中的底部 Tab
+    await _loadLastSelectedTab();
   }
 
   /// 设置模块启用状态
@@ -209,6 +211,31 @@ class SettingsService {
     _avatarB64 = b64.isEmpty ? null : b64;
     await _db.upsertSetting('user_avatar', b64);
   }
+
+  // ─────────────────────────────────────────────────────────
+  // 底部导航上次选中项（重启后恢复）
+  // ─────────────────────────────────────────────────────────
+
+  String _lastTabId = 'toolbox';
+
+  /// 上次选中的底部 Tab 标识：'toolbox' | 模块 moduleId | 'profile'
+  String get lastSelectedTab => _lastTabId;
+
+  /// 保存当前选中的底部 Tab 并持久化，供下次启动恢复
+  Future<void> setLastSelectedTab(String tabId) async {
+    _lastTabId = tabId;
+    await _db.upsertSetting('last_selected_tab', tabId);
+  }
+
+  /// 从数据库加载上次选中的底部 Tab（无记录则回退工具箱）
+  Future<void> _loadLastSelectedTab() async {
+    final rows =
+        await _db.query('app_settings', where: "key = 'last_selected_tab'");
+    _lastTabId = (rows.isNotEmpty &&
+            (rows.first['value'] as String? ?? '').isNotEmpty)
+        ? (rows.first['value'] as String)
+        : 'toolbox';
+  }
 }
 
 /// 设置状态控制器 — ChangeNotifier，供 UI 层监听模块启停变化
@@ -265,6 +292,11 @@ class SettingsController extends ChangeNotifier {
     await _service.setUserAvatar(b64);
     notifyListeners();
   }
+
+  /// 上次选中的底部 Tab 标识（'toolbox' | 模块 moduleId | 'profile'）
+  ///
+  /// 只读透传：Tab 由 MainShellPage 自管状态，无需经控制器广播。
+  String get lastSelectedTab => _service.lastSelectedTab;
 
   /// 从数据库重新加载设置并通知 UI
   Future<void> reload() async {
