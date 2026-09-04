@@ -2,6 +2,7 @@
 import 'package:go_router/go_router.dart';
 import '../module_system/module_registry.dart';
 import '../../pages/main_shell_page.dart';
+import '../../pages/module_manage_page.dart';
 import '../settings/settings_page.dart';
 import '../sync/sync_page.dart';
 
@@ -59,6 +60,13 @@ class AppRouter {
           pageBuilder: (context, state) => _buildPage(
             state: state,
             child: const SyncPage(),
+          ),
+        ),
+        GoRoute(
+          path: '/module_manage',
+          pageBuilder: (context, state) => _buildPage(
+            state: state,
+            child: const ModuleManagePage(),
           ),
         ),
         ..._buildModuleRoutes(),

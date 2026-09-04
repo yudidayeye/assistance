@@ -5,6 +5,7 @@ import '../core/module_system/tool_module.dart';
 import '../core/settings/settings_service.dart';
 import '../core/theme/theme_extension.dart';
 import '../shared/widgets/featured_card.dart';
+import '../shared/widgets/module_row_tile.dart';
 import '../shared/widgets/toolbox_bottom_nav.dart';
 import '../shared/widgets/app_scaffold.dart';
 import '../shared/foundation/app_typography.dart';
@@ -108,8 +109,58 @@ class _MainShellPageState extends State<MainShellPage> {
   static Widget _profileIcon(Color color) =>
       Icon(Icons.person_rounded, size: 22, color: color);
 
+  /// 工具箱右上「设置」下拉菜单选中处理
+  ///
+  /// 'cols_1'/'cols_2' → 切换展示样式（经 SettingsController 通知即时重排并持久化）；
+  /// 'manage' → 进入模块管理独立页。
+  void _onToolboxMenuSelected(String value) {
+    if (value == 'cols_1' || value == 'cols_2') {
+      _settingsController.setToolboxColumns(value == 'cols_1' ? '1' : '2');
+    } else if (value == 'manage') {
+      context.push('/module_manage');
+    }
+  }
+
+  /// 工具箱展示样式下拉菜单项 — 当前列数前带 ✓（leading 占位保证切选时不错位）
+  List<PopupMenuEntry<String>> _toolboxMenuItems(String columns) {
+    final appTheme = Theme.of(context).appTheme;
+    Widget item(IconData? check, String text) => Row(
+          children: [
+            SizedBox(
+              width: 22,
+              child: check == null
+                  ? null
+                  : Icon(Icons.check_rounded, size: 18, color: appTheme.primary),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(fontSize: 14, color: appTheme.earth),
+              ),
+            ),
+          ],
+        );
+    return [
+      PopupMenuItem(
+        value: 'cols_2',
+        child: item(columns == '2' ? Icons.check_rounded : null, '双列展示'),
+      ),
+      PopupMenuItem(
+        value: 'cols_1',
+        child: item(columns == '1' ? Icons.check_rounded : null, '单列展示'),
+      ),
+      const PopupMenuDivider(),
+      PopupMenuItem(
+        value: 'manage',
+        child: item(null, '模块管理'),
+      ),
+    ];
+  }
+
   Widget _buildToolboxPage(AppThemeExtension appTheme) {
     final enabledModules = ModuleRegistry.instance.getEnabledModules();
+    final isSingleColumn = _settingsController.toolboxColumns == '1';
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -128,38 +179,78 @@ class _MainShellPageState extends State<MainShellPage> {
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: IconButton(
-                onPressed: () => context.push('/settings'),
-                icon: const Icon(Icons.settings_outlined),
-                color: appTheme.earth,
-                iconSize: 20,
+              child: PopupMenuButton<String>(
+                tooltip: '工具箱设置',
+                onSelected: _onToolboxMenuSelected,
+                itemBuilder: (_) =>
+                    _toolboxMenuItems(_settingsController.toolboxColumns),
+                icon: Icon(Icons.settings_outlined,
+                    size: 20, color: appTheme.earth),
               ),
             ),
           ],
         ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 20,
-              crossAxisSpacing: 20,
-              childAspectRatio: 0.88,
+        if (isSingleColumn)
+          // ── 单列：整卡横版行（图标 + 标题 + 摘要 + 箭头，行间细分隔线）──
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            sliver: SliverToBoxAdapter(
+              child: _buildModuleRowCard(appTheme, enabledModules),
             ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final module = enabledModules[index];
-                return FeaturedCard(
-                  key: ValueKey(module.moduleId),
-                  module: module,
-                );
-              },
-              childCount: enabledModules.length,
+          )
+        else
+          // ── 双列：独立方块大卡网格 ──
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 20,
+                crossAxisSpacing: 20,
+                childAspectRatio: 0.88,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final module = enabledModules[index];
+                  return FeaturedCard(
+                    key: ValueKey(module.moduleId),
+                    module: module,
+                  );
+                },
+                childCount: enabledModules.length,
+              ),
             ),
           ),
-        ),
         const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
+    );
+  }
+
+  /// 单列模式的模块横版行整卡 — 与 FeaturedCard 同款底色/圆角/描边，
+  /// 内部逐模块一行，行间由 ModuleRowTile.showDivider 绘制分隔线。
+  Widget _buildModuleRowCard(
+      AppThemeExtension appTheme, List<ToolModule> modules) {
+    if (modules.isEmpty) return const SizedBox.shrink();
+    return Container(
+      decoration: BoxDecoration(
+        color: appTheme.cardBackground,
+        borderRadius: BorderRadius.circular(appTheme.radiusLg),
+        border: Border.all(
+          color: appTheme.earthMedium.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < modules.length; i++)
+            ModuleRowTile(
+              module: modules[i],
+              showDivider: i < modules.length - 1,
+            ),
+        ],
+      ),
     );
   }
 }

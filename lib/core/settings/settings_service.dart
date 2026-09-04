@@ -68,6 +68,12 @@ class SettingsService {
         await _db.upsertSetting('module_pinned_$moduleId', '0');
       }
     }
+    // 加载工具箱展示样式（单列/双列）
+    final colRows = await _db.query('app_settings',
+        where: "key = 'toolbox_columns'");
+    _toolboxColumns = (colRows.isNotEmpty && colRows.first['value'] == '1')
+        ? '1'
+        : '2';
     // 加载隐私声明
     await loadPrivacyDisclaimer();
   }
@@ -137,6 +143,21 @@ class SettingsService {
         where: "key = 'privacy_disclaimer_accepted'");
     _privacyAccepted = rows.isNotEmpty && rows.first['value'] == '1';
   }
+
+  // ─────────────────────────────────────────────────────────
+  // 工具箱展示样式偏好
+  // ─────────────────────────────────────────────────────────
+
+  String _toolboxColumns = '2';
+
+  /// 工具箱模块区的展示列数（'1' 单列 / '2' 双列）
+  String get toolboxColumns => _toolboxColumns;
+
+  /// 设置工具箱展示列数并持久化（非法值一律回退双列）
+  Future<void> setToolboxColumns(String value) async {
+    _toolboxColumns = value == '1' ? '1' : '2';
+    await _db.upsertSetting('toolbox_columns', _toolboxColumns);
+  }
 }
 
 /// 设置状态控制器 — ChangeNotifier，供 UI 层监听模块启停变化
@@ -164,6 +185,15 @@ class SettingsController extends ChangeNotifier {
   /// 固定/取消固定模块并通知 UI（底部导航随之实时更新）
   Future<void> setModulePinned(String moduleId, bool pinned) async {
     await _service.setModulePinned(moduleId, pinned);
+    notifyListeners();
+  }
+
+  /// 工具箱展示列数（'1'/'2'）
+  String get toolboxColumns => _service.toolboxColumns;
+
+  /// 设置工具箱展示列数并通知 UI（模块网格随之实时重排）
+  Future<void> setToolboxColumns(String value) async {
+    await _service.setToolboxColumns(value);
     notifyListeners();
   }
 
