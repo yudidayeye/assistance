@@ -1,13 +1,33 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/theme_extension.dart';
 
+/// 底部导航项（数据驱动）
+class ToolboxBottomNavItem {
+  /// 标签文案
+  final String label;
+
+  /// 选中态强调色；为空则使用主题 primary / primaryDark
+  final Color? selectedColor;
+
+  /// 图标构建器（接收当前着色，便于统一适配普通 Icon 与模块 ModuleIcon）
+  final Widget Function(Color color) iconBuilder;
+
+  const ToolboxBottomNavItem({
+    required this.label,
+    required this.iconBuilder,
+    this.selectedColor,
+  });
+}
+
 /// 工具箱底部导航栏 — 毛玻璃柔和风格
 class ToolboxBottomNav extends StatelessWidget {
+  final List<ToolboxBottomNavItem> items;
   final int selectedIndex;
   final ValueChanged<int> onTap;
 
   const ToolboxBottomNav({
     super.key,
+    required this.items,
     required this.selectedIndex,
     required this.onTap,
   });
@@ -31,24 +51,15 @@ class ToolboxBottomNav extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: _NavItem(
-              icon: Icons.handyman_rounded,
-              label: '工具箱',
-              isSelected: selectedIndex == 0,
-              onTap: () => onTap(0),
-              appTheme: appTheme,
+          for (var i = 0; i < items.length; i++)
+            Expanded(
+              child: _NavItem(
+                item: items[i],
+                isSelected: selectedIndex == i,
+                onTap: () => onTap(i),
+                appTheme: appTheme,
+              ),
             ),
-          ),
-          Expanded(
-            child: _NavItem(
-              icon: Icons.person_rounded,
-              label: '我的',
-              isSelected: selectedIndex == 1,
-              onTap: () => onTap(1),
-              appTheme: appTheme,
-            ),
-          ),
         ],
       ),
     );
@@ -56,15 +67,13 @@ class ToolboxBottomNav extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
+  final ToolboxBottomNavItem item;
   final bool isSelected;
   final VoidCallback onTap;
   final AppThemeExtension appTheme;
 
   const _NavItem({
-    required this.icon,
-    required this.label,
+    required this.item,
     required this.isSelected,
     required this.onTap,
     required this.appTheme,
@@ -72,7 +81,11 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? appTheme.primaryDark : appTheme.earthLight;
+    final accent = item.selectedColor;
+    final barColor = accent ?? appTheme.primary;
+    final color = isSelected
+        ? (accent ?? appTheme.primaryDark)
+        : appTheme.earthLight;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -90,14 +103,16 @@ class _NavItem extends StatelessWidget {
               height: 3,
               margin: const EdgeInsets.only(bottom: 6),
               decoration: BoxDecoration(
-                color: appTheme.primary,
+                color: barColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Icon(icon, size: 22, color: color),
+            item.iconBuilder(color),
             const SizedBox(height: 4),
             Text(
-              label,
+              item.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,

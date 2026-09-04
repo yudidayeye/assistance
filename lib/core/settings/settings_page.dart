@@ -39,6 +39,22 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   final SettingsService _settings = SettingsService.instance;
   final SettingsController _controller = SettingsController.instance;
+
+  // ── 模块行几何（px），供行内排版与分隔线对齐使用 ──
+  static const double _moduleRowPadH = 20;
+  static const double _moduleHandleSize = 18;
+  static const double _moduleHandleGap = 8;
+  static const double _moduleIconSize = 34;
+  // 分隔线左缘对齐到文字列起点 = 行内左边距 + 手柄 + 手柄右距 + 图标 + 图标与文字间距
+  static const double _moduleTextIndent = _moduleRowPadH +
+      _moduleHandleSize +
+      _moduleHandleGap +
+      _moduleIconSize +
+      12;
+  // 右侧「启用/固定」开关列列宽（px）：与标准 Material Switch 实际布局宽一致，
+  // 标题行表头与行内开关均以该宽度居中，保证两列表心在水平方向精确对齐。
+  // 卡片外边距 17 + 行内右边距 20 = 37，即标题行右缩进。
+  static const double _moduleSwitchCol = 60;
   final DatabaseService _db = DatabaseService.instance;
   final ImportExportService _importExport = ImportExportService.instance;
   final UpdateService _updateService = UpdateService.instance;
@@ -112,7 +128,7 @@ class _SettingsPageState extends State<SettingsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── 模块管理（拖动排序，顺序同步到首页卡片） ──
-              const SectionLabel(title: '模块管理'),
+              _buildModuleHeader(appTheme),
               SectionCard(
                 child: ReorderableListView.builder(
                   shrinkWrap: true,
@@ -129,7 +145,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       key: ValueKey(module.moduleId),
                       children: [
                         _buildModuleItem(appTheme, module, index),
-                        if (!isLast) _buildSeparator(appTheme),
+                        if (!isLast) _buildModuleSeparator(appTheme),
                       ],
                     );
                   },
@@ -232,26 +248,38 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildModuleItem(
       AppThemeExtension appTheme, ToolModule module, int index) {
     final enabled = _settings.isModuleEnabled(module.moduleId);
+    final pinned = _settings.isModulePinned(module.moduleId);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+          horizontal: _moduleRowPadH, vertical: 8),
       child: Row(
         children: [
-          // 内容区：长按即可拖动（不干扰开关的点按）
+          // ① 拖拽手柄（最左）：按下即拖，无需长按
+          ReorderableDragStartListener(
+            index: index,
+            child: Padding(
+              padding: const EdgeInsets.only(right: _moduleHandleGap),
+              child: Icon(Icons.drag_indicator_rounded,
+                  size: _moduleHandleSize,
+                  color: appTheme.earthMedium.withValues(alpha: 0.35)),
+            ),
+          ),
+          // ② 内容区：图标 + 名称，长按即可拖动（不干扰开关点按）
           Expanded(
             child: ReorderableDelayedDragStartListener(
               index: index,
               child: Row(
                 children: [
                   Container(
-                    width: 34,
-                    height: 34,
+                    width: _moduleIconSize,
+                    height: _moduleIconSize,
                     decoration: BoxDecoration(
                       color: module.themeColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(appTheme.radiusMd),
                     ),
                     child: Center(
-                      child:
-                          module.icon.build(size: 18, color: module.themeColor),
+                      child: module.icon.build(
+                          size: 18, color: module.themeColor),
                     ),
                   ),
                   AppSpacing.w12,
@@ -261,15 +289,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(module.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: AppTypography.bodySm
                                 .copyWith(color: appTheme.earth)),
-                        const SizedBox(height: 2),
-                        Text(enabled ? '已启用' : '已禁用',
-                            style: AppTypography.caption.copyWith(
-                                color: enabled
-                                    ? appTheme.sage.withValues(alpha: 0.8)
-                                    : appTheme.earthMedium
-                                        .withValues(alpha: 0.5))),
                       ],
                     ),
                   ),
@@ -277,37 +300,109 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ),
-          Transform.scale(
-            scale: 0.8,
-            child: Switch(
-              value: enabled,
-              onChanged: (val) async {
-                await _controller.setModuleEnabled(module.moduleId, val);
-                setState(() {});
-              },
-              activeTrackColor: module.themeColor.withValues(alpha: 0.12),
-              activeThumbColor: module.themeColor,
-              inactiveThumbColor: appTheme.earthMedium.withValues(alpha: 0.45),
-              inactiveTrackColor: appTheme.earthMedium.withValues(alpha: 0.12),
-              trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return Colors.transparent;
-                }
-                return appTheme.earthMedium.withValues(alpha: 0.25);
-              }),
-            ),
+          const SizedBox(width: 14),
+          // ③ 启用开关（关闭启用会联动清除固定）
+          _buildModuleSwitch(
+            value: enabled,
+            accentColor: module.themeColor,
+            onChanged: (val) async {
+              await _controller.setModuleEnabled(module.moduleId, val);
+              setState(() {});
+            },
           ),
-          // 拖拽手柄：按下即拖，无需长按
-          ReorderableDragStartListener(
-            index: index,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: Icon(Icons.drag_indicator_rounded,
-                  size: 18,
-                  color: appTheme.earthMedium.withValues(alpha: 0.35)),
-            ),
+          const SizedBox(width: 12),
+          // ④ 固定开关（模块禁用时呈禁用态、不可点）
+          _buildModuleSwitch(
+            value: pinned,
+            accentColor: module.themeColor,
+            onChanged: enabled
+                ? (val) async {
+                    await _controller.setModulePinned(module.moduleId, val);
+                    setState(() {});
+                  }
+                : null,
           ),
         ],
+      ),
+    );
+  }
+
+  /// 模块管理分区标题行 — 左侧「模块管理」，右侧同行标注一次「启用/固定」列表头。
+  ///
+  /// 行内每枚开关已不再重复文字，两列含义只在标题行说明。
+  /// 右缘与卡片内容对齐：标题行右缩进 = 卡片外边距(17) + 行内右边距(20) = 37，
+  /// 两列表头按 [_moduleSwitchCol] 定宽、间距 12 → 与每行开关列心精确对齐。
+  Widget _buildModuleHeader(AppThemeExtension appTheme) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20, right: 37, bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            '模块管理',
+            style: AppTypography.label.copyWith(
+              color: appTheme.earthMedium,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const Spacer(),
+          _buildModuleHeaderWord(appTheme, '启用'),
+          const SizedBox(width: 12),
+          _buildModuleHeaderWord(appTheme, '固定'),
+        ],
+      ),
+    );
+  }
+
+  /// 标题行右侧的一个列表头文字 — 与下方对应开关列同宽并居中。
+  Widget _buildModuleHeaderWord(
+      AppThemeExtension appTheme, String word) {
+    return SizedBox(
+      width: _moduleSwitchCol,
+      child: Text(
+        word,
+        textAlign: TextAlign.center,
+        style: AppTypography.caption.copyWith(
+          fontSize: 10.5,
+          height: 1,
+          fontWeight: FontWeight.w600,
+          color: appTheme.earthMedium.withValues(alpha: 0.6),
+        ),
+      ),
+    );
+  }
+
+  /// 模块行的「启用/固定」开关 — 标准 Material Switch，外观与改动前一致。
+  ///
+  /// Switch 配色：模块主题色圆头、淡主题色轨道，关闭态灰白轨道 + 灰圆头。
+  /// 固定宽为 [_moduleSwitchCol]，与标题行列表头同宽，保证文字列心对齐。
+  Widget _buildModuleSwitch({
+    required bool value,
+    required Color accentColor,
+    required ValueChanged<bool>? onChanged,
+  }) {
+    final appTheme = Theme.of(context).appTheme;
+    return SizedBox(
+      width: _moduleSwitchCol,
+      child: Center(
+        child: Transform.scale(
+          scale: 0.8,
+          alignment: Alignment.center,
+          child: Switch(
+            value: value,
+            onChanged: onChanged,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            activeTrackColor: accentColor.withValues(alpha: 0.12),
+            activeThumbColor: accentColor,
+            inactiveThumbColor: appTheme.earthMedium.withValues(alpha: 0.45),
+            inactiveTrackColor: appTheme.earthMedium.withValues(alpha: 0.12),
+            trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return Colors.transparent;
+              }
+              return appTheme.earthMedium.withValues(alpha: 0.25);
+            }),
+          ),
+        ),
       ),
     );
   }
@@ -332,8 +427,7 @@ class _SettingsPageState extends State<SettingsPage> {
   /// 拖拽中的浮动代理样式 — 卡片底色 + 极轻阴影，保持安静的视觉语言
   ///
   /// 代理子树挂载在 Overlay 中（脱离原页面的 Material 祖先），
-  /// 因此必须包一层透明 Material，否则行内的 Switch 会因找不到
-  /// Material 祖先而报错。
+  /// 必须包一层透明 Material 以提供文字样式等继承环境。
   Widget _buildModuleDragProxy(AppThemeExtension appTheme, Widget child) {
     return Material(
       color: Colors.transparent,
@@ -355,6 +449,17 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         child: child,
       ),
+    );
+  }
+
+  /// 模块行分割线 — 左缘对齐到文字列（考虑左侧拖拽手柄）
+  Widget _buildModuleSeparator(AppThemeExtension appTheme) {
+    return Padding(
+      padding: const EdgeInsets.only(left: _moduleTextIndent),
+      child: Divider(
+          height: 0,
+          thickness: 0.5,
+          color: appTheme.earthMedium.withValues(alpha: 0.07)),
     );
   }
 
@@ -716,6 +821,8 @@ class _SettingsPageState extends State<SettingsPage> {
               '如需恢复该备份的保险箱数据，请先在设置中「清除业务数据」，再重新导入。',
         );
       }
+      // 导入可能改变模块启用/固定状态，重载并通知，让底部导航/工具箱立即反映
+      await SettingsController.instance.reload();
       setState(() {});
     } else {
       _showErrorDialog('导入失败', result.error ?? '未知错误');

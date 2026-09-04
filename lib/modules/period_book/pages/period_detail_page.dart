@@ -164,6 +164,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   @override
   Widget build(BuildContext context) {
     final appTheme = Theme.of(context).appTheme;
+    // 整页 push（有返回键）时标题贴返回键；被固定嵌入主页（无返回键）时
+    // 回落到与「工具箱」一致的默认左侧间距。
+    final canPop = ModalRoute.of(context)?.canPop ?? false;
 
     if (_loading) {
       return AppScaffold(
@@ -181,7 +184,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          titleSpacing: 0,
+          titleSpacing: canPop ? 0 : null,
           automaticallyImplyLeading: true,
           title: Text(
             '周期详情',
@@ -231,7 +234,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          titleSpacing: 0,
+          titleSpacing: canPop ? 0 : null,
           automaticallyImplyLeading: true,
           title: Text(
             '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日',

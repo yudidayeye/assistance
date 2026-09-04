@@ -617,6 +617,9 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appTheme = theme.appTheme;
+    // 整页 push（有返回键）时标题贴返回键；被固定嵌入主页（无返回键）时
+    // 回落到与「工具箱」一致的默认左侧间距。
+    final canPop = ModalRoute.of(context)?.canPop ?? false;
 
     // 首次使用，需设置主密码
     if (_needSetup) {
@@ -629,7 +632,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          titleSpacing: 0,
+          titleSpacing: canPop ? 0 : null,
           automaticallyImplyLeading: true,
           title: Text(
             '密码保险箱',
@@ -654,7 +657,7 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          titleSpacing: 0,
+          titleSpacing: canPop ? 0 : null,
           automaticallyImplyLeading: true,
           title: Text(
             '密码保险箱',
@@ -699,12 +702,13 @@ class _VaultEntryPageState extends State<VaultEntryPage> {
   }
 
   Widget _buildSetupScreen(AppThemeExtension appTheme) {
+    final canPop = ModalRoute.of(context)?.canPop ?? false;
     return AppScaffold(
       appBar: AppBar(
         backgroundColor: appTheme.cream,
         elevation: 0,
         centerTitle: false,
-        titleSpacing: 0,
+        titleSpacing: canPop ? 0 : null,
         automaticallyImplyLeading: true,
         title: Text(
           '密码保险箱',

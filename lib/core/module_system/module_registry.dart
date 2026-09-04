@@ -64,6 +64,15 @@ class ModuleRegistry {
         .toList();
   }
 
+  /// 获取已固定且已启用的模块，顺序与模块管理一致（遵循 moduleOrder）
+  List<ToolModule> getPinnedModules() {
+    return orderedModules
+        .where((m) =>
+            SettingsService.instance.isModuleEnabled(m.moduleId) &&
+            SettingsService.instance.isModulePinned(m.moduleId))
+        .toList();
+  }
+
   /// 根据ID获取模块
   ToolModule? getModule(String moduleId) => _modules[moduleId];
 }

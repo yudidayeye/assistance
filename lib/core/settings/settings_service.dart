@@ -51,14 +51,53 @@ class SettingsService {
     }
     // 加载模块展示顺序
     await _loadModuleOrder();
+    // 加载固定状态（默认未固定）
+    final pinnedRows =
+        await _db.query('app_settings', where: "key LIKE 'module_pinned_%'");
+    for (final row in pinnedRows) {
+      final key = row['key'] as String;
+      final moduleId = key.replaceFirst('module_pinned_', '');
+      _modulePinnedCache[moduleId] = row['value'] == '1';
+    }
+    // 不变量：固定 ⟹ 启用。清除「已固定但被禁用」的陈旧状态（含导入恢复场景）。
+    for (final module in ModuleRegistry.instance.allModules) {
+      final moduleId = module.moduleId;
+      if ((_modulePinnedCache[moduleId] ?? false) &&
+          !isModuleEnabled(moduleId)) {
+        _modulePinnedCache[moduleId] = false;
+        await _db.upsertSetting('module_pinned_$moduleId', '0');
+      }
+    }
     // 加载隐私声明
     await loadPrivacyDisclaimer();
   }
 
   /// 设置模块启用状态
+  ///
+  /// 关闭启用时联动清除固定状态，保证「固定 ⟹ 启用」不变量成立。
   Future<void> setModuleEnabled(String moduleId, bool enabled) async {
     _moduleEnabledCache[moduleId] = enabled;
+    if (!enabled) {
+      final wasPinned = _modulePinnedCache[moduleId] ?? false;
+      _modulePinnedCache[moduleId] = false;
+      if (wasPinned) {
+        await _db.upsertSetting('module_pinned_$moduleId', '0');
+      }
+    }
     await _db.upsertSetting('module_enabled_$moduleId', enabled ? '1' : '0');
+  }
+
+  final Map<String, bool> _modulePinnedCache = {};
+
+  /// 检查模块是否已固定到底部导航
+  bool isModulePinned(String moduleId) {
+    return _modulePinnedCache[moduleId] ?? false;
+  }
+
+  /// 设置模块固定状态（固定/取消固定）并持久化
+  Future<void> setModulePinned(String moduleId, bool pinned) async {
+    _modulePinnedCache[moduleId] = pinned;
+    await _db.upsertSetting('module_pinned_$moduleId', pinned ? '1' : '0');
   }
 
   /// 从数据库加载模块展示顺序
@@ -117,6 +156,14 @@ class SettingsController extends ChangeNotifier {
   /// 保存模块展示顺序并通知 UI（首页卡片顺序随之更新）
   Future<void> setModuleOrder(List<String> moduleIds) async {
     await _service.setModuleOrder(moduleIds);
+    notifyListeners();
+  }
+
+  bool isModulePinned(String moduleId) => _service.isModulePinned(moduleId);
+
+  /// 固定/取消固定模块并通知 UI（底部导航随之实时更新）
+  Future<void> setModulePinned(String moduleId, bool pinned) async {
+    await _service.setModulePinned(moduleId, pinned);
     notifyListeners();
   }
 
