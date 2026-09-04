@@ -9,7 +9,6 @@ import '../core/module_system/module_registry.dart';
 import '../core/module_system/module_summary.dart';
 import '../core/module_system/tool_module.dart';
 import '../core/settings/settings_service.dart';
-import '../core/storage/database_service.dart';
 import '../core/theme/theme_extension.dart';
 import '../modules/period_book/services/period_book_service.dart';
 import '../modules/period_tracker/services/period_service.dart';
@@ -19,6 +18,7 @@ import '../shared/widgets/app_scaffold.dart';
 import '../shared/widgets/app_snack_bar.dart';
 import '../shared/widgets/section_card.dart';
 import '../shared/widgets/settings_list_item.dart';
+import '../shared/widgets/user_avatar.dart';
 
 /// 我的页面 — 个人数据概览 + 功能操作中心
 class ProfilePageContent extends StatefulWidget {
@@ -41,7 +41,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
   static const int _avatarMaxDim = 320;
   static const int _avatarMaxBytes = 15 * 1024 * 1024;
 
-  String _userName = '用户';
+  String _userName = SettingsService.defaultUserName;
   String? _avatarB64;
 
   /// 各工具模块的动态摘要（key = moduleId）
@@ -82,28 +82,17 @@ class _ProfilePageContentState extends State<ProfilePageContent>
   // 数据加载
   // ───────────────────────────────────────────────────────────
 
-  /// 参数化读取 app_settings 单键（收敛原裸 rawQuery 写法）
-  Future<String?> _readSetting(String key) async {
-    final rows = await DatabaseService.instance.query(
-      'app_settings',
-      where: 'key = ?',
-      whereArgs: [key],
-      limit: 1,
-    );
-    if (rows.isEmpty) return null;
-    final value = rows.first['value'] as String?;
-    return (value == null || value.isEmpty) ? null : value;
+  /// 从 SettingsController 缓存同步用户身份（app 启动经 loadSettings 已载入；
+  /// 昵称/头像保存也走同一 controller，故本页与工具箱顶栏共享单一数据源）
+  void _applyIdentity() {
+    final c = SettingsController.instance;
+    _userName = c.userName;
+    _avatarB64 = c.avatarB64;
   }
 
   Future<void> _loadAll() async {
-    final name = await _readSetting('user_name');
-    final avatar = await _readSetting('user_avatar');
+    _applyIdentity();
     await _loadModuleSummaries();
-    if (!mounted) return;
-    setState(() {
-      _userName = name ?? '用户';
-      _avatarB64 = avatar;
-    });
   }
 
   Future<void> _loadModuleSummaries() async {
@@ -211,11 +200,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
       child: Row(
         children: [
           // 头像（点击更换）
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _onAvatarTap,
-            child: _buildAvatar(appTheme),
-          ),
+          UserAvatar(avatarB64: _avatarB64, size: 60, onTap: _onAvatarTap),
           const SizedBox(width: 14),
           // 昵称（点击编辑）
           Expanded(
@@ -250,62 +235,6 @@ class _ProfilePageContentState extends State<ProfilePageContent>
           ),
         ],
       ),
-    );
-  }
-
-  /// 头像圆环 + 内圆头像（已设图片则展示图片，否则默认人形图标）
-  Widget _buildAvatar(AppThemeExtension appTheme) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [
-            appTheme.primary.withValues(alpha: 0.18),
-            appTheme.primaryLight.withValues(alpha: 0.3),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Center(child: _buildAvatarFace(appTheme)),
-    );
-  }
-
-  Widget _buildAvatarFace(AppThemeExtension appTheme) {
-    final avatar = _avatarB64;
-    if (avatar != null) {
-      try {
-        final bytes = base64Decode(avatar);
-        return ClipOval(
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Image.memory(
-              bytes,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildDefaultAvatarFace(appTheme),
-            ),
-          ),
-        );
-      } catch (_) {
-        // base64 数据异常时回退默认头像
-      }
-    }
-    return _buildDefaultAvatarFace(appTheme);
-  }
-
-  /// 默认人形头像（无自定义头像 / 头像数据异常时展示）
-  Widget _buildDefaultAvatarFace(AppThemeExtension appTheme) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: appTheme.primary.withValues(alpha: 0.12),
-      ),
-      child: Icon(Icons.person_rounded, color: appTheme.primary, size: 28),
     );
   }
 
@@ -395,7 +324,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
       if (data == null) return;
 
       final b64 = base64Encode(data.buffer.asUint8List());
-      await DatabaseService.instance.upsertSetting('user_avatar', b64);
+      await SettingsController.instance.setUserAvatar(b64);
       if (!mounted) return;
       setState(() => _avatarB64 = b64);
       AppSnackBar.show(context, '头像已更新', type: AppSnackBarType.success);
@@ -408,7 +337,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
   }
 
   Future<void> _removeAvatar() async {
-    await DatabaseService.instance.upsertSetting('user_avatar', '');
+    await SettingsController.instance.setUserAvatar('');
     if (!mounted) return;
     setState(() => _avatarB64 = null);
     AppSnackBar.show(context, '已移除头像');
@@ -608,8 +537,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
             onPressed: () async {
               final name = ctrl.text.trim();
               if (name.isEmpty) return;
-              await DatabaseService.instance
-                  .upsertSetting('user_name', name);
+              await SettingsController.instance.setUserName(name);
               if (mounted) setState(() => _userName = name);
               if (ctx.mounted) Navigator.pop(ctx);
             },

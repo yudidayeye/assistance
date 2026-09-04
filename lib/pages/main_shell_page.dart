@@ -7,6 +7,7 @@ import '../core/theme/theme_extension.dart';
 import '../shared/widgets/featured_card.dart';
 import '../shared/widgets/module_row_tile.dart';
 import '../shared/widgets/toolbox_bottom_nav.dart';
+import '../shared/widgets/user_avatar.dart';
 import '../shared/widgets/app_scaffold.dart';
 import '../shared/foundation/app_typography.dart';
 import 'profile_page.dart';
@@ -53,6 +54,12 @@ class _MainShellPageState extends State<MainShellPage> {
       // 当前选中的 Tab 被取消固定/禁用时，安全回落到工具箱
       if (!ids.contains(_selectedId)) _selectedId = 'toolbox';
     });
+  }
+
+  /// 点头像切到「我的」底部 Tab（不 push 路由，无返回栈）
+  void _switchToProfileTab() {
+    if (_selectedId == 'profile') return;
+    setState(() => _selectedId = 'profile');
   }
 
   @override
@@ -254,6 +261,49 @@ class _MainShellPageState extends State<MainShellPage> {
     );
   }
 
+  /// 工具箱顶栏欢迎区 — 左：用户头像（点按切「我的」Tab）；右：欢迎语，
+  /// 句末内联一个紧贴文字的挥手欢迎图标
+  Widget _buildWelcomeHeader(AppThemeExtension appTheme) {
+    return Row(
+      children: [
+        UserAvatar(
+          avatarB64: _settingsController.avatarB64,
+          size: 44,
+          onTap: _switchToProfileTab,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.2,
+                color: appTheme.earth,
+              ),
+              children: [
+                TextSpan(text: '欢迎来到${_settingsController.userName}的工具箱'),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Icon(
+                      Icons.celebration_rounded,
+                      size: 16,
+                      color: appTheme.rose,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildToolboxPage(AppThemeExtension appTheme) {
     final enabledModules = ModuleRegistry.instance.getEnabledModules();
     final isSingleColumn = _settingsController.toolboxColumns == '1';
@@ -266,12 +316,9 @@ class _MainShellPageState extends State<MainShellPage> {
           backgroundColor: appTheme.cream,
           elevation: 0,
           centerTitle: false,
-          title: Text(
-            '工具箱',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
-          ),
+          // 与下方模块卡 20px 左边距对齐
+          titleSpacing: 20,
+          title: _buildWelcomeHeader(appTheme),
           actions: [
             // 更多菜单（展示样式 + 模块管理，右上角展开）
             _buildMoreMenu(appTheme),

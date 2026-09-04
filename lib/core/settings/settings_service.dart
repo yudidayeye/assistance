@@ -76,6 +76,8 @@ class SettingsService {
         : '2';
     // 加载隐私声明
     await loadPrivacyDisclaimer();
+    // 加载用户昵称与头像
+    await _loadUserProfile();
   }
 
   /// 设置模块启用状态
@@ -158,6 +160,55 @@ class SettingsService {
     _toolboxColumns = value == '1' ? '1' : '2';
     await _db.upsertSetting('toolbox_columns', _toolboxColumns);
   }
+
+  // ─────────────────────────────────────────────────────────
+  // 用户身份（昵称 + 头像）
+  // ─────────────────────────────────────────────────────────
+
+  /// 未设置昵称时的默认展示名
+  static const String defaultUserName = '用户';
+
+  String _userName = defaultUserName;
+
+  /// 头像 base64（无头像时为 null；空串统一规整为 null）
+  String? _avatarB64;
+
+  /// 当前用户昵称（未设置时回退 [defaultUserName]）
+  String get userName => _userName;
+
+  /// 当前头像 base64，无头像时为 null
+  String? get avatarB64 => _avatarB64;
+
+  /// 从数据库加载用户昵称与头像到缓存
+  Future<void> _loadUserProfile() async {
+    final nameRows =
+        await _db.query('app_settings', where: "key = 'user_name'");
+    _userName = (nameRows.isNotEmpty &&
+            (nameRows.first['value'] as String? ?? '').trim().isNotEmpty)
+        ? (nameRows.first['value'] as String).trim()
+        : defaultUserName;
+
+    final avatarRows =
+        await _db.query('app_settings', where: "key = 'user_avatar'");
+    final raw = avatarRows.isNotEmpty
+        ? (avatarRows.first['value'] as String? ?? '')
+        : '';
+    _avatarB64 = raw.isEmpty ? null : raw;
+  }
+
+  /// 保存用户昵称并持久化（去首尾空白，空值忽略）
+  Future<void> setUserName(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    _userName = trimmed;
+    await _db.upsertSetting('user_name', trimmed);
+  }
+
+  /// 保存用户头像 base64 并持久化（传空串即「移除头像」）
+  Future<void> setUserAvatar(String b64) async {
+    _avatarB64 = b64.isEmpty ? null : b64;
+    await _db.upsertSetting('user_avatar', b64);
+  }
 }
 
 /// 设置状态控制器 — ChangeNotifier，供 UI 层监听模块启停变化
@@ -194,6 +245,24 @@ class SettingsController extends ChangeNotifier {
   /// 设置工具箱展示列数并通知 UI（模块网格随之实时重排）
   Future<void> setToolboxColumns(String value) async {
     await _service.setToolboxColumns(value);
+    notifyListeners();
+  }
+
+  /// 当前用户昵称（未设置时回退默认名）
+  String get userName => _service.userName;
+
+  /// 当前头像 base64（无头像时为 null）
+  String? get avatarB64 => _service.avatarB64;
+
+  /// 保存昵称并通知 UI（工具箱欢迎区随之更新）
+  Future<void> setUserName(String name) async {
+    await _service.setUserName(name);
+    notifyListeners();
+  }
+
+  /// 保存头像 base64（空串 = 移除头像）并通知 UI
+  Future<void> setUserAvatar(String b64) async {
+    await _service.setUserAvatar(b64);
     notifyListeners();
   }
 
