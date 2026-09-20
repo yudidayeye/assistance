@@ -2,11 +2,11 @@
 
 ## 项目结构与模块组织
 
-本项目是 Flutter 应用(`my_assistant`)——轻量级个人工具集(记账 + 生理期记录),数据仅存本地 SQLite,禁止引入网络同步或遥测。
+本项目是 Flutter 应用(`my_assistant`)——轻量级个人工具集(周期记账、生理期记录、密码保险箱),数据仅存本地 SQLite,禁止引入网络同步或遥测。
 
 - `lib/main.dart` —— 入口,按固定顺序初始化数据库、模块、设置、主题、路由。
 - `lib/core/` —— 模块系统(`module_system/`)、GoRouter 路由(`routing/`)、设置、SQLite 存储、主题。
-- `lib/modules/` —— 插件式模块(如 `accounting/`、`period_tracker/`),各含 `models/`、`services/`、`pages/`、`widgets/` 和实现 `ToolModule` 的 `*_module.dart`。新增模块须在 `main()` 注册并在 `AppRouter` 加子路由。
+- `lib/modules/` —— 插件式模块(如 `period_book/`、`period_tracker/`、`vault/`),各含 `models/`、`services/`、`pages/`、`widgets/` 和实现 `ToolModule` 的 `*_module.dart`。新增模块须在 `main()` 中注册,并在模块内用 `buildSubRoutes()` 声明子路由;顶层 `/<moduleId>` 路由由 `AppRouter` 依注册表自动生成,无需手工添加。
 - `lib/pages/`、`lib/shared/` —— 外壳页面与可复用组件。
 - `test/` —— 目录结构镜像 `lib/`;
 - `docs/UI.md` —— 改视觉样式前必读。
