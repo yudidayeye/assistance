@@ -13,12 +13,28 @@ enum ReportViewType {
 }
 
 /// 报表卡片 — 整合支出趋势和支出占比，支持视图切换
+///
+/// 分类筛选是**受控**的：选中状态由调用方持有并下发，本组件只负责派发点击意图。
+/// 选中键是**分类显示名**，不是扇区下标——扇区按金额降序排列，范围一变排序即变，
+/// 下标会指向另一个分类（research R1）。
 class ReportCard extends StatefulWidget {
   final List<Map<String, dynamic>> monthlyData;
   final List<Map<String, dynamic>> stageData;
   final Map<String, double> expenseTypeData;
   final Map<String, double>? stageExpenseTypeData;
   final ReportViewType defaultView;
+
+  /// 当前选中的分类显示名；null 表示未筛选
+  final String? selectedCategory;
+
+  /// 扇区与图例共用的回调；传 null 表示取消筛选
+  final ValueChanged<String?>? onCategorySelected;
+
+  /// 报表视图（占比 ↔ 趋势）被用户切换时通知调用方。
+  ///
+  /// 本组件自持 `_currentView`，页面侧看不到这次切换；而卡片展开态需要随
+  /// 视图切换整体收起（契约 C5-3），否则上一视图留下的展开状态会残留在新内容上
+  final ValueChanged<ReportViewType>? onViewTypeChanged;
 
   const ReportCard({
     super.key,
@@ -27,6 +43,9 @@ class ReportCard extends StatefulWidget {
     required this.expenseTypeData,
     this.stageExpenseTypeData,
     this.defaultView = ReportViewType.expensePie,
+    this.selectedCategory,
+    this.onCategorySelected,
+    this.onViewTypeChanged,
   });
 
   @override
@@ -35,7 +54,13 @@ class ReportCard extends StatefulWidget {
 
 class _ReportCardState extends State<ReportCard> {
   ReportViewType _currentView = ReportViewType.expensePie;
-  int? _touchedIndex;
+
+  /// 未选中扇区的半径。fl_chart 的默认值就是 40，此处显式写出以便选中态外扩时
+  /// 有两个可比的常量，也避免依赖库的默认值在升级中漂移
+  static const double _pieBaseRadius = 40;
+
+  /// 选中扇区的外扩半径（FR-006）
+  static const double _pieSelectedRadius = _pieBaseRadius + 6;
 
   @override
   void initState() {
@@ -134,11 +159,13 @@ class _ReportCardState extends State<ReportCard> {
     return GestureDetector(
       onTap: () => _showViewPicker(appTheme),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs + 2),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm, vertical: AppSpacing.xxs + 2),
         decoration: BoxDecoration(
           color: appTheme.primaryLight.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(appTheme.radiusSm),
-          border: Border.all(color: appTheme.primary.withValues(alpha: 0.4), width: 0.5),
+          border: Border.all(
+              color: appTheme.primary.withValues(alpha: 0.4), width: 0.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -221,9 +248,8 @@ class _ReportCardState extends State<ReportCard> {
                 viewType: ReportViewType.expenseTrend,
                 icon: Icons.trending_up_rounded,
                 title: '支出趋势',
-                subtitle: widget.stageData.isNotEmpty
-                    ? '查看各阶段支出变化'
-                    : '查看每月支出变化',
+                subtitle:
+                    widget.stageData.isNotEmpty ? '查看各阶段支出变化' : '查看每月支出变化',
               ),
               _buildViewOption(
                 appTheme: appTheme,
@@ -253,16 +279,23 @@ class _ReportCardState extends State<ReportCard> {
     return GestureDetector(
       onTap: () {
         setState(() => _currentView = viewType);
+        // 筛选状态本身 MUST NOT 因切换报表视图而取消（FR-017），只把这次切换
+        // 告知页面，让展开态随之收起（契约 C5-3）
+        widget.onViewTypeChanged?.call(viewType);
         Navigator.pop(context);
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? appTheme.primaryLight.withValues(alpha: 0.3) : appTheme.cream,
+          color: isSelected
+              ? appTheme.primaryLight.withValues(alpha: 0.3)
+              : appTheme.cream,
           borderRadius: BorderRadius.circular(AppSpacing.sm),
           border: Border.all(
-            color: isSelected ? appTheme.primary.withValues(alpha: 0.4) : appTheme.cardBorder,
+            color: isSelected
+                ? appTheme.primary.withValues(alpha: 0.4)
+                : appTheme.cardBorder,
             width: 1,
           ),
         ),
@@ -439,7 +472,8 @@ class _ReportCardState extends State<ReportCard> {
                 }).toList();
               },
               touchTooltipData: LineTouchTooltipData(
-                getTooltipColor: (spot) => appTheme.primaryLight.withValues(alpha: 0.22),
+                getTooltipColor: (spot) =>
+                    appTheme.primaryLight.withValues(alpha: 0.22),
                 getTooltipItems: (spots) {
                   return spots.map((spot) {
                     final item = widget.monthlyData[spot.x.toInt()];
@@ -585,7 +619,8 @@ class _ReportCardState extends State<ReportCard> {
                 }).toList();
               },
               touchTooltipData: LineTouchTooltipData(
-                getTooltipColor: (spot) => appTheme.primaryLight.withValues(alpha: 0.22),
+                getTooltipColor: (spot) =>
+                    appTheme.primaryLight.withValues(alpha: 0.22),
                 getTooltipItems: (spots) {
                   return spots.map((spot) {
                     final item = widget.stageData[spot.x.toInt()];
@@ -640,7 +675,16 @@ class _ReportCardState extends State<ReportCard> {
   }
 
   /// 分类显示顺序和颜色映射
-  static const _categoryOrder = ['购物', '生活', '工作', '娱乐', '大餐', '杂项', '其他', 'balance'];
+  static const _categoryOrder = [
+    '购物',
+    '生活',
+    '工作',
+    '娱乐',
+    '大餐',
+    '杂项',
+    '其他',
+    'balance'
+  ];
 
   Color _categoryColor(String key, AppThemeExtension appTheme) {
     switch (key) {
@@ -667,6 +711,23 @@ class _ReportCardState extends State<ReportCard> {
     return key == 'balance' ? '杂项' : key;
   }
 
+  /// 分类显示名在扇区数组中的下标；未筛选或该分类当前无金额时为 null
+  int? _indexOfCategory(
+      List<MapEntry<String, double>> entries, String? category) {
+    if (category == null) return null;
+    for (var i = 0; i < entries.length; i++) {
+      if (_categoryLabel(entries[i].key) == category) return i;
+    }
+    return null;
+  }
+
+  /// 派发一次点击意图。与当前选中项一致时不派发，避免页面侧无谓重建；
+  /// 取消（传 null）与选中走的是同一条路径（契约 C1-4 / C1-5 / C1-6）
+  void _dispatchCategory(String? category) {
+    if (category == widget.selectedCategory) return;
+    widget.onCategorySelected?.call(category);
+  }
+
   /// 构建支出占比图
   Widget _buildExpensePie(AppThemeExtension appTheme) {
     // 选中阶段时使用阶段维度的数据，否则使用全局汇总
@@ -684,6 +745,8 @@ class _ReportCardState extends State<ReportCard> {
     }
 
     final total = entries.fold(0.0, (sum, e) => sum + e.value);
+    // 选中项的定位每次都按分类名重算：排序、范围、阶段任一变化都会换掉下标
+    final selectedIndex = _indexOfCategory(entries, widget.selectedCategory);
 
     return Padding(
       padding: AppSpacing.pageH,
@@ -700,13 +763,14 @@ class _ReportCardState extends State<ReportCard> {
                   child: PieChart(
                     PieChartData(
                       sections: entries.asMap().entries.map((indexed) {
-                        final pct = total > 0 ? indexed.value.value / total : 0.0;
+                        final pct =
+                            total > 0 ? indexed.value.value / total : 0.0;
                         return _buildPieSection(
                           value: indexed.value.value,
                           color: _categoryColor(indexed.value.key, appTheme),
                           title: _categoryLabel(indexed.value.key),
                           pct: pct,
-                          isTouched: indexed.key == _touchedIndex,
+                          isSelected: indexed.key == selectedIndex,
                         );
                       }).toList(),
                       centerSpaceRadius: 28,
@@ -714,33 +778,29 @@ class _ReportCardState extends State<ReportCard> {
                       startDegreeOffset: -90,
                       pieTouchData: PieTouchData(
                         touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                          // 只响应点击事件，忽略悬浮
+                          // 只响应点击事件，忽略悬浮（契约 C1-8）
                           if (event is! FlTapDownEvent) return;
-                          if (pieTouchResponse == null ||
-                              pieTouchResponse.touchedSection == null) {
-                            if (_touchedIndex != null) {
-                              setState(() => _touchedIndex = null);
-                            }
+                          final touched = pieTouchResponse?.touchedSection;
+                          if (touched == null) {
+                            // 点中扇区之外的空白 = 取消（契约 C1-6）
+                            _dispatchCategory(null);
                             return;
                           }
-                          final newIndex =
-                              pieTouchResponse.touchedSection!.touchedSectionIndex;
-                          if (newIndex < 0 || newIndex >= entries.length) {
-                            if (_touchedIndex != null) {
-                              setState(() => _touchedIndex = null);
-                            }
-                          } else if (newIndex == _touchedIndex) {
-                            // 再次点击同一扇区则取消选中
-                            setState(() => _touchedIndex = null);
-                          } else {
-                            setState(() => _touchedIndex = newIndex);
+                          final index = touched.touchedSectionIndex;
+                          if (index < 0 || index >= entries.length) {
+                            _dispatchCategory(null);
+                            return;
                           }
+                          final label = _categoryLabel(entries[index].key);
+                          // 再点当前分类则取消，点其他分类则直接替换（FR-003 / FR-004）
+                          _dispatchCategory(
+                              label == widget.selectedCategory ? null : label);
                         },
                       ),
                     ),
                   ),
                 ),
-                if (_touchedIndex != null && _touchedIndex! < entries.length)
+                if (selectedIndex != null)
                   Positioned(
                     bottom: -8,
                     left: 0,
@@ -748,10 +808,10 @@ class _ReportCardState extends State<ReportCard> {
                     child: Center(
                       child: _buildPieTooltip(
                         appTheme,
-                        _categoryLabel(entries[_touchedIndex!].key),
-                        entries[_touchedIndex!].value,
-                        total > 0 ? entries[_touchedIndex!].value / total : 0,
-                        _categoryColor(entries[_touchedIndex!].key, appTheme),
+                        _categoryLabel(entries[selectedIndex].key),
+                        entries[selectedIndex].value,
+                        total > 0 ? entries[selectedIndex].value / total : 0,
+                        _categoryColor(entries[selectedIndex].key, appTheme),
                       ),
                     ),
                   ),
@@ -768,14 +828,17 @@ class _ReportCardState extends State<ReportCard> {
               children: entries.asMap().entries.map((indexed) {
                 final e = indexed.value;
                 final pct = total > 0 ? e.value / total : 0.0;
-                return Padding(
-                  padding: EdgeInsets.only(top: indexed.key > 0 ? 14 : 0),
-                  child: _buildLegend(
-                    appTheme: appTheme,
-                    label: _categoryLabel(e.key),
-                    color: _categoryColor(e.key, appTheme),
-                    value: e.value,
-                    pct: pct,
+                final label = _categoryLabel(e.key);
+                return _buildLegend(
+                  appTheme: appTheme,
+                  label: label,
+                  color: _categoryColor(e.key, appTheme),
+                  value: e.value,
+                  pct: pct,
+                  isSelected: indexed.key == selectedIndex,
+                  // 图例与扇区派发同一个回调，两者完全等价（FR-001）
+                  onTap: () => _dispatchCategory(
+                    label == widget.selectedCategory ? null : label,
                   ),
                 );
               }).toList(),
@@ -860,25 +923,30 @@ class _ReportCardState extends State<ReportCard> {
     required Color color,
     required String title,
     required double pct,
-    bool isTouched = false,
+    bool isSelected = false,
   }) {
     final icon = ExpenseCategoryHelper.categoryIcon(title);
     final showBadge = icon != null && pct >= 0.05;
     return PieChartSectionData(
       value: value > 0 ? value : 0.001,
+      // 选中扇区半径外扩；其余扇区半径不变、MUST NOT 淡化（FR-006 / 契约 C1-3）
+      radius: isSelected ? _pieSelectedRadius : _pieBaseRadius,
       color: color,
       title: '',
 
       badgeWidget: showBadge
           ? Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(
+              padding: EdgeInsets.all(isSelected ? 3 : 2),
+              decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
+                // 占比极小的分类没有徽标，选中态此时全靠半径外扩表达
+                border:
+                    isSelected ? Border.all(color: color, width: 1.5) : null,
               ),
               child: Icon(
                 icon,
-                size: 10,
+                size: isSelected ? 12 : 10,
                 color: color,
               ),
             )
@@ -949,36 +1017,59 @@ class _ReportCardState extends State<ReportCard> {
     required Color color,
     required double value,
     required double pct,
+    required bool isSelected,
+    required VoidCallback onTap,
   }) {
     final icon = ExpenseCategoryHelper.categoryIcon(label);
-    return Row(
-      children: [
-        if (icon != null) ...[
-          Icon(icon, size: 13, color: color),
-          AppSpacing.w6,
-        ],
-        Text(
-          label,
-          style: AppTypography.bodySm.copyWith(color: appTheme.earth),
+    return GestureDetector(
+      onTap: onTap,
+      // 点击区域即整行，不依赖图标的命中范围
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        // 行高即点击区域：占比再小的分类也有尺寸充足的入口（SC-008）
+        constraints: const BoxConstraints(minHeight: 44),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
         ),
-        AppSpacing.w4,
-        Text(
-          '${(pct * 100).toStringAsFixed(0)}%',
-          style: TextStyle(
-            fontSize: 11,
-            color: appTheme.earth,
-          ),
+        decoration: BoxDecoration(
+          // 选中态用整行底色表达，与扇区的半径外扩不同形（契约 C1-2）。
+          // 未选中行保持透明，MUST NOT 淡化（契约 C1-3）
+          color: isSelected
+              ? appTheme.primaryLight.withValues(alpha: 0.3)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(appTheme.radiusSm),
         ),
-        const Spacer(),
-        Text(
-          FormatUtils.formatAmount(value),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
+        child: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 13, color: color),
+              AppSpacing.w6,
+            ],
+            Text(
+              label,
+              style: AppTypography.bodySm.copyWith(color: appTheme.earth),
+            ),
+            AppSpacing.w4,
+            Text(
+              '${(pct * 100).toStringAsFixed(0)}%',
+              style: TextStyle(
+                fontSize: 11,
+                color: appTheme.earth,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              FormatUtils.formatAmount(value),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
