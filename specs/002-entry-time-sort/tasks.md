@@ -182,7 +182,19 @@ description: "Task list for feature: 记账条目可选时间与按时间排序"
 - [x] T038 运行 `flutter test test/modules/period_book`，确认 `test/modules/period_book/entry_ordering_test.dart` 全部用例通过，且既有 `test/modules/period_book/agg_page_filter_test.dart` / `category_filter_helper_test.dart` / `expense_category_test.dart` **无回归**（任何回归都说明改动越界，尤其可能触碰了聚合口径）→ 91/91 通过，7s
 - [x] T039 判断是否需要全量 `flutter test`：若实现中改到了 `lib/core/` 的共享路径（`clearModuleData` / `factoryReset` / 通用 `query`、`transaction`）则**必须**全量；若仅有加列 + 加迁移则按需测试即可。将判断结论记入提交说明 → **结论：必须全量，且已执行**。实现确实改到了共享路径：`DatabaseService._onCreate` 的事务体（首启建表，影响**所有**模块）与 5 个 schema 构造函数签名。全量结果见 T041 提交说明
 - [x] T040 按 `quickstart.md` §五 提交前检查清单逐项核对，重点确认 `grep` 自检项（`entry_date` 不出现在任何 `ORDER BY` 或聚合方法中）→ 11 处 `orderBy` 全为 `sort_order` / `start_date`，`entry_date` 仅出现在 insert/update 映射与兄弟行查询的列名中，FR-010 成立
-- [ ] T041 按 `.codex/skills/commit/SKILL.md` 提交（英文 type/scope 前缀 + 简体中文描述），提交信息中说明本次交付了哪些 story
+- [x] T041 按 `.codex/skills/commit/SKILL.md` 提交（英文 type/scope 前缀 + 简体中文描述），提交信息中说明本次交付了哪些 story → 拆为 3 个提交，见下方「提交拆分」
+
+### 提交拆分
+
+实现过程中发现两个**与本特性无关的既有缺陷**，混进特性提交会让两者都难以评审，故分开提交：
+
+| 提交 | 说明 |
+| :--- | :--- |
+| `77af886 fix(core)` | `_onCreate` / `_onUpgrade` 兜底分支在事务内混用 `db` 导致的数据库锁死 |
+| `ba31cfe test(vault)` | 新增分类弹窗用例因真实 IO 卡在 FakeAsync 而挂死，并补上失效的选中断言 |
+| `42c66ad feat(period_book)` | 本特性（US1–US4）+ spec 工作区 |
+
+> ⚠️ `77af886` 的锁死修复**尚未经真机全新安装验证**（正是 T034 的手工步骤）。已确认的是：Windows/Linux 生产环境走 `databaseFactoryFfi`，与复现所用工厂同源；升级路径不触发 `_onCreate`，因此存量用户从未暴露该问题。
 
 ---
 
