@@ -57,8 +57,7 @@ class ImportExportService {
         orderBy: 'period_id ASC, sort_order ASC, created_at ASC');
 
     // 4. 读取密码保险箱数据（分类 + 条目）
-    final vaultCategories = await _db.query(
-        'mod_vault_categories',
+    final vaultCategories = await _db.query('mod_vault_categories',
         orderBy: 'sort_order ASC, created_at ASC');
     final vaultEntries = await _db.query('mod_vault_entries',
         orderBy: 'category_id ASC, sort_order ASC, created_at ASC');
@@ -164,8 +163,7 @@ class ImportExportService {
 
       final vaultCategories =
           (data['vault_categories'] as List<dynamic>?) ?? [];
-      final vaultEntries =
-          (data['vault_entries'] as List<dynamic>?) ?? [];
+      final vaultEntries = (data['vault_entries'] as List<dynamic>?) ?? [];
 
       return ImportPreviewResult.ready(
         filePath: filePath,
@@ -306,13 +304,17 @@ class ImportExportService {
     int largeExpensesCount = 0;
 
     // 确保大额记录表存在（兼容旧数据库未创建该表的场景）
+    // ⚠️ 列定义必须与 `DatabaseService._onCreate` 保持一致：下方 INSERT 会写入
+    // `sort_order` 与 `entry_date`，本回退建表若漏列，INSERT 会在这里直接失败。
     await txn.execute('''
       CREATE TABLE IF NOT EXISTS mod_period_book_large_additions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         period_id INTEGER NOT NULL,
         amount REAL NOT NULL,
         reason TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
+        entry_date TEXT,
         FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
       )
     ''');
@@ -325,6 +327,7 @@ class ImportExportService {
         description TEXT NOT NULL,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
+        entry_date TEXT,
         FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
       )
     ''');
@@ -384,8 +387,8 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(addition as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_period_book_additions
-           (id, stage_id, amount, reason, sort_order, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)''',
+           (id, stage_id, amount, reason, sort_order, created_at, entry_date)
+           VALUES (?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['stage_id'],
@@ -393,6 +396,9 @@ class ImportExportService {
           map['reason'],
           map['sort_order'] ?? 0,
           map['created_at'],
+          // 旧备份无此键 → null → 「未填写时间」。
+          // ⚠️ 不得写 `?? ''`：空串字典序小于一切 YYYY-MM-DD，会把旧数据全推到列表最前。
+          map['entry_date'],
         ],
       );
       additionsCount++;
@@ -404,8 +410,8 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(expense as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_period_book_expenses
-           (id, stage_id, category, amount, description, sort_order, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)''',
+           (id, stage_id, category, amount, description, sort_order, created_at, entry_date)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['stage_id'],
@@ -414,6 +420,7 @@ class ImportExportService {
           map['description'],
           map['sort_order'] ?? 0,
           map['created_at'],
+          map['entry_date'],
         ],
       );
       expensesCount++;
@@ -426,14 +433,16 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(addition as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_period_book_large_additions
-           (id, period_id, amount, reason, created_at)
-           VALUES (?, ?, ?, ?, ?)''',
+           (id, period_id, amount, reason, sort_order, created_at, entry_date)
+           VALUES (?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['period_id'],
           map['amount'],
           map['reason'],
+          map['sort_order'] ?? 0,
           map['created_at'],
+          map['entry_date'],
         ],
       );
       largeAdditionsCount++;
@@ -446,8 +455,8 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(expense as Map);
       await txn.rawInsert(
         '''INSERT OR REPLACE INTO mod_period_book_large_expenses
-           (id, period_id, category, amount, description, sort_order, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)''',
+           (id, period_id, category, amount, description, sort_order, created_at, entry_date)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['period_id'],
@@ -456,6 +465,7 @@ class ImportExportService {
           map['description'],
           map['sort_order'] ?? 0,
           map['created_at'],
+          map['entry_date'],
         ],
       );
       largeExpensesCount++;
@@ -687,12 +697,10 @@ class ImportExportService {
     if (data['vault_master'] != null && data['vault_master'] is! Map) {
       return '密码保险箱主密码数据格式不正确';
     }
-    if (data['vault_categories'] != null &&
-        data['vault_categories'] is! List) {
+    if (data['vault_categories'] != null && data['vault_categories'] is! List) {
       return '密码保险箱分类数据格式不正确';
     }
-    if (data['vault_entries'] != null &&
-        data['vault_entries'] is! List) {
+    if (data['vault_entries'] != null && data['vault_entries'] is! List) {
       return '密码保险箱条目数据格式不正确';
     }
 

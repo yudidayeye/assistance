@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/theme_extension.dart';
+import 'entry_date_field.dart';
 
 /// 通用内嵌添加表单（大额追加 / 个人支出 / 其他支出）
 ///
-/// 三段结构：金额输入 → 描述/原因输入 → 操作按钮行（收起 + 确认添加）
+/// 四段结构：金额输入 → 描述/原因输入 → 时间（可选） → 操作按钮行（收起 + 确认添加）
 ///
 /// 键盘行为：
 /// - 金额输入框按"下一步" → 自动聚焦到描述输入框
@@ -11,10 +12,13 @@ import '../../../core/theme/theme_extension.dart';
 class AddForm extends StatefulWidget {
   /// 第一个输入框的 label
   final String amountLabel;
+
   /// 第二个输入框的 label
   final String descLabel;
+
   /// 第一个输入框的 hint
   final String amountHint;
+
   /// 第二个输入框的 hint
   final String descHint;
 
@@ -28,15 +32,25 @@ class AddForm extends StatefulWidget {
 
   /// 确认按钮文字
   final String confirmText;
+
   /// 确认按钮前景色
   final Color confirmForeground;
+
   /// 确认按钮背景色
   final Color confirmBackground;
+
   /// 确认按钮边框色
   final Color confirmBorder;
 
   /// 收起按钮文字
   final String collapseText;
+
+  /// 发生时间（可选）。`null` 表示用户不填，条目按创建顺序落位。
+  /// 有值时该条目会被插入到同组中最后一个「不晚于该日期」的条目之后。
+  final DateTime? selectedDate;
+
+  /// 时间变更回调；传 `null` 表示用户清除了已选时间。
+  final ValueChanged<DateTime?>? onDateChanged;
 
   const AddForm({
     super.key,
@@ -56,6 +70,8 @@ class AddForm extends StatefulWidget {
     this.confirmBackground = const Color(0xFF8B7EC8),
     this.confirmBorder = const Color(0xFF8B7EC8),
     this.collapseText = '收起',
+    this.selectedDate,
+    this.onDateChanged,
   });
 
   @override
@@ -195,6 +211,12 @@ class _AddFormState extends State<AddForm> {
             style: TextStyle(fontSize: 14, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
+          // 时间（可选）
+          EntryDateField(
+            selectedDate: widget.selectedDate,
+            onDateChanged: widget.onDateChanged,
+          ),
+          const SizedBox(height: 10),
           // 操作按钮行
           Row(
             children: [
@@ -223,13 +245,17 @@ class _AddFormState extends State<AddForm> {
                   label: Text(widget.confirmText),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: widget.confirmForeground,
-                    backgroundColor: widget.confirmBackground.withValues(alpha: 0.1),
-                    side: BorderSide(color: widget.confirmBorder.withValues(alpha: 0.3)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    backgroundColor:
+                        widget.confirmBackground.withValues(alpha: 0.1),
+                    side: BorderSide(
+                        color: widget.confirmBorder.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    textStyle: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),

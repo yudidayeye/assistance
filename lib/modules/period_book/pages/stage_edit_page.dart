@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -16,6 +16,8 @@ import '../widgets/addition_section_card.dart';
 import '../widgets/records_tab_card.dart';
 import '../widgets/add_form.dart';
 import '../widgets/edit_balance_dialog.dart';
+import '../widgets/entry_date_field.dart';
+import '../services/entry_ordering.dart';
 
 /// 阶段编辑页（单阶段编辑 + 批量记账）
 class StageEditPage extends StatefulWidget {
@@ -53,6 +55,11 @@ class _StageEditPageState extends State<StageEditPage> {
   final _otherAmountController = TextEditingController();
   String _shoppingCategory = '生活';
   String _otherCategory = '生活';
+
+  // 各新增表单已选的发生时间（可选，null = 用户不填）
+  DateTime? _additionEntryDate;
+  DateTime? _shoppingEntryDate;
+  DateTime? _otherEntryDate;
 
   // 焦点节点：金额 → 描述/原因
   final _additionAmountFocusNode = FocusNode();
@@ -162,7 +169,6 @@ class _StageEditPageState extends State<StageEditPage> {
     if (mounted) setState(() => _loading = false);
   }
 
-
   /// 刷新数据（不显示加载指示器，保持滚动位置）
   Future<void> _refreshData() async {
     try {
@@ -203,14 +209,12 @@ class _StageEditPageState extends State<StageEditPage> {
 
   /// 加载数据并保持滚动位置
   Future<void> _loadDataPreserveScroll() async {
-    _savedScrollOffset = _scrollController.hasClients
-        ? _scrollController.offset
-        : null;
+    _savedScrollOffset =
+        _scrollController.hasClients ? _scrollController.offset : null;
     await _loadData();
     if (mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_savedScrollOffset != null &&
-            _scrollController.hasClients) {
+        if (_savedScrollOffset != null && _scrollController.hasClients) {
           _scrollController.jumpTo(_savedScrollOffset!);
         }
       });
@@ -248,23 +252,33 @@ class _StageEditPageState extends State<StageEditPage> {
     } catch (e) {
       debugPrint('Save stage dates error: $e');
       if (mounted) {
-        AppSnackBar.show(context, '保存失败: $e',
-            type: AppSnackBarType.error);
+        AppSnackBar.show(context, '保存失败: $e', type: AppSnackBarType.error);
       }
     }
   }
 
   /// 实时保存追加记录编辑（金额与原因均合法时才写入）
+  ///
+  /// [entryDate] / [clearEntryDate] 由弹窗内的日期行决定：只有当用户真的动过
+  /// 日期控件时才会是有效变更，否则两者皆 null，服务层不碰 `entry_date`。
   void _saveAdditionEdit(
     AdditionRecord addition,
     TextEditingController reasonController,
-    TextEditingController amountController,
-  ) {
+    TextEditingController amountController, {
+    String? entryDate,
+    bool clearEntryDate = false,
+  }) {
     if (addition.id == null) return;
     final amount = double.tryParse(amountController.text);
     final reason = reasonController.text.trim();
     if (amount == null || amount <= 0 || reason.isEmpty) return;
-    _service.updateAddition(addition.id!, amount: amount, reason: reason);
+    _service.updateAddition(
+      addition.id!,
+      amount: amount,
+      reason: reason,
+      entryDate: entryDate,
+      clearEntryDate: clearEntryDate,
+    );
   }
 
   /// 实时保存支出记录编辑（金额与描述均合法时才写入）
@@ -272,8 +286,10 @@ class _StageEditPageState extends State<StageEditPage> {
     ExpenseRecord expense,
     String category,
     TextEditingController amountController,
-    TextEditingController descController,
-  ) {
+    TextEditingController descController, {
+    String? entryDate,
+    bool clearEntryDate = false,
+  }) {
     if (expense.id == null) return;
     final amount = double.tryParse(amountController.text);
     final desc = descController.text.trim();
@@ -283,6 +299,8 @@ class _StageEditPageState extends State<StageEditPage> {
       category: category,
       amount: amount,
       description: desc,
+      entryDate: entryDate,
+      clearEntryDate: clearEntryDate,
     );
   }
 
@@ -449,7 +467,8 @@ class _StageEditPageState extends State<StageEditPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('取消', style: TextStyle(color: appTheme.earthMedium)),
+                child:
+                    Text('取消', style: TextStyle(color: appTheme.earthMedium)),
               ),
               TextButton(
                 onPressed: () {
@@ -536,21 +555,34 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
-
   Widget _buildAdditionsSection(AppThemeExtension appTheme) {
     return AdditionSectionCard(
       title: '追加记录',
       emptyText: '暂无追加记录',
-      additions: _additions.map((a) => AdditionItemData(
-        id: '${a.id}',
-        reason: a.reason,
-        amount: a.amount,
-      )).toList(),
+      additions: _additions
+          .map((a) => AdditionItemData(
+                id: '${a.id}',
+                reason: a.reason,
+                amount: a.amount,
+                entryDate: a.entryDate,
+              ))
+          .toList(),
       color: appTheme.sage,
       prefix: '+¥',
       showAddButton: !_additionFormExpanded,
       form: _additionFormExpanded ? _buildAdditionForm(appTheme) : null,
-      onAdd: () { setState(() => _additionFormExpanded = true); WidgetsBinding.instance.addPostFrameCallback((_) { if (_scrollController.hasClients) { _scrollController.animateTo( _scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut, ); } }); },
+      onAdd: () {
+        setState(() => _additionFormExpanded = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      },
       onEdit: (data) {
         final addition = _additions.firstWhere((a) => '${a.id}' == data.id);
         _showEditAdditionSheet(appTheme, addition);
@@ -559,13 +591,7 @@ class _StageEditPageState extends State<StageEditPage> {
         final addition = _additions.firstWhere((a) => '${a.id}' == data.id);
         _deleteAddition(addition);
       },
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          final item = _additions.removeAt(oldIndex);
-          _additions.insert(newIndex, item);
-        });
-        _service.updateAdditionsOrder(_additions);
-      },
+      onReorder: _onAdditionReorder,
       leading: Icon(
         Icons.drag_handle_rounded,
         color: appTheme.earthMedium.withValues(alpha: 0.4),
@@ -574,13 +600,25 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
+  /// 追加记录拖动排序
+  void _onAdditionReorder(int oldIndex, int newIndex) {
+    final dates = _additions.map((a) => a.entryDate).toList();
+    if (!canReorder(dates, oldIndex, newIndex)) {
+      AppSnackBar.show(context, '已填写时间的条目只能在同一天内调整顺序',
+          type: AppSnackBarType.info);
+      return;
+    }
+    setState(() => _additions = applyReorder(_additions, oldIndex, newIndex));
+    _service.updateAdditionsOrder(_additions);
+  }
+
   // ═══════════════════════════════════════════════════════════
   // 弹窗：编辑阶段余额
   // ═══════════════════════════════════════════════════════════
 
   Future<void> _showEditBalanceSheet() async {
     final maxBalance = _stageCalc?.baseAmount ?? 0;
-    
+
     await EditBalanceDialog.show(
       context: context,
       currentBalance: _stage!.balance,
@@ -597,6 +635,9 @@ class _StageEditPageState extends State<StageEditPage> {
     final reasonController = TextEditingController(text: addition.reason);
     final amountController =
         TextEditingController(text: addition.amount.toStringAsFixed(2));
+    // 脏值（手改过的备份）解析成 null，弹窗显示「不填」而不是崩掉
+    DateTime? selectedDate = parseEntryDate(addition.entryDate);
+    bool dateTouched = false;
 
     await showModalBottomSheet(
       context: context,
@@ -614,7 +655,8 @@ class _StageEditPageState extends State<StageEditPage> {
             ),
             decoration: BoxDecoration(
               color: sheetTheme.cream,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
+              borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(sheetTheme.radiusXl)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -695,12 +737,29 @@ class _StageEditPageState extends State<StageEditPage> {
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
                 AppSpacing.h16,
+                // 时间（可选）
+                EntryDateField(
+                  selectedDate: selectedDate,
+                  onDateChanged: (date) => setLocal(() {
+                    selectedDate = date;
+                    dateTouched = true;
+                  }),
+                ),
+                AppSpacing.h16,
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () {
                       _saveAdditionEdit(
-                          addition, reasonController, amountController);
+                        addition,
+                        reasonController,
+                        amountController,
+                        // 只有动过日期才把变更传出去，否则两者皆 null
+                        entryDate: dateTouched && selectedDate != null
+                            ? formatEntryDate(selectedDate!)
+                            : null,
+                        clearEntryDate: dateTouched && selectedDate == null,
+                      );
                       Navigator.pop(ctx);
                     },
                     style: _primaryButtonStyle(
@@ -747,6 +806,7 @@ class _StageEditPageState extends State<StageEditPage> {
                 category: e.category,
                 description: e.description,
                 amount: e.amount,
+                entryDate: e.entryDate,
               ))
           .toList(),
       color: appTheme.rose,
@@ -790,19 +850,48 @@ class _StageEditPageState extends State<StageEditPage> {
     );
   }
 
-  /// 个人支出拖动排序：仅调整非 other 子集顺序，其他支出保持相对位置
+  /// 个人支出拖动排序：仅调整非 other 子集顺序，其他支出保持相对位置。
+  ///
+  /// 校验必须跑在**卡片实际渲染的那个子集**上——页面的全量 `_expenses` 索引
+  /// 空间与卡片不符，拿它做判定会错位。
   void _onShoppingReorder(int oldIndex, int newIndex) {
+    final dates = _shoppingEntries.map((e) => e.entryDate).toList();
+    if (!canReorder(dates, oldIndex, newIndex)) {
+      AppSnackBar.show(context, '已填写时间的条目只能在同一天内调整顺序',
+          type: AppSnackBarType.info);
+      return;
+    }
     setState(() {
-      final shoppingExpenses = _expenses.where((e) => !e.isOther).toList();
-      final item = shoppingExpenses.removeAt(oldIndex);
-      shoppingExpenses.insert(newIndex, item);
       _expenses = [
-        ...shoppingExpenses,
-        ..._expenses.where((e) => e.isOther),
+        ...applyReorder(_shoppingEntries, oldIndex, newIndex),
+        ..._otherEntries,
       ];
     });
     _service.updateExpensesOrder(_expenses);
   }
+
+  /// 其他支出拖动排序
+  void _onOtherReorder(int oldIndex, int newIndex) {
+    final dates = _otherEntries.map((e) => e.entryDate).toList();
+    if (!canReorder(dates, oldIndex, newIndex)) {
+      AppSnackBar.show(context, '已填写时间的条目只能在同一天内调整顺序',
+          type: AppSnackBarType.info);
+      return;
+    }
+    setState(() {
+      _expenses = [
+        ..._shoppingEntries,
+        ...applyReorder(_otherEntries, oldIndex, newIndex),
+      ];
+    });
+    _service.updateExpensesOrder(_expenses);
+  }
+
+  List<ExpenseRecord> get _shoppingEntries =>
+      _expenses.where((e) => !e.isOther).toList();
+
+  List<ExpenseRecord> get _otherEntries =>
+      _expenses.where((e) => e.isOther).toList();
 
   // ═══════════════════════════════════════════════════════════
   // 其他支出卡片
@@ -814,17 +903,31 @@ class _StageEditPageState extends State<StageEditPage> {
     return ExpenseSectionCard(
       title: '其他支出',
       emptyText: '暂无其他支出',
-      expenses: otherExpenses.map((e) => ExpenseItemData(
-        id: '${e.id}',
-        category: e.category,
-        description: e.description,
-        amount: e.amount,
-      )).toList(),
+      expenses: otherExpenses
+          .map((e) => ExpenseItemData(
+                id: '${e.id}',
+                category: e.category,
+                description: e.description,
+                amount: e.amount,
+                entryDate: e.entryDate,
+              ))
+          .toList(),
       color: appTheme.rose,
       isOther: true,
       showAddButton: !_otherFormExpanded,
       form: _otherFormExpanded ? _buildOtherForm(appTheme) : null,
-      onAdd: () { setState(() => _otherFormExpanded = true); WidgetsBinding.instance.addPostFrameCallback((_) { if (_scrollController.hasClients) { _scrollController.animateTo( _scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut, ); } }); },
+      onAdd: () {
+        setState(() => _otherFormExpanded = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      },
       onEdit: (data) {
         final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
         _showEditExpenseSheet(appTheme, expense);
@@ -833,18 +936,7 @@ class _StageEditPageState extends State<StageEditPage> {
         final expense = _expenses.firstWhere((e) => '${e.id}' == data.id);
         _deleteExpense(expense);
       },
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          final otherExpenses = _expenses.where((e) => e.isOther).toList();
-          final item = otherExpenses.removeAt(oldIndex);
-          otherExpenses.insert(newIndex, item);
-          _expenses = [
-            ..._expenses.where((e) => !e.isOther),
-            ...otherExpenses,
-          ];
-        });
-        _service.updateExpensesOrder(_expenses);
-      },
+      onReorder: _onOtherReorder,
       leading: Icon(
         Icons.drag_handle_rounded,
         color: appTheme.earthMedium.withValues(alpha: 0.4),
@@ -869,6 +961,8 @@ class _StageEditPageState extends State<StageEditPage> {
       selectedCategory: _shoppingCategory,
       onCategoryChanged: (category) =>
           setState(() => _shoppingCategory = category),
+      selectedDate: _shoppingEntryDate,
+      onDateChanged: (date) => setState(() => _shoppingEntryDate = date),
       onCollapse: () => setState(() => _shoppingFormExpanded = false),
       onConfirm: _submitShoppingExpense,
       confirmForeground: appTheme.primary,
@@ -881,11 +975,14 @@ class _StageEditPageState extends State<StageEditPage> {
     final amount = double.tryParse(_shoppingAmountController.text);
     final desc = _shoppingDescController.text.trim();
     if (amount == null || amount <= 0 || desc.isEmpty) return;
-    final category =
-        ExpenseCategoryHelper.categoryToDbValue(_shoppingCategory);
-    _service.addExpense(widget.stageId, category, amount, desc).then((_) {
+    final category = ExpenseCategoryHelper.categoryToDbValue(_shoppingCategory);
+    _service
+        .addExpense(widget.stageId, category, amount, desc,
+            entryDate: _entryDateOf(_shoppingEntryDate))
+        .then((_) {
       _shoppingAmountController.clear();
       _shoppingDescController.clear();
+      setState(() => _shoppingEntryDate = null);
       _refreshData();
     });
   }
@@ -903,6 +1000,8 @@ class _StageEditPageState extends State<StageEditPage> {
       selectedCategory: _otherCategory,
       onCategoryChanged: (category) =>
           setState(() => _otherCategory = category),
+      selectedDate: _otherEntryDate,
+      onDateChanged: (date) => setState(() => _otherEntryDate = date),
       onCollapse: () => setState(() => _otherFormExpanded = false),
       onConfirm: _submitOtherExpense,
       confirmForeground: appTheme.primary,
@@ -916,9 +1015,13 @@ class _StageEditPageState extends State<StageEditPage> {
     final desc = _otherDescController.text.trim();
     if (amount == null || amount <= 0 || desc.isEmpty) return;
     final category = ExpenseCategoryHelper.toOtherCategory(_otherCategory);
-    _service.addExpense(widget.stageId, category, amount, desc).then((_) {
+    _service
+        .addExpense(widget.stageId, category, amount, desc,
+            entryDate: _entryDateOf(_otherEntryDate))
+        .then((_) {
       _otherAmountController.clear();
       _otherDescController.clear();
+      setState(() => _otherEntryDate = null);
       _refreshData();
     });
   }
@@ -999,8 +1102,7 @@ class _StageEditPageState extends State<StageEditPage> {
   }
 
   // 可选类型列表（可后续扩展）
-  List<String> get _expenseCategories =>
-      const ['生活', '购物', '工作', '娱乐', '大餐'];
+  List<String> get _expenseCategories => const ['生活', '购物', '工作', '娱乐', '大餐'];
 
   Future<void> _showEditExpenseSheet(
       AppThemeExtension appTheme, ExpenseRecord expense) async {
@@ -1009,9 +1111,11 @@ class _StageEditPageState extends State<StageEditPage> {
     final descController = TextEditingController(text: expense.description);
     final isOther = expense.isOther;
     final initialCategory = _mapCategoryForDisplay(expense.category);
-    String selectedCategory = _expenseCategories.contains(initialCategory)
-        ? initialCategory
-        : '生活';
+    String selectedCategory =
+        _expenseCategories.contains(initialCategory) ? initialCategory : '生活';
+    // 脏值（手改过的备份）解析成 null，弹窗显示「不填」而不是崩掉
+    DateTime? selectedDate = parseEntryDate(expense.entryDate);
+    bool dateTouched = false;
 
     await showModalBottomSheet(
       context: context,
@@ -1023,179 +1127,202 @@ class _StageEditPageState extends State<StageEditPage> {
           builder: (ctx, setLocal) {
             return Container(
               padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          decoration: BoxDecoration(
-            color: sheetTheme.cream,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 标题
-              Row(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              decoration: BoxDecoration(
+                color: sheetTheme.cream,
+                borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(sheetTheme.radiusXl)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 标题
+                  Row(
+                    children: [
+                      Text(
+                        isOther ? '编辑其他支出' : '编辑支出',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: sheetTheme.earth,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: 20,
+                          color: sheetTheme.earthMedium.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                  AppSpacing.h12,
+                  // 类型选择
                   Text(
-                    isOther ? '编辑其他支出' : '编辑支出',
+                    '类型',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: sheetTheme.earth,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: sheetTheme.earthMedium.withValues(alpha: 0.7),
                     ),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(
-                      Icons.close_rounded,
-                      size: 20,
-                      color: sheetTheme.earthMedium.withValues(alpha: 0.6),
+                  AppSpacing.h8,
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _expenseCategories.map((cat) {
+                      final isSelected = selectedCategory == cat;
+                      final catColor = _categoryColorForName(cat);
+                      return GestureDetector(
+                        onTap: () {
+                          setLocal(() => selectedCategory = cat);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? catColor.withValues(alpha: 0.12)
+                                : sheetTheme.creamDark.withValues(alpha: 0.5),
+                            borderRadius:
+                                BorderRadius.circular(sheetTheme.radiusPill),
+                            border: Border.all(
+                              color: isSelected
+                                  ? catColor.withValues(alpha: 0.4)
+                                  : sheetTheme.earthMedium
+                                      .withValues(alpha: 0.1),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Text(
+                            cat,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: isSelected
+                                  ? catColor.withValues(alpha: 0.85)
+                                  : sheetTheme.earthMedium,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  AppSpacing.h16,
+                  // 金额
+                  TextField(
+                    controller: amountController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: '金额',
+                      hintText: '请输入金额',
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: sheetTheme.earthMedium.withValues(alpha: 0.5),
+                      ),
+                      filled: true,
+                      fillColor: sheetTheme.cardBackground,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(sheetTheme.radiusSm),
+                        borderSide: BorderSide(
+                          color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                    ),
+                    style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+                  ),
+                  const SizedBox(height: 14),
+                  // 描述
+                  TextField(
+                    controller: descController,
+                    decoration: InputDecoration(
+                      labelText: '描述',
+                      hintText: '请输入描述',
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: sheetTheme.earthMedium.withValues(alpha: 0.5),
+                      ),
+                      filled: true,
+                      fillColor: sheetTheme.cardBackground,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(sheetTheme.radiusSm),
+                        borderSide: BorderSide(
+                          color: sheetTheme.earthMedium.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                    ),
+                    style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+                  ),
+                  AppSpacing.h16,
+                  // 时间（可选）
+                  EntryDateField(
+                    selectedDate: selectedDate,
+                    onDateChanged: (date) => setLocal(() {
+                      selectedDate = date;
+                      dateTouched = true;
+                    }),
+                  ),
+                  AppSpacing.h16,
+                  // 确定按钮
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {
+                        final dbCategory = isOther
+                            ? ExpenseCategoryHelper.toOtherCategory(
+                                selectedCategory)
+                            : _categoryToDbValue(selectedCategory);
+                        _saveExpenseEdit(
+                          expense,
+                          dbCategory,
+                          amountController,
+                          descController,
+                          // 只有动过日期才把变更传出去，否则两者皆 null
+                          entryDate: dateTouched && selectedDate != null
+                              ? formatEntryDate(selectedDate!)
+                              : null,
+                          clearEntryDate: dateTouched && selectedDate == null,
+                        );
+                        Navigator.pop(ctx);
+                      },
+                      style: _primaryButtonStyle(
+                        sheetTheme,
+                        background: sheetTheme.primary,
+                        verticalPadding: 14,
+                        radius: sheetTheme.radiusMd,
+                        fontSize: 15,
+                      ),
+                      child: const Text('保存修改'),
                     ),
                   ),
                 ],
               ),
-              AppSpacing.h12,
-              // 类型选择
-                Text(
-                  '类型',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: sheetTheme.earthMedium.withValues(alpha: 0.7),
-                  ),
-                ),
-                AppSpacing.h8,
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _expenseCategories.map((cat) {
-                    final isSelected = selectedCategory == cat;
-                    final catColor = _categoryColorForName(cat);
-                    return GestureDetector(
-                      onTap: () {
-                        setLocal(() => selectedCategory = cat);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? catColor.withValues(alpha: 0.12)
-                              : sheetTheme.creamDark.withValues(alpha: 0.5),
-                          borderRadius:
-                              BorderRadius.circular(sheetTheme.radiusPill),
-                          border: Border.all(
-                            color: isSelected
-                                ? catColor.withValues(alpha: 0.4)
-                                : sheetTheme.earthMedium.withValues(alpha: 0.1),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Text(
-                          cat,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                            color: isSelected
-                                ? catColor.withValues(alpha: 0.85)
-                                : sheetTheme.earthMedium,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              AppSpacing.h16,
-              // 金额
-              TextField(
-                controller: amountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: '金额',
-                  hintText: '请输入金额',
-                  hintStyle: TextStyle(
-                    fontSize: 13,
-                    color: sheetTheme.earthMedium.withValues(alpha: 0.5),
-                  ),
-                  filled: true,
-                  fillColor: sheetTheme.cardBackground,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
-                    borderSide: BorderSide(
-                      color: sheetTheme.earthMedium.withValues(alpha: 0.25),
-                      width: 1,
-                    ),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                ),
-                style: TextStyle(fontSize: 14, color: sheetTheme.earth),
-              ),
-              const SizedBox(height: 14),
-              // 描述
-              TextField(
-                controller: descController,
-                decoration: InputDecoration(
-                  labelText: '描述',
-                  hintText: '请输入描述',
-                  hintStyle: TextStyle(
-                    fontSize: 13,
-                    color: sheetTheme.earthMedium.withValues(alpha: 0.5),
-                  ),
-                  filled: true,
-                  fillColor: sheetTheme.cardBackground,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
-                    borderSide: BorderSide(
-                      color: sheetTheme.earthMedium.withValues(alpha: 0.25),
-                      width: 1,
-                    ),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                ),
-                style: TextStyle(fontSize: 14, color: sheetTheme.earth),
-              ),
-              AppSpacing.h16,
-              // 确定按钮
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    final dbCategory = isOther
-                        ? ExpenseCategoryHelper.toOtherCategory(selectedCategory)
-                        : _categoryToDbValue(selectedCategory);
-                    _saveExpenseEdit(
-                        expense, dbCategory, amountController, descController);
-                    Navigator.pop(ctx);
-                  },
-                  style: _primaryButtonStyle(
-                    sheetTheme,
-                    background: sheetTheme.primary,
-                    verticalPadding: 14,
-                    radius: sheetTheme.radiusMd,
-                    fontSize: 15,
-                  ),
-                  child: const Text('保存修改'),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
-  },
-);
     // 编辑已实时保存，关闭弹窗后刷新列表
     if (mounted) await _refreshData();
   }
@@ -1269,12 +1396,23 @@ class _StageEditPageState extends State<StageEditPage> {
     final reason = _additionReasonController.text.trim();
     if (amount == null || amount <= 0 || reason.isEmpty) return;
 
-    _service.addAddition(widget.stageId, amount, reason).then((_) {
+    _service
+        .addAddition(widget.stageId, amount, reason,
+            entryDate: _entryDateOf(_additionEntryDate))
+        .then((_) {
       _additionReasonController.clear();
       _additionAmountController.clear();
+      setState(() => _additionEntryDate = null);
       _refreshData();
     });
   }
+
+  /// 把 UI 层的 `DateTime?` 转成存储态的 `YYYY-MM-DD` 串。
+  ///
+  /// 用 `entry_ordering.dart` 的 [formatEntryDate] 而非 `toIso8601String()`：
+  /// 后者会带上时分秒并可能带时区，破坏「定长字典序 == 时间序」这一前提。
+  String? _entryDateOf(DateTime? date) =>
+      date == null ? null : formatEntryDate(date);
 
   Widget _buildAdditionForm(AppThemeExtension appTheme) {
     return Container(
@@ -1353,6 +1491,12 @@ class _StageEditPageState extends State<StageEditPage> {
             style: TextStyle(fontSize: 14, color: appTheme.earth),
           ),
           const SizedBox(height: 10),
+          // 时间（可选）
+          EntryDateField(
+            selectedDate: _additionEntryDate,
+            onDateChanged: (date) => setState(() => _additionEntryDate = date),
+          ),
+          const SizedBox(height: 10),
           // 操作按钮行
           Row(
             children: [
@@ -1377,12 +1521,15 @@ class _StageEditPageState extends State<StageEditPage> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: appTheme.sage,
                     backgroundColor: appTheme.sage.withValues(alpha: 0.1),
-                    side: BorderSide(color: appTheme.sage.withValues(alpha: 0.3)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    side:
+                        BorderSide(color: appTheme.sage.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    textStyle: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),

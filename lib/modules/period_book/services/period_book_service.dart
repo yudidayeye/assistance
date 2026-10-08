@@ -6,6 +6,7 @@ import '../models/addition_record.dart';
 import '../models/expense_record.dart';
 import '../models/large_addition_record.dart';
 import '../models/large_expense_record.dart';
+import 'entry_ordering.dart';
 
 /// 阶段计算结果
 class StageCalculations {
@@ -66,6 +67,160 @@ class PeriodBookService extends ChangeNotifier {
   void notifyChanged() => notifyListeners();
 
   // ══════════════════════════════════════════════════════════
+  // 落位（按发生时间把条目插到同组内的正确位置）
+  //
+  // 列表顺序由 `sort_order` 独占承载，`entry_date` 只是**落位依据**：
+  // 这些方法算出新顺序后，把整组的 `sort_order` 重编号为 0..n-1。
+  // 详见 specs/002-entry-time-sort/research.md R1~R3。
+  // ══════════════════════════════════════════════════════════
+
+  /// 把 [id] 这条记录按 [entryDate] 重新落位到同组内的正确位置。
+  ///
+  /// [table] / [fkColumn] / [fkValue] 共同界定「同组」的边界（同一阶段或同一周期）。
+  ///
+  /// **[entryDate] 为 `null` 时立即返回，一个字节都不写**——这是「不填时间的条目
+  /// 行为与改动前完全一致」（SC-001）的实现保证，新增路径完全依赖这一点。
+  ///
+  /// 整组重编号放在一个事务里：中途失败不会留下「一半新序号一半旧序号」
+  /// 的中间态，那种状态下列表顺序会自相矛盾。
+  ///
+  /// **不负责通知**：通知由公开方法（`addXxx` / `updateXxx`）统一发出，
+  /// 免得一次调用触发多次 `notifyListeners()`。
+  Future<void> _rescheduleEntry({
+    required String table,
+    required String fkColumn,
+    required int fkValue,
+    required int id,
+    required String? entryDate,
+  }) async {
+    if (entryDate == null) return;
+
+    await _db.transaction((txn) async {
+      await txn.update(
+        table,
+        {'entry_date': entryDate},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+
+      // 同组其他条目，按当前列表顺序取出——这就是 resolveInsertIndex 需要的
+      // 「除自己以外的同组快照」，顺序必须是当前生效的顺序
+      final rows = await txn.query(
+        table,
+        columns: ['id', 'entry_date'],
+        where: '$fkColumn = ? AND id != ?',
+        whereArgs: [fkValue, id],
+        orderBy: 'sort_order ASC, created_at ASC',
+      );
+
+      final siblings = rows.map((r) => r['entry_date'] as String?).toList();
+      final orderedIds = rows.map((r) => r['id'] as int).toList();
+      orderedIds.insert(resolveInsertIndex(siblings, entryDate), id);
+
+      for (var i = 0; i < orderedIds.length; i++) {
+        await txn.update(
+          table,
+          {'sort_order': i},
+          where: 'id = ?',
+          whereArgs: [orderedIds[i]],
+        );
+      }
+    });
+  }
+
+  /// 阶段内追加记录的落位。
+  Future<void> _rescheduleAddition(int id, int stageId, String? entryDate) =>
+      _rescheduleEntry(
+        table: 'mod_period_book_additions',
+        fkColumn: 'stage_id',
+        fkValue: stageId,
+        id: id,
+        entryDate: entryDate,
+      );
+
+  /// 阶段内支出记录的落位。
+  Future<void> _rescheduleExpense(int id, int stageId, String? entryDate) =>
+      _rescheduleEntry(
+        table: 'mod_period_book_expenses',
+        fkColumn: 'stage_id',
+        fkValue: stageId,
+        id: id,
+        entryDate: entryDate,
+      );
+
+  /// 周期内大额追加记录的落位。
+  Future<void> _rescheduleLargeAddition(
+          int id, int periodId, String? entryDate) =>
+      _rescheduleEntry(
+        table: 'mod_period_book_large_additions',
+        fkColumn: 'period_id',
+        fkValue: periodId,
+        id: id,
+        entryDate: entryDate,
+      );
+
+  /// 周期内大额支出记录的落位。
+  Future<void> _rescheduleLargeExpense(
+          int id, int periodId, String? entryDate) =>
+      _rescheduleEntry(
+        table: 'mod_period_book_large_expenses',
+        fkColumn: 'period_id',
+        fkValue: periodId,
+        id: id,
+        entryDate: entryDate,
+      );
+
+  /// 读出一条记录所属组的 id（`stage_id` 或 `period_id`）；记录不存在时返回 `null`。
+  ///
+  /// `updateXxx` 的公开签名只收 `id`，落位却需要知道「同组」是谁，
+  /// 所以只能回查一次。
+  Future<int?> _fkValueOf(String table, String fkColumn, int id) async {
+    final rows = await _db.query(
+      table,
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first[fkColumn] as int?;
+  }
+
+  /// 处理一次「时间字段变更」，供 4 个 `updateXxx` 共用。
+  ///
+  /// - [clearEntryDate]：置 `entry_date = NULL` 且**停在当前位置不动**（FR-004）
+  /// - [entryDate] 非空：写入并按 FR-003 重新落位
+  /// - 两者皆空：什么都不做（调用方据此判断要不要早退）
+  ///
+  /// 同样**不负责通知**。
+  Future<void> _applyEntryDateChange({
+    required String table,
+    required String fkColumn,
+    required int id,
+    required String? entryDate,
+    required bool clearEntryDate,
+  }) async {
+    if (clearEntryDate) {
+      await _db.update(
+        table,
+        {'entry_date': null},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      return;
+    }
+    if (entryDate == null) return;
+    final fkValue = await _fkValueOf(table, fkColumn, id);
+    if (fkValue == null) return;
+    await _rescheduleEntry(
+      table: table,
+      fkColumn: fkColumn,
+      fkValue: fkValue,
+      id: id,
+      entryDate: entryDate,
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
   // 周期 CRUD
   // ══════════════════════════════════════════════════════════
 
@@ -111,7 +266,8 @@ class PeriodBookService extends ChangeNotifier {
 
     // 检查周期是否已过期（endDate < 今天），过期则自动关闭
     final endDate = DateTime.parse(period.endDate);
-    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final today =
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     if (endDate.isBefore(today)) {
       await closePeriod(period.id!);
       return null;
@@ -366,7 +522,16 @@ class PeriodBookService extends ChangeNotifier {
   // 追加记录 CRUD
   // ══════════════════════════════════════════════════════════
 
-  Future<int> addAddition(int stageId, double amount, String reason) async {
+  /// 新增一条追加记录。
+  ///
+  /// [entryDate] 为可选的发生时间（`YYYY-MM-DD`，由 UI 层 `formatEntryDate`
+  /// 格式化后传入）。`null` 表示用户未填写。
+  Future<int> addAddition(
+    int stageId,
+    double amount,
+    String reason, {
+    String? entryDate,
+  }) async {
     final now = DateTime.now().toIso8601String();
     // 获取当前最大 sort_order
     final existingAdditions = await getAdditionsByStage(stageId);
@@ -383,7 +548,10 @@ class PeriodBookService extends ChangeNotifier {
       'reason': reason,
       'sort_order': sortOrder,
       'created_at': now,
+      'entry_date': entryDate,
     });
+    // 未填时间时是空操作，无需分支
+    await _rescheduleAddition(id, stageId, entryDate);
     _notifyChanged();
     return id;
   }
@@ -419,14 +587,35 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
-  /// 更新追加记录（金额、原因）
-  Future<void> updateAddition(int id, {double? amount, String? reason}) async {
+  /// 更新追加记录（金额、原因、发生时间）。
+  ///
+  /// 时间参数的三种组合见 [updateExpense] 的同名参数说明。
+  Future<void> updateAddition(
+    int id, {
+    double? amount,
+    String? reason,
+    String? entryDate,
+    bool clearEntryDate = false,
+  }) async {
+    assert(!(entryDate != null && clearEntryDate),
+        'entryDate 与 clearEntryDate 不能同时传入');
     final data = <String, dynamic>{};
     if (amount != null) data['amount'] = amount;
     if (reason != null) data['reason'] = reason;
-    if (data.isEmpty) return;
-    await _db.update('mod_period_book_additions', data,
-        where: 'id = ?', whereArgs: [id]);
+    // 只在「确实无事可做」时早退：原实现只看 data 是否为空，
+    // 加上时间参数后那样会把「只改时间」的调用静默吞掉
+    if (data.isEmpty && entryDate == null && !clearEntryDate) return;
+    if (data.isNotEmpty) {
+      await _db.update('mod_period_book_additions', data,
+          where: 'id = ?', whereArgs: [id]);
+    }
+    await _applyEntryDateChange(
+      table: 'mod_period_book_additions',
+      fkColumn: 'stage_id',
+      id: id,
+      entryDate: entryDate,
+      clearEntryDate: clearEntryDate,
+    );
     _notifyChanged();
   }
 
@@ -446,12 +635,14 @@ class PeriodBookService extends ChangeNotifier {
   // 支出明细 CRUD
   // ══════════════════════════════════════════════════════════
 
+  /// 新增一条支出记录。[entryDate] 语义同 [addAddition]。
   Future<int> addExpense(
     int stageId,
     String category,
     double amount,
-    String description,
-  ) async {
+    String description, {
+    String? entryDate,
+  }) async {
     final now = DateTime.now().toIso8601String();
     // 获取当前最大 sort_order
     final existingExpenses = await getExpensesByStage(stageId);
@@ -462,17 +653,19 @@ class PeriodBookService extends ChangeNotifier {
             1
         : 0;
 
-    return _db.insert('mod_period_book_expenses', {
+    final id = await _db.insert('mod_period_book_expenses', {
       'stage_id': stageId,
       'category': category,
       'amount': amount,
       'description': description,
       'sort_order': sortOrder,
       'created_at': now,
-    }).then((id) {
-      _notifyChanged();
-      return id;
+      'entry_date': entryDate,
     });
+    // 未填时间时是空操作，无需分支
+    await _rescheduleExpense(id, stageId, entryDate);
+    _notifyChanged();
+    return id;
   }
 
   /// 批量添加支出
@@ -548,16 +741,40 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
-  /// 更新支出记录（分类、金额、描述）
-  Future<void> updateExpense(int id,
-      {String? category, double? amount, String? description}) async {
+  /// 更新支出记录（分类、金额、描述、发生时间）。
+  ///
+  /// 时间参数的三种组合：
+  /// - `entryDate == null && !clearEntryDate` → 不动时间、不落位（与改动前一致）
+  /// - `entryDate != null` → 写入该日期并按 FR-003 **重新落位**
+  /// - `clearEntryDate == true` → 置 NULL 且**停在当前位置不动**（FR-004）
+  ///
+  /// 二者同时传入是非法调用，由 `assert` 拦截。
+  Future<void> updateExpense(
+    int id, {
+    String? category,
+    double? amount,
+    String? description,
+    String? entryDate,
+    bool clearEntryDate = false,
+  }) async {
+    assert(!(entryDate != null && clearEntryDate),
+        'entryDate 与 clearEntryDate 不能同时传入');
     final data = <String, dynamic>{};
     if (category != null) data['category'] = category;
     if (amount != null) data['amount'] = amount;
     if (description != null) data['description'] = description;
-    if (data.isEmpty) return;
-    await _db.update('mod_period_book_expenses', data,
-        where: 'id = ?', whereArgs: [id]);
+    if (data.isEmpty && entryDate == null && !clearEntryDate) return;
+    if (data.isNotEmpty) {
+      await _db.update('mod_period_book_expenses', data,
+          where: 'id = ?', whereArgs: [id]);
+    }
+    await _applyEntryDateChange(
+      table: 'mod_period_book_expenses',
+      fkColumn: 'stage_id',
+      id: id,
+      entryDate: entryDate,
+      clearEntryDate: clearEntryDate,
+    );
     _notifyChanged();
   }
 
@@ -579,15 +796,19 @@ class PeriodBookService extends ChangeNotifier {
 
   // --- 大额追加 ---
 
-  Future<int> addLargeAddition(
-      int periodId, double amount, String reason) async {
+  /// 新增大额追加记录。[entryDate] 语义同 [addAddition]。
+  Future<int> addLargeAddition(int periodId, double amount, String reason,
+      {String? entryDate}) async {
     final now = DateTime.now().toIso8601String();
     final id = await _db.insert('mod_period_book_large_additions', {
       'period_id': periodId,
       'amount': amount,
       'reason': reason,
       'created_at': now,
+      'entry_date': entryDate,
     });
+    // 未填时间时是空操作，无需分支
+    await _rescheduleLargeAddition(id, periodId, entryDate);
     _notifyChanged();
     return id;
   }
@@ -609,16 +830,35 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
-  /// 更新大额追加记录
-  Future<void> updateLargeAddition(int id,
-      {double? amount, String? reason, int? sortOrder}) async {
+  /// 更新大额追加记录（金额、原因、发生时间）。
+  ///
+  /// 时间参数的三种组合见 [updateExpense] 的同名参数说明。
+  Future<void> updateLargeAddition(
+    int id, {
+    double? amount,
+    String? reason,
+    int? sortOrder,
+    String? entryDate,
+    bool clearEntryDate = false,
+  }) async {
+    assert(!(entryDate != null && clearEntryDate),
+        'entryDate 与 clearEntryDate 不能同时传入');
     final data = <String, dynamic>{};
     if (amount != null) data['amount'] = amount;
     if (reason != null) data['reason'] = reason;
     if (sortOrder != null) data['sort_order'] = sortOrder;
-    if (data.isEmpty) return;
-    await _db.update('mod_period_book_large_additions', data,
-        where: 'id = ?', whereArgs: [id]);
+    if (data.isEmpty && entryDate == null && !clearEntryDate) return;
+    if (data.isNotEmpty) {
+      await _db.update('mod_period_book_large_additions', data,
+          where: 'id = ?', whereArgs: [id]);
+    }
+    await _applyEntryDateChange(
+      table: 'mod_period_book_large_additions',
+      fkColumn: 'period_id',
+      id: id,
+      entryDate: entryDate,
+      clearEntryDate: clearEntryDate,
+    );
     _notifyChanged();
   }
 
@@ -636,12 +876,14 @@ class PeriodBookService extends ChangeNotifier {
 
   // --- 大额支出 ---
 
+  /// 新增大额支出记录。[entryDate] 语义同 [addAddition]。
   Future<int> addLargeExpense(
     int periodId,
     String category,
     double amount,
-    String description,
-  ) async {
+    String description, {
+    String? entryDate,
+  }) async {
     final now = DateTime.now().toIso8601String();
     final existing = await getLargeExpensesByPeriod(periodId);
     final sortOrder = existing.isNotEmpty
@@ -655,7 +897,10 @@ class PeriodBookService extends ChangeNotifier {
       'description': description,
       'sort_order': sortOrder,
       'created_at': now,
+      'entry_date': entryDate,
     });
+    // 未填时间时是空操作，无需分支
+    await _rescheduleLargeExpense(id, periodId, entryDate);
     _notifyChanged();
     return id;
   }
@@ -677,19 +922,37 @@ class PeriodBookService extends ChangeNotifier {
     _notifyChanged();
   }
 
-  Future<void> updateLargeExpense(int id,
-      {String? category,
-      double? amount,
-      String? description,
-      int? sortOrder}) async {
+  /// 更新大额支出记录（分类、金额、描述、发生时间）。
+  ///
+  /// 时间参数的三种组合见 [updateExpense] 的同名参数说明。
+  Future<void> updateLargeExpense(
+    int id, {
+    String? category,
+    double? amount,
+    String? description,
+    int? sortOrder,
+    String? entryDate,
+    bool clearEntryDate = false,
+  }) async {
+    assert(!(entryDate != null && clearEntryDate),
+        'entryDate 与 clearEntryDate 不能同时传入');
     final data = <String, dynamic>{};
     if (category != null) data['category'] = category;
     if (amount != null) data['amount'] = amount;
     if (description != null) data['description'] = description;
     if (sortOrder != null) data['sort_order'] = sortOrder;
-    if (data.isEmpty) return;
-    await _db.update('mod_period_book_large_expenses', data,
-        where: 'id = ?', whereArgs: [id]);
+    if (data.isEmpty && entryDate == null && !clearEntryDate) return;
+    if (data.isNotEmpty) {
+      await _db.update('mod_period_book_large_expenses', data,
+          where: 'id = ?', whereArgs: [id]);
+    }
+    await _applyEntryDateChange(
+      table: 'mod_period_book_large_expenses',
+      fkColumn: 'period_id',
+      id: id,
+      entryDate: entryDate,
+      clearEntryDate: clearEntryDate,
+    );
     _notifyChanged();
   }
 

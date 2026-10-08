@@ -10,7 +10,7 @@ class DatabaseService {
   DatabaseService._();
 
   Database? _db;
-  static const int _currentVersion = 17;
+  static const int _currentVersion = 18;
 
   /// 注入数据库实例（仅测试用，绕过依赖 path_provider 的默认初始化）
   @visibleForTesting
@@ -141,6 +141,7 @@ class DatabaseService {
         reason TEXT NOT NULL,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
+        entry_date TEXT,
         FOREIGN KEY (stage_id) REFERENCES mod_period_book_stages(id) ON DELETE CASCADE
       )
     ''');
@@ -153,6 +154,7 @@ class DatabaseService {
         description TEXT NOT NULL,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
+        entry_date TEXT,
         FOREIGN KEY (stage_id) REFERENCES mod_period_book_stages(id) ON DELETE CASCADE
       )
     ''');
@@ -178,6 +180,7 @@ class DatabaseService {
         reason TEXT NOT NULL,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
+        entry_date TEXT,
         FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
       )
     ''');
@@ -190,6 +193,7 @@ class DatabaseService {
         description TEXT NOT NULL,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
+        entry_date TEXT,
         FOREIGN KEY (period_id) REFERENCES mod_period_book_periods(id) ON DELETE CASCADE
       )
     ''');
@@ -331,6 +335,11 @@ class DatabaseService {
       await _migrateToV17(db);
     }
 
+    // 如果从 v17 升级到 v18，为记账条目添加发生时间字段
+    if (oldVersion < 18 && newVersion >= 18) {
+      await _migrateToV18(db);
+    }
+
     // 对于其他版本的升级，逐个执行
     for (var v = oldVersion + 1; v <= newVersion; v++) {
       if (v == 6) continue; // 已经在上面处理了
@@ -345,6 +354,7 @@ class DatabaseService {
       if (v == 15) continue; // 已经在上面处理了
       if (v == 16) continue; // 已经在上面处理了
       if (v == 17) continue; // 已经在上面处理了
+      if (v == 18) continue; // 已经在上面处理了
       // 与 `_onCreate` 同理：事务体内必须走 `txn`，走 `db` 会抢锁互等。
       // 本分支只在从 <5 的远古版本升级时才可达，故一直没暴露。
       await db.transaction((txn) async {
@@ -392,6 +402,33 @@ class DatabaseService {
     // 回填：把现有条目的盐设为当前主密码盐
     await db.execute(
       'UPDATE mod_vault_entries SET salt = (SELECT salt FROM mod_vault_master LIMIT 1) WHERE salt IS NULL',
+    );
+  }
+
+  /// v18 迁移：为记账条目添加发生时间字段 `entry_date`
+  ///
+  /// 语义：该笔记录**实际发生**的日期，格式 `YYYY-MM-DD`；NULL 表示用户未填写。
+  /// 该字段**不是排序键**——列表顺序由 `sort_order` 独占承载，`entry_date` 只在
+  /// 新增或修改时间时充当一次性的落位依据（详见 specs/002-entry-time-sort）。
+  ///
+  /// 可空且无 DEFAULT 是本迁移安全的前提：SQLite 的 ADD COLUMN 在「可空 + 无默认值」
+  /// 时不触发表重建，既有行自动取 NULL，等价于「未填写时间」，因此历史数据零丢失、
+  /// 顺序零变化。`sort_order` 与 `created_at` 一个字节都不动。
+  ///
+  /// 前置条件：4 张表在 v18 之前必定已存在——前两张由 v4/v5 建表，后两张由
+  /// `_migrateToV9` 建表（`_onUpgrade` 的 `oldVersion < 9` 分支保证不会跳过）。
+  Future<void> _migrateToV18(Database db) async {
+    await db.execute(
+      'ALTER TABLE mod_period_book_additions ADD COLUMN entry_date TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE mod_period_book_expenses ADD COLUMN entry_date TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE mod_period_book_large_additions ADD COLUMN entry_date TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE mod_period_book_large_expenses ADD COLUMN entry_date TEXT',
     );
   }
 

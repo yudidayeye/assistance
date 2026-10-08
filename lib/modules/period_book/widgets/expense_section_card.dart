@@ -107,12 +107,15 @@ class ExpenseSectionCard extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: appTheme.primary,
                   backgroundColor: appTheme.primary.withValues(alpha: 0.1),
-                  side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  side: BorderSide(
+                      color: appTheme.primary.withValues(alpha: 0.3)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  textStyle: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -160,6 +163,7 @@ class ExpenseSectionCard extends StatelessWidget {
       onTap: () => onEdit?.call(expense),
       onDelete: () => onDelete?.call(expense),
       leading: effectiveLeading,
+      entryDate: expense.entryDate,
     );
   }
 }
@@ -171,10 +175,14 @@ class ExpenseItemData {
   final String description;
   final double amount;
 
+  /// 存储态发生时间（`YYYY-MM-DD`）；`null` 表示用户未填写。
+  final String? entryDate;
+
   const ExpenseItemData({
     required this.id,
     required this.category,
     required this.description,
     required this.amount,
+    this.entryDate,
   });
 }

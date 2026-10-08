@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/foundation/app_spacing.dart';
 import '../../../shared/utils/format_utils.dart';
+import '../services/entry_ordering.dart';
 
 /// 追加记录列表卡片组件（阶段编辑页和大额记录页共用）
 ///
@@ -107,12 +108,15 @@ class AdditionSectionCard extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: appTheme.primary,
                   backgroundColor: appTheme.primary.withValues(alpha: 0.1),
-                  side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  side: BorderSide(
+                      color: appTheme.primary.withValues(alpha: 0.3)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  textStyle: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -139,8 +143,8 @@ class AdditionSectionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAdditionItem(
-      BuildContext context, AppThemeExtension appTheme, AdditionItemData addition,
+  Widget _buildAdditionItem(BuildContext context, AppThemeExtension appTheme,
+      AdditionItemData addition,
       {int? index}) {
     Widget? effectiveLeading = leading;
     if (effectiveLeading != null && onReorder != null && index != null) {
@@ -149,6 +153,7 @@ class AdditionSectionCard extends StatelessWidget {
         child: effectiveLeading,
       );
     }
+    final displayDate = formatEntryDateForDisplay(addition.entryDate);
 
     return GestureDetector(
       key: ValueKey('addition_${addition.id}'),
@@ -177,6 +182,16 @@ class AdditionSectionCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (displayDate != null) ...[
+              AppSpacing.w4,
+              Text(
+                displayDate,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: appTheme.earthMedium.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
             Text(
               '+${FormatUtils.formatAmount(addition.amount)}',
               style: TextStyle(
@@ -208,9 +223,13 @@ class AdditionItemData {
   final String reason;
   final double amount;
 
+  /// 存储态发生时间（`YYYY-MM-DD`）；`null` 表示用户未填写。
+  final String? entryDate;
+
   const AdditionItemData({
     required this.id,
     required this.reason,
     required this.amount,
+    this.entryDate,
   });
 }

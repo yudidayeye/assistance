@@ -11,6 +11,10 @@ class LargeExpenseRecord {
   final int sortOrder;
   final String createdAt;
 
+  /// 发生时间（可空，日粒度，格式 YYYY-MM-DD）；null 表示用户未填写。
+  /// 注意：这是**落位依据**而非排序键，列表顺序由 [sortOrder] 独占承载。
+  final String? entryDate;
+
   const LargeExpenseRecord({
     this.id,
     required this.periodId,
@@ -19,6 +23,7 @@ class LargeExpenseRecord {
     required this.description,
     this.sortOrder = 0,
     required this.createdAt,
+    this.entryDate,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,6 +35,7 @@ class LargeExpenseRecord {
       'description': description,
       'sort_order': sortOrder,
       'created_at': createdAt,
+      'entry_date': entryDate,
     };
   }
 
@@ -42,6 +48,7 @@ class LargeExpenseRecord {
       description: map['description'] as String,
       sortOrder: (map['sort_order'] as int?) ?? 0,
       createdAt: map['created_at'] as String,
+      entryDate: map['entry_date'] as String?,
     );
   }
 
@@ -53,6 +60,7 @@ class LargeExpenseRecord {
     String? description,
     int? sortOrder,
     String? createdAt,
+    String? entryDate,
   }) {
     return LargeExpenseRecord(
       id: id ?? this.id,
@@ -62,11 +70,12 @@ class LargeExpenseRecord {
       description: description ?? this.description,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
+      entryDate: entryDate ?? this.entryDate,
     );
   }
 
   @override
   String toString() {
-    return 'LargeExpenseRecord(id: $id, periodId: $periodId, $category: $amount, $description, sort: $sortOrder)';
+    return 'LargeExpenseRecord(id: $id, periodId: $periodId, $category: $amount, $description, sort: $sortOrder, entryDate: $entryDate)';
   }
 }

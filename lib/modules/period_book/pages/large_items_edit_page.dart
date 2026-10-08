@@ -3,6 +3,7 @@ import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
 import '../../../shared/foundation/app_spacing.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../models/period_record.dart';
 import '../models/large_addition_record.dart';
 import '../models/large_expense_record.dart';
@@ -12,6 +13,8 @@ import '../widgets/expense_section_card.dart';
 import '../widgets/addition_section_card.dart';
 import '../widgets/records_tab_card.dart';
 import '../widgets/add_form.dart';
+import '../widgets/entry_date_field.dart';
+import '../services/entry_ordering.dart';
 
 /// 大额记录编辑页（周期级，不计入总本金和总支出）
 class LargeItemsEditPage extends StatefulWidget {
@@ -40,6 +43,18 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
   final _shoppingDescController = TextEditingController();
   final _otherAmountController = TextEditingController();
   final _otherDescController = TextEditingController();
+
+  // 各新增表单已选的发生时间（可选，null = 用户不填）
+  DateTime? _additionEntryDate;
+  DateTime? _shoppingEntryDate;
+  DateTime? _otherEntryDate;
+
+  /// 把 UI 层的 `DateTime?` 转成存储态的 `YYYY-MM-DD` 串。
+  ///
+  /// 用 `entry_ordering.dart` 的 [formatEntryDate] 而非 `toIso8601String()`：
+  /// 后者会带上时分秒并可能带时区，破坏「定长字典序 == 时间序」这一前提。
+  String? _entryDateOf(DateTime? date) =>
+      date == null ? null : formatEntryDate(date);
   String _shoppingCategory = '生活';
   String _otherCategory = '生活';
 
@@ -75,10 +90,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
         _additions = await _service.getLargeAdditionsByPeriod(widget.periodId);
         final allExpenses =
             await _service.getLargeExpensesByPeriod(widget.periodId);
-        _shoppingExpenses =
-            allExpenses.where((e) => !e.isOther).toList();
-        _otherExpenses =
-            allExpenses.where((e) => e.isOther).toList();
+        _shoppingExpenses = allExpenses.where((e) => !e.isOther).toList();
+        _otherExpenses = allExpenses.where((e) => e.isOther).toList();
       }
     } catch (e) {
       debugPrint('Load large items error: $e');
@@ -88,14 +101,12 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
 
   /// 加载数据并保持滚动位置
   Future<void> _loadDataPreserveScroll() async {
-    _savedScrollOffset = _scrollController.hasClients
-        ? _scrollController.offset
-        : null;
+    _savedScrollOffset =
+        _scrollController.hasClients ? _scrollController.offset : null;
     await _loadData();
     if (mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_savedScrollOffset != null &&
-            _scrollController.hasClients) {
+        if (_savedScrollOffset != null && _scrollController.hasClients) {
           _scrollController.jumpTo(_savedScrollOffset!);
         }
       });
@@ -174,37 +185,48 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     return AdditionSectionCard(
       title: '大额追加',
       emptyText: '暂无大额追加',
-      additions: _additions.map((a) => AdditionItemData(
-        id: 'large_${a.id}',
-        reason: a.reason,
-        amount: a.amount,
-      )).toList(),
+      additions: _additions
+          .map((a) => AdditionItemData(
+                id: 'large_${a.id}',
+                reason: a.reason,
+                amount: a.amount,
+                entryDate: a.entryDate,
+              ))
+          .toList(),
       color: appTheme.sage,
       prefix: '+¥',
       showAddButton: !_additionFormExpanded,
       form: _additionFormExpanded ? _buildAdditionForm(appTheme) : null,
       onAdd: () => setState(() => _additionFormExpanded = true),
       onEdit: (data) {
-        final addition = _additions.firstWhere((a) => 'large_${a.id}' == data.id);
+        final addition =
+            _additions.firstWhere((a) => 'large_${a.id}' == data.id);
         _showEditAdditionSheet(appTheme, addition);
       },
       onDelete: (data) {
-        final addition = _additions.firstWhere((a) => 'large_${a.id}' == data.id);
+        final addition =
+            _additions.firstWhere((a) => 'large_${a.id}' == data.id);
         _deleteAddition(addition);
       },
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          final item = _additions.removeAt(oldIndex);
-          _additions.insert(newIndex, item);
-        });
-        _service.updateLargeAdditionsOrder(_additions);
-      },
+      onReorder: _onAdditionReorder,
       leading: Icon(
         Icons.drag_handle_rounded,
         color: appTheme.earthMedium.withValues(alpha: 0.4),
         size: 18,
       ),
     );
+  }
+
+  /// 大额追加拖动排序
+  void _onAdditionReorder(int oldIndex, int newIndex) {
+    final dates = _additions.map((a) => a.entryDate).toList();
+    if (!canReorder(dates, oldIndex, newIndex)) {
+      AppSnackBar.show(context, '已填写时间的条目只能在同一天内调整顺序',
+          type: AppSnackBarType.info);
+      return;
+    }
+    setState(() => _additions = applyReorder(_additions, oldIndex, newIndex));
+    _service.updateLargeAdditionsOrder(_additions);
   }
 
   Widget _buildAdditionForm(AppThemeExtension appTheme) {
@@ -215,6 +237,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       descHint: '请输入追加原因',
       amountController: _additionAmountController,
       descController: _additionReasonController,
+      selectedDate: _additionEntryDate,
+      onDateChanged: (date) => setState(() => _additionEntryDate = date),
       onCollapse: () => setState(() => _additionFormExpanded = false),
       onConfirm: _submitAddition,
       confirmText: '确认添加',
@@ -232,37 +256,62 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     return ExpenseSectionCard(
       title: '个人支出',
       emptyText: '暂无个人支出',
-      expenses: _shoppingExpenses.map((e) => ExpenseItemData(
-        id: 'large_${e.id}',
-        category: e.category,
-        description: e.description,
-        amount: e.amount,
-      )).toList(),
+      expenses: _shoppingExpenses
+          .map((e) => ExpenseItemData(
+                id: 'large_${e.id}',
+                category: e.category,
+                description: e.description,
+                amount: e.amount,
+                entryDate: e.entryDate,
+              ))
+          .toList(),
       color: appTheme.rose,
       showAddButton: !_shoppingFormExpanded,
       form: _shoppingFormExpanded ? _buildShoppingForm(appTheme) : null,
       onAdd: () => setState(() => _shoppingFormExpanded = true),
       onEdit: (data) {
-        final expense = _shoppingExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
+        final expense =
+            _shoppingExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
         _showEditExpenseSheet(appTheme, expense);
       },
       onDelete: (data) {
-        final expense = _shoppingExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
+        final expense =
+            _shoppingExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
         _deleteExpense(expense);
       },
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          final item = _shoppingExpenses.removeAt(oldIndex);
-          _shoppingExpenses.insert(newIndex, item);
-        });
-        _updateShoppingExpensesOrder();
-      },
+      onReorder: _onShoppingReorder,
       leading: Icon(
         Icons.drag_handle_rounded,
         color: appTheme.earthMedium.withValues(alpha: 0.4),
         size: 18,
       ),
     );
+  }
+
+  /// 大额个人支出拖动排序
+  void _onShoppingReorder(int oldIndex, int newIndex) {
+    final dates = _shoppingExpenses.map((e) => e.entryDate).toList();
+    if (!canReorder(dates, oldIndex, newIndex)) {
+      AppSnackBar.show(context, '已填写时间的条目只能在同一天内调整顺序',
+          type: AppSnackBarType.info);
+      return;
+    }
+    setState(() => _shoppingExpenses =
+        applyReorder(_shoppingExpenses, oldIndex, newIndex));
+    _updateShoppingExpensesOrder();
+  }
+
+  /// 大额其他支出拖动排序
+  void _onOtherReorder(int oldIndex, int newIndex) {
+    final dates = _otherExpenses.map((e) => e.entryDate).toList();
+    if (!canReorder(dates, oldIndex, newIndex)) {
+      AppSnackBar.show(context, '已填写时间的条目只能在同一天内调整顺序',
+          type: AppSnackBarType.info);
+      return;
+    }
+    setState(() =>
+        _otherExpenses = applyReorder(_otherExpenses, oldIndex, newIndex));
+    _updateOtherExpensesOrder();
   }
 
   Widget _buildShoppingForm(AppThemeExtension appTheme) {
@@ -277,6 +326,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       selectedCategory: _shoppingCategory,
       onCategoryChanged: (category) =>
           setState(() => _shoppingCategory = category),
+      selectedDate: _shoppingEntryDate,
+      onDateChanged: (date) => setState(() => _shoppingEntryDate = date),
       onCollapse: () => setState(() => _shoppingFormExpanded = false),
       onConfirm: _submitShoppingExpense,
       confirmText: '确认添加',
@@ -294,32 +345,31 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     return ExpenseSectionCard(
       title: '其他支出',
       emptyText: '暂无其他支出',
-      expenses: _otherExpenses.map((e) => ExpenseItemData(
-        id: 'large_${e.id}',
-        category: e.category,
-        description: e.description,
-        amount: e.amount,
-      )).toList(),
+      expenses: _otherExpenses
+          .map((e) => ExpenseItemData(
+                id: 'large_${e.id}',
+                category: e.category,
+                description: e.description,
+                amount: e.amount,
+                entryDate: e.entryDate,
+              ))
+          .toList(),
       color: appTheme.rose,
       isOther: true,
       showAddButton: !_otherFormExpanded,
       form: _otherFormExpanded ? _buildOtherForm(appTheme) : null,
       onAdd: () => setState(() => _otherFormExpanded = true),
       onEdit: (data) {
-        final expense = _otherExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
+        final expense =
+            _otherExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
         _showEditExpenseSheet(appTheme, expense);
       },
       onDelete: (data) {
-        final expense = _otherExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
+        final expense =
+            _otherExpenses.firstWhere((e) => 'large_${e.id}' == data.id);
         _deleteExpense(expense);
       },
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          final item = _otherExpenses.removeAt(oldIndex);
-          _otherExpenses.insert(newIndex, item);
-        });
-        _updateOtherExpensesOrder();
-      },
+      onReorder: _onOtherReorder,
       leading: Icon(
         Icons.drag_handle_rounded,
         color: appTheme.earthMedium.withValues(alpha: 0.4),
@@ -340,6 +390,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       selectedCategory: _otherCategory,
       onCategoryChanged: (category) =>
           setState(() => _otherCategory = category),
+      selectedDate: _otherEntryDate,
+      onDateChanged: (date) => setState(() => _otherEntryDate = date),
       onCollapse: () => setState(() => _otherFormExpanded = false),
       onConfirm: _submitOtherExpense,
       confirmText: '确认添加',
@@ -358,6 +410,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     final amountController =
         TextEditingController(text: addition.amount.toStringAsFixed(2));
     final reasonController = TextEditingController(text: addition.reason);
+    // 脏值（手改过的备份）解析成 null，弹窗显示「不填」而不是崩掉
+    DateTime? selectedDate = parseEntryDate(addition.entryDate);
+    bool dateTouched = false;
 
     await showModalBottomSheet(
       context: context,
@@ -375,7 +430,8 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
             ),
             decoration: BoxDecoration(
               color: sheetTheme.cream,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
+              borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(sheetTheme.radiusXl)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -456,6 +512,15 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                   style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                 ),
                 AppSpacing.h16,
+                // 时间（可选）
+                EntryDateField(
+                  selectedDate: selectedDate,
+                  onDateChanged: (date) => setLocal(() {
+                    selectedDate = date;
+                    dateTouched = true;
+                  }),
+                ),
+                AppSpacing.h16,
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
@@ -468,6 +533,11 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                         addition.id!,
                         amount: amount,
                         reason: reason,
+                        // 只有动过日期才把变更传出去，否则两者皆 null
+                        entryDate: dateTouched && selectedDate != null
+                            ? formatEntryDate(selectedDate!)
+                            : null,
+                        clearEntryDate: dateTouched && selectedDate == null,
                       );
                       if (ctx.mounted) Navigator.pop(ctx);
                       await _loadDataPreserveScroll();
@@ -509,12 +579,16 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
       description: expense.description,
       showCategorySelector: true,
       isOther: isOther,
-      onSave: (dbCategory, amount, description) async {
+      entryDate: expense.entryDate,
+      onSave:
+          (dbCategory, amount, description, entryDate, clearEntryDate) async {
         await _service.updateLargeExpense(
           expense.id!,
           category: dbCategory,
           amount: amount,
           description: description,
+          entryDate: entryDate,
+          clearEntryDate: clearEntryDate,
         );
         await _loadDataPreserveScroll();
       },
@@ -600,9 +674,13 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
     final reason = _additionReasonController.text.trim();
     if (amount == null || amount <= 0 || reason.isEmpty) return;
 
-    _service.addLargeAddition(widget.periodId, amount, reason).then((_) {
+    _service
+        .addLargeAddition(widget.periodId, amount, reason,
+            entryDate: _entryDateOf(_additionEntryDate))
+        .then((_) {
       _additionReasonController.clear();
       _additionAmountController.clear();
+      setState(() => _additionEntryDate = null);
       _loadDataPreserveScroll();
     });
   }
@@ -614,14 +692,16 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
 
     _service
         .addLargeExpense(
-          widget.periodId,
-          ExpenseCategoryHelper.categoryToDbValue(_shoppingCategory),
-          amount,
-          desc,
-        )
+      widget.periodId,
+      ExpenseCategoryHelper.categoryToDbValue(_shoppingCategory),
+      amount,
+      desc,
+      entryDate: _entryDateOf(_shoppingEntryDate),
+    )
         .then((_) {
       _shoppingAmountController.clear();
       _shoppingDescController.clear();
+      setState(() => _shoppingEntryDate = null);
       _loadDataPreserveScroll();
     });
   }
@@ -633,14 +713,16 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
 
     _service
         .addLargeExpense(
-          widget.periodId,
-          ExpenseCategoryHelper.toOtherCategory(_otherCategory),
-          amount,
-          desc,
-        )
+      widget.periodId,
+      ExpenseCategoryHelper.toOtherCategory(_otherCategory),
+      amount,
+      desc,
+      entryDate: _entryDateOf(_otherEntryDate),
+    )
         .then((_) {
       _otherAmountController.clear();
       _otherDescController.clear();
+      setState(() => _otherEntryDate = null);
       _loadDataPreserveScroll();
     });
   }

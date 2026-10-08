@@ -1,6 +1,8 @@
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../shared/foundation/app_spacing.dart';
 import '../../../../shared/utils/format_utils.dart';
+import '../services/entry_ordering.dart';
+import 'entry_date_field.dart';
 import 'package:flutter/material.dart';
 
 /// 支出分类相关工具方法（阶段编辑页和大额记录页共用）
@@ -86,6 +88,9 @@ class ExpenseCategoryHelper {
   }
 
   /// 构建支出列表项（阶段编辑页和大额记录页共用）
+  ///
+  /// [entryDate] 为可选的存储态日期串（`YYYY-MM-DD`）。传 `null` 或脏值时
+  /// 不渲染任何日期标记——既有调用点（报表页等）无需改动。
   static Widget buildExpenseItem({
     required BuildContext context,
     required AppThemeExtension appTheme,
@@ -96,10 +101,12 @@ class ExpenseCategoryHelper {
     required VoidCallback onTap,
     required VoidCallback onDelete,
     Widget? leading,
+    String? entryDate,
   }) {
     final displayCat = mapCategoryForDisplay(category);
     final icon = categoryIcon(displayCat);
     final color = categoryColor(appTheme, displayCat);
+    final displayDate = formatEntryDateForDisplay(entryDate);
 
     return GestureDetector(
       key: ValueKey('expense_$expenseId'),
@@ -125,7 +132,8 @@ class ExpenseCategoryHelper {
             ],
             if (category != 'other')
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(appTheme.radiusPill),
@@ -151,6 +159,16 @@ class ExpenseCategoryHelper {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            if (displayDate != null) ...[
+              AppSpacing.w4,
+              Text(
+                displayDate,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: appTheme.earthMedium.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
             Text(
               '-${FormatUtils.formatAmount(amount)}',
               style: TextStyle(
@@ -176,6 +194,11 @@ class ExpenseCategoryHelper {
   }
 
   /// 显示编辑支出弹窗（阶段编辑页和大额记录页共用）
+  ///
+  /// [entryDate] 为当前存储态的发生时间（`YYYY-MM-DD`）。弹窗内的日期行**默认
+  /// 呈现该值**；只有用户真的动过日期控件，保存时才会把它作为变更传出去
+  /// （`onSave` 的 `entryDate` / `clearEntryDate`），否则两者皆 `null`，
+  /// 服务层不会碰 `entry_date`、也不会重新落位。
   static Future<void> showEditExpenseSheet({
     required BuildContext context,
     required AppThemeExtension appTheme,
@@ -184,14 +207,25 @@ class ExpenseCategoryHelper {
     required String description,
     required bool showCategorySelector,
     bool isOther = false,
-    required Function(String category, double amount, String description) onSave,
+    String? entryDate,
+    required Function(
+      String category,
+      double amount,
+      String description,
+      String? entryDate,
+      bool clearEntryDate,
+    ) onSave,
   }) async {
     final displayCategory = mapCategoryForDisplay(category);
     String selectedCategory = _categories.contains(displayCategory)
         ? displayCategory
         : _categories.first;
-    final amountController = TextEditingController(text: amount.toStringAsFixed(2));
+    final amountController =
+        TextEditingController(text: amount.toStringAsFixed(2));
     final descController = TextEditingController(text: description);
+    // 脏值（手改过的备份）解析成 null，弹窗显示「不填」而不是崩掉
+    DateTime? selectedDate = parseEntryDate(entryDate);
+    bool dateTouched = false;
 
     await showModalBottomSheet(
       context: context,
@@ -210,7 +244,8 @@ class ExpenseCategoryHelper {
               ),
               decoration: BoxDecoration(
                 color: sheetTheme.cream,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
+                borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(sheetTheme.radiusXl)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -275,7 +310,8 @@ class ExpenseCategoryHelper {
                               border: Border.all(
                                 color: isSelected
                                     ? catColor.withValues(alpha: 0.4)
-                                    : sheetTheme.earthMedium.withValues(alpha: 0.1),
+                                    : sheetTheme.earthMedium
+                                        .withValues(alpha: 0.1),
                                 width: 0.5,
                               ),
                             ),
@@ -313,14 +349,15 @@ class ExpenseCategoryHelper {
                       filled: true,
                       fillColor: sheetTheme.cardBackground,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
+                        borderRadius:
+                            BorderRadius.circular(sheetTheme.radiusSm),
                         borderSide: BorderSide(
                           color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                           width: 1,
                         ),
                       ),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
                     ),
                     style: TextStyle(fontSize: 14, color: sheetTheme.earth),
                   ),
@@ -338,16 +375,26 @@ class ExpenseCategoryHelper {
                       filled: true,
                       fillColor: sheetTheme.cardBackground,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(sheetTheme.radiusSm),
+                        borderRadius:
+                            BorderRadius.circular(sheetTheme.radiusSm),
                         borderSide: BorderSide(
                           color: sheetTheme.earthMedium.withValues(alpha: 0.25),
                           width: 1,
                         ),
                       ),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
                     ),
                     style: TextStyle(fontSize: 14, color: sheetTheme.earth),
+                  ),
+                  AppSpacing.h16,
+                  // 时间（可选）
+                  EntryDateField(
+                    selectedDate: selectedDate,
+                    onDateChanged: (date) => setLocal(() {
+                      selectedDate = date;
+                      dateTouched = true;
+                    }),
                   ),
                   AppSpacing.h16,
                   // 确定按钮
@@ -358,17 +405,29 @@ class ExpenseCategoryHelper {
                         final dbCategory = isOther
                             ? toOtherCategory(selectedCategory)
                             : categoryToDbValue(selectedCategory);
-                        final parsedAmount = double.tryParse(amountController.text) ?? 0;
-                        onSave(dbCategory, parsedAmount, descController.text);
+                        final parsedAmount =
+                            double.tryParse(amountController.text) ?? 0;
+                        onSave(
+                          dbCategory,
+                          parsedAmount,
+                          descController.text,
+                          // 只有动过日期才把变更传出去，否则两者皆 null
+                          dateTouched && selectedDate != null
+                              ? formatEntryDate(selectedDate!)
+                              : null,
+                          dateTouched && selectedDate == null,
+                        );
                         Navigator.pop(ctx);
                       },
                       style: FilledButton.styleFrom(
                         backgroundColor: sheetTheme.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(sheetTheme.radiusMd),
+                          borderRadius:
+                              BorderRadius.circular(sheetTheme.radiusMd),
                         ),
-                        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                        textStyle: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w600),
                       ),
                       child: const Text('保存修改'),
                     ),
