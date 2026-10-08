@@ -71,8 +71,7 @@ void main() {
     }
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
-    final testDb =
-        await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+    final testDb = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
     dbService.useDatabaseForTesting(testDb);
     await dbService.createSchemaForTesting(testDb);
 
@@ -158,10 +157,11 @@ void main() {
     await resetAll();
     await settings.setModuleEnabled('mod_p1', false);
     // 绕过 API 直接写库，模拟导入恢复出的矛盾状态：固定=1 且 启用=0
-    await dbService.insert('app_settings', {
-      'key': 'module_pinned_mod_p1',
-      'value': '1',
-    });
+    //
+    // 必须走 upsert：`resetAll()` 已经用 `setModulePinned(false)` 写过这一行，
+    // 裸 `insert` 会撞 `app_settings.key` 的 UNIQUE 约束。这里绕过的是
+    // `SettingsService` 的内存缓存，`DatabaseService.upsertSetting` 同样不经它。
+    await dbService.upsertSetting('module_pinned_mod_p1', '1');
 
     await settings.loadSettings();
 

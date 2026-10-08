@@ -79,7 +79,7 @@ class DatabaseService {
 
   // --- Schema ---
 
-  static Future<void> _createV1Schema(Database db) async {
+  static Future<void> _createV1Schema(DatabaseExecutor db) async {
     await db.execute('''
       CREATE TABLE app_settings (
         key TEXT PRIMARY KEY,
@@ -99,14 +99,14 @@ class DatabaseService {
     ''');
   }
 
-  static Future<void> _createV2Schema(Database db) async {
+  static Future<void> _createV2Schema(DatabaseExecutor db) async {
     // 添加必要索引
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_period_start_date ON mod_period_tracker_records(start_date)',
     );
   }
 
-  static Future<void> _createV4Schema(Database db) async {
+  static Future<void> _createV4Schema(DatabaseExecutor db) async {
     // 周期记账模块三张表 - v6 最终结构（全新安装时直接创建最终结构）
     await db.execute('''
       CREATE TABLE mod_period_book_periods (
@@ -201,13 +201,13 @@ class DatabaseService {
     );
   }
 
-  static Future<void> _createV5Schema(Database db) async {
+  static Future<void> _createV5Schema(DatabaseExecutor db) async {
     // 删除旧 accounting 模块的表和索引
     await db.execute('DROP TABLE IF EXISTS mod_accounting_transactions');
     await db.execute('DROP TABLE IF EXISTS mod_accounting_categories');
   }
 
-  static Future<void> _createV13Schema(Database db) async {
+  static Future<void> _createV13Schema(DatabaseExecutor db) async {
     // 密码保险箱 - 主密码验证表（仅一行）
     await db.execute('''
       CREATE TABLE IF NOT EXISTS mod_vault_master (
@@ -255,19 +255,23 @@ class DatabaseService {
   // --- Lifecycle ---
 
   Future<void> _onCreate(Database db, int version) async {
+    // ⚠️ 事务体内的每条语句都必须走 `txn`，不能走 `db`。
+    //
+    // sqflite 的事务持有数据库锁，而 `db.execute(...)` 会另起一个队列条目去抢同一把锁，
+    // 于是**永久互等**——日志只留一句「database has been locked for 0:00:10」，
+    // 表现为启动/建表挂死，没有任何异常抛出。原先这里传的是 `db`，与下面的
+    // `txn.batch()` 混用，正是这个死锁的成因。
     await db.transaction((txn) async {
-      final batch = txn.batch();
       // v1 base tables
-      await _createV1Schema(db);
+      await _createV1Schema(txn);
       // v2 indices
-      await _createV2Schema(db);
+      await _createV2Schema(txn);
       // v4 period_book tables (v6 最终结构)
-      await _createV4Schema(db);
+      await _createV4Schema(txn);
       // v5 删除旧 accounting 模块表
-      await _createV5Schema(db);
+      await _createV5Schema(txn);
       // v13 密码保险箱模块表
-      await _createV13Schema(db);
-      await batch.commit(noResult: true);
+      await _createV13Schema(txn);
     });
   }
 
@@ -341,15 +345,17 @@ class DatabaseService {
       if (v == 15) continue; // 已经在上面处理了
       if (v == 16) continue; // 已经在上面处理了
       if (v == 17) continue; // 已经在上面处理了
+      // 与 `_onCreate` 同理：事务体内必须走 `txn`，走 `db` 会抢锁互等。
+      // 本分支只在从 <5 的远古版本升级时才可达，故一直没暴露。
       await db.transaction((txn) async {
         if (v == 2) {
-          await _createV2Schema(db);
+          await _createV2Schema(txn);
         } else if (v == 3) {
-          await db.execute(
+          await txn.execute(
             'ALTER TABLE mod_period_tracker_records ADD COLUMN note TEXT',
           );
         } else if (v == 5) {
-          await _createV5Schema(db);
+          await _createV5Schema(txn);
         }
       });
     }
