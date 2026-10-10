@@ -24,6 +24,40 @@ class DatabaseService {
     await _onCreate(db, _currentVersion);
   }
 
+  /// 执行 v18 迁移（仅测试用）
+  @visibleForTesting
+  Future<void> migrateToV18ForTesting(Database db) => _migrateToV18(db);
+
+  /// 执行降级处理（仅测试用）
+  @visibleForTesting
+  Future<void> downgradeForTesting(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) =>
+      _onDowngrade(db, oldVersion, newVersion);
+
+  Future<Database> _openDatabaseAt(
+    String path, {
+    required int version,
+  }) {
+    return openDatabase(
+      path,
+      version: version,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+      onDowngrade: _onDowngrade,
+    );
+  }
+
+  /// 打开指定路径的数据库（仅测试用）
+  @visibleForTesting
+  Future<Database> openDatabaseAtForTesting(
+    String path, {
+    int version = _currentVersion,
+  }) =>
+      _openDatabaseAt(path, version: version);
+
   /// 初始化数据库工厂
   static Future<void> initializeFactory() async {
     if (Platform.isWindows || Platform.isLinux) {
@@ -54,12 +88,7 @@ class DatabaseService {
       await Directory(p.dirname(path)).create(recursive: true);
     }
 
-    return openDatabase(
-      path,
-      version: _currentVersion,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
-    );
+    return _openDatabaseAt(path, version: _currentVersion);
   }
 
   /// Resolve a fixed path for the database file.
@@ -75,6 +104,14 @@ class DatabaseService {
     }
     final dbPath = await getDatabasesPath();
     return p.join(dbPath, 'toolbox.db');
+  }
+
+  Future<void> _onDowngrade(Database db, int oldVersion, int newVersion) async {
+    throw StateError(
+      '数据库版本回退被拒绝：库版本 $oldVersion 高于应用版本 $newVersion。'
+      '为防止数据损坏，本次不会修改或删除任何数据。'
+      '请安装不低于 $oldVersion 的应用版本后再打开。',
+    );
   }
 
   // --- Schema ---
@@ -405,6 +442,25 @@ class DatabaseService {
     );
   }
 
+  static Future<bool> _columnExists(
+    DatabaseExecutor db,
+    String table,
+    String column,
+  ) async {
+    final columns = await db.rawQuery('PRAGMA table_info($table)');
+    return columns.any((row) => row['name'] == column);
+  }
+
+  static Future<void> _addColumnIfMissing(
+    DatabaseExecutor db,
+    String table,
+    String column,
+    String definition,
+  ) async {
+    if (await _columnExists(db, table, column)) return;
+    await db.execute('ALTER TABLE $table ADD COLUMN $column $definition');
+  }
+
   /// v18 迁移：为记账条目添加发生时间字段 `entry_date`
   ///
   /// 语义：该笔记录**实际发生**的日期，格式 `YYYY-MM-DD`；NULL 表示用户未填写。
@@ -417,19 +473,17 @@ class DatabaseService {
   ///
   /// 前置条件：4 张表在 v18 之前必定已存在——前两张由 v4/v5 建表，后两张由
   /// `_migrateToV9` 建表（`_onUpgrade` 的 `oldVersion < 9` 分支保证不会跳过）。
+  /// 列存在时会跳过，因此可修复「结构已升级、版本号仍为 17」的半迁移状态。
   Future<void> _migrateToV18(Database db) async {
-    await db.execute(
-      'ALTER TABLE mod_period_book_additions ADD COLUMN entry_date TEXT',
-    );
-    await db.execute(
-      'ALTER TABLE mod_period_book_expenses ADD COLUMN entry_date TEXT',
-    );
-    await db.execute(
-      'ALTER TABLE mod_period_book_large_additions ADD COLUMN entry_date TEXT',
-    );
-    await db.execute(
-      'ALTER TABLE mod_period_book_large_expenses ADD COLUMN entry_date TEXT',
-    );
+    const tables = [
+      'mod_period_book_additions',
+      'mod_period_book_expenses',
+      'mod_period_book_large_additions',
+      'mod_period_book_large_expenses',
+    ];
+    for (final table in tables) {
+      await _addColumnIfMissing(db, table, 'entry_date', 'TEXT');
+    }
   }
 
   /// v6 迁移：引入阶段概念，保留旧数据

@@ -27,6 +27,12 @@ class ModuleRegistry {
     }
   }
 
+  /// 清理注册状态，供启动失败后的可重入重试使用。
+  void reset() {
+    _modules.clear();
+    _initialized = false;
+  }
+
   /// 初始化所有模块
   Future<void> initializeAll() async {
     if (_initialized) return;
