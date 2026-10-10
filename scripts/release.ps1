@@ -21,7 +21,10 @@ param(
   [string]$NOTES = "",
 
   # 从零重建（慢，仅在需要时用）
-  [switch]$Clean
+  [switch]$Clean,
+
+  # 同版本重发：保留 Release，构建成功后更新标签与附件。
+  [switch]$Republish
 )
 
 $ErrorActionPreference = "Stop"
@@ -83,8 +86,17 @@ if ($dirty) {
 # tag 重名：原先会走到 `git tag` 才失败，而那时 `git push` 可能已经执行，
 # 留下「代码已推、tag 没打」的半截状态。
 $tagExists = git rev-parse -q --verify "refs/tags/$TAG" 2>$null
-if ($LASTEXITCODE -eq 0) {
+if ($LASTEXITCODE -eq 0 -and -not $Republish) {
   Fail "tag $TAG 已存在，请换一个版本号"
+}
+
+$remoteTag = $null
+if ($Republish) {
+  gh release view $TAG --json url | Out-Null
+  if ($LASTEXITCODE -ne 0) { Fail "重发要求远端 Release $TAG 已存在" }
+  $remoteTagLine = git ls-remote origin "refs/tags/$TAG"
+  if ($LASTEXITCODE -ne 0 -or -not $remoteTagLine) { Fail "无法读取远端标签 $TAG" }
+  $remoteTag = ($remoteTagLine -split '\s+')[0]
 }
 
 # 上游分支：当前分支若无 upstream，脚本里的 `git push` 会失败但**脚本不会因此
@@ -185,20 +197,24 @@ foreach ($FILE in $APK_PATHS + @($SETUP_PATH)) {
 # ============================================================
 Write-Host ">>> 提交版本变更"
 git add pubspec.yaml
-git commit -m "chore: 发布 v$VERSION"
+git commit -m "chore: release v$VERSION"
 if ($LASTEXITCODE -ne 0) { Fail "提交失败" }
 
 # ============================================================
 # --- 打 Tag 并推送 ---
 # ============================================================
 Write-Host ">>> 打 Tag: ${TAG}"
-git tag $TAG
+if ($Republish) { git tag -f $TAG } else { git tag $TAG }
 if ($LASTEXITCODE -ne 0) { Fail "打 tag 失败" }
 
 Write-Host ">>> 推送到远程"
 git push
 if ($LASTEXITCODE -ne 0) { Fail "推送分支失败" }
-git push origin $TAG
+if ($Republish) {
+  git push "--force-with-lease=refs/tags/${TAG}:$remoteTag" origin "refs/tags/$TAG"
+} else {
+  git push origin $TAG
+}
 if ($LASTEXITCODE -ne 0) { Fail "推送 tag 失败" }
 
 # ============================================================
@@ -207,7 +223,14 @@ if ($LASTEXITCODE -ne 0) { Fail "推送 tag 失败" }
 Write-Host ">>> 创建 GitHub Release"
 $RELEASE_FILES = $APK_PATHS + @($SETUP_PATH)
 
-if ([string]::IsNullOrWhiteSpace($NOTES)) {
+if ($Republish) {
+  gh release upload $TAG --clobber @RELEASE_FILES
+  if ($LASTEXITCODE -ne 0) { Fail "替换 Release 附件失败" }
+  if (-not [string]::IsNullOrWhiteSpace($NOTES)) {
+    gh release edit $TAG --notes $NOTES
+    if ($LASTEXITCODE -ne 0) { Fail "更新 Release 说明失败" }
+  }
+} elseif ([string]::IsNullOrWhiteSpace($NOTES)) {
   # 无自定义说明，生成默认 Release Notes
   gh release create $TAG --title $TAG --generate-notes @RELEASE_FILES
 } else {
