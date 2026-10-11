@@ -222,6 +222,11 @@ void main() {
       routes: [
         GoRoute(path: '/', builder: (_, __) => const AggPage()),
         GoRoute(
+          path: '/period_book/stage_edit/:stageId',
+          builder: (_, state) =>
+              Text('阶段详情 ${state.pathParameters["stageId"]}'),
+        ),
+        GoRoute(
           path: '/period_book/detail/:id',
           builder: (_, __) => const Text('周期详情哨兵'),
         ),
@@ -330,6 +335,20 @@ void main() {
   });
 
   group('C4 日常卡片下钻', () {
+    testWidgets('工作分类的具体条目跳转到所属阶段而不是周期', (tester) async {
+      await tester.runAsync(() async {
+        await seedStandard();
+        await seedExpense(
+            stageId: 11, category: '工作', amount: 20, description: '充值AI');
+      });
+      await pumpAggPage(tester);
+      await tapLegend(tester, '工作');
+      await tester.tap(find.text('充值AI'));
+      await tester.pumpAndSettle();
+      expect(find.text('阶段详情 11'), findsOneWidget);
+      expect(find.text('周期详情哨兵'), findsNothing);
+    });
+
     testWidgets('图例入口：展示分类小计与至多 3 条明细', (tester) async {
       await tester.runAsync(seedStandard);
       await pumpAggPage(tester);

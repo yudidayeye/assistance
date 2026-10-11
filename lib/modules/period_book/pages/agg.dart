@@ -680,11 +680,21 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
           _buildFilterSubtotalRow(appTheme, title, subtotal),
           if (items.isNotEmpty) AppSpacing.h4,
         ],
-        ...items.map((item) => _buildDetailRow(
-              appTheme,
-              item.description,
-              '-${FormatUtils.formatAmount(item.amount)}',
-              appTheme.rose,
+        ...items.map((item) => GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: item.stageId == null
+                  ? null
+                  : () async {
+                      await context
+                          .push('/period_book/stage_edit/${item.stageId}');
+                      if (mounted) _loadData();
+                    },
+              child: _buildDetailRow(
+                appTheme,
+                item.description,
+                '-${FormatUtils.formatAmount(item.amount)}',
+                appTheme.rose,
+              ),
             )),
       ],
     );

@@ -7,14 +7,18 @@ import 'expense_category_helper.dart';
 
 /// 明细项 —— 筛选生效后卡片内逐条列出的支出
 ///
-/// 只携带描述与金额：分类名、子类名 MUST NOT 进入本模型（FR-023）。子类信息
+/// 携带描述、金额与日常记录的阶段 ID：分类名、子类名不进入展示模型。子类信息
 /// （`other:购物` 中的「购物」）只保留在数据库里，因为子类名与普通分类同名时
 /// （「其他·购物」对真正的「购物」），带上标签会让用户无法分辨这笔钱属于哪一边。
 class FilterItem {
   final String description;
   final double amount;
 
-  const FilterItem({required this.description, required this.amount});
+  /// 日常记录所属阶段；大额记录不属于阶段。
+  final int? stageId;
+
+  const FilterItem(
+      {required this.description, required this.amount, this.stageId});
 
   @override
   String toString() => 'FilterItem($description, $amount)';
@@ -162,6 +166,7 @@ class CategoryFilterHelper {
               dailyItems.add(FilterItem(
                 description: _describe(e.description, categoryName),
                 amount: e.amount,
+                stageId: e.stageId,
               ));
             }
           }
