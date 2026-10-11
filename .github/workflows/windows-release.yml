@@ -23,6 +23,7 @@ jobs:
       run:
         shell: pwsh
     env:
+      CXXFLAGS: /utf-8
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       RELEASE_TAG: ${{ inputs.tag || 'v1.2.10' }}
@@ -41,12 +42,6 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
           path: app
           persist-credentials: false
-      - name: 读取上一轮构建诊断
-        run: |
-          $lines = gh run view 38149308214 --repo $env:GH_REPO --log-failed
-          $lines | Select-Object -Last 8 | ForEach-Object {
-            Write-Output "::notice title=上一轮错误诊断::$($_.Replace('%', '%25'))"
-          }
       - name: 安装固定 Flutter SDK 和 Inno Setup
         run: |
           $ErrorActionPreference = 'Stop'
@@ -80,7 +75,10 @@ jobs:
         run: |
           $log = Join-Path $env:RUNNER_TEMP 'windows-release.log'
           if (Test-Path $log) {
-            Get-Content $log -Encoding utf8 -Tail 8 | ForEach-Object {
+            $lines = Get-Content $log -Encoding utf8
+            $details = @($lines | Select-String -Pattern 'error C[0-9]+|fatal error|CMake Error|error LNK|version solving failed|Because .+|SDK version is|Error:' | Select-Object -First 8 | ForEach-Object { $_.Line })
+            if ($details.Count -eq 0) { $details = @($lines | Select-Object -Last 8) }
+            $details | ForEach-Object {
               $line = $_.Replace('%', '%25')
               Write-Output "::error title=Windows 构建日志::$line"
             }
