@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/theme_extension.dart';
 import 'entry_date_field.dart';
+import 'expense_category_helper.dart';
 
 /// 通用内嵌添加表单（大额追加 / 个人支出 / 其他支出）
 ///
@@ -110,35 +111,40 @@ class _AddFormState extends State<AddForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.categories.isNotEmpty) ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: widget.categories.map((category) {
-                final selected = widget.selectedCategory == category;
-                return ChoiceChip(
-                  label: Text(category),
-                  selected: selected,
-                  onSelected: (_) => widget.onCategoryChanged?.call(category),
-                  showCheckmark: false,
-                  visualDensity: VisualDensity.compact,
-                  backgroundColor: appTheme.cardBackground,
-                  selectedColor: appTheme.primary.withValues(alpha: 0.12),
-                  side: BorderSide(
-                    color: selected
-                        ? appTheme.primary.withValues(alpha: 0.4)
-                        : appTheme.earthMedium.withValues(alpha: 0.1),
-                    width: 0.5,
-                  ),
-                  labelStyle: TextStyle(
-                    fontSize: 12,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                    color: selected ? appTheme.primary : appTheme.earthMedium,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(appTheme.radiusPill),
-                  ),
-                );
-              }).toList(),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: widget.categories.map((category) {
+                  final selected = widget.selectedCategory == category;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Tooltip(
+                      message: category,
+                      child: ChoiceChip(
+                        label: Icon(
+                            ExpenseCategoryHelper.categoryIcon(category),
+                            size: 20,
+                            color: selected
+                                ? appTheme.primary
+                                : appTheme.earthMedium),
+                        selected: selected,
+                        onSelected: (_) =>
+                            widget.onCategoryChanged?.call(category),
+                        showCheckmark: false,
+                        backgroundColor: appTheme.cardBackground,
+                        selectedColor: appTheme.primary.withValues(alpha: 0.12),
+                        side: BorderSide(
+                            color: selected
+                                ? appTheme.primary
+                                : appTheme.earthMedium.withValues(alpha: 0.15)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(appTheme.radiusSm)),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
             const SizedBox(height: 10),
           ],

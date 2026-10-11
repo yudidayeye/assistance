@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/theme_extension.dart';
-import '../../../shared/foundation/app_spacing.dart';
 import '../services/entry_ordering.dart';
 
 /// 新增表单里的「时间（可选）」行。
@@ -15,7 +14,7 @@ import '../services/entry_ordering.dart';
 /// 的 FR-002）。预填今天会让用户在不知情的情况下得到一条带日期的记录，
 /// 破坏「不填时间的行为与改动前完全一致」这一承诺（SC-001）。
 class EntryDateField extends StatelessWidget {
-  /// 当前已选日期；`null` 表示未填写，此时右侧显示「不填」。
+  /// 当前已选日期；`null` 表示未填写，此时右侧显示「选择日期」。
   final DateTime? selectedDate;
 
   /// 变更回调；以 `null` 调用表示用户清除了已选日期。
@@ -62,52 +61,37 @@ class EntryDateField extends StatelessWidget {
 
     return Row(
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: appTheme.earthMedium.withValues(alpha: 0.7),
-          ),
+        Expanded(
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12, color: appTheme.earthMedium)),
         ),
-        const Spacer(),
-        if (selected != null) ...[
-          GestureDetector(
-            onTap: () => onDateChanged?.call(null),
-            child: Icon(
-              Icons.close_rounded,
-              size: 16,
-              color: appTheme.earthMedium.withValues(alpha: 0.5),
-            ),
+        TextButton(
+          onPressed: onDateChanged == null
+              ? null
+              : () {
+                  final now = DateTime.now();
+                  onDateChanged?.call(DateTime(now.year, now.month, now.day));
+                },
+          child: const Text('今天'),
+        ),
+        if (selected != null)
+          IconButton(
+            tooltip: '清除日期',
+            onPressed:
+                onDateChanged == null ? null : () => onDateChanged?.call(null),
+            icon: const Icon(Icons.close_rounded, size: 18),
           ),
-          AppSpacing.w8,
-        ],
-        GestureDetector(
-          onTap: () => _pickDate(context),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: selected != null
+        TextButton.icon(
+          onPressed: onDateChanged == null ? null : () => _pickDate(context),
+          style: TextButton.styleFrom(
+              foregroundColor: accent,
+              backgroundColor: selected != null
                   ? appTheme.primary.withValues(alpha: 0.08)
-                  : appTheme.creamDark,
-              borderRadius: BorderRadius.circular(appTheme.radiusSm),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  displayText,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight:
-                        selected != null ? FontWeight.w600 : FontWeight.w400,
-                    color: accent,
-                  ),
-                ),
-                AppSpacing.w4,
-                Icon(Icons.calendar_today, size: 14, color: accent),
-              ],
-            ),
-          ),
+                  : appTheme.creamDark),
+          icon: const Icon(Icons.calendar_today_outlined, size: 16),
+          label: Text(selected == null ? '选择日期' : displayText),
         ),
       ],
     );

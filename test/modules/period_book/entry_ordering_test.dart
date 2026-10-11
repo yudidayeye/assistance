@@ -78,16 +78,16 @@ void main() {
       expect(formatEntryDateForDisplay('bogus'), isNull);
     });
 
-    test('同年展示为「M月d日」，不带前导零', () {
+    test('同年展示为「MM.dd」，补齐前导零', () {
       expect(
         formatEntryDateForDisplay('2026-10-08',
             reference: DateTime(2026, 11, 1)),
-        '10月8日',
+        '10.08',
       );
       expect(
         formatEntryDateForDisplay('2026-01-05',
             reference: DateTime(2026, 11, 1)),
-        '1月5日',
+        '01.05',
       );
     });
 
@@ -95,7 +95,7 @@ void main() {
       expect(
         formatEntryDateForDisplay('2025-12-31',
             reference: DateTime(2026, 1, 2)),
-        '2025年12月31日',
+        '2025.12.31',
       );
     });
   });

@@ -42,7 +42,7 @@ DateTime? parseEntryDate(String? raw) {
   return parsed;
 }
 
-/// 界面展示文案：同年为 `10月8日`，跨年带上年份为 `2025年12月31日`。
+/// 界面展示文案：同年为 `10.08`，跨年带上年份为 `2025.12.31`。
 ///
 /// 无日期或非法值返回 `null`（调用方据此决定不渲染任何占位）。
 /// [reference] 仅在测试中注入，用于固定「今年」。
@@ -50,8 +50,10 @@ String? formatEntryDateForDisplay(String? raw, {DateTime? reference}) {
   final date = parseEntryDate(raw);
   if (date == null) return null;
   final now = reference ?? DateTime.now();
-  if (date.year == now.year) return '${date.month}月${date.day}日';
-  return '${date.year}年${date.month}月${date.day}日';
+  final monthDay =
+      '${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  if (date.year == now.year) return monthDay;
+  return '${date.year}.$monthDay';
 }
 
 /// 求 [entryDate] 应插入 [siblings] 的哪个下标（0 起，可为 `siblings.length`）。

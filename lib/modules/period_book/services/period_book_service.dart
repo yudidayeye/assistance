@@ -496,12 +496,14 @@ class PeriodBookService extends ChangeNotifier {
 
   /// 删除阶段及关联数据
   Future<void> deleteStage(int id) async {
-    await _db.delete('mod_period_book_expenses',
-        where: 'stage_id = ?', whereArgs: [id]);
-    await _db.delete('mod_period_book_additions',
-        where: 'stage_id = ?', whereArgs: [id]);
-    await _db
-        .delete('mod_period_book_stages', where: 'id = ?', whereArgs: [id]);
+    await _db.transaction((txn) async {
+      await txn.delete('mod_period_book_expenses',
+          where: 'stage_id = ?', whereArgs: [id]);
+      await txn.delete('mod_period_book_additions',
+          where: 'stage_id = ?', whereArgs: [id]);
+      await txn
+          .delete('mod_period_book_stages', where: 'id = ?', whereArgs: [id]);
+    });
     _notifyChanged();
   }
 

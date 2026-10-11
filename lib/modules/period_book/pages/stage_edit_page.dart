@@ -328,7 +328,8 @@ class _StageEditPageState extends State<StageEditPage> {
 
     final start = DateTime.parse(_stage!.startDate);
     final end = DateTime.parse(_stage!.endDate);
-    final dateRange = '${start.month}/${start.day} ~ ${end.month}/${end.day}';
+    final dateRange =
+        '${formatEntryDateForDisplay(_formatDate(start))} ~ ${formatEntryDateForDisplay(_formatDate(end))}';
 
     return AppScrollScaffold(
       controller: _scrollController,
@@ -347,11 +348,20 @@ class _StageEditPageState extends State<StageEditPage> {
             style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
           ),
           actions: [
-            IconButton(
-              onPressed: () => _showEditDatesDialog(appTheme),
-              icon: const Icon(Icons.edit_outlined),
-              color: appTheme.earth,
-              iconSize: 20,
+            PopupMenuButton<String>(
+              tooltip: '更多操作',
+              icon: const Icon(Icons.more_horiz),
+              onSelected: (action) {
+                if (action == 'dates') {
+                  _showEditDatesDialog(appTheme);
+                } else {
+                  _confirmDeleteStage();
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'dates', child: Text('编辑日期')),
+                PopupMenuItem(value: 'delete', child: Text('删除阶段')),
+              ],
             ),
           ],
         ),
@@ -490,6 +500,40 @@ class _StageEditPageState extends State<StageEditPage> {
         );
       },
     );
+  }
+
+  Future<void> _confirmDeleteStage() async {
+    final stage = _stage;
+    if (stage == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('删除阶段？'),
+        content: const Text('该阶段的所有支出和追加记录也将删除，此操作无法撤销。'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('取消')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('删除')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await _service.deleteStage(widget.stageId);
+      if (!mounted) return;
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/period_book/detail/${stage.periodId}');
+      }
+    } catch (error) {
+      if (mounted) {
+        AppSnackBar.show(context, '删除失败，请重试', type: AppSnackBarType.error);
+      }
+    }
   }
 
   Widget _buildDialogDateRow({
@@ -798,6 +842,7 @@ class _StageEditPageState extends State<StageEditPage> {
         filter != null && shoppingExpenses.isEmpty && allShopping.isNotEmpty;
 
     return ExpenseSectionCard(
+      showCategoryLabel: false,
       title: '个人支出',
       emptyText: emptyByFilter ? '「$filter」分类暂无支出条目' : '暂无个人支出',
       expenses: shoppingExpenses
@@ -901,6 +946,7 @@ class _StageEditPageState extends State<StageEditPage> {
     final otherExpenses = _expenses.where((e) => e.isOther).toList();
 
     return ExpenseSectionCard(
+      showCategoryLabel: false,
       title: '其他支出',
       emptyText: '暂无其他支出',
       expenses: otherExpenses

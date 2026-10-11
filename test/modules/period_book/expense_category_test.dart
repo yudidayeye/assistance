@@ -135,10 +135,10 @@ void main() {
     );
 
     expect(find.text('分类'), findsNothing);
-    expect(find.text('生活'), findsOneWidget);
-    expect(find.text('购物'), findsOneWidget);
+    expect(find.byTooltip('生活'), findsOneWidget);
+    expect(find.byTooltip('购物'), findsOneWidget);
 
-    await tester.tap(find.text('购物'));
+    await tester.tap(find.byTooltip('购物'));
     await tester.pump();
 
     expect(changedCategory, '购物');

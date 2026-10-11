@@ -19,6 +19,7 @@ class ExpenseSectionCard extends StatelessWidget {
   final Widget? leading;
   final Widget? form;
   final bool showAddButton;
+  final bool showCategoryLabel;
 
   const ExpenseSectionCard({
     super.key,
@@ -34,6 +35,7 @@ class ExpenseSectionCard extends StatelessWidget {
     this.leading,
     this.form,
     this.showAddButton = true,
+    this.showCategoryLabel = true,
   });
 
   @override
@@ -157,6 +159,7 @@ class ExpenseSectionCard extends StatelessWidget {
       context: context,
       appTheme: appTheme,
       expenseId: expense.id,
+      showCategoryLabel: showCategoryLabel,
       category: expense.category,
       description: expense.description,
       amount: expense.amount,

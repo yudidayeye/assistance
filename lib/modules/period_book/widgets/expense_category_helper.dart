@@ -102,6 +102,7 @@ class ExpenseCategoryHelper {
     required VoidCallback onDelete,
     Widget? leading,
     String? entryDate,
+    bool showCategoryLabel = true,
   }) {
     final displayCat = mapCategoryForDisplay(category);
     final icon = categoryIcon(displayCat);
@@ -127,10 +128,12 @@ class ExpenseCategoryHelper {
             if (leading != null) leading,
             if (leading != null) AppSpacing.w8,
             if (icon != null) ...[
-              Icon(icon, size: 16, color: color),
+              Tooltip(
+                  message: displayCat,
+                  child: Icon(icon, size: 16, color: color)),
               AppSpacing.w8,
             ],
-            if (category != 'other')
+            if (showCategoryLabel && category != 'other')
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -169,6 +172,7 @@ class ExpenseCategoryHelper {
                 ),
               ),
             ],
+            AppSpacing.w8,
             Text(
               '-${FormatUtils.formatAmount(amount)}',
               style: TextStyle(
