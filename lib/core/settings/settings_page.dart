@@ -28,7 +28,9 @@ import '../../shared/foundation/app_spacing.dart';
 /// 大圆角卡片、柔和色彩、清晰的信息层级，
 /// 强调信息存在感而非可点击感，营造安静舒适的浏览体验。
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.updateService});
+
+  final UpdateService? updateService;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -37,7 +39,8 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   final DatabaseService _db = DatabaseService.instance;
   final ImportExportService _importExport = ImportExportService.instance;
-  final UpdateService _updateService = UpdateService.instance;
+  late final UpdateService _updateService =
+      widget.updateService ?? UpdateService.instance;
 
   String _currentVersion = '';
   bool _isCheckingUpdate = false;
@@ -65,19 +68,42 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   /// 检查更新
-  Future<void> _checkUpdate() async {
-    if (mounted) {
-      setState(() => _isCheckingUpdate = true);
+  Future<void> _checkUpdate({bool manual = false}) async {
+    if (!mounted || _isCheckingUpdate) return;
+    setState(() {
+      _isCheckingUpdate = true;
+      _updateInfo = null;
+    });
+
+    UpdateInfo info;
+    try {
+      info = await _updateService.checkForUpdate();
+    } catch (_) {
+      info = UpdateInfo(
+        hasUpdate: false,
+        currentVersion: _currentVersion,
+        error: '检查更新失败，请稍后重试',
+      );
+    } finally {
+      if (mounted) setState(() => _isCheckingUpdate = false);
     }
-
-    final info = await _updateService.checkForUpdate();
-
-    if (mounted) {
-      setState(() {
-        _isCheckingUpdate = false;
-        _updateInfo = info;
+    if (!mounted) return;
+    setState(() {
+      _updateInfo = info;
+      if (info.currentVersion.isNotEmpty) {
         _currentVersion = info.currentVersion;
-      });
+      }
+    });
+    if (manual) {
+      final message = info.error ??
+          (info.hasUpdate
+              ? '发现新版本 V${info.latestVersion}，点击更新即可下载'
+              : '当前已是最新版本（V${info.currentVersion}）');
+      AppSnackBar.show(
+        context,
+        message,
+        type: info.error == null ? AppSnackBarType.info : AppSnackBarType.error,
+      );
     }
   }
 
@@ -193,7 +219,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-
   // ═══════════════════════════════════════════════════════════════
   // 主题选择器 — 扁平纯色圆圈
   // ═══════════════════════════════════════════════════════════════
@@ -264,7 +289,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-
   // ═══════════════════════════════════════════════════════════════
   // 版本信息项 — 带检查更新功能
   // ═══════════════════════════════════════════════════════════════
@@ -294,9 +318,25 @@ class _SettingsPageState extends State<SettingsPage> {
               Text('版本',
                   style: AppTypography.bodyMd.copyWith(color: appTheme.earth)),
               const SizedBox(height: 2),
-              Text('V$_currentVersion',
+              Text(_currentVersion.isEmpty ? '版本读取中' : 'V$_currentVersion',
                   style: AppTypography.caption.copyWith(
                       color: appTheme.earthMedium.withValues(alpha: 0.6))),
+              if (_isCheckingUpdate || _updateInfo != null) ...[
+                AppSpacing.h4,
+                Text(
+                  _isCheckingUpdate
+                      ? '正在检查更新…'
+                      : _updateInfo!.error ??
+                          (_updateInfo!.hasUpdate
+                              ? '发现新版本 V$latestVersion'
+                              : '当前已是最新版本'),
+                  style: AppTypography.caption.copyWith(
+                    color: _updateInfo?.error != null
+                        ? appTheme.primary
+                        : appTheme.earthMedium,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -336,8 +376,8 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           )
         else
-          GestureDetector(
-            onTap: _checkUpdate,
+          TextButton(
+            onPressed: () => _checkUpdate(manual: true),
             child: Text(
               '检查更新',
               style: AppTypography.caption.copyWith(
@@ -391,8 +431,8 @@ class _SettingsPageState extends State<SettingsPage> {
             color: appTheme.sage.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Icon(Icons.system_update_rounded,
-              color: appTheme.sage, size: 26),
+          child:
+              Icon(Icons.system_update_rounded, color: appTheme.sage, size: 26),
         ),
         title: Text(
           '发现新版本',
@@ -410,8 +450,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               textAlign: TextAlign.center,
             ),
-            if (info.releaseNotes != null &&
-                info.releaseNotes!.isNotEmpty) ...[
+            if (info.releaseNotes != null && info.releaseNotes!.isNotEmpty) ...[
               AppSpacing.h16,
               Container(
                 width: double.infinity,
@@ -452,7 +491,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-
   // ═══════════════════════════════════════════════════════════════
   // 内部柔和分割线
   // ═══════════════════════════════════════════════════════════════
@@ -460,7 +498,9 @@ class _SettingsPageState extends State<SettingsPage> {
     return Padding(
       padding: const EdgeInsets.only(left: 66),
       child: Divider(
-          height: 0, thickness: 0.5, color: appTheme.earthMedium.withValues(alpha: 0.07)),
+          height: 0,
+          thickness: 0.5,
+          color: appTheme.earthMedium.withValues(alpha: 0.07)),
     );
   }
 
@@ -583,8 +623,8 @@ class _SettingsPageState extends State<SettingsPage> {
             color: appTheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Icon(Icons.download_rounded,
-              color: appTheme.primary, size: 26),
+          child:
+              Icon(Icons.download_rounded, color: appTheme.primary, size: 26),
         ),
         title: Text(
           '确认导入数据？',
@@ -599,8 +639,8 @@ class _SettingsPageState extends State<SettingsPage> {
           '、$bookAdditionsCount 条追加、$bookExpensesCount 条支出'
           '、$bookLargeAdditionsCount 条大额追加、$bookLargeExpensesCount 条大额支出。\n'
           '已存在的设置和记录将被覆盖。',
-          style: AppTypography.bodyMd.copyWith(
-              color: appTheme.earthMedium, height: 1.5),
+          style: AppTypography.bodyMd
+              .copyWith(color: appTheme.earthMedium, height: 1.5),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -631,15 +671,15 @@ class _SettingsPageState extends State<SettingsPage> {
             color: appTheme.rose.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Icon(Icons.error_outline_rounded,
-              color: appTheme.rose, size: 26),
+          child:
+              Icon(Icons.error_outline_rounded, color: appTheme.rose, size: 26),
         ),
         title: Text(title,
             style: AppTypography.displayMd.copyWith(color: appTheme.earth),
             textAlign: TextAlign.center),
         content: Text(message,
-            style: AppTypography.bodyMd.copyWith(
-                color: appTheme.earthMedium, height: 1.5),
+            style: AppTypography.bodyMd
+                .copyWith(color: appTheme.earthMedium, height: 1.5),
             textAlign: TextAlign.center),
         actions: [
           TextButton(
@@ -665,8 +705,8 @@ class _SettingsPageState extends State<SettingsPage> {
             color: appTheme.rose.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusMd),
           ),
-          child: Icon(Icons.warning_amber_rounded,
-              color: appTheme.rose, size: 26),
+          child:
+              Icon(Icons.warning_amber_rounded, color: appTheme.rose, size: 26),
         ),
         title: Text(
           '确认清除所有业务数据？',
@@ -675,8 +715,8 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         content: Text(
           '此操作将删除所有周期记账和生理期记录，但保留设置和主题偏好。',
-          style: AppTypography.bodyMd.copyWith(
-              color: appTheme.earthMedium, height: 1.5),
+          style: AppTypography.bodyMd
+              .copyWith(color: appTheme.earthMedium, height: 1.5),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -708,4 +748,3 @@ class _SettingsPageState extends State<SettingsPage> {
     AppSnackBar.show(context, message);
   }
 }
-

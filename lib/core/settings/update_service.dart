@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -16,8 +17,18 @@ import 'package:url_launcher/url_launcher.dart';
 /// 查询 GitHub Release 获取最新版本，与当前应用版本比较；
 /// 支持按设备 CPU 架构匹配 APK、应用内下载与唤起系统安装器。
 class UpdateService {
-  UpdateService._();
-  static final instance = UpdateService._();
+  UpdateService({
+    http.Client? client,
+    Future<PackageInfo> Function()? packageInfoLoader,
+    Duration checkTimeout = const Duration(seconds: 10),
+  })  : _client = client,
+        _packageInfoLoader = packageInfoLoader ?? PackageInfo.fromPlatform,
+        _checkTimeout = checkTimeout;
+
+  static final instance = UpdateService();
+  final http.Client? _client;
+  final Future<PackageInfo> Function() _packageInfoLoader;
+  final Duration _checkTimeout;
 
   /// GitHub 仓库信息
   static const _owner = 'yudidayeye';
@@ -45,56 +56,79 @@ class UpdateService {
   ///
   /// 返回 [UpdateInfo]，包含是否有更新、当前版本、最新版本、产物列表等信息。
   Future<UpdateInfo> checkForUpdate() async {
-    // 获取当前应用版本
-    final packageInfo = await PackageInfo.fromPlatform();
-    final currentVersion = packageInfo.version;
-
+    String currentVersion;
     try {
-      // 请求 GitHub API 获取最新 Release
+      final packageInfo = await _packageInfoLoader().timeout(_checkTimeout);
+      currentVersion = packageInfo.version;
+      if (!RegExp(r'^\d+\.\d+\.\d+$').hasMatch(currentVersion)) {
+        throw const FormatException('Invalid local version');
+      }
+    } catch (_) {
+      return const UpdateInfo(
+        hasUpdate: false,
+        currentVersion: '',
+        error: '无法读取当前应用版本，请重启应用后重试',
+      );
+    }
+
+    UpdateInfo failure(String message) => UpdateInfo(
+          hasUpdate: false,
+          currentVersion: currentVersion,
+          error: message,
+        );
+    try {
       final url = Uri.parse(
         'https://api.github.com/repos/$_owner/$_repo/releases/latest',
       );
-      final response = await http.get(url).timeout(
-        const Duration(seconds: 10),
-      );
-
+      final response =
+          await (_client?.get(url) ?? http.get(url)).timeout(_checkTimeout);
       if (response.statusCode != 200) {
-        return UpdateInfo(
-          hasUpdate: false,
-          currentVersion: currentVersion,
-          error: '检查更新失败（${response.statusCode}）',
-        );
+        final code = response.statusCode;
+        if (code == 429 ||
+            (code == 403 && response.headers['x-ratelimit-remaining'] == '0')) {
+          return failure('GitHub 请求次数已达上限（$code），请稍后重试或切换网络');
+        }
+        if (code == 404) {
+          return failure('未找到已发布版本（404），请前往 GitHub 发布页确认');
+        }
+        if (code == 403) {
+          return failure('GitHub 拒绝访问（403），请检查网络或代理设置后重试');
+        }
+        if (code >= 500) {
+          return failure('GitHub 服务暂时不可用（$code），请稍后重试');
+        }
+        return failure('检查更新失败（HTTP $code），请稍后重试');
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final tagName = json['tag_name'] as String? ?? '';
-      final releaseName = json['name'] as String? ?? '';
-      final htmlUrl = json['html_url'] as String? ?? '';
-      final body = json['body'] as String? ?? '';
-
-      // 解析远程版本号（去掉可能的 'v' 前缀）
       final remoteVersion = tagName.replaceFirst(RegExp(r'^[vV]'), '');
-
-      // 比较版本
-      final hasUpdate = _compareVersions(currentVersion, remoteVersion) < 0;
-
-      final info = UpdateInfo(
-        hasUpdate: hasUpdate,
+      if (!RegExp(r'^\d+\.\d+\.\d+$').hasMatch(remoteVersion)) {
+        throw const FormatException('Invalid release version');
+      }
+      return UpdateInfo(
+        hasUpdate: _compareVersions(currentVersion, remoteVersion) < 0,
         currentVersion: currentVersion,
         latestVersion: remoteVersion,
-        releaseName: releaseName,
-        releaseUrl: htmlUrl,
-        releaseNotes: body,
+        releaseName: json['name'] as String? ?? '',
+        releaseUrl: json['html_url'] as String? ?? '',
+        releaseNotes: json['body'] as String? ?? '',
         assets: _parseAssets(json['assets']),
       );
-
-      return info;
-    } catch (e) {
-      return UpdateInfo(
-        hasUpdate: false,
-        currentVersion: currentVersion,
-        error: '网络异常，请稍后重试',
-      );
+    } on TimeoutException {
+      return failure('检查更新超时，请检查网络或代理设置后重试');
+    } on HandshakeException {
+      return failure('安全连接失败，请检查设备时间、网络或代理设置');
+    } on SocketException {
+      return failure('无法连接 GitHub，请检查网络或代理设置后重试');
+    } on http.ClientException {
+      return failure('无法连接 GitHub，请检查网络或代理设置后重试');
+    } on FormatException {
+      return failure('GitHub 返回的版本信息格式异常，请稍后重试');
+    } on TypeError {
+      return failure('GitHub 返回的版本信息格式异常，请稍后重试');
+    } catch (_) {
+      return failure('检查更新失败，请稍后重试');
     }
   }
 
@@ -127,9 +161,8 @@ class UpdateService {
     List<ReleaseAsset> assets,
     List<String> supportedAbis,
   ) {
-    final apks = assets
-        .where((a) => a.name.toLowerCase().endsWith('.apk'))
-        .toList();
+    final apks =
+        assets.where((a) => a.name.toLowerCase().endsWith('.apk')).toList();
     if (apks.isEmpty) return null;
 
     // L1：按设备 ABI 优先级顺序匹配（arm64 设备优先命中 arm64-v8a）
@@ -188,12 +221,10 @@ class UpdateService {
     }).toList();
     if (candidates.isEmpty) return null;
 
-    final preferred = candidates
-        .where((a) {
-          final name = a.name.toLowerCase();
-          return name.contains('setup') || name.contains('installer');
-        })
-        .toList();
+    final preferred = candidates.where((a) {
+      final name = a.name.toLowerCase();
+      return name.contains('setup') || name.contains('installer');
+    }).toList();
     final pool = preferred.isNotEmpty ? preferred : candidates;
 
     pool.sort((a, b) => b.size.compareTo(a.size));
@@ -322,9 +353,7 @@ class UpdateService {
         case DioExceptionType.badResponse:
           final code = error.response?.statusCode;
           return UpdateException(
-            code == null
-                ? '下载失败，请稍后重试'
-                : '下载失败（$code），可前往 GitHub 发布页手动下载',
+            code == null ? '下载失败，请稍后重试' : '下载失败（$code），可前往 GitHub 发布页手动下载',
           );
         case DioExceptionType.cancel:
           return const UpdateException('下载已取消');
