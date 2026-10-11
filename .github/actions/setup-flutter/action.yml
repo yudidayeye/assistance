@@ -1,0 +1,28 @@
+name: 固定 Flutter SDK
+description: 安装已验证的官方 Flutter stable 提交
+runs:
+  using: composite
+  steps:
+    - if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        set -euo pipefail
+        flutter_commit=abaf9c523780a608bd46686fd5e53740a07077f8
+        flutter_dir="$RUNNER_TEMP/flutter"
+        git clone --no-checkout --depth 1 --branch stable https://github.com/flutter/flutter.git "$flutter_dir"
+        git -C "$flutter_dir" fetch --depth 1 origin "$flutter_commit"
+        git -C "$flutter_dir" checkout --detach FETCH_HEAD
+        test "$(git -C "$flutter_dir" rev-parse HEAD)" = "$flutter_commit"
+        echo "$flutter_dir/bin" >> "$GITHUB_PATH"
+    - if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $PSNativeCommandUseErrorActionPreference = $true
+        $flutterCommit = 'abaf9c523780a608bd46686fd5e53740a07077f8'
+        $flutterDir = Join-Path $env:RUNNER_TEMP 'flutter'
+        git clone --no-checkout --depth 1 --branch stable https://github.com/flutter/flutter.git $flutterDir
+        git -C $flutterDir fetch --depth 1 origin $flutterCommit
+        git -C $flutterDir checkout --detach FETCH_HEAD
+        if ((git -C $flutterDir rev-parse HEAD) -ne $flutterCommit) { throw 'Flutter 提交不匹配' }
+        "$flutterDir\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append

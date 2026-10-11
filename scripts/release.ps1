@@ -28,7 +28,10 @@ param(
   [switch]$Republish,
 
   # 给已发布的标签补充 Windows 安装包，不递增版本或修改标签。
-  [switch]$WindowsOnly
+  [switch]$WindowsOnly,
+
+  [switch]$BuildOnly,
+  [int]$BuildNumber
 )
 
 $ErrorActionPreference = "Stop"
@@ -89,24 +92,33 @@ if ($dirty) {
 }
 
 # 已发布版本补包：源码必须来自目标标签，保留原版本和已有附件。
-if ($WindowsOnly) {
+if ($WindowsOnly -or $BuildOnly) {
+  if ($BuildOnly) {
+    if ($WindowsOnly -or $Republish) { Fail "-BuildOnly 不能与补包或重发选项混用" }
+    python $env:CI_RELEASE_HELPER set-version $VERSION $BuildNumber
+    if ($LASTEXITCODE -ne 0) { Fail "配置构建版本失败" }
+  }
   if ($Republish) { Fail "-WindowsOnly 不能与 -Republish 同时使用" }
-  $headCommit = git rev-parse HEAD
-  if ($LASTEXITCODE -ne 0) { Fail "无法读取当前提交" }
-  $tagCommit = git rev-parse "refs/tags/${TAG}^{commit}"
-  if ($LASTEXITCODE -ne 0 -or $headCommit -ne $tagCommit) {
-    Fail "补包必须在 $TAG 对应的源码检出中执行"
+  if (-not $BuildOnly) {
+    $headCommit = git rev-parse HEAD
+    if ($LASTEXITCODE -ne 0) { Fail "无法读取当前提交" }
+    $tagCommit = git rev-parse "refs/tags/${TAG}^{commit}"
+    if ($LASTEXITCODE -ne 0 -or $headCommit -ne $tagCommit) {
+      Fail "补包必须在 $TAG 对应的源码检出中执行"
+    }
   }
   $versionLine = Get-Content pubspec.yaml -Encoding UTF8 | Where-Object { $_ -match '^version:' } | Select-Object -First 1
   if ($versionLine -notmatch "^version:\s+$([regex]::Escape($VERSION))\+(\d+)\s*$") {
     Fail "源码版本与 $VERSION 不匹配"
   }
   $expectedProductVersion = "$VERSION+$($Matches[1])"
-  $releaseJson = gh release view $TAG --json tagName,isDraft,isPrerelease
-  if ($LASTEXITCODE -ne 0) { Fail "目标 Release $TAG 不存在" }
-  $release = $releaseJson | ConvertFrom-Json
-  if ($release.tagName -ne $TAG -or $release.isDraft -or $release.isPrerelease) {
-    Fail "补包要求 $TAG 已正式发布"
+  if (-not $BuildOnly) {
+    $releaseJson = gh release view $TAG --json tagName,isDraft,isPrerelease
+    if ($LASTEXITCODE -ne 0) { Fail "目标 Release $TAG 不存在" }
+    $release = $releaseJson | ConvertFrom-Json
+    if ($release.tagName -ne $TAG -or $release.isDraft -or $release.isPrerelease) {
+      Fail "补包要求 $TAG 已正式发布"
+    }
   }
   if ($Clean) {
     flutter clean
@@ -130,6 +142,11 @@ if ($WindowsOnly) {
   $expectedVersionParts = ([version]$VERSION)
   if ($setupVersionParts.Major -ne $expectedVersionParts.Major -or $setupVersionParts.Minor -ne $expectedVersionParts.Minor -or $setupVersionParts.Build -ne $expectedVersionParts.Build) {
     Fail "安装包版本为 $setupVersion，期望 $VERSION"
+  }
+  if ($BuildOnly) {
+    python $env:CI_RELEASE_HELPER windows $VERSION $BuildNumber
+    if ($LASTEXITCODE -ne 0) { Fail "Windows 产物清单生成失败" }
+    exit 0
   }
   $digest = (Get-FileHash $SETUP_PATH -Algorithm SHA256).Hash.ToLowerInvariant()
   gh release upload $TAG $SETUP_PATH --clobber

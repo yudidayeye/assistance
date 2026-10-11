@@ -19,10 +19,14 @@ set -e
 VERSION=""
 NOTES=""
 CLEAN=0
+CI_BUILD=0
+CI_PUBLISH=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --clean) CLEAN=1 ;;
+    --ci-build) CI_BUILD=1 ;;
+    --ci-publish) CI_PUBLISH=1 ;;
     -*)
       echo "未知选项: $1"
       exit 1
@@ -67,6 +71,22 @@ fail() {
   echo "错误: $1"
   exit 1
 }
+
+# Actions 分平台构建与统一发布；常规本地发布流程保持不变。
+if [ "$CI_BUILD" -eq 1 ] && [ "$CI_PUBLISH" -eq 1 ]; then
+  fail "--ci-build 不能与 --ci-publish 混用"
+fi
+if [ "$CI_BUILD" -eq 1 ]; then
+  python3 "${CI_RELEASE_HELPER:-scripts/ci_release.py}" set-version "$VERSION" "$CI_RELEASE_BUILD"
+  flutter pub get --enforce-lockfile
+  flutter build apk --release --split-per-abi
+  python3 "${CI_RELEASE_HELPER:-scripts/ci_release.py}" android "$VERSION" "$CI_RELEASE_BUILD"
+  exit 0
+fi
+if [ "$CI_PUBLISH" -eq 1 ]; then
+  python3 scripts/ci_release.py publish "$VERSION" "$CI_RELEASE_BUILD" "$CI_RELEASE_MODE" "$CI_SOURCE_SHA"
+  exit 0
+fi
 
 echo "========================================"
 echo "  发布 v${VERSION}"
