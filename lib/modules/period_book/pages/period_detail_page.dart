@@ -131,6 +131,40 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
     );
   }
 
+  Future<void> _confirmDeletePeriod() async {
+    final period = _period;
+    if (period?.id == null) return;
+    final appTheme = Theme.of(context).appTheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierColor: appTheme.surfaceOverlay,
+      builder: (ctx) => AlertDialog(
+        title: const Text('删除周期？'),
+        content: const Text('该周期的所有阶段、支出、追加及大额记录也将删除，此操作无法撤销。'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('取消')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('删除', style: TextStyle(color: appTheme.rose))),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await _service.deletePeriod(period!.id!);
+      if (!mounted) return;
+      AppSnackBar.show(context, '周期已删除');
+      if (context.canPop()) context.pop();
+      // 嵌入主页时由数据变更通知刷新到其他周期或空状态。
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.show(context, '删除失败，请重试', type: AppSnackBarType.error);
+      }
+    }
+  }
+
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
@@ -208,9 +242,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           child: EmptyStateWidget(
             icon: Icons.account_balance_wallet_outlined,
             title: _hasAnyPeriods ? '当前没有进行中的周期' : '还没有记账周期',
-            subtitle: _hasAnyPeriods
-                ? '新建一个周期开始记账，或查看历史记录'
-                : '创建第一个周期，开始记录你的收支',
+            subtitle:
+                _hasAnyPeriods ? '新建一个周期开始记账，或查看历史记录' : '创建第一个周期，开始记录你的收支',
             actionLabel: '新建周期',
             onAction: () async {
               await context.push('/period_book/new');
@@ -230,84 +263,100 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       controller: _scrollController,
       slivers: [
         SliverAppBar(
-          pinned: true,
-          backgroundColor: appTheme.cream,
-          elevation: 0,
-          centerTitle: false,
-          titleSpacing: canPop ? 0 : null,
-          automaticallyImplyLeading: true,
-          title: Text(
-            '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: IconButton(
-                onPressed: () => context.push('/period_book/history'),
-                icon: const Icon(Icons.history_rounded),
-                color: appTheme.earth,
-                iconSize: 20,
-                tooltip: '历史记录',
-              ),
+            pinned: true,
+            backgroundColor: appTheme.cream,
+            elevation: 0,
+            centerTitle: false,
+            titleSpacing: canPop ? 0 : null,
+            automaticallyImplyLeading: true,
+            title: Text(
+              '${start.month}月${start.day}日 ~ ${end.month}月${end.day}日',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.headerTitle.copyWith(color: appTheme.earth),
             ),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert_rounded, size: 20, color: appTheme.earth),
-              color: appTheme.cardBackground,
-              position: PopupMenuPosition.under,
-              onSelected: (value) {
-                switch (value) {
-                  case 'new_period':
-                    context.push('/period_book/new');
-                    break;
-                  case 'edit_period':
-                    context.push('/period_book/edit/${_period!.id}');
-                    break;
-                  
-                  case 'payday':
-                    _showPaydayPicker();
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'new_period',
-                  child: Row(
-                    children: [
-                      Icon(Icons.add_circle_outline_rounded, size: 18, color: appTheme.earth),
-                      const SizedBox(width: 8),
-                      const Text('新增周期'),
-                    ],
-                  ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: IconButton(
+                  onPressed: () => context.push('/period_book/history'),
+                  icon: const Icon(Icons.history_rounded),
+                  color: appTheme.earth,
+                  iconSize: 20,
+                  tooltip: '历史记录',
                 ),
-                if (!_isReadOnly)
+              ),
+              PopupMenuButton<String>(
+                tooltip: '更多操作',
+                icon: Icon(Icons.more_vert_rounded,
+                    size: 20, color: appTheme.earth),
+                color: appTheme.cardBackground,
+                position: PopupMenuPosition.under,
+                onSelected: (value) {
+                  switch (value) {
+                    case 'new_period':
+                      context.push('/period_book/new');
+                      break;
+                    case 'edit_period':
+                      context.push('/period_book/edit/${_period!.id}');
+                      break;
+
+                    case 'delete_period':
+                      _confirmDeletePeriod();
+                      break;
+                    case 'payday':
+                      _showPaydayPicker();
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
                   PopupMenuItem(
-                    value: 'edit_period',
+                    value: 'new_period',
                     child: Row(
                       children: [
-                        Icon(Icons.edit_outlined, size: 18, color: appTheme.earth),
+                        Icon(Icons.add_circle_outline_rounded,
+                            size: 18, color: appTheme.earth),
                         const SizedBox(width: 8),
-                        const Text('编辑周期'),
+                        const Text('新增周期'),
                       ],
                     ),
                   ),
-
-                PopupMenuItem(
-                  value: 'payday',
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_month_rounded, size: 18, color: appTheme.earth),
-                      const SizedBox(width: 8),
-                      const Text('发薪日设置'),
-                    ],
+                  if (!_isReadOnly)
+                    PopupMenuItem(
+                      value: 'edit_period',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined,
+                              size: 18, color: appTheme.earth),
+                          const SizedBox(width: 8),
+                          const Text('编辑周期'),
+                        ],
+                      ),
+                    ),
+                  if (!_isReadOnly)
+                    PopupMenuItem(
+                      value: 'delete_period',
+                      child: Row(children: [
+                        Icon(Icons.delete_outline_rounded,
+                            size: 18, color: appTheme.rose),
+                        AppSpacing.w8,
+                        Text('删除周期', style: TextStyle(color: appTheme.rose)),
+                      ]),
+                    ),
+                  PopupMenuItem(
+                    value: 'payday',
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_month_rounded,
+                            size: 18, color: appTheme.earth),
+                        const SizedBox(width: 8),
+                        const Text('发薪日设置'),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ]
-        ),
+                ],
+              ),
+            ]),
         SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
         SliverToBoxAdapter(child: AppSpacing.h8),
         _buildStagesSection(appTheme),
@@ -345,7 +394,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           ),
           decoration: BoxDecoration(
             color: sheetTheme.cream,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
+            borderRadius: BorderRadius.vertical(
+                top: Radius.circular(sheetTheme.radiusXl)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -354,13 +404,15 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 padding: const EdgeInsets.only(top: 20, bottom: 16),
                 child: Text(
                   '总本金构成',
-                  style: AppTypography.displayMd.copyWith(color: sheetTheme.earth),
+                  style:
+                      AppTypography.displayMd.copyWith(color: sheetTheme.earth),
                 ),
               ),
               Flexible(
                 child: ListView(
                   shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   children: [
                     _buildDetailRow(
                       appTheme: appTheme,
@@ -390,7 +442,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                             const SizedBox(height: 4),
                             for (final a in additions)
                               Padding(
-                                padding: const EdgeInsets.only(left: 16, bottom: 4),
+                                padding:
+                                    const EdgeInsets.only(left: 16, bottom: 4),
                                 child: Row(
                                   children: [
                                     Text(
@@ -463,7 +516,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
           ),
           decoration: BoxDecoration(
             color: sheetTheme.cream,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(sheetTheme.radiusXl)),
+            borderRadius: BorderRadius.vertical(
+                top: Radius.circular(sheetTheme.radiusXl)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -472,13 +526,15 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                 padding: const EdgeInsets.only(top: 20, bottom: 16),
                 child: Text(
                   '总支出构成',
-                  style: AppTypography.displayMd.copyWith(color: sheetTheme.earth),
+                  style:
+                      AppTypography.displayMd.copyWith(color: sheetTheme.earth),
                 ),
               ),
               Flexible(
                 child: ListView(
                   shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   children: [
                     _buildDetailRow(
                       appTheme: appTheme,
@@ -609,8 +665,9 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               stageCalc: stageCalc,
               previousBalance: previousBalance,
               additions: additions,
-              personalExpenseBreakdown:
-                  stage.id != null ? _computePersonalBreakdown(stage.id!) : null,
+              personalExpenseBreakdown: stage.id != null
+                  ? _computePersonalBreakdown(stage.id!)
+                  : null,
               onEditBalance:
                   _isReadOnly ? null : () => _showEditStageBalanceDialog(stage),
               onEdit: _isReadOnly
@@ -630,9 +687,8 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   }
 
   Map<String, double> _computePersonalBreakdown(int stageId) {
-    final stageExpenses = _allExpenses
-        .where((e) => e.stageId == stageId && !e.isOther)
-        .toList();
+    final stageExpenses =
+        _allExpenses.where((e) => e.stageId == stageId && !e.isOther).toList();
     final map = <String, double>{};
     for (final e in stageExpenses) {
       final display = _categoryDisplayName(e.category);
@@ -654,12 +710,13 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       'shopping': '购物',
       'other': '其他',
       '生活': '生活',
-      
       '工作': '工作',
       '娱乐': '娱乐',
       '大餐': '大餐',
     };
-    return dbValue != null && map.containsKey(dbValue) ? map[dbValue]! : (dbValue ?? '其他');
+    return dbValue != null && map.containsKey(dbValue)
+        ? map[dbValue]!
+        : (dbValue ?? '其他');
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -677,14 +734,12 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
       maxBalance: maxBalance,
       onSave: (val) async {
         await _service.updateStageBalance(stage.id!, val);
-        _savedScrollOffset = _scrollController.hasClients
-            ? _scrollController.offset
-            : null;
+        _savedScrollOffset =
+            _scrollController.hasClients ? _scrollController.offset : null;
         await _loadData();
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_savedScrollOffset != null &&
-                _scrollController.hasClients) {
+            if (_savedScrollOffset != null && _scrollController.hasClients) {
               _scrollController.jumpTo(_savedScrollOffset!);
             }
           });
@@ -784,6 +839,3 @@ class _PaydayPickerState extends State<_PaydayPicker> {
     );
   }
 }
-
-
-

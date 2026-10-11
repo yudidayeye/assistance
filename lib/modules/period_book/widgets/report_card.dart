@@ -119,8 +119,8 @@ class _ReportCardState extends State<ReportCard> {
             style: AppTypography.bodySm.copyWith(color: appTheme.earth),
           ),
           // 消费总金额
-          _buildTotalAmount(appTheme),
-          const Spacer(),
+          Flexible(child: _buildTotalAmount(appTheme)),
+          AppSpacing.w8,
           // 视图切换选择器
           _buildViewSelector(appTheme),
         ],
@@ -144,6 +144,8 @@ class _ReportCardState extends State<ReportCard> {
       ),
       child: Text(
         '-$formatted',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,

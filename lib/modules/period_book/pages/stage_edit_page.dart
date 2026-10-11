@@ -350,7 +350,10 @@ class _StageEditPageState extends State<StageEditPage> {
           actions: [
             PopupMenuButton<String>(
               tooltip: '更多操作',
-              icon: const Icon(Icons.more_horiz),
+              icon: Icon(Icons.more_vert_rounded,
+                  size: 20, color: appTheme.earth),
+              color: appTheme.cardBackground,
+              position: PopupMenuPosition.under,
               onSelected: (action) {
                 if (action == 'dates') {
                   _showEditDatesDialog(appTheme);
@@ -358,9 +361,23 @@ class _StageEditPageState extends State<StageEditPage> {
                   _confirmDeleteStage();
                 }
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'dates', child: Text('编辑日期')),
-                PopupMenuItem(value: 'delete', child: Text('删除阶段')),
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                    value: 'dates',
+                    child: Row(children: [
+                      Icon(Icons.edit_calendar_outlined,
+                          size: 18, color: appTheme.earth),
+                      AppSpacing.w8,
+                      const Text('编辑日期'),
+                    ])),
+                PopupMenuItem(
+                    value: 'delete',
+                    child: Row(children: [
+                      Icon(Icons.delete_outline_rounded,
+                          size: 18, color: appTheme.rose),
+                      AppSpacing.w8,
+                      Text('删除阶段', style: TextStyle(color: appTheme.rose)),
+                    ])),
               ],
             ),
           ],

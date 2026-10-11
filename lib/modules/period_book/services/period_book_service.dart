@@ -325,16 +325,27 @@ class PeriodBookService extends ChangeNotifier {
 
   /// 删除周期及关联数据
   Future<void> deletePeriod(int id) async {
-    // 先删除阶段（级联删除 additions 和 expenses）
-    await _db.delete('mod_period_book_stages',
-        where: 'period_id = ?', whereArgs: [id]);
-    // 删除大额记录
-    await _db.delete('mod_period_book_large_additions',
-        where: 'period_id = ?', whereArgs: [id]);
-    await _db.delete('mod_period_book_large_expenses',
-        where: 'period_id = ?', whereArgs: [id]);
-    await _db
-        .delete('mod_period_book_periods', where: 'id = ?', whereArgs: [id]);
+    await _db.transaction((txn) async {
+      // 显式删除阶段条目，避免依赖连接的外键级联开关。
+      for (final table in [
+        'mod_period_book_expenses',
+        'mod_period_book_additions'
+      ]) {
+        await txn.rawDelete(
+            'DELETE FROM $table WHERE stage_id IN '
+            '(SELECT id FROM mod_period_book_stages WHERE period_id = ?)',
+            [id]);
+      }
+      for (final table in [
+        'mod_period_book_stages',
+        'mod_period_book_large_additions',
+        'mod_period_book_large_expenses'
+      ]) {
+        await txn.delete(table, where: 'period_id = ?', whereArgs: [id]);
+      }
+      await txn
+          .delete('mod_period_book_periods', where: 'id = ?', whereArgs: [id]);
+    });
     _notifyChanged();
   }
 
