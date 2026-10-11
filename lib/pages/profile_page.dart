@@ -5,14 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/module_system/module_registry.dart';
-import '../core/module_system/module_summary.dart';
-import '../core/module_system/tool_module.dart';
 import '../core/settings/settings_service.dart';
 import '../core/theme/theme_extension.dart';
-import '../modules/period_book/services/period_book_service.dart';
-import '../modules/period_tracker/services/period_service.dart';
-import '../modules/vault/services/vault_service.dart';
 import '../shared/foundation/app_typography.dart';
 import '../shared/widgets/app_scaffold.dart';
 import '../shared/widgets/app_snack_bar.dart';
@@ -28,15 +22,7 @@ class ProfilePageContent extends StatefulWidget {
   State<ProfilePageContent> createState() => _ProfilePageContentState();
 }
 
-class _ProfilePageContentState extends State<ProfilePageContent>
-    with WidgetsBindingObserver {
-  /// 我的工具固定展示顺序
-  static const List<String> _toolModuleIds = [
-    'period_book',
-    'period_tracker',
-    'vault',
-  ];
-
+class _ProfilePageContentState extends State<ProfilePageContent> {
   /// 头像最大尺寸（等比压缩到该范围后存储）
   static const int _avatarMaxDim = 320;
   static const int _avatarMaxBytes = 15 * 1024 * 1024;
@@ -44,43 +30,18 @@ class _ProfilePageContentState extends State<ProfilePageContent>
   String _userName = SettingsService.defaultUserName;
   String? _avatarB64;
 
-  /// 各工具模块的动态摘要（key = moduleId）
-  final Map<String, ModuleSummary> _summaries = {};
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    // 订阅模块数据变更（新增/删除后刷新摘要）
-    PeriodBookService.instance.addListener(_onModuleData);
-    PeriodService.instance.addListener(_onModuleData);
-    VaultService.instance.addListener(_onModuleData);
-    // 订阅设置变更（导入 / 模块启停 / 主题重载后刷新身份与摘要）
     SettingsController.instance.addListener(_onSettingsChanged);
-    _loadAll();
+    _applyIdentity();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    PeriodBookService.instance.removeListener(_onModuleData);
-    PeriodService.instance.removeListener(_onModuleData);
-    VaultService.instance.removeListener(_onModuleData);
     SettingsController.instance.removeListener(_onSettingsChanged);
     super.dispose();
   }
-
-  /// 保险箱在切后台时自动锁定，回到前台后刷新按钮状态相关 UI
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) {
-      setState(() {});
-    }
-  }
-
-  // ───────────────────────────────────────────────────────────
-  // 数据加载
-  // ───────────────────────────────────────────────────────────
 
   /// 从 SettingsController 缓存同步用户身份（app 启动经 loadSettings 已载入；
   /// 昵称/头像保存也走同一 controller，故本页与工具箱顶栏共享单一数据源）
@@ -90,44 +51,8 @@ class _ProfilePageContentState extends State<ProfilePageContent>
     _avatarB64 = c.avatarB64;
   }
 
-  Future<void> _loadAll() async {
-    _applyIdentity();
-    await _loadModuleSummaries();
-  }
-
-  Future<void> _loadModuleSummaries() async {
-    final results = <String, ModuleSummary>{};
-    for (final moduleId in _toolModuleIds) {
-      final module = ModuleRegistry.instance.getModule(moduleId);
-      if (module == null) continue;
-      results[moduleId] = await module.getSummary();
-    }
-    if (!mounted) return;
-    setState(() => _summaries
-      ..clear()
-      ..addAll(results));
-  }
-
-  /// 模块数据变化 → 仅重读摘要（轻量）
-  void _onModuleData() {
-    _loadModuleSummaries();
-  }
-
-  /// 设置变化（模块启停 / 导入重载）→ 身份与摘要都可能有变
   void _onSettingsChanged() {
-    _loadAll();
-  }
-
-  /// 当前启用的工具模块列表（禁用模块不显示），顺序固定
-  List<ToolModule> _enabledTools() {
-    final tools = <ToolModule>[];
-    for (final moduleId in _toolModuleIds) {
-      final module = ModuleRegistry.instance.getModule(moduleId);
-      if (module != null && SettingsService.instance.isModuleEnabled(moduleId)) {
-        tools.add(module);
-      }
-    }
-    return tools;
+    if (mounted) setState(_applyIdentity);
   }
 
   @override
@@ -167,14 +92,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildUserCard(appTheme),
-
               const SizedBox(height: 6),
-              if (_enabledTools().isNotEmpty) ...[
-                const SectionLabel(title: '我的工具'),
-                SectionCard(child: _buildToolsSection(appTheme)),
-                const SizedBox(height: 16),
-              ],
-
               const SectionLabel(title: '快捷入口'),
               SectionCard(child: _buildFeatureSection()),
               const SizedBox(height: 28),
@@ -264,19 +182,19 @@ class _ProfilePageContentState extends State<ProfilePageContent>
                 ),
               ),
               ListTile(
-                leading: Icon(Icons.photo_library_outlined,
-                    color: appTheme.primary),
+                leading:
+                    Icon(Icons.photo_library_outlined, color: appTheme.primary),
                 title: Text('从相册选择',
-                    style: AppTypography.bodyMd
-                        .copyWith(color: appTheme.earth)),
+                    style:
+                        AppTypography.bodyMd.copyWith(color: appTheme.earth)),
                 onTap: () => Navigator.pop(ctx, 'pick'),
               ),
               if (hasAvatar)
                 ListTile(
                   leading: Icon(Icons.delete_outline, color: appTheme.rose),
                   title: Text('移除头像',
-                      style: AppTypography.bodyMd
-                          .copyWith(color: appTheme.rose)),
+                      style:
+                          AppTypography.bodyMd.copyWith(color: appTheme.rose)),
                   onTap: () => Navigator.pop(ctx, 'remove'),
                 ),
               SizedBox(height: MediaQuery.of(ctx).padding.bottom),
@@ -330,8 +248,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
       AppSnackBar.show(context, '头像已更新', type: AppSnackBarType.success);
     } catch (_) {
       if (mounted) {
-        AppSnackBar.show(context, '无法读取该图片，请更换图片',
-            type: AppSnackBarType.error);
+        AppSnackBar.show(context, '无法读取该图片，请更换图片', type: AppSnackBarType.error);
       }
     }
   }
@@ -341,92 +258,6 @@ class _ProfilePageContentState extends State<ProfilePageContent>
     if (!mounted) return;
     setState(() => _avatarB64 = null);
     AppSnackBar.show(context, '已移除头像');
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // ② 我的工具 — 三模块摘要行
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildToolsSection(AppThemeExtension appTheme) {
-    final tools = _enabledTools();
-    final children = <Widget>[];
-    for (var i = 0; i < tools.length; i++) {
-      children.add(_buildToolTile(appTheme, tools[i]));
-      if (i < tools.length - 1) children.add(_buildSeparator(appTheme, left: 70));
-    }
-    return Column(children: children);
-  }
-
-  Widget _buildToolTile(AppThemeExtension appTheme, ToolModule module) {
-    final color = module.themeColor;
-    final summary = _summaries[module.moduleId];
-
-    return InkWell(
-      onTap: () => context.push('/${module.moduleId}'),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Row(
-          children: [
-            // 模块图标
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(appTheme.radiusSm),
-              ),
-              child: Center(
-                child: module.icon.build(size: 20, color: color),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // 名称 + 摘要
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    module.displayName,
-                    style: AppTypography.bodyMd.copyWith(
-                      color: appTheme.earth,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (summary?.line1 != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      summary!.line1,
-                      style: AppTypography.caption.copyWith(
-                        color: appTheme.earthMedium,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (summary?.line2 != null) ...[
-                    const SizedBox(height: 1),
-                    Text(
-                      summary!.line2!,
-                      style: AppTypography.caption.copyWith(
-                        fontSize: 10,
-                        color: appTheme.earthMedium.withValues(alpha: 0.7),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right_rounded,
-                size: 18,
-                color: appTheme.earthMedium.withValues(alpha: 0.4)),
-          ],
-        ),
-      ),
-    );
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -459,7 +290,9 @@ class _ProfilePageContentState extends State<ProfilePageContent>
     final children = <Widget>[];
     for (var i = 0; i < items.length; i++) {
       children.add(items[i]);
-      if (i < items.length - 1) children.add(_buildSeparator(Theme.of(context).appTheme));
+      if (i < items.length - 1) {
+        children.add(_buildSeparator(Theme.of(context).appTheme));
+      }
     }
     return Column(children: children);
   }
@@ -497,8 +330,7 @@ class _ProfilePageContentState extends State<ProfilePageContent>
             color: appTheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(appTheme.radiusLg),
           ),
-          child: Icon(Icons.person_rounded,
-              color: appTheme.primary, size: 30),
+          child: Icon(Icons.person_rounded, color: appTheme.primary, size: 30),
         ),
         title: Text(
           '编辑昵称',
