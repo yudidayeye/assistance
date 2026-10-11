@@ -30,6 +30,27 @@ void main() {
     ));
   }
 
+  testWidgets('点击版本可离线展示应用版本和构建号，不触发更新检查', (tester) async {
+    var calls = 0;
+    final service = UpdateService(client: MockClient((_) async {
+      calls++;
+      return http.Response('', 403);
+    }));
+    await showSettings(tester, service);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('版本'));
+    await tester.tap(find.text('版本'));
+    await tester.pumpAndSettle();
+    expect(find.text('当前版本信息'), findsOneWidget);
+    expect(find.textContaining('版本：1.2.10'), findsOneWidget);
+    expect(find.textContaining('构建号：39'), findsOneWidget);
+    expect(find.textContaining('应用包名：example.app'), findsOneWidget);
+    expect(calls, 1);
+    await tester.tap(find.text('关闭'));
+    await tester.pumpAndSettle();
+    expect(find.text('当前版本信息'), findsNothing);
+  });
+
   testWidgets('自动检查失败可见，手动重试显示检查中和最新版本提示', (tester) async {
     var calls = 0;
     final response = Completer<http.Response>();

@@ -59,9 +59,9 @@ class AppTheme {
   // ══════════════════════════════════════════════════════
   // 主题 4: 花雾 (Flower Mist)
   // ══════════════════════════════════════════════════════
-  static const Color _flowerMistPrimary = Color(0xFFC9A0AA);
-  static const Color _flowerMistPrimaryLight = Color(0xFFEDD8DE);
-  static const Color _flowerMistPrimaryDark = Color(0xFFA8808A);
+  static const Color _flowerMistPrimary = Color(0xFFA5483D);
+  static const Color _flowerMistPrimaryLight = Color(0xFFF4E4DF);
+  static const Color _flowerMistPrimaryDark = Color(0xFF7D332D);
   static const Color _flowerMistCream = Color(0xFFF8F8FA);
   static const Color _flowerMistCreamDark = Color(0xFFF0F0F2);
 

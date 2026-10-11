@@ -43,6 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
       widget.updateService ?? UpdateService.instance;
 
   String _currentVersion = '';
+  PackageInfo? _packageInfo;
   bool _isCheckingUpdate = false;
   UpdateInfo? _updateInfo;
 
@@ -60,11 +61,44 @@ class _SettingsPageState extends State<SettingsPage> {
       if (mounted) {
         setState(() {
           _currentVersion = packageInfo.version;
+          _packageInfo = packageInfo;
         });
       }
     } catch (e) {
       // 忽略，版本号将在检查更新时填充
     }
+  }
+
+  Future<void> _showVersionInfo() async {
+    PackageInfo? info = _packageInfo;
+    if (info == null) {
+      try {
+        info = await PackageInfo.fromPlatform()
+            .timeout(const Duration(seconds: 10));
+      } catch (_) {
+        if (mounted) {
+          AppSnackBar.show(context, '无法读取版本信息，请重启应用后重试',
+              type: AppSnackBarType.error);
+        }
+        return;
+      }
+    }
+    if (!mounted) return;
+    final appTheme = Theme.of(context).appTheme;
+    await showDialog<void>(
+      context: context,
+      barrierColor: appTheme.surfaceOverlay,
+      builder: (ctx) => AlertDialog(
+        title: const Text('当前版本信息'),
+        icon: Icon(Icons.info_outline_rounded, color: appTheme.primary),
+        content: Text(
+            '${info!.appName}\n版本：${info.version}\n构建号：${info.buildNumber}\n应用包名：${info.packageName}'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('关闭'))
+        ],
+      ),
+    );
   }
 
   /// 检查更新
@@ -311,33 +345,37 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         AppSpacing.w12,
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('版本',
-                  style: AppTypography.bodyMd.copyWith(color: appTheme.earth)),
-              const SizedBox(height: 2),
-              Text(_currentVersion.isEmpty ? '版本读取中' : 'V$_currentVersion',
-                  style: AppTypography.caption.copyWith(
-                      color: appTheme.earthMedium.withValues(alpha: 0.6))),
-              if (_isCheckingUpdate || _updateInfo != null) ...[
-                AppSpacing.h4,
-                Text(
-                  _isCheckingUpdate
-                      ? '正在检查更新…'
-                      : _updateInfo!.error ??
-                          (_updateInfo!.hasUpdate
-                              ? '发现新版本 V$latestVersion'
-                              : '当前已是最新版本'),
-                  style: AppTypography.caption.copyWith(
-                    color: _updateInfo?.error != null
-                        ? appTheme.primary
-                        : appTheme.earthMedium,
+          child: InkWell(
+            onTap: _showVersionInfo,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('版本',
+                    style:
+                        AppTypography.bodyMd.copyWith(color: appTheme.earth)),
+                const SizedBox(height: 2),
+                Text(_currentVersion.isEmpty ? '版本读取中' : 'V$_currentVersion',
+                    style: AppTypography.caption.copyWith(
+                        color: appTheme.earthMedium.withValues(alpha: 0.6))),
+                if (_isCheckingUpdate || _updateInfo != null) ...[
+                  AppSpacing.h4,
+                  Text(
+                    _isCheckingUpdate
+                        ? '正在检查更新…'
+                        : _updateInfo!.error ??
+                            (_updateInfo!.hasUpdate
+                                ? '发现新版本 V$latestVersion'
+                                : '当前已是最新版本'),
+                    style: AppTypography.caption.copyWith(
+                      color: _updateInfo?.error != null
+                          ? appTheme.primary
+                          : appTheme.earthMedium,
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
         // 更新按钮或状态
