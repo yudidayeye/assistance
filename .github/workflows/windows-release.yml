@@ -6,12 +6,8 @@ on:
         description: 已正式发布的版本标签
         required: true
         default: v1.2.10
-  push:
-    branches: [work]
-    paths: [.github/workflows/windows-release.yml]
 permissions:
   contents: write
-  actions: read
 concurrency:
   group: windows-release-${{ inputs.tag || 'v1.2.10' }}
   cancel-in-progress: false
