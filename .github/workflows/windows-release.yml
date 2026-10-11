@@ -11,6 +11,7 @@ on:
     paths: [.github/workflows/windows-release.yml]
 permissions:
   contents: write
+  actions: read
 concurrency:
   group: windows-release-${{ inputs.tag || 'v1.2.10' }}
   cancel-in-progress: false
@@ -40,14 +41,19 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
           path: app
           persist-credentials: false
+      - name: 读取上一轮构建诊断
+        run: |
+          $lines = gh run view 38149308214 --repo $env:GH_REPO --log-failed
+          $lines | Select-Object -Last 8 | ForEach-Object {
+            Write-Output "::notice title=上一轮错误诊断::$($_.Replace('%', '%25'))"
+          }
       - name: 安装固定 Flutter SDK 和 Inno Setup
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
           $flutterCommit = 'abaf9c523780a608bd46686fd5e53740a07077f8'
           $flutterDir = Join-Path $env:RUNNER_TEMP 'flutter'
-          git init $flutterDir
-          git -C $flutterDir remote add origin https://github.com/flutter/flutter.git
+          git clone --no-checkout --depth 1 --branch stable https://github.com/flutter/flutter.git $flutterDir
           git -C $flutterDir fetch --depth 1 origin $flutterCommit
           git -C $flutterDir checkout --detach FETCH_HEAD
           if ((git -C $flutterDir rev-parse HEAD) -ne $flutterCommit) { throw 'Flutter 提交不匹配' }
@@ -74,7 +80,7 @@ jobs:
         run: |
           $log = Join-Path $env:RUNNER_TEMP 'windows-release.log'
           if (Test-Path $log) {
-            Get-Content $log -Encoding utf8 -Tail 50 | ForEach-Object {
+            Get-Content $log -Encoding utf8 -Tail 8 | ForEach-Object {
               $line = $_.Replace('%', '%25')
               Write-Output "::error title=Windows 构建日志::$line"
             }
