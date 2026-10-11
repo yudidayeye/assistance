@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/foundation/app_typography.dart';
-import '../../../shared/foundation/app_spacing.dart';
 
 /// 记一笔页面 — Phase 4 实现
 class AddExpensePage extends StatefulWidget {

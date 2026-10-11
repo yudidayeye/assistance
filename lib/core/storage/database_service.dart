@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
@@ -65,9 +65,9 @@ class DatabaseService {
         sqfliteFfiInit();
         databaseFactory = databaseFactoryFfi;
       } catch (e) {
-        print('SQLite FFI 初始化失败: $e');
-        print('请确保 sqlite3.dll 文件已放置在正确位置');
-        print('运行 windows/setup_sqlite3.bat 或手动下载 SQLite DLL');
+        debugPrint('SQLite FFI 初始化失败: $e');
+        debugPrint('请确保 sqlite3.dll 文件已放置在正确位置');
+        debugPrint('运行 windows/setup_sqlite3.bat 或手动下载 SQLite DLL');
         rethrow;
       }
     }

@@ -25,7 +25,7 @@ class AppTheme {
   static const Color _roseLight = Color(0xFFF2D8DE);
 
   // ── 通用卡片阴影（所有主题共用） ──────────────────────
-  static final List<BoxShadow> _cardShadow = cardShadow;
+  static const List<BoxShadow> _cardShadow = cardShadow;
 
   static const Color _surfaceOverlay = Color(0x4D000000); // 30% 黑
 
@@ -142,7 +142,7 @@ class AppTheme {
       scaffoldBackgroundColor: cream,
 
       // AppBar — 透明无分割线，标题更克制
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: _earth,
         elevation: 0,

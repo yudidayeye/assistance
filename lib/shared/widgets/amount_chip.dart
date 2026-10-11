@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/theme_extension.dart';
-import '../foundation/app_typography.dart';
 
 /// 金额徽章组件
 ///

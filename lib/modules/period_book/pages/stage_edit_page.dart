@@ -40,7 +40,6 @@ class _StageEditPageState extends State<StageEditPage> {
 
   // 滚动位置保存
   final ScrollController _scrollController = ScrollController();
-  double? _savedScrollOffset;
 
   // 内嵌表单状态
   bool _additionFormExpanded = false;
@@ -80,11 +79,7 @@ class _StageEditPageState extends State<StageEditPage> {
   /// 记录分组卡片 Key，用于筛选后滚动到列表区
   final GlobalKey _recordsTabKey = GlobalKey();
 
-  /// 所有追加记录合计金额
-  double get _additionsTotal =>
-      _additions.fold(0.0, (sum, addition) => sum + addition.amount);
-
-  /// 所有支出记录合计金额
+  @override
   void initState() {
     super.initState();
     _loadData();
@@ -205,20 +200,6 @@ class _StageEditPageState extends State<StageEditPage> {
       debugPrint('Refresh data error: ');
     }
     if (mounted) setState(() {});
-  }
-
-  /// 加载数据并保持滚动位置
-  Future<void> _loadDataPreserveScroll() async {
-    _savedScrollOffset =
-        _scrollController.hasClients ? _scrollController.offset : null;
-    await _loadData();
-    if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_savedScrollOffset != null && _scrollController.hasClients) {
-          _scrollController.jumpTo(_savedScrollOffset!);
-        }
-      });
-    }
   }
 
   String _formatDate(DateTime date) {
@@ -1123,25 +1104,6 @@ class _StageEditPageState extends State<StageEditPage> {
     return map;
   }
 
-  IconData? _categoryIcon(String displayName) {
-    switch (displayName) {
-      case '其他':
-        return null;
-      case '生活':
-        return Icons.coffee_outlined;
-      case '购物':
-        return Icons.shopping_bag_outlined;
-      case '工作':
-        return Icons.business_center_outlined;
-      case '娱乐':
-        return Icons.sports_esports_outlined;
-      case '大餐':
-        return Icons.restaurant_outlined;
-      default:
-        return Icons.category_outlined;
-    }
-  }
-
   Color _categoryColorForName(String displayName) {
     final appTheme = Theme.of(context).appTheme;
     return _categoryColor(appTheme, displayName);
@@ -1393,20 +1355,6 @@ class _StageEditPageState extends State<StageEditPage> {
   // ═══════════════════════════════════════════════════════════
   // Material 按钮样式
   // ═══════════════════════════════════════════════════════════
-
-  /// 添加按钮样式（OutlinedButton.icon 用）
-  ButtonStyle _addButtonStyle(AppThemeExtension appTheme) {
-    return OutlinedButton.styleFrom(
-      foregroundColor: appTheme.primary,
-      backgroundColor: appTheme.primary.withValues(alpha: 0.1),
-      side: BorderSide(color: appTheme.primary.withValues(alpha: 0.3)),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-    );
-  }
 
   /// 次要按钮样式（收起）
   ButtonStyle _secondaryButtonStyle(AppThemeExtension appTheme) {

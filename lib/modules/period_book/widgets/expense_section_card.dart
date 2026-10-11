@@ -15,6 +15,8 @@ class ExpenseSectionCard extends StatelessWidget {
   final VoidCallback? onAdd;
   final Function(ExpenseItemData expense)? onEdit;
   final Function(ExpenseItemData expense)? onDelete;
+
+  /// 回调使用移除前的插入索引，与 canReorder / applyReorder 的约定一致。
   final Function(int oldIndex, int newIndex)? onReorder;
   final Widget? leading;
   final Widget? form;
@@ -81,9 +83,10 @@ class ExpenseSectionCard extends StatelessWidget {
               shrinkWrap: true,
               padding: EdgeInsets.zero,
               buildDefaultDragHandles: false,
-              onReorder: (oldIndex, newIndex) {
-                if (newIndex > oldIndex) newIndex -= 1;
-                onReorder!(oldIndex, newIndex);
+              // 框架给出移除后的索引；还原为业务排序工具约定的插入索引。
+              onReorderItem: (oldIndex, newIndex) {
+                onReorder!(
+                    oldIndex, newIndex > oldIndex ? newIndex + 1 : newIndex);
               },
               children: [
                 for (int i = 0; i < expenses.length; i++)

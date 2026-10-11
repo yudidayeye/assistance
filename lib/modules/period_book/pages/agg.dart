@@ -72,11 +72,6 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
   /// 已展开全部明细的周期 id，按周期记录、允许多张同时展开（FR-012）。
   final Set<int> _expandedPeriodIds = {};
 
-  double _totalExpense = 0;
-  double _totalLargeAddition = 0;
-  double _totalLargeExpense = 0;
-  double _totalNet = 0;
-
   @override
   void initState() {
     super.initState();
@@ -129,7 +124,6 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
 
       _extractFilterOptions();
       _calculateStats();
-      _calculateSummary();
 
       if (mounted) {
         setState(() => _loading = false);
@@ -737,37 +731,6 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
     );
   }
 
-  void _calculateSummary() {
-    double totalExpense = 0;
-    double totalLargeAddition = 0;
-    double totalLargeExpense = 0;
-
-    for (final period in _periods) {
-      final calc = _calcMap[period.id];
-      final balance = _balances[period.id];
-      if (calc != null) {
-        totalExpense += calc.totalBase - (balance ?? 0);
-      }
-
-      final additions = _additionsMap[period.id] ?? [];
-      for (final a in additions) {
-        totalLargeAddition += a.amount;
-      }
-
-      final expenses = _largeExpensesMap[period.id] ?? [];
-      for (final e in expenses) {
-        totalLargeExpense += e.amount;
-      }
-    }
-
-    setState(() {
-      _totalExpense = totalExpense;
-      _totalLargeAddition = totalLargeAddition;
-      _totalLargeExpense = totalLargeExpense;
-      _totalNet = totalLargeAddition - totalLargeExpense;
-    });
-  }
-
   List<PeriodRecord> _getFilteredPeriods() {
     return _periods.where((period) {
       final startDate = DateTime.parse(period.startDate);
@@ -835,7 +798,7 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
             padding: const EdgeInsets.only(right: 16),
             child: SegmentedButton<int>(
               showSelectedIcon: false,
-              segments: [
+              segments: const [
                 ButtonSegment<int>(
                   value: 0,
                   label: Text('日常', style: TextStyle(fontSize: 12)),
@@ -1145,78 +1108,6 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
     );
   }
 
-  Widget _buildSummaryItem({
-    required AppThemeExtension appTheme,
-    required String label,
-    required double value,
-    required IconData icon,
-    required Color color,
-    bool isTotal = false,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        AppSpacing.w12,
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: appTheme.earthMedium,
-                ),
-              ),
-              Text(
-                value >= 0
-                    ? FormatUtils.formatAmount(value)
-                    : '-${FormatUtils.formatAmount(value.abs())}',
-                style: TextStyle(
-                  fontSize: isTotal ? 20 : 16,
-                  fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
-                  color: color,
-                  fontFeatures: [FontFeature.tabularFigures()],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(AppThemeExtension appTheme, String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: appTheme.earthMedium,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: appTheme.earth,
-          ),
-        ),
-      ],
-    );
-  }
-
   /// 日常周期卡片
   ///
   /// [summary] 非空表示筛选生效，在既有汇总行下方追加分类小计与明细
@@ -1291,7 +1182,7 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: appTheme.earthLight,
-                        fontFeatures: [FontFeature.tabularFigures()],
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ),
@@ -1310,7 +1201,7 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
                           color: hasExpense
                               ? appTheme.rose
                               : appTheme.earthMedium.withValues(alpha: 0.4),
-                          fontFeatures: [FontFeature.tabularFigures()],
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                       AppSpacing.w6,
@@ -1463,7 +1354,7 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: appTheme.earthLight,
-                        fontFeatures: [FontFeature.tabularFigures()],
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ),
@@ -1480,7 +1371,7 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
                           color: hasItems
                               ? (net >= 0 ? appTheme.sage : appTheme.rose)
                               : appTheme.earthMedium.withValues(alpha: 0.4),
-                          fontFeatures: [FontFeature.tabularFigures()],
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                       AppSpacing.w6,
@@ -1669,7 +1560,7 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: appTheme.earthLight,
-                        fontFeatures: [FontFeature.tabularFigures()],
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ),
@@ -1688,7 +1579,7 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
                           color: hasExpense
                               ? appTheme.rose
                               : appTheme.earthMedium.withValues(alpha: 0.4),
-                          fontFeatures: [FontFeature.tabularFigures()],
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                       AppSpacing.w6,
@@ -1792,7 +1683,7 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
             color: hasValue
                 ? appTheme.earth
                 : appTheme.earthMedium.withValues(alpha: 0.35),
-            fontFeatures: [FontFeature.tabularFigures()],
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
       ],
@@ -1850,7 +1741,7 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
-              fontFeatures: [FontFeature.tabularFigures()],
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],

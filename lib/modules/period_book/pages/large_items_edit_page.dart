@@ -527,8 +527,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
                     onPressed: () async {
                       final amount = double.tryParse(amountController.text);
                       final reason = reasonController.text.trim();
-                      if (amount == null || amount <= 0 || reason.isEmpty)
+                      if (amount == null || amount <= 0 || reason.isEmpty) {
                         return;
+                      }
                       await _service.updateLargeAddition(
                         addition.id!,
                         amount: amount,

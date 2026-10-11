@@ -14,12 +14,16 @@ class StageCard extends StatefulWidget {
   final List<AdditionRecord> additions;
   final VoidCallback? onEditBalance;
   final VoidCallback? onEdit;
+
   /// 是否显示头部行（标题 + 日期）。阶段编辑页传 false 避免与页面标题重复
   final bool showHeader;
+
   /// 是否默认展开支出明细
   final bool expandExpenseByDefault;
+
   /// 个人支出分类明细（用于饼图展示），key 为分类名，value 为金额
   final Map<String, double>? personalExpenseBreakdown;
+
   /// 饼图选中/取消分类回调（传 null 表示取消选中）。
   /// 阶段编辑页用它把选中的分类联动到「个人支出」列表筛选。
   final ValueChanged<String?>? onBreakdownCategorySelected;
@@ -45,6 +49,7 @@ class StageCard extends StatefulWidget {
 class _StageCardState extends State<StageCard> {
   late bool _expenseExpanded;
   late bool _baseExpanded;
+
   /// 当前选中的饼图分类名（null = 未选中）。用名称而非索引，
   /// 避免数据刷新/排序变化后索引漂移导致 tooltip 与联动筛选错位。
   String? _touchedCategory;
@@ -138,7 +143,8 @@ class _StageCardState extends State<StageCard> {
               onTap: widget.onEdit,
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, AppSpacing.sm, AppSpacing.xs), // 更紧凑
+                padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm,
+                    AppSpacing.sm, AppSpacing.xs), // 更紧凑
                 child: _buildHeaderRow(appTheme),
               ),
             ),
@@ -335,7 +341,7 @@ class _StageCardState extends State<StageCard> {
                 child: SizedBox(
                   width: 116,
                   height: 116,
-                  child: _buildMiniPieChart(appTheme, breakdown!),
+                  child: _buildMiniPieChart(appTheme, breakdown),
                 ),
               ),
             // 右侧明细 — 金额右对齐
@@ -386,7 +392,9 @@ class _StageCardState extends State<StageCard> {
     final sortedEntries = breakdown.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    final pctMap = {for (final e in sortedEntries) e.key: total > 0 ? e.value / total : 0.0};
+    final pctMap = {
+      for (final e in sortedEntries) e.key: total > 0 ? e.value / total : 0.0
+    };
 
     // 当前选中分类对应的明细（数据变化后按名称反查最新金额/占比）
     MapEntry<String, double>? selectedEntry;
@@ -432,8 +440,7 @@ class _StageCardState extends State<StageCard> {
                           child: Icon(
                             icon,
                             size: 10,
-                            color:
-                                colorMap[entry.key] ?? appTheme.earthMedium,
+                            color: colorMap[entry.key] ?? appTheme.earthMedium,
                           ),
                         ),
                       )
@@ -821,7 +828,7 @@ class _StageCardState extends State<StageCard> {
         background: appTheme.primary,
         child: Text(
           '${widget.stage.sortOrder}',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: Colors.white,
@@ -889,7 +896,8 @@ class _StageCardState extends State<StageCard> {
       height: 24,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(Theme.of(context).appTheme.radiusPill),
+        borderRadius:
+            BorderRadius.circular(Theme.of(context).appTheme.radiusPill),
         border: borderColor == null
             ? null
             : Border.all(color: borderColor, width: 0.5),
@@ -945,7 +953,8 @@ class _StageCardState extends State<StageCard> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 11,
-                              color: appTheme.earthMedium.withValues(alpha: 0.48),
+                              color:
+                                  appTheme.earthMedium.withValues(alpha: 0.48),
                             ),
                           ),
                         ),
@@ -955,7 +964,8 @@ class _StageCardState extends State<StageCard> {
                   const Spacer(),
                   Text(
                     amountText,
-                    style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 12),
+                    style: _amountStyle(appTheme,
+                        color: appTheme.rose, fontSize: 12),
                   ),
                 ]
               : [
@@ -970,7 +980,8 @@ class _StageCardState extends State<StageCard> {
                   const Spacer(),
                   Text(
                     amountText,
-                    style: _amountStyle(appTheme, color: appTheme.rose, fontSize: 12),
+                    style: _amountStyle(appTheme,
+                        color: appTheme.rose, fontSize: 12),
                   ),
                 ]),
         ],
@@ -1090,4 +1101,3 @@ class _StageCardState extends State<StageCard> {
     );
   }
 }
-

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
@@ -358,7 +358,7 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               ),
             ]),
         SliverToBoxAdapter(child: _buildSummarySection(appTheme)),
-        SliverToBoxAdapter(child: AppSpacing.h8),
+        const SliverToBoxAdapter(child: AppSpacing.h8),
         _buildStagesSection(appTheme),
         const SliverToBoxAdapter(child: SizedBox(height: 80)),
       ],
