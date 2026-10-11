@@ -48,6 +48,7 @@ $MANIFEST_META = "build/app/intermediates/merged_manifests/release/processReleas
 
 function Fail([string]$Message) {
   Write-Host "错误: $Message" -ForegroundColor Red
+  if ($env:GITHUB_ACTIONS -eq "true") { Write-Host "::error::$Message" }
   exit 1
 }
 
