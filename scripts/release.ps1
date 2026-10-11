@@ -1,6 +1,7 @@
 ﻿# ============================================================
 # Flutter App 发布脚本 (Windows PowerShell 版)
 # 用法: powershell -ExecutionPolicy Bypass -File scripts/release.ps1 <版本号> ["<发布说明>"] [-Clean]
+# 为现有 Release 补 Windows 安装包：检出对应标签后，加 -WindowsOnly（保持版本和标签）。
 # 示例: powershell -ExecutionPolicy Bypass -File scripts/release.ps1 1.2.9 "修复了输入数据后首页卡片不更新的问题"
 #
 # 默认**不执行 `flutter clean`**。build/ 通常存有约 1.7 GB 热缓存（Gradle /
@@ -24,7 +25,10 @@ param(
   [switch]$Clean,
 
   # 同版本重发：保留 Release，构建成功后更新标签与附件。
-  [switch]$Republish
+  [switch]$Republish,
+
+  # 给已发布的标签补充 Windows 安装包，不递增版本或修改标签。
+  [switch]$WindowsOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -81,6 +85,66 @@ $dirty = git status --porcelain
 if ($dirty) {
   Write-Host $dirty
   Fail "工作区有未提交的改动，请先提交或 stash 后再发布"
+}
+
+# 已发布版本补包：源码必须来自目标标签，保留原版本和已有附件。
+if ($WindowsOnly) {
+  if ($Republish) { Fail "-WindowsOnly 不能与 -Republish 同时使用" }
+  $headCommit = git rev-parse HEAD
+  if ($LASTEXITCODE -ne 0) { Fail "无法读取当前提交" }
+  $tagCommit = git rev-parse "refs/tags/${TAG}^{commit}"
+  if ($LASTEXITCODE -ne 0 -or $headCommit -ne $tagCommit) {
+    Fail "补包必须在 $TAG 对应的源码检出中执行"
+  }
+  $versionLine = Get-Content pubspec.yaml -Encoding UTF8 | Where-Object { $_ -match '^version:' } | Select-Object -First 1
+  if ($versionLine -notmatch "^version:\s+$([regex]::Escape($VERSION))\+(\d+)\s*$") {
+    Fail "源码版本与 $VERSION 不匹配"
+  }
+  $expectedProductVersion = "$VERSION+$($Matches[1])"
+  $releaseJson = gh release view $TAG --json tagName,isDraft,isPrerelease
+  if ($LASTEXITCODE -ne 0) { Fail "目标 Release $TAG 不存在" }
+  $release = $releaseJson | ConvertFrom-Json
+  if ($release.tagName -ne $TAG -or $release.isDraft -or $release.isPrerelease) {
+    Fail "补包要求 $TAG 已正式发布"
+  }
+  if ($Clean) {
+    flutter clean
+    if ($LASTEXITCODE -ne 0) { Fail "flutter clean 失败" }
+  }
+  flutter pub get --enforce-lockfile
+  if ($LASTEXITCODE -ne 0) { Fail "依赖安装失败" }
+  flutter build windows --release
+  if ($LASTEXITCODE -ne 0) { Fail "Windows 构建失败" }
+  $actualVersion = (Get-Item $EXE_PATH).VersionInfo.ProductVersion
+  if ($actualVersion -ne $expectedProductVersion) {
+    Fail "exe 版本为 $actualVersion，期望 $expectedProductVersion"
+  }
+  New-Item -ItemType Directory -Force -Path $INSTALLER_DIR | Out-Null
+  & $ISCC_PATH /DMyAppVersion=$VERSION scripts/setup_windows.iss
+  if ($LASTEXITCODE -ne 0) { Fail "Inno Setup 编译失败" }
+  if (-not (Test-Path $SETUP_PATH)) { Fail "安装包未生成" }
+  $setup = Get-Item $SETUP_PATH
+  $setupVersion = $setup.VersionInfo.ProductVersion
+  $setupVersionParts = ([version]$setupVersion)
+  $expectedVersionParts = ([version]$VERSION)
+  if ($setupVersionParts.Major -ne $expectedVersionParts.Major -or $setupVersionParts.Minor -ne $expectedVersionParts.Minor -or $setupVersionParts.Build -ne $expectedVersionParts.Build) {
+    Fail "安装包版本为 $setupVersion，期望 $VERSION"
+  }
+  $digest = (Get-FileHash $SETUP_PATH -Algorithm SHA256).Hash.ToLowerInvariant()
+  gh release upload $TAG $SETUP_PATH --clobber
+  if ($LASTEXITCODE -ne 0) { Fail "上传 Windows 安装包失败" }
+  $releaseRepo = gh repo view --json nameWithOwner -q .nameWithOwner
+  if ($LASTEXITCODE -ne 0) { Fail "读取仓库身份失败" }
+  $uploadedJson = gh api "repos/$releaseRepo/releases/tags/$TAG"
+  if ($LASTEXITCODE -ne 0) { Fail "读取上传结果失败" }
+  $uploaded = $uploadedJson | ConvertFrom-Json
+  $asset = @($uploaded.assets | Where-Object { $_.name -eq $setup.Name })
+  if ($asset.Count -ne 1 -or $asset[0].state -ne 'uploaded' -or $asset[0].size -ne $setup.Length -or $asset[0].digest -ne "sha256:$digest") {
+    Fail "上传产物的大小或 SHA-256 校验失败"
+  }
+  Write-Host "Windows 补包完成：$expectedProductVersion，SHA-256 $digest"
+  Write-Host $asset[0].browser_download_url
+  exit 0
 }
 
 # tag 重名：原先会走到 `git tag` 才失败，而那时 `git push` 可能已经执行，
