@@ -168,10 +168,11 @@ class ExpenseSectionCard extends StatelessWidget {
       key: expense.id == focusExpenseId
           ? focusKey
           : ValueKey('expense_row_${expense.id}'),
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
           color: expense.id == highlightedExpenseId
-              ? appTheme.primaryLight
+              ? appTheme.primaryLight.withValues(alpha: 0.4)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(appTheme.radiusSm)),
       child: ExpenseCategoryHelper.buildExpenseItem(

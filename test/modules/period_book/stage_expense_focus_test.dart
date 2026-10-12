@@ -51,12 +51,24 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      var sawHighlight = false;
+      void observeHighlight() {
+        final cards = find.byType(ExpenseSectionCard);
+        if (cards.evaluate().isNotEmpty) {
+          sawHighlight |=
+              tester.widget<ExpenseSectionCard>(cards).highlightedExpenseId ==
+                  '$targetId';
+        }
+      }
+
       for (var i = 0; i < 60; i++) {
         await tester.runAsync(
             () => Future<void>.delayed(const Duration(milliseconds: 2)));
         await tester.pump(const Duration(milliseconds: 10));
+        observeHighlight();
       }
       await tester.pump(const Duration(milliseconds: 450));
+      observeHighlight();
       final card =
           tester.widget<ExpenseSectionCard>(find.byType(ExpenseSectionCard));
       expect(card.isOther, other);
@@ -65,7 +77,6 @@ void main() {
       expect(
           tester.getRect(target).overlaps(const Rect.fromLTWH(0, 0, 360, 800)),
           isTrue);
-      var sawHighlight = false;
       for (var i = 0; i < 8; i++) {
         await tester.pump(const Duration(milliseconds: 100));
         sawHighlight |= tester
@@ -76,7 +87,7 @@ void main() {
       expect(sawHighlight, isTrue);
       // 计时器推进后高亮恢复，定位不会修改记录或持续闪烁。
       await tester.pumpAndSettle(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(seconds: 3));
+      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
       expect(
           tester

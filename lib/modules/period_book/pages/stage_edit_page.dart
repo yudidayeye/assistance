@@ -197,16 +197,9 @@ class _StageEditPageState extends State<StageEditPage> {
           curve: Curves.easeOut);
       if (!mounted) return;
       setState(() => _highlightActive = true);
-      _highlightTimer =
-          Timer.periodic(const Duration(milliseconds: 450), (timer) {
-        if (!mounted) {
-          timer.cancel();
-          return;
-        }
-        setState(() => _highlightActive = timer.tick.isEven);
-        if (timer.tick >= 5) {
-          timer.cancel();
-        }
+      // 只提示一次：短暂显现后淡出，避免反复闪烁打断阅读。
+      _highlightTimer = Timer(const Duration(milliseconds: 500), () {
+        if (mounted) setState(() => _highlightActive = false);
       });
     });
   }
