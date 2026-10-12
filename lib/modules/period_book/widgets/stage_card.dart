@@ -763,7 +763,7 @@ class _StageCardState extends State<StageCard> {
     return Row(
       children: [
         _buildIndexBadge(appTheme),
-        const SizedBox(width: 12),
+        const SizedBox(width: 6),
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -773,13 +773,13 @@ class _StageCardState extends State<StageCard> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                   color: appTheme.earth,
                   letterSpacing: -0.1,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   dateText,
@@ -794,9 +794,9 @@ class _StageCardState extends State<StageCard> {
             ],
           ),
         ),
-        if (badge != null) ...[const SizedBox(width: 8), badge],
+        if (badge != null) ...[const SizedBox(width: 4), badge],
         if (widget.onEdit != null) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           Icon(
             Icons.chevron_right_rounded,
             size: 22,
@@ -915,77 +915,43 @@ class _StageCardState extends State<StageCard> {
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-      child: Row(
-        children: [
-          Container(
+      child: Row(children: [
+        Container(
             width: 20,
             height: 20,
             decoration: BoxDecoration(
-              color: appTheme.earthMedium.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(appTheme.radiusPill),
-            ),
-            child: Icon(
-              icon,
-              size: 13,
-              color: appTheme.earth.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // 标签 + 金额紧贴
-          ...(subtitle != null
-              ? [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: appTheme.earth,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color:
-                                  appTheme.earthMedium.withValues(alpha: 0.48),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    amountText,
-                    style: _amountStyle(appTheme,
-                        color: appTheme.rose, fontSize: 12),
-                  ),
-                ]
-              : [
-                  Text(
-                    label,
+                color: appTheme.earthMedium.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(appTheme.radiusPill)),
+            child: Icon(icon,
+                size: 13, color: appTheme.earth.withValues(alpha: 0.6))),
+        const SizedBox(width: 6),
+        Expanded(
+            child: Row(children: [
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: appTheme.earth)),
+          if (subtitle != null) ...[
+            const SizedBox(width: 4),
+            Flexible(
+                child: Text(subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: appTheme.earth,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    amountText,
+                        fontSize: 11,
+                        color: appTheme.earthMedium.withValues(alpha: 0.48)))),
+          ],
+        ])),
+        const SizedBox(width: 4),
+        Flexible(
+            child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Text(amountText,
                     style: _amountStyle(appTheme,
-                        color: appTheme.rose, fontSize: 12),
-                  ),
-                ]),
-        ],
-      ),
+                        color: appTheme.rose, fontSize: 12)))),
+      ]),
     );
   }
 

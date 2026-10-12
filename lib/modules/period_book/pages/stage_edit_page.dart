@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_extension.dart';
@@ -23,7 +24,9 @@ import '../services/entry_ordering.dart';
 class StageEditPage extends StatefulWidget {
   final int stageId;
 
-  const StageEditPage({super.key, required this.stageId});
+  final int? expenseId;
+
+  const StageEditPage({super.key, required this.stageId, this.expenseId});
 
   @override
   State<StageEditPage> createState() => _StageEditPageState();
@@ -78,6 +81,11 @@ class _StageEditPageState extends State<StageEditPage> {
 
   /// 记录分组卡片 Key，用于筛选后滚动到列表区
   final GlobalKey _recordsTabKey = GlobalKey();
+  final GlobalKey _focusExpenseKey = GlobalKey();
+  int? _focusedExpenseId;
+  bool _highlightActive = false;
+  bool _didFocusExpense = false;
+  Timer? _highlightTimer;
 
   @override
   void initState() {
@@ -87,6 +95,7 @@ class _StageEditPageState extends State<StageEditPage> {
 
   @override
   void dispose() {
+    _highlightTimer?.cancel();
     _scrollController.dispose();
     _additionReasonController.dispose();
     _additionAmountController.dispose();
@@ -161,7 +170,45 @@ class _StageEditPageState extends State<StageEditPage> {
     } catch (e) {
       debugPrint('Load data error: $e');
     }
-    if (mounted) setState(() => _loading = false);
+    if (mounted) {
+      setState(() => _loading = false);
+      _focusRequestedExpense();
+    }
+  }
+
+  void _focusRequestedExpense() {
+    if (_didFocusExpense || widget.expenseId == null) return;
+    final matches =
+        _expenses.where((expense) => expense.id == widget.expenseId);
+    if (matches.isEmpty) return;
+    final expense = matches.first;
+    _didFocusExpense = true;
+    setState(() {
+      _focusedExpenseId = expense.id;
+      _recordsTabIndex = expense.isOther ? 1 : 0;
+      _expenseFilter = null;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final target = _focusExpenseKey.currentContext;
+      if (!mounted || target == null) return;
+      await Scrollable.ensureVisible(target,
+          alignment: 0.35,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOut);
+      if (!mounted) return;
+      setState(() => _highlightActive = true);
+      _highlightTimer =
+          Timer.periodic(const Duration(milliseconds: 450), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        setState(() => _highlightActive = timer.tick.isEven);
+        if (timer.tick >= 5) {
+          timer.cancel();
+        }
+      });
+    });
   }
 
   /// 刷新数据（不显示加载指示器，保持滚动位置）
@@ -840,6 +887,10 @@ class _StageEditPageState extends State<StageEditPage> {
         filter != null && shoppingExpenses.isEmpty && allShopping.isNotEmpty;
 
     return ExpenseSectionCard(
+      focusExpenseId: _focusedExpenseId?.toString(),
+      highlightedExpenseId:
+          _highlightActive ? _focusedExpenseId?.toString() : null,
+      focusKey: _focusExpenseKey,
       showCategoryLabel: false,
       title: '个人支出',
       emptyText: emptyByFilter ? '「$filter」分类暂无支出条目' : '暂无个人支出',
@@ -944,6 +995,10 @@ class _StageEditPageState extends State<StageEditPage> {
     final otherExpenses = _expenses.where((e) => e.isOther).toList();
 
     return ExpenseSectionCard(
+      focusExpenseId: _focusedExpenseId?.toString(),
+      highlightedExpenseId:
+          _highlightActive ? _focusedExpenseId?.toString() : null,
+      focusKey: _focusExpenseKey,
       showCategoryLabel: false,
       title: '其他支出',
       emptyText: '暂无其他支出',

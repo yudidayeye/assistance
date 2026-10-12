@@ -7,7 +7,7 @@ import 'expense_category_helper.dart';
 
 /// 明细项 —— 筛选生效后卡片内逐条列出的支出
 ///
-/// 携带描述、金额与日常记录的阶段 ID：分类名、子类名不进入展示模型。子类信息
+/// 携带描述、金额与日常记录的阶段和条目 ID：分类名、子类名不进入展示模型。子类信息
 /// （`other:购物` 中的「购物」）只保留在数据库里，因为子类名与普通分类同名时
 /// （「其他·购物」对真正的「购物」），带上标签会让用户无法分辨这笔钱属于哪一边。
 class FilterItem {
@@ -16,9 +16,14 @@ class FilterItem {
 
   /// 日常记录所属阶段；大额记录不属于阶段。
   final int? stageId;
+  /// 用于阶段页定位具体条目，避免同名记录混淆。
+  final int? expenseId;
 
   const FilterItem(
-      {required this.description, required this.amount, this.stageId});
+      {required this.description,
+      required this.amount,
+      this.stageId,
+      this.expenseId});
 
   @override
   String toString() => 'FilterItem($description, $amount)';
@@ -167,6 +172,7 @@ class CategoryFilterHelper {
                 description: _describe(e.description, categoryName),
                 amount: e.amount,
                 stageId: e.stageId,
+                expenseId: e.id,
               ));
             }
           }

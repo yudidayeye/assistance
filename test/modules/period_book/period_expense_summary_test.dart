@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:my_assistant/modules/period_book/pages/period_detail_page.dart';
 import 'package:my_assistant/modules/period_book/period_book_module.dart';
 import 'package:my_assistant/modules/period_book/widgets/report_card.dart';
+import 'package:my_assistant/shared/widgets/module_row_tile.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'period_detail_delete_test.dart' show fixture;
 
@@ -27,6 +28,27 @@ void main() {
     await db.update('mod_period_book_stages', {'balance': 900},
         where: 'id = 1');
     expect((await module.getSummary()).line2, '余额 ¥900.00');
+  });
+
+  testWidgets('工具箱卡片未填余额展示实际支出，不显示本金', (tester) async {
+    late Database db;
+    await tester.runAsync(() async {
+      db = await fixture();
+      await db.update('mod_period_book_periods', {'is_closed': 1},
+          where: 'id = 2');
+      await db.update('mod_period_book_periods', {'end_date': '2099-12-31'},
+          where: 'id = 1');
+    });
+    addTearDown(db.close);
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: ModuleRowTile(module: PeriodBookModule()))));
+    for (var i = 0; i < 50; i++) {
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 2)));
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(find.text('支出 ¥10.00'), findsOneWidget);
+    expect(find.textContaining('1000.00'), findsNothing);
   });
 
   testWidgets('阶段显示含首尾天数，支出弹窗分类及总额与历史日常报表一致', (tester) async {
@@ -70,6 +92,8 @@ void main() {
         {'工作': 10.0, '购物': 20.0, '其他': 5.0, '杂项': 25.0});
     expect(report.expenseTypeData.values.reduce((a, b) => a + b), 60);
     expect(report.monthlyData.single['expense'], 60);
+    expect(report.showViewSelector, isFalse);
+    expect(find.text('支出占比'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

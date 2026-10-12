@@ -679,8 +679,12 @@ class _AggPageState extends State<AggPage> with SingleTickerProviderStateMixin {
               onTap: item.stageId == null
                   ? null
                   : () async {
-                      await context
-                          .push('/period_book/stage_edit/${item.stageId}');
+                      await context.push(Uri(
+                              path: '/period_book/stage_edit/${item.stageId}',
+                              queryParameters: item.expenseId == null
+                                  ? null
+                                  : {'expenseId': '${item.expenseId}'})
+                          .toString());
                       if (mounted) _loadData();
                     },
               child: _buildDetailRow(

@@ -22,6 +22,9 @@ class ExpenseSectionCard extends StatelessWidget {
   final Widget? form;
   final bool showAddButton;
   final bool showCategoryLabel;
+  final String? focusExpenseId;
+  final String? highlightedExpenseId;
+  final GlobalKey? focusKey;
 
   const ExpenseSectionCard({
     super.key,
@@ -38,6 +41,9 @@ class ExpenseSectionCard extends StatelessWidget {
     this.form,
     this.showAddButton = true,
     this.showCategoryLabel = true,
+    this.focusExpenseId,
+    this.highlightedExpenseId,
+    this.focusKey,
   });
 
   @override
@@ -158,18 +164,29 @@ class ExpenseSectionCard extends StatelessWidget {
       );
     }
 
-    return ExpenseCategoryHelper.buildExpenseItem(
-      context: context,
-      appTheme: appTheme,
-      expenseId: expense.id,
-      showCategoryLabel: showCategoryLabel,
-      category: expense.category,
-      description: expense.description,
-      amount: expense.amount,
-      onTap: () => onEdit?.call(expense),
-      onDelete: () => onDelete?.call(expense),
-      leading: effectiveLeading,
-      entryDate: expense.entryDate,
+    return AnimatedContainer(
+      key: expense.id == focusExpenseId
+          ? focusKey
+          : ValueKey('expense_row_${expense.id}'),
+      duration: const Duration(milliseconds: 250),
+      decoration: BoxDecoration(
+          color: expense.id == highlightedExpenseId
+              ? appTheme.primaryLight
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(appTheme.radiusSm)),
+      child: ExpenseCategoryHelper.buildExpenseItem(
+        context: context,
+        appTheme: appTheme,
+        expenseId: expense.id,
+        showCategoryLabel: showCategoryLabel,
+        category: expense.category,
+        description: expense.description,
+        amount: expense.amount,
+        onTap: () => onEdit?.call(expense),
+        onDelete: () => onDelete?.call(expense),
+        leading: effectiveLeading,
+        entryDate: expense.entryDate,
+      ),
     );
   }
 }

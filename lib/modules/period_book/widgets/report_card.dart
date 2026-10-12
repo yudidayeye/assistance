@@ -23,6 +23,7 @@ class ReportCard extends StatefulWidget {
   final Map<String, double> expenseTypeData;
   final Map<String, double>? stageExpenseTypeData;
   final ReportViewType defaultView;
+  final bool showViewSelector;
 
   /// 当前选中的分类显示名；null 表示未筛选
   final String? selectedCategory;
@@ -43,6 +44,7 @@ class ReportCard extends StatefulWidget {
     required this.expenseTypeData,
     this.stageExpenseTypeData,
     this.defaultView = ReportViewType.expensePie,
+    this.showViewSelector = true,
     this.selectedCategory,
     this.onCategorySelected,
     this.onViewTypeChanged,
@@ -119,10 +121,12 @@ class _ReportCardState extends State<ReportCard> {
             style: AppTypography.bodySm.copyWith(color: appTheme.earth),
           ),
           // 消费总金额
-          Flexible(child: _buildTotalAmount(appTheme)),
-          const Spacer(),
-          // 视图切换选择器
-          _buildViewSelector(appTheme),
+          Expanded(
+              child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _buildTotalAmount(appTheme))),
+          // 总额占用剩余宽度，切换器只占自身宽度。
+          if (widget.showViewSelector) _buildViewSelector(appTheme),
         ],
       ),
     );

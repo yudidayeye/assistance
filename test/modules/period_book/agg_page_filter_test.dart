@@ -27,6 +27,7 @@ void main() {
   });
 
   late Database db;
+  String? routedExpenseId;
 
   setUp(() async {
     // 建表必须挂在 `openDatabase` 的 `onCreate` 上，不能对已打开的句柄直接调用
@@ -223,8 +224,10 @@ void main() {
         GoRoute(path: '/', builder: (_, __) => const AggPage()),
         GoRoute(
           path: '/period_book/stage_edit/:stageId',
-          builder: (_, state) =>
-              Text('阶段详情 ${state.pathParameters["stageId"]}'),
+          builder: (_, state) {
+            routedExpenseId = state.uri.queryParameters['expenseId'];
+            return Text('阶段详情 ${state.pathParameters["stageId"]}');
+          },
         ),
         GoRoute(
           path: '/period_book/detail/:id',
@@ -346,6 +349,12 @@ void main() {
       await tester.tap(find.text('充值AI'));
       await tester.pumpAndSettle();
       expect(find.text('阶段详情 11'), findsOneWidget);
+      await tester.runAsync(() async {
+        final record = (await db.query('mod_period_book_expenses',
+                where: 'description = ?', whereArgs: ['充值AI']))
+            .single;
+        expect(routedExpenseId, '${record['id']}');
+      });
       expect(find.text('周期详情哨兵'), findsNothing);
     });
 

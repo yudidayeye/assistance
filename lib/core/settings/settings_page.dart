@@ -331,88 +331,35 @@ class _SettingsPageState extends State<SettingsPage> {
     final hasUpdate = _updateInfo?.hasUpdate ?? false;
     final latestVersion = _updateInfo?.latestVersion;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Row(children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: appTheme.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(appTheme.radiusMd),
-          ),
-          child: Icon(Icons.info_outline_rounded,
-              color: appTheme.primary, size: 18),
+    return SettingsListItem(
+      icon: Icons.info_outline_rounded,
+      title: '版本',
+      subtitle: _currentVersion.isEmpty ? '版本读取中' : 'V$_currentVersion',
+      onTap: _showVersionInfo,
+      showChevron: false,
+      trailing: SizedBox(
+        width: 120,
+        height: 44,
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: _isCheckingUpdate
+              ? Tooltip(
+                  message: '正在检查更新…',
+                  child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: appTheme.primary)))
+              : TextButton(
+                  onPressed: hasUpdate
+                      ? () => _showUpdateDialog(appTheme)
+                      : () => _checkUpdate(manual: true),
+                  child: Text(hasUpdate ? '更新 V$latestVersion' : '检查更新',
+                      style: AppTypography.caption
+                          .copyWith(color: appTheme.primary)),
+                ),
         ),
-        AppSpacing.w12,
-        Expanded(
-          child: InkWell(
-            onTap: _showVersionInfo,
-            child: Row(
-              children: [
-                Text('版本',
-                    style:
-                        AppTypography.bodyMd.copyWith(color: appTheme.earth)),
-                AppSpacing.w8,
-                Flexible(
-                    child: Text(
-                        _currentVersion.isEmpty ? '版本读取中' : 'V$_currentVersion',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.caption
-                            .copyWith(color: appTheme.earthMedium))),
-              ],
-            ),
-          ),
-        ),
-        // 更新按钮或状态
-        if (_isCheckingUpdate)
-          Tooltip(
-            message: '正在检查更新…',
-            child: SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: appTheme.earthMedium.withValues(alpha: 0.4)),
-            ),
-          )
-        else if (hasUpdate)
-          GestureDetector(
-            onTap: () => _showUpdateDialog(appTheme),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: appTheme.sage.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(appTheme.radiusXl),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.system_update_rounded,
-                      color: appTheme.sage, size: 14),
-                  AppSpacing.w4,
-                  Text(
-                    '更新 V$latestVersion',
-                    style: AppTypography.label.copyWith(
-                      color: appTheme.sage,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          TextButton(
-            onPressed: () => _checkUpdate(manual: true),
-            child: Text(
-              '检查更新',
-              style: AppTypography.caption.copyWith(
-                color: appTheme.earthMedium.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-      ]),
+      ),
     );
   }
 

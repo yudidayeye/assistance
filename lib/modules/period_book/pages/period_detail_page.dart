@@ -537,11 +537,11 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 20, bottom: 16),
+                padding: const EdgeInsets.only(top: 16, bottom: 4),
                 child: Text(
                   '总支出构成',
-                  style:
-                      AppTypography.displayMd.copyWith(color: sheetTheme.earth),
+                  style: AppTypography.bodyLg.copyWith(
+                      color: sheetTheme.earth, fontWeight: FontWeight.w600),
                 ),
               ),
               Flexible(
@@ -549,14 +549,18 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
                   shrinkWrap: true,
                   padding: EdgeInsets.zero,
                   children: [
-                    ReportCard(monthlyData: [
-                      {
-                        'month': month.month,
-                        'year': month.year,
-                        'expense': categories.values
-                            .fold<double>(0, (sum, value) => sum + value)
-                      },
-                    ], stageData: const [], expenseTypeData: categories),
+                    ReportCard(
+                        showViewSelector: false,
+                        monthlyData: [
+                          {
+                            'month': month.month,
+                            'year': month.year,
+                            'expense': categories.values
+                                .fold<double>(0, (sum, value) => sum + value)
+                          },
+                        ],
+                        stageData: const [],
+                        expenseTypeData: categories),
                     SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
                   ],
                 ),

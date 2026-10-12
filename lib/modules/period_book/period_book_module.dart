@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/module_system/tool_module.dart';
 import '../../core/module_system/module_context.dart';
@@ -54,7 +54,10 @@ class PeriodBookModule implements ToolModule {
           builder: (context, state) {
             final stageId =
                 int.tryParse(state.pathParameters['stageId'] ?? '') ?? 0;
-            return StageEditPage(stageId: stageId);
+            return StageEditPage(
+                stageId: stageId,
+                expenseId:
+                    int.tryParse(state.uri.queryParameters['expenseId'] ?? ''));
           },
         ),
         GoRoute(

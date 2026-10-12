@@ -64,8 +64,19 @@ void main() {
     expect(find.textContaining('GitHub 拒绝访问（403）'), findsNothing);
     expect(find.byType(SnackBar), findsNothing);
     await tester.ensureVisible(find.text('检查更新'));
+    final versionHeight = tester
+        .getSize(
+            find.ancestor(of: find.text('版本'), matching: find.byType(Row)).last)
+        .height;
     await tester.tap(find.text('检查更新'));
     await tester.pump();
+    expect(
+        tester
+            .getSize(find
+                .ancestor(of: find.text('版本'), matching: find.byType(Row))
+                .last)
+            .height,
+        versionHeight);
     expect(find.byTooltip('正在检查更新…'), findsOneWidget);
     expect(find.textContaining('GitHub 拒绝访问'), findsNothing);
     expect(find.text('检查更新'), findsNothing);
