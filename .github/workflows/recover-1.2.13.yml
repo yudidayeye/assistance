@@ -1,0 +1,55 @@
+name: 恢复 1.2.13 已构建产物
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: assistance-release
+  cancel-in-progress: false
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      CI_RELEASE_MODE: existing
+      CI_RELEASE_BUILD: 42
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          run-id: 38223161882
+          github-token: ${{ github.token }}
+          pattern: '*'
+          path: release-assets
+          merge-multiple: true
+      - name: 验证原构建与版本标签一致
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,re,subprocess
+          def run(*args):
+              return subprocess.check_output(args,text=True,encoding='utf-8').strip()
+          original=json.loads(run('gh','run','view','38223161882','--json','headSha,jobs'))
+          assert all(any(j['name']==p and j['conclusion']=='success' for j in original['jobs']) for p in ('android','windows'))
+          source=original['headSha']
+          tag=run('git','rev-parse','v1.2.13^{commit}')
+          assert run('git','diff',source,tag,'--name-only')=='pubspec.yaml'
+          before=run('git','show',f'{source}:pubspec.yaml')
+          after=run('git','show',f'{tag}:pubspec.yaml')
+          assert re.sub(r'^version:.*$', 'version: 1.2.13+42',before,flags=re.M)==after
+          for platform in ('android','windows'):
+              p=pathlib.Path('release-assets')/f'manifest-{platform}.json'
+              m=json.loads(p.read_text())
+              assert (m['version'],m['build'],m['source'])==('1.2.13',42,source)
+              # 原构建已设置该版本；标签仅提交相同的版本号，源码树等价。
+              m['source']=tag
+              p.write_text(json.dumps(m))
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              f.write(f'CI_SOURCE_SHA={tag}\n')
+          PY
+      - name: 通过发布脚本上传并公开
+        run: bash scripts/release.sh 1.2.13 --ci-publish

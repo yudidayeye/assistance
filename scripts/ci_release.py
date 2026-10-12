@@ -111,6 +111,8 @@ def publish(v, build, mode, source):
     if mode not in ('new', 'existing'):
         raise ValueError('未知发布模式')
     tag = 'v' + v
+    repo = os.environ.get('GH_REPO', '')
+    release_id = None
     root = Path('release-assets')
     manifests = [json.loads((root / f'manifest-{p}.json').read_text(encoding='utf-8')) for p in ('android', 'windows')]
     expected_names = set(APK_NAMES + [f'my_assistant_setup_{v}.exe'])
@@ -129,33 +131,47 @@ def publish(v, build, mode, source):
             raise ValueError('构建期间 master 已变化，请重新运行，不覆盖其他提交')
         if run('git', 'ls-remote', 'origin', f'refs/tags/{tag}'):
             raise ValueError('版本标签已存在，停止新版本发布')
+        if not repo:
+            raise ValueError('缺少 GH_REPO 仓库配置')
         set_version(v, build)
         subprocess.check_call(['git', 'add', 'pubspec.yaml'])
         subprocess.check_call(['git', 'commit', '-m', f'chore: 发布 {tag}'])
         subprocess.check_call(['git', 'tag', tag])
         subprocess.check_call(['git', 'push', '--atomic', 'origin', 'HEAD:refs/heads/master', f'refs/tags/{tag}'])
         notes = os.environ.get('RELEASE_NOTES', '')
-        with tempfile.NamedTemporaryFile('w', delete=False) as f:
-            f.write(notes)
-            notes_path = f.name
+        payload = {'tag_name': tag, 'name': tag, 'draft': True}
+        if notes:
+            payload['body'] = notes
+        else:
+            payload['generate_release_notes'] = True
+        with tempfile.NamedTemporaryFile('w', encoding='utf-8', delete=False) as f:
+            json.dump(payload, f, ensure_ascii=False)
+            payload_path = f.name
         try:
-            args = ['gh', 'release', 'create', tag, '--draft', '--verify-tag', '--title', tag]
-            args += ['--notes-file', notes_path] if notes else ['--generate-notes']
-            subprocess.check_call(args)
+            created = json.loads(run('gh', 'api', f'repos/{repo}/releases',
+                '--method', 'POST', '--input', payload_path))
+            # 创建响应已给出 ID，不依赖尚未可见的新草稿列表。
+            release_id = str(created['id'])
         finally:
-            Path(notes_path).unlink()
+            Path(payload_path).unlink()
     else:
         if run('git', 'rev-parse', f'{tag}^{{commit}}') != source:
             raise ValueError('原版本标签发生变化，停止替换附件')
-        run('gh', 'release', 'view', tag, '--json', 'url')
-    repo = os.environ['GH_REPO']
-    # 草稿不能通过 releases/tags 查询；列表定位后使用稳定的数字 ID。
-    release_id = run('gh', 'api', f'repos/{repo}/releases', '--paginate', '--jq',
-        f'.[] | select(.tag_name == "{tag}") | .id')
+        if not repo:
+            raise ValueError('缺少 GH_REPO 仓库配置')
+        owner, name = repo.split('/')
+        query = ('query($owner:String!,$name:String!,$tag:String!) {'
+            'repository(owner:$owner,name:$name) {release(tagName:$tag) {databaseId}}}')
+        result = json.loads(run('gh', 'api', 'graphql', '-f', f'query={query}',
+            '-f', f'owner={owner}', '-f', f'name={name}', '-f', f'tag={tag}'))
+        found = result['data']['repository']['release']
+        release_id = str(found['databaseId']) if found else ''
     if not release_id.isdigit():
         raise ValueError('无法唯一定位目标 Release，停止发布')
     endpoint = f'repos/{repo}/releases/{release_id}'
     release = json.loads(run('gh', 'api', endpoint))
+    if release['tag_name'] != tag:
+        raise ValueError('Release 标签不匹配，停止发布')
 
     def matches(asset, expected):
         return (asset is not None and asset.get('state') == 'uploaded'

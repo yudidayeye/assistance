@@ -103,6 +103,43 @@ class ReleaseGuardTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '源码不一致'):
             release.publish('1.2.11', '40', 'new', self.source)
 
+    def test_new_release_uses_create_response_id_without_querying_draft_list(self):
+        root = self.manifests()
+        files = [f for p in ('android', 'windows')
+            for f in json.loads((root / f'manifest-{p}.json').read_text())['files']]
+        real_run = release.run
+        uploaded = False
+        calls = []
+        def command(args):
+            nonlocal uploaded
+            if args[0] == 'git':
+                subprocess.run(args, check=True, capture_output=True)
+                return
+            calls.append(args)
+            if args[:3] == ['gh','release','upload']:
+                uploaded = True
+        def output(*args):
+            if args[0] != 'gh':
+                return real_run(*args)
+            if args[:3] == ('gh','release','view'):
+                return 'https://example.com/release'
+            if args[2] == 'repos/example/repo/releases':
+                self.assertIn('--method', args)
+                self.assertIn('POST', args)
+                payload = json.loads(Path(args[-1]).read_text())
+                self.assertEqual(payload, {'tag_name':'v1.2.11','name':'v1.2.11','draft':True,'body':'发布说明'})
+                return json.dumps({'id':123})
+            self.assertEqual(args[2], 'repos/example/repo/releases/123')
+            assets = [{**f,'state':'uploaded','digest':'sha256:'+f['sha256']} for f in files] if uploaded else []
+            return json.dumps({'tag_name':'v1.2.11','assets':assets,'html_url':'https://example.com/release'})
+        with patch.dict(os.environ, {'GH_REPO':'example/repo','RELEASE_NOTES':'发布说明'}), \
+             patch.object(release,'run',side_effect=output), \
+             patch.object(subprocess,'check_call',side_effect=command):
+            release.publish('1.2.11','40','new',self.source)
+        self.assertEqual(release.current(), ('1.2.11',40))
+        self.assertEqual(calls[0][:5], ['gh','release','upload','v1.2.11','--clobber'])
+        self.assertEqual(calls[-1], ['gh','release','edit','v1.2.11','--draft=false','--latest'])
+
     def test_existing_draft_uses_release_id_and_resumes_without_reuploading_matching_assets(self):
         release.set_version('1.2.11', 40)
         self.git('add', 'pubspec.yaml')
@@ -128,13 +165,13 @@ class ReleaseGuardTest(unittest.TestCase):
                         return real_run(*args)
                     if args[:3] == ('gh', 'release', 'view'):
                         return '{}'
-                    if args[2] == 'repos/example/repo/releases':
-                        return '123'
+                    if args[2] == 'graphql':
+                        return json.dumps({'data':{'repository':{'release':{'databaseId':123}}}})
                     self.assertEqual(args[2], 'repos/example/repo/releases/123')
                     assets = [{**f, 'state':'uploaded', 'digest':'sha256:' + f['sha256']} for f in files]
                     if changed and not uploaded:
                         assets[0]['digest'] = 'sha256:' + '0' * 64
-                    return json.dumps({'assets':assets, 'html_url':'https://example.com/release'})
+                    return json.dumps({'tag_name':'v1.2.11', 'assets':assets, 'html_url':'https://example.com/release'})
                 with patch.dict(os.environ, {'GH_REPO':'example/repo'}), \
                      patch.object(release, 'run', side_effect=output), \
                      patch.object(subprocess, 'check_call', side_effect=command):
