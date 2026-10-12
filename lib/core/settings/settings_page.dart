@@ -92,7 +92,8 @@ class _SettingsPageState extends State<SettingsPage> {
         title: const Text('当前版本信息'),
         icon: Icon(Icons.info_outline_rounded, color: appTheme.primary),
         content: Text(
-            '${info!.appName}\n版本：${info.version}\n构建号：${info.buildNumber}\n应用包名：${info.packageName}'),
+            '${info!.appName}\n版本：${info.version}\n构建号：${info.buildNumber}\n应用包名：${info.packageName}'
+            '${_updateInfo != null ? '\n更新检查：${_updateInfo!.error ?? (_updateInfo!.hasUpdate ? '发现新版本 V${_updateInfo!.latestVersion}' : '当前已是最新版本')}' : ''}'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx), child: const Text('关闭'))
@@ -347,45 +348,33 @@ class _SettingsPageState extends State<SettingsPage> {
         Expanded(
           child: InkWell(
             onTap: _showVersionInfo,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
                 Text('版本',
                     style:
                         AppTypography.bodyMd.copyWith(color: appTheme.earth)),
-                const SizedBox(height: 2),
-                Text(_currentVersion.isEmpty ? '版本读取中' : 'V$_currentVersion',
-                    style: AppTypography.caption.copyWith(
-                        color: appTheme.earthMedium.withValues(alpha: 0.6))),
-                if (_isCheckingUpdate || _updateInfo != null) ...[
-                  AppSpacing.h4,
-                  Text(
-                    _isCheckingUpdate
-                        ? '正在检查更新…'
-                        : _updateInfo!.error ??
-                            (_updateInfo!.hasUpdate
-                                ? '发现新版本 V$latestVersion'
-                                : '当前已是最新版本'),
-                    style: AppTypography.caption.copyWith(
-                      color: _updateInfo?.error != null
-                          ? appTheme.primary
-                          : appTheme.earthMedium,
-                    ),
-                  ),
-                ],
+                AppSpacing.w8,
+                Flexible(
+                    child: Text(
+                        _currentVersion.isEmpty ? '版本读取中' : 'V$_currentVersion',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption
+                            .copyWith(color: appTheme.earthMedium))),
               ],
             ),
           ),
         ),
         // 更新按钮或状态
         if (_isCheckingUpdate)
-          SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: appTheme.earthMedium.withValues(alpha: 0.4),
+          Tooltip(
+            message: '正在检查更新…',
+            child: SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: appTheme.earthMedium.withValues(alpha: 0.4)),
             ),
           )
         else if (hasUpdate)
