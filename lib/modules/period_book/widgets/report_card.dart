@@ -120,7 +120,7 @@ class _ReportCardState extends State<ReportCard> {
           ),
           // 消费总金额
           Flexible(child: _buildTotalAmount(appTheme)),
-          AppSpacing.w8,
+          const Spacer(),
           // 视图切换选择器
           _buildViewSelector(appTheme),
         ],
@@ -1028,11 +1028,11 @@ class _ReportCardState extends State<ReportCard> {
       // 点击区域即整行，不依赖图标的命中范围
       behavior: HitTestBehavior.opaque,
       child: Container(
-        // 行高即点击区域：占比再小的分类也有尺寸充足的入口（SC-008）
-        constraints: const BoxConstraints(minHeight: 44),
+        // 紧凑图例保持整行可点击，选中背景随行高收紧。
+        constraints: const BoxConstraints(minHeight: 32),
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
+          horizontal: AppSpacing.xs,
+          vertical: AppSpacing.xxs,
         ),
         decoration: BoxDecoration(
           // 选中态用整行底色表达，与扇区的半径外扩不同形（契约 C1-2）。
@@ -1042,34 +1042,39 @@ class _ReportCardState extends State<ReportCard> {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(appTheme.radiusSm),
         ),
-        child: Row(
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 13, color: color),
-              AppSpacing.w6,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 13, color: color),
+                AppSpacing.w6,
+              ],
+              Text(
+                label,
+                style: AppTypography.bodySm.copyWith(color: appTheme.earth),
+              ),
+              AppSpacing.w4,
+              Text(
+                '${(pct * 100).toStringAsFixed(0)}%',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: appTheme.earth,
+                ),
+              ),
+              AppSpacing.w8,
+              Text(
+                FormatUtils.formatAmount(value),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
             ],
-            Text(
-              label,
-              style: AppTypography.bodySm.copyWith(color: appTheme.earth),
-            ),
-            AppSpacing.w4,
-            Text(
-              '${(pct * 100).toStringAsFixed(0)}%',
-              style: TextStyle(
-                fontSize: 11,
-                color: appTheme.earth,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              FormatUtils.formatAmount(value),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

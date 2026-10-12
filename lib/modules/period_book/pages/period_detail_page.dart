@@ -15,6 +15,8 @@ import '../services/period_book_settings.dart';
 import '../widgets/stage_card.dart';
 import '../widgets/edit_balance_dialog.dart';
 import '../widgets/period_summary_card.dart';
+import '../widgets/report_card.dart';
+import '../widgets/category_filter_helper.dart';
 
 /// 当前周期详情页（入口页）
 class PeriodDetailPage extends StatefulWidget {
@@ -503,7 +505,19 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
   // ═══════════════════════════════════════════════════════════
 
   void _showTotalExpenseDetail() {
-    final appTheme = Theme.of(context).appTheme;
+    final categories = <String, double>{};
+    for (final expense in _allExpenses) {
+      final category = CategoryFilterHelper.resolveCategoryName(
+          isOther: expense.isOther, rawCategory: expense.category);
+      categories[category] = (categories[category] ?? 0) + expense.amount;
+    }
+    // 与历史记录日常报表一致：已记录分类 + 已确认余额倒推的正数杂项。
+    final residual = _calc!.stages
+        .fold<double>(0, (sum, stage) => sum + (stage.livingTotal ?? 0));
+    if (residual > 0) {
+      categories[CategoryFilterHelper.residualOnlyCategory] = residual;
+    }
+    final month = DateTime.parse(_period!.startDate);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -533,43 +547,16 @@ class _PeriodDetailPageState extends State<PeriodDetailPage> {
               Flexible(
                 child: ListView(
                   shrinkWrap: true,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding: EdgeInsets.zero,
                   children: [
-                    _buildDetailRow(
-                      appTheme: appTheme,
-                      label: '购物',
-                      amount: _calc!.shoppingTotal,
-                      color: appTheme.rose,
-                      isTotal: false,
-                    ),
-                    const Divider(height: 24),
-                    _buildDetailRow(
-                      appTheme: appTheme,
-                      label: '其他',
-                      amount: _calc!.otherTotal,
-                      color: appTheme.rose,
-                      isTotal: false,
-                    ),
-                    const Divider(height: 24),
-                    if (_calc!.livingTotal != null &&
-                        _calc!.livingTotal! > 0) ...[
-                      _buildDetailRow(
-                        appTheme: appTheme,
-                        label: '生活',
-                        amount: _calc!.livingTotal!,
-                        color: appTheme.rose,
-                        isTotal: false,
-                      ),
-                      const Divider(height: 24),
-                    ],
-                    _buildDetailRow(
-                      appTheme: appTheme,
-                      label: '合计',
-                      amount: _calc!.totalBase - (_calc?.balance ?? 0),
-                      color: appTheme.rose,
-                      isTotal: true,
-                    ),
+                    ReportCard(monthlyData: [
+                      {
+                        'month': month.month,
+                        'year': month.year,
+                        'expense': categories.values
+                            .fold<double>(0, (sum, value) => sum + value)
+                      },
+                    ], stageData: const [], expenseTypeData: categories),
                     SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
                   ],
                 ),

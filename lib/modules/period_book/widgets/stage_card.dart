@@ -769,7 +769,7 @@ class _StageCardState extends State<StageCard> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                '第${widget.stage.sortOrder}阶段',
+                '第${widget.stage.sortOrder}阶段 · ${widget.stage.totalDays}天',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

@@ -102,7 +102,7 @@ class PeriodBookModule implements ToolModule {
     final calc =
         await PeriodBookService.instance.getPeriodCalculations(period.id!);
     final balance = calc.balance;
-    final totalExpense = calc.totalBase - (balance ?? 0);
+    final totalExpense = calc.shoppingTotal + calc.otherTotal;
     final line2 = balance != null
         ? '余额 ¥${balance.toStringAsFixed(2)}'
         : '支出 ¥${totalExpense.toStringAsFixed(2)}';
