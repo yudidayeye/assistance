@@ -172,7 +172,7 @@ def publish(v, build, mode, source):
     if any(not matches(assets.get(f['name']), f) for f in files):
         raise ValueError('GitHub 上传产物校验失败；未执行公开发布步骤')
     subprocess.check_call(['gh', 'release', 'edit', tag, '--draft=false', '--latest'])
-    print(release['html_url'])
+    print(run('gh', 'release', 'view', tag, '--json', 'url', '--jq', '.url'))
 
 
 if __name__ == '__main__':
