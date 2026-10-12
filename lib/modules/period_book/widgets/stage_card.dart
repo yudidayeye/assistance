@@ -944,7 +944,7 @@ class _StageCardState extends State<StageCard> {
           ],
         ])),
         const SizedBox(width: 4),
-        Flexible(
+        Expanded(
             child: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerRight,
