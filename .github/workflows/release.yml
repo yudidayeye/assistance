@@ -93,7 +93,18 @@ jobs:
           PY
       - name: 构建、原密钥签名并校验 APK
         working-directory: app
-        run: bash "$GITHUB_WORKSPACE/automation/scripts/release.sh" "$RELEASE_VERSION" --ci-build
+        run: |
+          set -euo pipefail
+          if bash "$GITHUB_WORKSPACE/automation/scripts/release.sh" "$RELEASE_VERSION" --ci-build 2>&1 | tee "$RUNNER_TEMP/android-build.log"; then
+            exit 0
+          fi
+          python3 - <<'PYLOG'
+          import os,pathlib
+          log=(pathlib.Path(os.environ['RUNNER_TEMP'])/'android-build.log').read_text(errors='replace')[-12000:]
+          log=log.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+          print(f'::error title=Android 构建失败::{log}')
+          PYLOG
+          exit 1
       - name: 保存 Android 构建产物
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
