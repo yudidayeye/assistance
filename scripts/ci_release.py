@@ -148,13 +148,29 @@ def publish(v, build, mode, source):
         if run('git', 'rev-parse', f'{tag}^{{commit}}') != source:
             raise ValueError('原版本标签发生变化，停止替换附件')
         run('gh', 'release', 'view', tag, '--json', 'url')
-    subprocess.check_call(['gh', 'release', 'upload', tag, '--clobber', *[str(root / f['name']) for f in files]])
-    release = json.loads(run('gh', 'api', f'repos/{os.environ["GH_REPO"]}/releases/tags/{tag}'))
+    repo = os.environ['GH_REPO']
+    # 草稿不能通过 releases/tags 查询；列表定位后使用稳定的数字 ID。
+    release_id = run('gh', 'api', f'repos/{repo}/releases', '--paginate', '--jq',
+        f'.[] | select(.tag_name == "{tag}") | .id')
+    if not release_id.isdigit():
+        raise ValueError('无法唯一定位目标 Release，停止发布')
+    endpoint = f'repos/{repo}/releases/{release_id}'
+    release = json.loads(run('gh', 'api', endpoint))
+
+    def matches(asset, expected):
+        return (asset is not None and asset.get('state') == 'uploaded'
+            and asset.get('size') == expected['size']
+            and asset.get('digest') == 'sha256:' + expected['sha256'])
+
     assets = {a['name']: a for a in release['assets']}
-    for f in files:
-        a = assets[f['name']]
-        if a['state'] != 'uploaded' or a['size'] != f['size'] or a.get('digest') != 'sha256:' + f['sha256']:
-            raise ValueError('GitHub 上传产物校验失败；未执行公开发布步骤')
+    pending = [f for f in files if not matches(assets.get(f['name']), f)]
+    if pending:
+        subprocess.check_call(['gh', 'release', 'upload', tag, '--clobber',
+            *[str(root / f['name']) for f in pending]])
+        release = json.loads(run('gh', 'api', endpoint))
+        assets = {a['name']: a for a in release['assets']}
+    if any(not matches(assets.get(f['name']), f) for f in files):
+        raise ValueError('GitHub 上传产物校验失败；未执行公开发布步骤')
     subprocess.check_call(['gh', 'release', 'edit', tag, '--draft=false', '--latest'])
     print(release['html_url'])
 

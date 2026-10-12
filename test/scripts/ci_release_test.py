@@ -103,6 +103,48 @@ class ReleaseGuardTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '源码不一致'):
             release.publish('1.2.11', '40', 'new', self.source)
 
+    def test_existing_draft_uses_release_id_and_resumes_without_reuploading_matching_assets(self):
+        release.set_version('1.2.11', 40)
+        self.git('add', 'pubspec.yaml')
+        self.git('commit', '-m', 'release version')
+        self.source = self.git('rev-parse', 'HEAD')
+        self.git('tag', 'v1.2.11')
+        root = self.manifests()
+        files = [f for platform in ('android', 'windows')
+            for f in json.loads((root / f'manifest-{platform}.json').read_text())['files']]
+        real_run = release.run
+        for changed in (False, True):
+            with self.subTest(changed=changed):
+                calls = []
+                uploaded = False
+                def command(args):
+                    nonlocal uploaded
+                    self.assertEqual(args[0], 'gh')
+                    calls.append(args)
+                    if args[:3] == ['gh', 'release', 'upload']:
+                        uploaded = True
+                def output(*args):
+                    if args[0] != 'gh':
+                        return real_run(*args)
+                    if args[:3] == ('gh', 'release', 'view'):
+                        return '{}'
+                    if args[2] == 'repos/example/repo/releases':
+                        return '123'
+                    self.assertEqual(args[2], 'repos/example/repo/releases/123')
+                    assets = [{**f, 'state':'uploaded', 'digest':'sha256:' + f['sha256']} for f in files]
+                    if changed and not uploaded:
+                        assets[0]['digest'] = 'sha256:' + '0' * 64
+                    return json.dumps({'assets':assets, 'html_url':'https://example.com/release'})
+                with patch.dict(os.environ, {'GH_REPO':'example/repo'}), \
+                     patch.object(release, 'run', side_effect=output), \
+                     patch.object(subprocess, 'check_call', side_effect=command):
+                    release.publish('1.2.11', '40', 'existing', self.source)
+                self.assertEqual(calls[-1], ['gh','release','edit','v1.2.11','--draft=false','--latest'])
+                self.assertEqual(len(calls), 2 if changed else 1)
+                if changed:
+                    self.assertEqual(calls[0][-1], str(root / files[0]['name']))
+                    self.assertEqual(len(calls[0]), 6)
+
     def test_publish_does_not_overwrite_master_advanced_during_build(self):
         self.manifests()
         Path('another-change').write_text('concurrent update')
