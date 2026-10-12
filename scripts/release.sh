@@ -21,12 +21,14 @@ NOTES=""
 CLEAN=0
 CI_BUILD=0
 CI_PUBLISH=0
+CI_SINGLE=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --clean) CLEAN=1 ;;
     --ci-build) CI_BUILD=1 ;;
     --ci-publish) CI_PUBLISH=1 ;;
+    --ci-single-publish) CI_SINGLE=1 ;;
     -*)
       echo "未知选项: $1"
       exit 1
@@ -73,8 +75,12 @@ fail() {
 }
 
 # Actions 分平台构建与统一发布；常规本地发布流程保持不变。
-if [ "$CI_BUILD" -eq 1 ] && [ "$CI_PUBLISH" -eq 1 ]; then
-  fail "--ci-build 不能与 --ci-publish 混用"
+if [ "$((CI_BUILD + CI_PUBLISH + CI_SINGLE))" -gt 1 ]; then
+  fail "CI 构建和发布选项不能混用"
+fi
+if [ "$CI_SINGLE" -eq 1 ]; then
+  python3 scripts/ci_release.py publish-single "$VERSION" "$CI_RELEASE_BUILD" "$CI_RELEASE_PLATFORM" "$CI_SOURCE_SHA" "$CI_BASE_SHA"
+  exit 0
 fi
 if [ "$CI_BUILD" -eq 1 ]; then
   python3 "${CI_RELEASE_HELPER:-scripts/ci_release.py}" set-version "$VERSION" "$CI_RELEASE_BUILD"

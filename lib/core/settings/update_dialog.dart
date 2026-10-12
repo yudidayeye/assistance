@@ -256,7 +256,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
   String get _title {
     switch (_phase) {
       case _UpdatePhase.confirm:
-        return '发现新版本';
+        return widget.info.isPackageUpdate ? '发现安装包更新' : '发现新版本';
       case _UpdatePhase.downloading:
         return '正在下载更新包';
       case _UpdatePhase.installing:
@@ -304,7 +304,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'V${widget.info.currentVersion} → V${widget.info.latestVersion}',
+          '${widget.info.currentLabel} → ${widget.info.latestLabel}',
           style: AppTypography.bodyMd.copyWith(
             fontWeight: FontWeight.w600,
             color: appTheme.sage,

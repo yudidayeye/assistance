@@ -1,0 +1,159 @@
+name: Android 安装包补充发布
+'on':
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 已正式发布的标签，例如 v1.2.13
+        required: true
+      source:
+        description: master 使用最新代码；tag 重新打包原标签
+        type: choice
+        options:
+          - master
+          - tag
+        default: master
+      notes:
+        description: 本次安装包更新说明（可选）
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: assistance-release
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      build: ${{ steps.plan.outputs.build }}
+      ref: ${{ steps.plan.outputs.ref }}
+      base: ${{ steps.plan.outputs.base }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      SOURCE_CHOICE: ${{ inputs.source }}
+      RELEASE_PLATFORM: android
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: 检查发布来源与标签
+        env:
+          WORKFLOW_REF: ${{ github.ref }}
+        run: |-
+          set -euo pipefail
+          test "$WORKFLOW_REF" = refs/heads/master
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::标签格式必须为 vx.y.z"; exit 1; }
+      - name: 检查签名配置与发布来源
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          WORKFLOW_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          test "$WORKFLOW_REF" = refs/heads/master || { echo '::error::请从 master 运行发布工作流'; exit 1; }
+          for name in KEYSTORE STORE_PASSWORD KEY_PASSWORD KEY_ALIAS; do
+            test -n "${!name}" || { echo '::error::请先配置四个 Android Actions 签名 Secrets，参见发布指南'; exit 1; }
+          done
+      - id: plan
+        name: 规划单平台补发构建号
+        run: python3 scripts/ci_release.py plan-single "${RELEASE_TAG#v}" "$RELEASE_PLATFORM" "$SOURCE_CHOICE"
+  android:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI_RELEASE_BUILD: ${{ needs.prepare.outputs.build }}
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_SIGNING_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: automation
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.prepare.outputs.ref }}
+          path: app
+          persist-credentials: false
+      - uses: ./automation/.github/actions/setup-flutter
+      - name: 准备 Android SDK 与签名文件
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          export JAVA_HOME="$JAVA_HOME_17_X64"
+          echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;35.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+          python3 - <<'PY'
+          import os,base64,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'signing.keystore'
+          p.write_bytes(base64.b64decode(os.environ['KEYSTORE_BASE64'],validate=True))
+          p.chmod(0o600)
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              f.write(f'CI_KEYSTORE_PATH={p}\n')
+              f.write(f'CI_RELEASE_HELPER={os.environ["GITHUB_WORKSPACE"]}/automation/scripts/ci_release.py\n')
+          PY
+      - name: 构建、原密钥签名并校验 APK
+        working-directory: app
+        run: |
+          set -euo pipefail
+          if bash "$GITHUB_WORKSPACE/automation/scripts/release.sh" "$RELEASE_VERSION" --ci-build 2>&1 | tee "$RUNNER_TEMP/android-build.log"; then
+            exit 0
+          fi
+          python3 - <<'PYLOG'
+          import os,pathlib
+          log=(pathlib.Path(os.environ['RUNNER_TEMP'])/'android-build.log').read_text(errors='replace')[-12000:]
+          log=log.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+          print(f'::error title=Android 构建失败::{log}')
+          PYLOG
+          exit 1
+      - name: 保存 Android 构建产物
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: android
+          path: |
+            app/build/app/outputs/flutter-apk/app-*-release.apk
+            app/build/app/outputs/flutter-apk/manifest-android.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: 清理签名文件
+        if: always()
+        run: rm -f "$RUNNER_TEMP/signing.keystore"
+  publish:
+    needs:
+      - prepare
+      - android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      CI_RELEASE_BUILD: ${{ needs.prepare.outputs.build }}
+      CI_SOURCE_SHA: ${{ needs.prepare.outputs.ref }}
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      RELEASE_NOTES: ${{ inputs.notes }}
+      CI_RELEASE_PLATFORM: android
+      CI_BASE_SHA: ${{ needs.prepare.outputs.base }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: android
+          path: release-assets
+          merge-multiple: true
+      - name: 校验并补发当前平台安装包
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          bash scripts/release.sh "$RELEASE_VERSION" --ci-single-publish

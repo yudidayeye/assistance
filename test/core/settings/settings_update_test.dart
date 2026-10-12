@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,7 +45,7 @@ void main() {
     expect(find.text('当前版本信息'), findsOneWidget);
     expect(find.textContaining('版本：1.2.10'), findsOneWidget);
     expect(find.textContaining('构建号：39'), findsOneWidget);
-    expect(find.textContaining('应用包名：example.app'), findsOneWidget);
+    expect(find.textContaining('GitHub 拒绝访问（403）'), findsOneWidget);
     expect(calls, 1);
     await tester.tap(find.text('关闭'));
     await tester.pumpAndSettle();
@@ -105,6 +106,96 @@ void main() {
     expect(find.textContaining('无法连接 GitHub'), findsOneWidget);
     expect(find.text('检查更新'), findsOneWidget);
     expect(find.text('当前已是最新版本'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('版本弹窗展示检查状态并实时更新最新构建和说明', (tester) async {
+    var calls = 0;
+    final response = Completer<http.Response>();
+    final service = UpdateService(client: MockClient((_) async {
+      calls++;
+      if (calls == 1) return http.Response('', 403);
+      return response.future;
+    }));
+    await showSettings(tester, service);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('版本'));
+    await tester.tap(find.text('版本'));
+    await tester.pumpAndSettle();
+    final dialog = find.byType(AlertDialog);
+    expect(
+        find.descendant(
+            of: dialog, matching: find.textContaining('GitHub 拒绝访问')),
+        findsOneWidget);
+    await tester.tap(find.descendant(of: dialog, matching: find.text('检查更新')));
+    await tester.pump();
+    expect(find.descendant(of: dialog, matching: find.text('正在检查更新…')),
+        findsOneWidget);
+    response.complete(http.Response(
+        '{"tag_name":"v1.2.11","body":"优化小功能","assets":[]}', 200,
+        headers: {'content-type': 'application/json; charset=utf-8'}));
+    await tester.pumpAndSettle();
+    expect(find.text('最新安装包：V1.2.11'), findsOneWidget);
+    expect(find.text('发现新版本 V1.2.11'), findsOneWidget);
+    expect(find.text('优化小功能'), findsOneWidget);
+    expect(find.text('查看更新'), findsOneWidget);
+    expect(calls, 2);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('版本弹窗和更新弹窗都展示同版本补发构建及说明', (tester) async {
+    final digest = 'a' * 64;
+    final service = UpdateService(
+      platform: 'windows',
+      client: MockClient((request) async {
+        final body = request.url.host == 'api.github.com'
+            ? {
+                'tag_name': 'v1.2.10',
+                'assets': [
+                  {
+                    'name': 'my_assistant_setup_1.2.10.exe',
+                    'size': 3,
+                    'digest': 'sha256:$digest',
+                    'browser_download_url': 'https://example.com/setup.exe'
+                  },
+                  {
+                    'name': 'update-windows.json',
+                    'id': 201,
+                    'size': 200,
+                    'browser_download_url':
+                        'https://example.com/update-windows.json'
+                  },
+                ],
+              }
+            : {
+                'schema': 1,
+                'platform': 'windows',
+                'version': '1.2.10',
+                'build': 40,
+                'notes': '优化小功能',
+                'files': [
+                  {
+                    'name': 'my_assistant_setup_1.2.10.exe',
+                    'size': 3,
+                    'sha256': digest
+                  }
+                ],
+              };
+        return http.Response(jsonEncode(body), 200,
+            headers: {'content-type': 'application/json; charset=utf-8'});
+      }),
+    );
+    await showSettings(tester, service);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('版本'));
+    await tester.tap(find.text('版本'));
+    await tester.pumpAndSettle();
+    expect(find.text('最新安装包：V1.2.10+40'), findsOneWidget);
+    expect(find.textContaining('构建 39 → 40'), findsOneWidget);
+    expect(find.text('优化小功能'), findsOneWidget);
+    await tester.tap(find.text('查看更新'));
+    await tester.pumpAndSettle();
+    expect(find.text('发现安装包更新'), findsOneWidget);
+    expect(find.text('V1.2.10+39 → V1.2.10+40'), findsOneWidget);
+    expect(find.text('优化小功能'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

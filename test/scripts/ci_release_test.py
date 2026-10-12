@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import json
 import os
@@ -108,16 +109,15 @@ class ReleaseGuardTest(unittest.TestCase):
         files = [f for p in ('android', 'windows')
             for f in json.loads((root / f'manifest-{p}.json').read_text())['files']]
         real_run = release.run
-        uploaded = False
+        uploaded = set()
         calls = []
         def command(args):
-            nonlocal uploaded
             if args[0] == 'git':
                 subprocess.run(args, check=True, capture_output=True)
                 return
             calls.append(args)
             if args[:3] == ['gh','release','upload']:
-                uploaded = True
+                uploaded.update(Path(name).name for name in args[5:])
         def output(*args):
             if args[0] != 'gh':
                 return real_run(*args)
@@ -130,7 +130,8 @@ class ReleaseGuardTest(unittest.TestCase):
                 self.assertEqual(payload, {'tag_name':'v1.2.11','name':'v1.2.11','draft':True,'body':'发布说明'})
                 return json.dumps({'id':123})
             self.assertEqual(args[2], 'repos/example/repo/releases/123')
-            assets = [{**f,'state':'uploaded','digest':'sha256:'+f['sha256']} for f in files] if uploaded else []
+            metadata = [{'name': p.name, 'size': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in root.glob('update-*.json')]
+            assets = [{**f,'state':'uploaded','digest':'sha256:'+f['sha256']} for f in files + metadata if f['name'] in uploaded]
             return json.dumps({'tag_name':'v1.2.11','assets':assets,'html_url':'https://example.com/release'})
         with patch.dict(os.environ, {'GH_REPO':'example/repo','RELEASE_NOTES':'发布说明'}), \
              patch.object(release,'run',side_effect=output), \
@@ -139,6 +140,8 @@ class ReleaseGuardTest(unittest.TestCase):
         self.assertEqual(release.current(), ('1.2.11',40))
         self.assertEqual(calls[0][:5], ['gh','release','upload','v1.2.11','--clobber'])
         self.assertEqual(calls[-1], ['gh','release','edit','v1.2.11','--draft=false','--latest'])
+        self.assertEqual(len(calls), 3)
+        self.assertTrue(all(Path(name).suffix == '.json' for name in calls[1][5:]))
 
     def test_existing_draft_uses_release_id_and_resumes_without_reuploading_matching_assets(self):
         release.set_version('1.2.11', 40)
@@ -168,7 +171,8 @@ class ReleaseGuardTest(unittest.TestCase):
                     if args[2] == 'graphql':
                         return json.dumps({'data':{'repository':{'release':{'databaseId':123}}}})
                     self.assertEqual(args[2], 'repos/example/repo/releases/123')
-                    assets = [{**f, 'state':'uploaded', 'digest':'sha256:' + f['sha256']} for f in files]
+                    metadata = [{'name': p.name, 'size': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in root.glob('update-*.json')]
+                    assets = [{**f, 'state':'uploaded', 'digest':'sha256:' + f['sha256']} for f in files + metadata]
                     if changed and not uploaded:
                         assets[0]['digest'] = 'sha256:' + '0' * 64
                     return json.dumps({'tag_name':'v1.2.11', 'assets':assets, 'html_url':'https://example.com/release'})
@@ -194,6 +198,98 @@ class ReleaseGuardTest(unittest.TestCase):
             release.publish('1.2.11', '40', 'new', self.source)
         self.assertIn(remote_head, self.git('ls-remote', 'origin', 'refs/heads/master'))
         self.assertEqual(self.git('tag'), '')
+
+    def test_single_plan_allocates_build_without_changing_version_or_tag(self):
+        real_run = release.run
+        for platform in ('android', 'windows'):
+            with patch.object(release, 'run', side_effect=lambda *args:
+                    json.dumps({'isDraft': False, 'isPrerelease': False}) if args[0] == 'gh' else real_run(*args)):
+                release.plan_single('1.2.10', platform, 'master')
+        self.assertIn('build=40\n', self.output.read_text())
+        self.assertIn(f'base={self.source}\n', self.output.read_text())
+        self.assertEqual(release.current(), ('1.2.10', 39))
+        self.assertEqual(self.git('status', '--porcelain'), '')
+        self.assertEqual(self.git('tag'), '')
+
+    def test_single_plan_tag_uses_original_source_and_latest_global_build(self):
+        self.git('tag', 'v1.2.10')
+        self.git('push', 'origin', 'v1.2.10')
+        release.set_version('1.2.11', 42)
+        self.git('add', 'pubspec.yaml')
+        self.git('commit', '-m', 'newer release')
+        real_run = release.run
+        with patch.object(release, 'run', side_effect=lambda *args:
+                json.dumps({'isDraft': False, 'isPrerelease': False}) if args[0] == 'gh' else real_run(*args)):
+            with self.assertRaisesRegex(ValueError, '只允许当前 master 版本'):
+                release.plan_single('1.2.10', 'android', 'master')
+            release.plan_single('1.2.10', 'android', 'tag')
+        self.assertIn('build=43\n', self.output.read_text())
+        self.assertIn(f'ref={self.source}\n', self.output.read_text())
+        self.assertEqual(release.current(), ('1.2.11', 42))
+
+    def test_single_plan_rejects_draft_and_prerelease(self):
+        for state in ({'isDraft': True, 'isPrerelease': False}, {'isDraft': False, 'isPrerelease': True}):
+            with patch.object(release, 'run', return_value=json.dumps(state)):
+                with self.assertRaisesRegex(ValueError, '正式 Release'):
+                    release.plan_single('1.2.10', 'android', 'master')
+
+    def test_single_publish_increments_build_preserves_tag_and_other_platform(self):
+        self.git('tag', 'v1.2.10')
+        self.git('push', 'origin', 'v1.2.10')
+        root = Path('release-assets')
+        root.mkdir()
+        real_run = release.run
+        for index, platform in enumerate(('android', 'windows'), start=40):
+            with self.subTest(platform=platform):
+                base = self.git('rev-parse', 'HEAD')
+                names = release.APK_NAMES if platform == 'android' else ['my_assistant_setup_1.2.10.exe']
+                for name in names:
+                    (root / name).write_bytes(name.encode())
+                release.manifest(platform, '1.2.10', index, root, names)
+                uploads = []
+                uploaded = set()
+                def command(args):
+                    if args[0] == 'git':
+                        subprocess.run(args, check=True, capture_output=True)
+                    else:
+                        self.assertEqual(args[:3], ['gh', 'release', 'upload'])
+                        uploads.append([Path(p).name for p in args[5:]])
+                        uploaded.update(uploads[-1])
+                def output(*args):
+                    if args[0] != 'gh':
+                        return real_run(*args)
+                    if args[2] == 'graphql':
+                        return json.dumps({'data': {'repository': {'release': {'databaseId': 123}}}})
+                    if args[1] == 'release':
+                        return 'https://example.com/release'
+                    self.assertEqual(args[2], 'repos/example/repo/releases/123')
+                    assets = [{'name': name, 'size': (root/name).stat().st_size, 'state': 'uploaded',
+                        'digest': 'sha256:' + hashlib.sha256((root/name).read_bytes()).hexdigest()} for name in uploaded]
+                    assets.append({'name': 'unrelated-package', 'size': 1, 'state': 'uploaded', 'digest': 'unchanged'})
+                    return json.dumps({'tag_name': 'v1.2.10', 'draft': False, 'prerelease': False, 'assets': assets})
+                with patch.dict(os.environ, {'GH_REPO': 'example/repo', 'RELEASE_NOTES': '小功能优化'}), \
+                     patch.object(release, 'run', side_effect=output), \
+                     patch.object(subprocess, 'check_call', side_effect=command):
+                    release.publish_single('1.2.10', str(index), platform, base, base)
+                self.assertEqual(release.current(), ('1.2.10', index))
+                self.assertEqual(self.git('rev-parse', 'v1.2.10'), self.source)
+                self.assertIn(self.git('rev-parse', 'HEAD'), self.git('ls-remote', 'origin', 'refs/heads/master'))
+                self.assertEqual(uploads, [names, [f'update-{platform}.json']])
+                metadata = json.loads((root/f'update-{platform}.json').read_text())
+                self.assertEqual((metadata['build'], metadata['platform'], metadata['source']), (index, platform, base))
+                self.assertEqual(metadata['notes'], '小功能优化')
+
+    def test_single_publish_rejects_stale_master_or_corrupt_package_before_write(self):
+        root = Path('release-assets')
+        root.mkdir()
+        (root/'my_assistant_setup_1.2.10.exe').write_bytes(b'package')
+        release.manifest('windows', '1.2.10', 40, root, ['my_assistant_setup_1.2.10.exe'])
+        with self.assertRaisesRegex(ValueError, 'master 已变化'):
+            release.publish_single('1.2.10', '40', 'windows', self.source, '0'*40)
+        (root/'my_assistant_setup_1.2.10.exe').write_bytes(b'changed')
+        with self.assertRaisesRegex(ValueError, '校验失败'):
+            release.publish_single('1.2.10', '40', 'windows', self.source, self.source)
+        self.assertEqual(release.current(), ('1.2.10', 39))
 
 
 if __name__ == '__main__':

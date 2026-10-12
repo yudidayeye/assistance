@@ -106,6 +106,117 @@ def manifest(platform, v, build, directory, names):
     (directory / f'manifest-{platform}.json').write_text(json.dumps(data), encoding='utf-8')
 
 
+def release_id_for(tag, repo):
+    owner, name = repo.split('/')
+    query = ('query($owner:String!,$name:String!,$tag:String!) {'
+        'repository(owner:$owner,name:$name) {release(tagName:$tag) {databaseId}}}')
+    result = json.loads(run('gh', 'api', 'graphql', '-f', f'query={query}',
+        '-f', f'owner={owner}', '-f', f'name={name}', '-f', f'tag={tag}'))
+    found = result['data']['repository']['release']
+    value = str(found['databaseId']) if found else ''
+    if not value.isdigit():
+        raise ValueError('无法唯一定位目标 Release，停止发布')
+    return value
+
+
+def update_files(manifests, root):
+    result = []
+    for m in manifests:
+        name = f'update-{m["platform"]}.json'
+        p = root / name
+        p.write_text(json.dumps({**m, 'schema': 1,
+            'notes': os.environ.get('RELEASE_NOTES', '')}, ensure_ascii=False), encoding='utf-8')
+        result.append({'name':name, 'size':p.stat().st_size,
+            'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
+    return result
+
+
+def upload_verified(tag, release_id, files, root):
+    endpoint = f'repos/{os.environ["GH_REPO"]}/releases/{release_id}'
+    release = json.loads(run('gh', 'api', endpoint))
+    if release['tag_name'] != tag:
+        raise ValueError('Release 标签不匹配，停止发布')
+    def matches(asset, expected):
+        return (asset is not None and asset.get('state') == 'uploaded'
+            and asset.get('size') == expected['size']
+            and asset.get('digest') == 'sha256:' + expected['sha256'])
+    # 先完成安装包，再上传元数据；客户端会校验二者一致性。
+    for group in ([f for f in files if not f['name'].startswith('update-')],
+                  [f for f in files if f['name'].startswith('update-')]):
+        assets = {a['name']:a for a in release['assets']}
+        pending = [f for f in group if not matches(assets.get(f['name']), f)]
+        if pending:
+            subprocess.check_call(['gh','release','upload',tag,'--clobber',
+                *[str(root/f['name']) for f in pending]])
+            release = json.loads(run('gh','api',endpoint))
+        assets = {a['name']:a for a in release['assets']}
+        if any(not matches(assets.get(f['name']),f) for f in group):
+            raise ValueError('GitHub 上传产物校验失败；未执行公开发布步骤')
+    return release
+
+
+def plan_single(v, platform, source_choice):
+    version(v)
+    if platform not in ('android','windows') or source_choice not in ('master','tag'):
+        raise ValueError('无效平台或源码选择')
+    base = run('git','rev-parse','HEAD')
+    actual, build = current()
+    info = json.loads(run('gh','release','view','v'+v,'--json','isDraft,isPrerelease'))
+    if info['isDraft'] or info['isPrerelease']:
+        raise ValueError('单平台补发要求正式 Release 已存在')
+    if source_choice == 'master':
+        if actual != v:
+            raise ValueError('最新代码补发只允许当前 master 版本；旧版重新打包请选择 tag')
+        ref = base
+    else:
+        subprocess.check_call(['git','fetch','origin',f'refs/tags/v{v}:refs/tags/v{v}'])
+        ref = run('git','rev-parse',f'v{v}^{{commit}}')
+        tag_version, tag_build = current(run('git','show',f'{ref}:pubspec.yaml'))
+        if tag_version != v:
+            raise ValueError('标签版本不匹配')
+        build = max(build, tag_build)
+    build += 1
+    if not 0 < build < 1000:
+        raise ValueError('构建号超出当前 ABI 编码范围')
+    with open(os.environ['GITHUB_OUTPUT'],'a') as f:
+        f.write(f'version={v}\nbuild={build}\nref={ref}\nbase={base}\nplatform={platform}\n')
+
+
+def publish_single(v, build, platform, source, base):
+    version(v)
+    if platform not in ('android','windows'):
+        raise ValueError('无效平台')
+    root = Path('release-assets')
+    m = json.loads((root/f'manifest-{platform}.json').read_text(encoding='utf-8'))
+    names = APK_NAMES if platform == 'android' else [f'my_assistant_setup_{v}.exe']
+    if (m['platform'],m['version'],m['build'],m['source']) != (platform,v,int(build),source):
+        raise ValueError('平台构建清单与发布计划不一致')
+    files = m['files']
+    if len(files) != len(names) or {f['name'] for f in files} != set(names):
+        raise ValueError('单平台产物不完整')
+    for f in files:
+        p = root/f['name']
+        if p.stat().st_size != f['size'] or hashlib.sha256(p.read_bytes()).hexdigest()!=f['sha256']:
+            raise ValueError('构建产物校验失败')
+    if run('git','rev-parse','HEAD') != base or run('git','ls-remote','origin','refs/heads/master').split()[0] != base:
+        raise ValueError('构建期间 master 已变化，请重新运行')
+    actual, previous_build = current()
+    if int(build) <= previous_build:
+        raise ValueError('补发构建号必须递增')
+    repo = os.environ['GH_REPO']
+    release_id = release_id_for('v'+v,repo)
+    info = json.loads(run('gh','api',f'repos/{repo}/releases/{release_id}'))
+    if info['tag_name'] != 'v'+v or info['draft'] or info['prerelease']:
+        raise ValueError('补发目标必须是对应正式 Release')
+    metadata = update_files([m],root)
+    set_version(actual,build)  # 保持 master 对外版本；只递增全局构建序号。
+    subprocess.check_call(['git','add','pubspec.yaml'])
+    subprocess.check_call(['git','commit','-m',f'chore(release): 更新 v{v} {platform} 构建 {build}'])
+    subprocess.check_call(['git','push','origin','HEAD:refs/heads/master'])
+    upload_verified('v'+v,release_id,files+metadata,root)
+    print(run('gh','release','view','v'+v,'--json','url','--jq','.url'))
+
+
 def publish(v, build, mode, source):
     version(v)
     if mode not in ('new', 'existing'):
@@ -159,40 +270,17 @@ def publish(v, build, mode, source):
             raise ValueError('原版本标签发生变化，停止替换附件')
         if not repo:
             raise ValueError('缺少 GH_REPO 仓库配置')
-        owner, name = repo.split('/')
-        query = ('query($owner:String!,$name:String!,$tag:String!) {'
-            'repository(owner:$owner,name:$name) {release(tagName:$tag) {databaseId}}}')
-        result = json.loads(run('gh', 'api', 'graphql', '-f', f'query={query}',
-            '-f', f'owner={owner}', '-f', f'name={name}', '-f', f'tag={tag}'))
-        found = result['data']['repository']['release']
-        release_id = str(found['databaseId']) if found else ''
+        release_id = release_id_for(tag, repo)
     if not release_id.isdigit():
         raise ValueError('无法唯一定位目标 Release，停止发布')
-    endpoint = f'repos/{repo}/releases/{release_id}'
-    release = json.loads(run('gh', 'api', endpoint))
-    if release['tag_name'] != tag:
-        raise ValueError('Release 标签不匹配，停止发布')
-
-    def matches(asset, expected):
-        return (asset is not None and asset.get('state') == 'uploaded'
-            and asset.get('size') == expected['size']
-            and asset.get('digest') == 'sha256:' + expected['sha256'])
-
-    assets = {a['name']: a for a in release['assets']}
-    pending = [f for f in files if not matches(assets.get(f['name']), f)]
-    if pending:
-        subprocess.check_call(['gh', 'release', 'upload', tag, '--clobber',
-            *[str(root / f['name']) for f in pending]])
-        release = json.loads(run('gh', 'api', endpoint))
-        assets = {a['name']: a for a in release['assets']}
-    if any(not matches(assets.get(f['name']), f) for f in files):
-        raise ValueError('GitHub 上传产物校验失败；未执行公开发布步骤')
+    metadata = update_files(manifests, root)
+    upload_verified(tag, release_id, files + metadata, root)
     subprocess.check_call(['gh', 'release', 'edit', tag, '--draft=false', '--latest'])
     print(run('gh', 'release', 'view', tag, '--json', 'url', '--jq', '.url'))
 
 
 if __name__ == '__main__':
-    commands = {'plan': plan, 'set-version': set_version, 'android': android, 'publish': publish,
+    commands = {'plan-single':plan_single, 'publish-single':publish_single, 'plan': plan, 'set-version': set_version, 'android': android, 'publish': publish,
         'windows': lambda v, b: manifest('windows', v, b, Path('build/windows/installer'), [f'my_assistant_setup_{v}.exe'])}
     try:
         commands[sys.argv[1]](*sys.argv[2:])

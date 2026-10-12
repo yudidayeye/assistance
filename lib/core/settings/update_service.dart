@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
@@ -8,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
+import 'package:pointycastle/digests/sha256.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -21,14 +23,28 @@ class UpdateService {
     http.Client? client,
     Future<PackageInfo> Function()? packageInfoLoader,
     Duration checkTimeout = const Duration(seconds: 10),
+    String? platform,
+    Future<List<String>> Function()? supportedAbisLoader,
+    Future<Directory> Function()? downloadDirectoryLoader,
   })  : _client = client,
         _packageInfoLoader = packageInfoLoader ?? PackageInfo.fromPlatform,
-        _checkTimeout = checkTimeout;
+        _checkTimeout = checkTimeout,
+        _platform = platform ??
+            (Platform.isAndroid
+                ? 'android'
+                : Platform.isWindows
+                    ? 'windows'
+                    : 'other'),
+        _supportedAbisLoader = supportedAbisLoader,
+        _downloadDirectoryLoader = downloadDirectoryLoader;
 
   static final instance = UpdateService();
   final http.Client? _client;
   final Future<PackageInfo> Function() _packageInfoLoader;
   final Duration _checkTimeout;
+  final String _platform;
+  final Future<List<String>> Function()? _supportedAbisLoader;
+  final Future<Directory> Function()? _downloadDirectoryLoader;
 
   /// GitHub 仓库信息
   static const _owner = 'yudidayeye';
@@ -57,9 +73,11 @@ class UpdateService {
   /// 返回 [UpdateInfo]，包含是否有更新、当前版本、最新版本、产物列表等信息。
   Future<UpdateInfo> checkForUpdate() async {
     String currentVersion;
+    int? currentBuild;
     try {
       final packageInfo = await _packageInfoLoader().timeout(_checkTimeout);
       currentVersion = packageInfo.version;
+      currentBuild = normalizeBuildNumber(packageInfo.buildNumber, _platform);
       if (!RegExp(r'^\d+\.\d+\.\d+$').hasMatch(currentVersion)) {
         throw const FormatException('Invalid local version');
       }
@@ -74,12 +92,15 @@ class UpdateService {
     UpdateInfo failure(String message) => UpdateInfo(
           hasUpdate: false,
           currentVersion: currentVersion,
+          currentBuildNumber: currentBuild,
           error: message,
         );
     try {
       final url = Uri.parse(
         'https://api.github.com/repos/$_owner/$_repo/releases/latest',
-      );
+      ).replace(queryParameters: {
+        'check': '${DateTime.now().millisecondsSinceEpoch}'
+      });
       final response =
           await (_client?.get(url) ?? http.get(url)).timeout(_checkTimeout);
       if (response.statusCode != 200) {
@@ -100,21 +121,98 @@ class UpdateService {
         return failure('检查更新失败（HTTP $code），请稍后重试');
       }
 
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json =
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       final tagName = json['tag_name'] as String? ?? '';
       final remoteVersion = tagName.replaceFirst(RegExp(r'^[vV]'), '');
       if (!RegExp(r'^\d+\.\d+\.\d+$').hasMatch(remoteVersion)) {
         throw const FormatException('Invalid release version');
       }
+      final assets = _parseAssets(json['assets']);
+      int? latestBuild;
+      var notes = json['body'] as String? ?? '';
+      DateTime? packageUpdatedAt;
+      final metadataAssets =
+          assets.where((asset) => asset.name == 'update-$_platform.json');
+      if (metadataAssets.isNotEmpty) {
+        final metadataAsset = metadataAssets.first;
+        final metadataUrl = Uri.parse(metadataAsset.downloadUrl);
+        final requestUrl = metadataUrl.replace(queryParameters: {
+          ...metadataUrl.queryParameters,
+          'revision':
+              '${metadataAsset.id ?? metadataAsset.updatedAt?.millisecondsSinceEpoch ?? metadataAsset.size}',
+        });
+        final metadataResponse =
+            await (_client?.get(requestUrl) ?? http.get(requestUrl))
+                .timeout(_checkTimeout);
+        if (metadataResponse.statusCode != 200) {
+          throw UpdateException(
+              '安装包更新信息读取失败（HTTP ${metadataResponse.statusCode}），请稍后重试');
+        }
+        final metadata = jsonDecode(utf8.decode(metadataResponse.bodyBytes))
+            as Map<String, dynamic>;
+        if (metadata['schema'] != 1 ||
+            metadata['platform'] != _platform ||
+            metadata['version'] != remoteVersion) {
+          throw const FormatException('Invalid package metadata');
+        }
+        latestBuild = metadata['build'] as int;
+        if (latestBuild < 1 || latestBuild > 999) {
+          throw const FormatException('Invalid build number');
+        }
+        final files = metadata['files'] as List;
+        for (final raw in files) {
+          final file = raw as Map<String, dynamic>;
+          final name = file['name'] as String;
+          final expected = file['sha256'] as String;
+          if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(expected)) {
+            throw const FormatException('Invalid digest');
+          }
+          final index = assets.indexWhere((asset) => asset.name == name);
+          if (index < 0 ||
+              assets[index].size != file['size'] ||
+              (assets[index].sha256 != null &&
+                  assets[index].sha256 != expected)) {
+            throw const UpdateException('安装包正在更新，请稍后重新检查');
+          }
+          assets[index] = assets[index].withDigest(expected);
+        }
+        final selected = _platform == 'android'
+            ? selectAsset(
+                assets,
+                await (_supportedAbisLoader?.call() ?? getSupportedAbis())
+                    .timeout(_checkTimeout))
+            : selectWindowsAsset(assets);
+        if (selected == null ||
+            !files.any((file) => file['name'] == selected.name)) {
+          throw const UpdateException('未找到适合当前设备的安装包，请前往发布页确认');
+        }
+        packageUpdatedAt = selected.updatedAt;
+        final packageNotes = metadata['notes'] as String? ?? '';
+        if (packageNotes.isNotEmpty) notes = packageNotes;
+        if (currentBuild == null) {
+          throw const UpdateException('无法读取当前安装包构建号，请重启应用后重试');
+        }
+      }
+      final comparison = _compareVersions(currentVersion, remoteVersion);
       return UpdateInfo(
-        hasUpdate: _compareVersions(currentVersion, remoteVersion) < 0,
+        hasUpdate: comparison < 0 ||
+            (comparison == 0 &&
+                latestBuild != null &&
+                currentBuild != null &&
+                latestBuild > currentBuild),
         currentVersion: currentVersion,
+        currentBuildNumber: currentBuild,
         latestVersion: remoteVersion,
+        latestBuildNumber: latestBuild,
+        packageUpdatedAt: packageUpdatedAt,
         releaseName: json['name'] as String? ?? '',
         releaseUrl: json['html_url'] as String? ?? '',
-        releaseNotes: json['body'] as String? ?? '',
-        assets: _parseAssets(json['assets']),
+        releaseNotes: notes,
+        assets: assets,
       );
+    } on UpdateException catch (error) {
+      return failure(error.message);
     } on TimeoutException {
       return failure('检查更新超时，请检查网络或代理设置后重试');
     } on HandshakeException {
@@ -145,9 +243,49 @@ class UpdateService {
         name: name,
         downloadUrl: downloadUrl,
         size: (item['size'] as num?)?.toInt() ?? 0,
+        id: (item['id'] as num?)?.toInt(),
+        sha256: parseDigest(item['digest'] as String?),
+        updatedAt: DateTime.tryParse(item['updated_at'] as String? ?? ''),
       ));
     }
     return result;
+  }
+
+  static int? normalizeBuildNumber(String raw, String platform) {
+    final value = int.tryParse(raw);
+    if (value == null || value < 0) return null;
+    return platform == 'android' ? value % 1000 : value;
+  }
+
+  static String? parseDigest(String? raw) {
+    if (raw == null || !RegExp(r'^sha256:[a-f0-9]{64}$').hasMatch(raw)) {
+      return null;
+    }
+    return raw.substring(7);
+  }
+
+  static String downloadFileName(ReleaseAsset asset, String version) {
+    final identity = asset.id?.toString() ?? asset.sha256 ?? 'legacy';
+    return 'update_v${version}_$identity${p.extension(asset.name).toLowerCase()}';
+  }
+
+  Future<bool> _isComplete(File target, ReleaseAsset asset,
+      {bool allowUnknownSize = false}) async {
+    if (!await target.exists()) return false;
+    final length = await target.length();
+    if (length == 0 || (asset.size > 0 && length != asset.size)) return false;
+    if (asset.sha256 == null) return asset.size > 0 || allowUnknownSize;
+    final digest = SHA256Digest();
+    await for (final bytes in target.openRead()) {
+      digest.update(bytes is Uint8List ? bytes : Uint8List.fromList(bytes), 0,
+          bytes.length);
+    }
+    final result = Uint8List(32);
+    digest.doFinal(result, 0);
+    return result
+            .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+            .join() ==
+        asset.sha256;
   }
 
   /// 按设备架构匹配最合适的 APK（纯函数，便于单元测试）
@@ -240,7 +378,7 @@ class UpdateService {
   /// 下载更新安装包到本地，返回本地路径；用户取消时返回 null
   ///
   /// [onProgress] 的 total 在服务端未返回 Content-Length 时回退为 asset.size。
-  /// 已存在且大小一致的完整安装包会被直接复用。
+  /// 已存在且大小、哈希一致的当前安装包会被直接复用。
   Future<String?> downloadUpdate({
     required ReleaseAsset asset,
     required String version,
@@ -248,14 +386,11 @@ class UpdateService {
     CancelToken? cancelToken,
   }) async {
     final dir = await _getDownloadDir();
-    final ext = p.extension(asset.name).toLowerCase();
-    final savePath = p.join(dir.path, 'update_v$version$ext');
+    final savePath = p.join(dir.path, downloadFileName(asset, version));
     final target = File(savePath);
 
     // 已存在完整安装包则直接复用
-    if (target.existsSync() &&
-        asset.size > 0 &&
-        target.lengthSync() == asset.size) {
+    if (await _isComplete(target, asset)) {
       onProgress?.call(asset.size, asset.size);
       return savePath;
     }
@@ -276,8 +411,8 @@ class UpdateService {
           },
         );
 
-        // 下载完成后按大小校验文件完整性
-        if (asset.size > 0 && target.lengthSync() != asset.size) {
+        // 下载完成后校验大小和可用的 SHA-256，避免同版本旧包被复用
+        if (!await _isComplete(target, asset, allowUnknownSize: true)) {
           await _deleteQuietly(target);
           throw const UpdateException('安装包校验失败，请重新下载');
         }
@@ -304,6 +439,8 @@ class UpdateService {
 
   /// 获取本次更新下载的存储目录（按平台选择）
   Future<Directory> _getDownloadDir() async {
+    final loader = _downloadDirectoryLoader;
+    if (loader != null) return loader();
     if (Platform.isAndroid) {
       final dir = await getExternalStorageDirectory();
       if (dir == null) {
@@ -457,11 +594,25 @@ class ReleaseAsset {
   final String name;
   final String downloadUrl;
   final int size;
+  final int? id;
+  final String? sha256;
+  final DateTime? updatedAt;
+
+  ReleaseAsset withDigest(String digest) => ReleaseAsset(
+      name: name,
+      downloadUrl: downloadUrl,
+      size: size,
+      id: id,
+      sha256: digest,
+      updatedAt: updatedAt);
 
   const ReleaseAsset({
     required this.name,
     required this.downloadUrl,
     required this.size,
+    this.id,
+    this.sha256,
+    this.updatedAt,
   });
 }
 
@@ -470,16 +621,35 @@ class UpdateInfo {
   final bool hasUpdate;
   final String currentVersion;
   final String? latestVersion;
+  final int? currentBuildNumber;
+  final int? latestBuildNumber;
+  final DateTime? packageUpdatedAt;
   final String? releaseName;
   final String? releaseUrl;
   final String? releaseNotes;
   final String? error;
   final List<ReleaseAsset> assets;
 
+  bool get isPackageUpdate => hasUpdate && currentVersion == latestVersion;
+  String get currentLabel =>
+      'V$currentVersion${currentBuildNumber == null ? '' : '+$currentBuildNumber'}';
+  String get latestLabel =>
+      'V${latestVersion ?? '未知'}${latestBuildNumber == null ? '' : '+$latestBuildNumber'}';
+  String get statusMessage =>
+      error ??
+      (hasUpdate
+          ? isPackageUpdate
+              ? '发现同版本安装包更新（构建 $currentBuildNumber → $latestBuildNumber）'
+              : '发现新版本 V$latestVersion'
+          : '当前已是最新版本（V$currentVersion）');
+
   const UpdateInfo({
     required this.hasUpdate,
     required this.currentVersion,
     this.latestVersion,
+    this.currentBuildNumber,
+    this.latestBuildNumber,
+    this.packageUpdatedAt,
     this.releaseName,
     this.releaseUrl,
     this.releaseNotes,

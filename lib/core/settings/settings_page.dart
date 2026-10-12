@@ -46,12 +46,19 @@ class _SettingsPageState extends State<SettingsPage> {
   PackageInfo? _packageInfo;
   bool _isCheckingUpdate = false;
   UpdateInfo? _updateInfo;
+  final ValueNotifier<int> _updateRevision = ValueNotifier(0);
 
   @override
   void initState() {
     super.initState();
     _loadVersion();
     _checkUpdate();
+  }
+
+  @override
+  void dispose() {
+    _updateRevision.dispose();
+    super.dispose();
   }
 
   /// 加载当前版本号（本地读取，不请求网络）
@@ -88,16 +95,61 @@ class _SettingsPageState extends State<SettingsPage> {
     await showDialog<void>(
       context: context,
       barrierColor: appTheme.surfaceOverlay,
-      builder: (ctx) => AlertDialog(
-        title: const Text('当前版本信息'),
-        icon: Icon(Icons.info_outline_rounded, color: appTheme.primary),
-        content: Text(
-            '${info!.appName}\n版本：${info.version}\n构建号：${info.buildNumber}\n应用包名：${info.packageName}'
-            '${_updateInfo != null ? '\n更新检查：${_updateInfo!.error ?? (_updateInfo!.hasUpdate ? '发现新版本 V${_updateInfo!.latestVersion}' : '当前已是最新版本')}' : ''}'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('关闭'))
-        ],
+      builder: (ctx) => ValueListenableBuilder<int>(
+        valueListenable: _updateRevision,
+        builder: (_, __, ___) {
+          final update = _updateInfo;
+          final build = update?.currentBuildNumber ??
+              UpdateService.normalizeBuildNumber(info!.buildNumber,
+                  Platform.isAndroid ? 'android' : 'windows');
+          return AlertDialog(
+            title: const Text('当前版本信息'),
+            icon: Icon(Icons.info_outline_rounded, color: appTheme.primary),
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(ctx).height * 0.55),
+              child: SingleChildScrollView(
+                  child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                      '${info!.appName}\n版本：${info.version}\n构建号：${build ?? info.buildNumber}'),
+                  if (update?.latestVersion != null) ...[
+                    AppSpacing.h12,
+                    Text('最新安装包：${update!.latestLabel}'),
+                    if (update.packageUpdatedAt != null)
+                      Text(
+                          '更新时间：${update.packageUpdatedAt!.toLocal().toIso8601String().substring(0, 16).replaceFirst('T', ' ')}'),
+                  ],
+                  AppSpacing.h12,
+                  Text(_isCheckingUpdate
+                      ? '正在检查更新…'
+                      : update?.statusMessage ?? '尚未检查更新'),
+                  if (update?.releaseNotes?.isNotEmpty == true) ...[
+                    AppSpacing.h12,
+                    const Text('更新说明'),
+                    Text(update!.releaseNotes!),
+                  ],
+                ],
+              )),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx), child: const Text('关闭')),
+              if (update?.hasUpdate == true)
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showUpdateDialog(appTheme);
+                    },
+                    child: const Text('查看更新')),
+              TextButton(
+                  onPressed: _isCheckingUpdate ? null : () => _checkUpdate(),
+                  child: const Text('检查更新')),
+            ],
+          );
+        },
       ),
     );
   }
@@ -109,6 +161,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _isCheckingUpdate = true;
       _updateInfo = null;
     });
+    _updateRevision.value++;
 
     UpdateInfo info;
     try {
@@ -129,11 +182,9 @@ class _SettingsPageState extends State<SettingsPage> {
         _currentVersion = info.currentVersion;
       }
     });
+    _updateRevision.value++;
     if (manual) {
-      final message = info.error ??
-          (info.hasUpdate
-              ? '发现新版本 V${info.latestVersion}，点击更新即可下载'
-              : '当前已是最新版本（V${info.currentVersion}）');
+      final message = info.statusMessage;
       AppSnackBar.show(
         context,
         message,
@@ -354,7 +405,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   onPressed: hasUpdate
                       ? () => _showUpdateDialog(appTheme)
                       : () => _checkUpdate(manual: true),
-                  child: Text(hasUpdate ? '更新 V$latestVersion' : '检查更新',
+                  child: Text(
+                      hasUpdate
+                          ? (_updateInfo!.isPackageUpdate
+                              ? '安装包更新'
+                              : '更新 V$latestVersion')
+                          : '检查更新',
                       style: AppTypography.caption
                           .copyWith(color: appTheme.primary)),
                 ),
@@ -409,7 +465,7 @@ class _SettingsPageState extends State<SettingsPage> {
               Icon(Icons.system_update_rounded, color: appTheme.sage, size: 26),
         ),
         title: Text(
-          '发现新版本',
+          info.isPackageUpdate ? '发现安装包更新' : '发现新版本',
           style: AppTypography.displayMd.copyWith(color: appTheme.earth),
           textAlign: TextAlign.center,
         ),
@@ -417,7 +473,7 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'V${info.currentVersion} → V${info.latestVersion}',
+              '${info.currentLabel} → ${info.latestLabel}',
               style: AppTypography.bodyMd.copyWith(
                 fontWeight: FontWeight.w600,
                 color: appTheme.sage,
