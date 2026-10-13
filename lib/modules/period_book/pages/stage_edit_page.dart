@@ -1483,6 +1483,12 @@ class _StageEditPageState extends State<StageEditPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 时间（可选）
+          EntryDateField(
+            selectedDate: _additionEntryDate,
+            onDateChanged: (date) => setState(() => _additionEntryDate = date),
+          ),
+          const SizedBox(height: 10),
           // 金额输入
           TextField(
             controller: _additionAmountController,
@@ -1548,12 +1554,6 @@ class _StageEditPageState extends State<StageEditPage> {
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 14, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          // 时间（可选）
-          EntryDateField(
-            selectedDate: _additionEntryDate,
-            onDateChanged: (date) => setState(() => _additionEntryDate = date),
           ),
           const SizedBox(height: 10),
           // 操作按钮行

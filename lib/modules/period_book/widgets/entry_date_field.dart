@@ -76,22 +76,32 @@ class EntryDateField extends StatelessWidget {
                 },
           child: const Text('今天'),
         ),
-        if (selected != null)
-          IconButton(
-            tooltip: '清除日期',
-            onPressed:
-                onDateChanged == null ? null : () => onDateChanged?.call(null),
-            icon: const Icon(Icons.close_rounded, size: 18),
+        Container(
+          key: const ValueKey('entry-date-box'),
+          decoration: BoxDecoration(
+            color: selected != null
+                ? appTheme.primary.withValues(alpha: 0.08)
+                : appTheme.creamDark,
+            borderRadius: BorderRadius.circular(appTheme.radiusSm),
           ),
-        TextButton.icon(
-          onPressed: onDateChanged == null ? null : () => _pickDate(context),
-          style: TextButton.styleFrom(
-              foregroundColor: accent,
-              backgroundColor: selected != null
-                  ? appTheme.primary.withValues(alpha: 0.08)
-                  : appTheme.creamDark),
-          icon: const Icon(Icons.calendar_today_outlined, size: 16),
-          label: Text(selected == null ? '选择日期' : displayText),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            TextButton.icon(
+              onPressed:
+                  onDateChanged == null ? null : () => _pickDate(context),
+              style: TextButton.styleFrom(foregroundColor: accent),
+              icon: const Icon(Icons.calendar_today_outlined, size: 16),
+              label: Text(selected == null ? '选择日期' : displayText),
+            ),
+            if (selected != null)
+              IconButton(
+                tooltip: '清除日期',
+                onPressed: onDateChanged == null
+                    ? null
+                    : () => onDateChanged?.call(null),
+                color: accent,
+                icon: const Icon(Icons.close_rounded, size: 18),
+              ),
+          ]),
         ),
       ],
     );

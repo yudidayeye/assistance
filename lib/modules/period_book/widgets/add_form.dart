@@ -5,7 +5,7 @@ import 'expense_category_helper.dart';
 
 /// 通用内嵌添加表单（大额追加 / 个人支出 / 其他支出）
 ///
-/// 四段结构：金额输入 → 描述/原因输入 → 时间（可选） → 操作按钮行（收起 + 确认添加）
+/// 四段结构：时间（可选） → 金额输入 → 描述/原因输入 → 操作按钮行（收起 + 确认添加）
 ///
 /// 键盘行为：
 /// - 金额输入框按"下一步" → 自动聚焦到描述输入框
@@ -148,6 +148,12 @@ class _AddFormState extends State<AddForm> {
             ),
             const SizedBox(height: 10),
           ],
+          // 时间（可选）
+          EntryDateField(
+            selectedDate: widget.selectedDate,
+            onDateChanged: widget.onDateChanged,
+          ),
+          const SizedBox(height: 10),
           // 金额输入
           TextField(
             controller: widget.amountController,
@@ -215,12 +221,6 @@ class _AddFormState extends State<AddForm> {
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
             style: TextStyle(fontSize: 14, color: appTheme.earth),
-          ),
-          const SizedBox(height: 10),
-          // 时间（可选）
-          EntryDateField(
-            selectedDate: widget.selectedDate,
-            onDateChanged: widget.onDateChanged,
           ),
           const SizedBox(height: 10),
           // 操作按钮行
