@@ -308,11 +308,16 @@ void main() {
     final chart = tester.widget<AiRelationChart>(find.byType(AiRelationChart));
     expect(chart.models.map((m) => m.creator).toSet().length, 25);
     expect(chart.models.every((m) => m.taskCost != null), isTrue);
+    await tester.tap(find.text('厂商：全部'));
+    await tester.pumpAndSettle();
     expect(
         tester
-            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
-            .items,
-        hasLength(26));
+            .widget<ListView>(find.byType(ListView).last)
+            .childrenDelegate
+            .estimatedChildCount,
+        25);
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
     expect(find.text('暂无可绘制的成本数据，请切换价格口径'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -354,14 +359,11 @@ void main() {
             .models
             .map((m) => m.slug),
         ['a', 'b']);
-    expect(
-        tester
-            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
-            .items,
-        hasLength(3));
-    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.tap(find.text('厂商：全部'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('厂商B').last);
+    expect(find.byKey(const ValueKey('creator-option-厂商C')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('creator-option-厂商B')));
+    await tester.tap(find.text('确定'));
     await tester.pumpAndSettle();
     expect(
         tester
@@ -383,16 +385,75 @@ void main() {
             .single
             .slug,
         'a');
-    expect(
-        tester
-            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
-            .value,
-        '');
-    expect(
-        tester
-            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
-            .items,
-        hasLength(2));
+    expect(find.text('厂商：全部'), findsOneWidget);
+    await tester.tap(find.text('厂商：全部'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('creator-option-厂商A')), findsOneWidget);
+    expect(find.byKey(const ValueKey('creator-option-厂商B')), findsNothing);
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('厂商可同时多选，分数变化保留有效选择，清空及取消行为正确', (tester) async {
+    tester.view.physicalSize = const Size(360, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final snapshot = AiSnapshot(fetchedAt: DateTime.utc(2026, 10, 13), models: [
+      const AiModel(
+          slug: 'a',
+          name: '模型A',
+          creator: '厂商A',
+          intelligence: 60,
+          taskCost: 0.1),
+      const AiModel(
+          slug: 'b',
+          name: '模型B',
+          creator: '厂商B',
+          intelligence: 40,
+          taskCost: 0.05),
+      const AiModel(
+          slug: 'c',
+          name: '模型C',
+          creator: '厂商C',
+          intelligence: 56,
+          taskCost: 0.03),
+    ]);
+    final service = AiLeaderboardService(
+        cacheReader: () async => jsonEncode(snapshot.toJson()),
+        cacheWriter: (_) async {});
+    await tester.pumpWidget(MaterialApp(
+        theme: ThemeProvider.instance.themeData,
+        home: AiModelsPage(service: service)));
+    await tester.pumpAndSettle();
+    List<String> shown() => tester
+        .widget<AiRelationChart>(find.byType(AiRelationChart))
+        .models
+        .map((m) => m.slug)
+        .toList();
+    await tester.tap(find.text('厂商：全部'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('creator-option-厂商A')));
+    await tester.tap(find.byKey(const ValueKey('creator-option-厂商B')));
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+    expect(shown(), ['a', 'b']);
+    expect(find.text('厂商：2 家'), findsOneWidget);
+    tester.widget<Slider>(find.byType(Slider)).onChanged!(50);
+    await tester.pumpAndSettle();
+    expect(shown(), ['a']);
+    expect(find.text('厂商：1 家'), findsOneWidget);
+    await tester.tap(find.text('厂商：1 家'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('清空选择'));
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+    expect(shown(), ['a', 'c']);
+    await tester.tap(find.text('厂商：全部'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('creator-option-厂商C')));
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
+    expect(shown(), ['a', 'c']);
     expect(tester.takeException(), isNull);
   });
 }

@@ -22,7 +22,7 @@ class _AiModelsPageState extends State<AiModelsPage> {
   bool _cached = false;
   String? _error;
   String _search = '';
-  String? _creator;
+  final Set<String> _selectedCreators = {};
   double _minimumScore = 35;
   List<AiModel> get _scoreModels =>
       modelsAboveScore(_snapshot?.models ?? [], _minimumScore);
@@ -66,10 +66,7 @@ class _AiModelsPageState extends State<AiModelsPage> {
         _cached = false;
         _selected = null;
         _minimumScore = _minimumScore.clamp(0, _sliderMax).toDouble();
-        if (_creator != null &&
-            !_scoreModels.any((m) => m.creator == _creator)) {
-          _creator = null;
-        }
+        _selectedCreators.retainAll(_scoreModels.map((m) => m.creator));
       });
     } on AiQueryException catch (e) {
       if (mounted) {
@@ -102,7 +99,8 @@ class _AiModelsPageState extends State<AiModelsPage> {
     final creators = _scoreModels.map((m) => m.creator).toSet().toList();
     final models = _scoreModels
         .where((m) =>
-            (_creator == null || m.creator == _creator) &&
+            (_selectedCreators.isEmpty ||
+                _selectedCreators.contains(m.creator)) &&
             '${m.name} ${m.creator}'
                 .toLowerCase()
                 .contains(_search.toLowerCase()))
@@ -165,10 +163,8 @@ class _AiModelsPageState extends State<AiModelsPage> {
                         .clamp(0, _sliderMax)
                         .toDouble();
                     _selected = null;
-                    if (_creator != null &&
-                        !_scoreModels.any((m) => m.creator == _creator)) {
-                      _creator = null;
-                    }
+                    _selectedCreators
+                        .retainAll(_scoreModels.map((m) => m.creator));
                   })),
           const Text('拖动滑动条调整最低分数，模型按智能指数从高到低排列。',
               style: AppTypography.caption),
@@ -203,27 +199,37 @@ class _AiModelsPageState extends State<AiModelsPage> {
             )),
             const SizedBox(width: 16),
             Expanded(
-                child: DropdownButton<String>(
-              isExpanded: true,
-              value: _creator ?? '',
-              items: [
-                const DropdownMenuItem(
-                    value: '',
-                    child: Text('全部符合条件的厂商',
-                        maxLines: 1, overflow: TextOverflow.ellipsis)),
-                ...creators.map((c) => DropdownMenuItem(
-                    value: c,
-                    child: Tooltip(
-                        message: c,
-                        child: Text(c,
-                            maxLines: 1, overflow: TextOverflow.ellipsis)))),
-              ],
-              onChanged: (value) => setState(() {
-                _creator = value == '' ? null : value;
-                _selected = null;
-              }),
+                child: TextButton.icon(
+              onPressed:
+                  creators.isEmpty ? null : () => _chooseCreators(creators),
+              icon: const Icon(Icons.filter_list_rounded, size: 16),
+              label: Text(
+                  _selectedCreators.isEmpty
+                      ? '厂商：全部'
+                      : '厂商：${_selectedCreators.length} 家',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
             )),
           ]),
+          if (_selectedCreators.isNotEmpty)
+            Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: _selectedCreators
+                    .map((creator) => InputChip(
+                          label: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                  maxWidth:
+                                      MediaQuery.sizeOf(context).width - 112),
+                              child: Text(creator,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis)),
+                          onDeleted: () => setState(() {
+                            _selectedCreators.remove(creator);
+                            _selected = null;
+                          }),
+                        ))
+                    .toList()),
           const SizedBox(height: 8),
           Text('${_metric.label}（${_metric.unit}） · $plotCount 个模型入图'),
           if (_metric == AiCostMetric.task)
@@ -300,6 +306,74 @@ class _AiModelsPageState extends State<AiModelsPage> {
         ],
       ]),
     );
+  }
+
+  Future<void> _chooseCreators(List<String> creators) async {
+    final pending = Set<String>.of(_selectedCreators);
+    final result = await showModalBottomSheet<Set<String>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+          builder: (ctx, updateSheet) => SafeArea(
+                child: SizedBox(
+                  height: MediaQuery.sizeOf(ctx).height * 0.75,
+                  child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(children: [
+                              const Expanded(
+                                  child: Text('选择厂商（可多选）',
+                                      style: AppTypography.displayMd)),
+                              TextButton(
+                                  onPressed: () => updateSheet(pending.clear),
+                                  child: const Text('清空选择')),
+                            ]),
+                            Text(
+                                '只列出智能指数 ≥ ${_minimumScore.toStringAsFixed(1)} 的厂商；不单独选择时展示全部。',
+                                style: AppTypography.caption),
+                            Expanded(
+                                child: ListView.builder(
+                                    itemCount: creators.length,
+                                    itemBuilder: (ctx, index) {
+                                      final creator = creators[index];
+                                      return CheckboxListTile(
+                                          key: ValueKey(
+                                              'creator-option-$creator'),
+                                          contentPadding: EdgeInsets.zero,
+                                          title: Text(creator),
+                                          value: pending.contains(creator),
+                                          onChanged: (value) => updateSheet(() {
+                                                if (value == true) {
+                                                  pending.add(creator);
+                                                } else {
+                                                  pending.remove(creator);
+                                                }
+                                              }));
+                                    })),
+                            Row(children: [
+                              TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('取消')),
+                              const Spacer(),
+                              FilledButton(
+                                  onPressed: () => Navigator.pop(
+                                      ctx, Set<String>.of(pending)),
+                                  child: const Text('确定')),
+                            ]),
+                          ])),
+                ),
+              )),
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _selectedCreators
+        ..clear()
+        ..addAll(
+            result.intersection(_scoreModels.map((m) => m.creator).toSet()));
+      _selected = null;
+    });
   }
 
   void _showLargeChart(List<AiModel> models) {
