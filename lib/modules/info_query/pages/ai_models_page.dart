@@ -58,7 +58,7 @@ class _AiModelsPageState extends State<AiModelsPage> {
         _cached = false;
         _selected = null;
         if (_creator != null &&
-            !result.models.any((m) => m.creator == _creator)) {
+            !topCreators(result.models).contains(_creator)) {
           _creator = null;
         }
       });
@@ -90,16 +90,16 @@ class _AiModelsPageState extends State<AiModelsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).appTheme;
+    final creators = topCreators(_snapshot?.models ?? []);
+    final allowed = creators.toSet();
     final models = (_snapshot?.models ?? [])
         .where((m) =>
+            allowed.contains(m.creator) &&
             (_creator == null || m.creator == _creator) &&
             '${m.name} ${m.creator}'
                 .toLowerCase()
                 .contains(_search.toLowerCase()))
         .toList();
-    final creators =
-        (_snapshot?.models.map((m) => m.creator).toSet().toList() ?? [])
-          ..sort();
     final frontier = paretoFrontier(models, _metric).map((m) => m.slug).toSet();
     final plotCount = models.where((m) => (m.cost(_metric) ?? 0) > 0).length;
     final date = _snapshot?.fetchedAt
@@ -143,6 +143,7 @@ class _AiModelsPageState extends State<AiModelsPage> {
           Text('${_cached ? "上次查询缓存" : "本次获取"}：$date',
               style: AppTypography.caption.copyWith(color: theme.earthLight)),
           const Text('以上为获取时间；数据更新频率以源站为准。', style: AppTypography.caption),
+          const Text('仅展示前20家厂商，按各厂商最高智能指数排名。', style: AppTypography.caption),
           const SizedBox(height: 16),
           TextField(
               decoration: const InputDecoration(
@@ -170,7 +171,7 @@ class _AiModelsPageState extends State<AiModelsPage> {
             DropdownButton<String>(
                 value: _creator ?? '',
                 items: [
-                  const DropdownMenuItem(value: '', child: Text('全部厂商')),
+                  const DropdownMenuItem(value: '', child: Text('前20家厂商')),
                   ...creators
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                 ],

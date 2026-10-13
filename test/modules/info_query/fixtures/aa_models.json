@@ -1,0 +1,33 @@
+{
+  "models": [
+    {
+      "slug": "gemini-3-5-flash",
+      "name": "Gemini 3.5 Flash (High)",
+      "modelCreatorName": "Google",
+      "intelligenceIndex": 32.5983283695905,
+      "intelligenceIndexIsEstimated": false,
+      "intelligenceIndexCostPerTask": 3.6936902127611133,
+      "price1mInputTokens": 1.5,
+      "price1mOutputTokens": 9
+    },
+    {
+      "slug": "gpt-6-sol-low",
+      "name": "GPT-6 Sol (Low)",
+      "modelCreatorName": "OpenAI",
+      "intelligenceIndex": 34.1548755585733,
+      "intelligenceIndexIsEstimated": false,
+      "intelligenceIndexCostPerTask": 0.1327768361714764,
+      "price1mInputTokens": 2,
+      "price1mOutputTokens": 10
+    },
+    {
+      "slug": "glm-4-5v",
+      "name": "GLM-4.5V (Non-reasoning)",
+      "modelCreatorName": "Z AI",
+      "intelligenceIndex": 6.69669796944385,
+      "intelligenceIndexIsEstimated": true,
+      "price1mInputTokens": 0.6,
+      "price1mOutputTokens": 1.8
+    }
+  ]
+}

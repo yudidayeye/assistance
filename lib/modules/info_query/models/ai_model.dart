@@ -42,9 +42,7 @@ class AiModel {
         'name': name,
         'creator': creator,
         'intelligenceIndex': intelligence,
-        'intelligenceIndexCostPerTask': {
-          'cost': {'total': taskCost}
-        },
+        'intelligenceIndexCostPerTask': taskCost,
         'price1mInputTokens': inputPrice,
         'price1mOutputTokens': outputPrice,
         'intelligenceIndexIsEstimated': estimated,
@@ -68,7 +66,9 @@ class AiModel {
     }
     final perTask = row['intelligenceIndexCostPerTask'];
     final costs = perTask is Map ? perTask['cost'] : null;
-    final task = number(costs is Map ? costs['total'] : null);
+    // 当前榜单为数字字段；兼容旧缓存及源站曾使用的嵌套结构。
+    final task =
+        number(perTask) ?? number(costs is Map ? costs['total'] : null);
     return AiModel(
         slug: slug,
         name: name,
@@ -93,6 +93,23 @@ class AiSnapshot {
         'fetchedAt': fetchedAt.toIso8601String(),
         'models': models.map((m) => m.toJson()).toList()
       };
+}
+
+/// 以每家厂商最高智能指数排名，同分时按名称排序，保证榜单稳定。
+List<String> topCreators(List<AiModel> models, {int limit = 20}) {
+  final best = <String, double>{};
+  for (final model in models) {
+    final previous = best[model.creator];
+    if (previous == null || model.intelligence > previous) {
+      best[model.creator] = model.intelligence;
+    }
+  }
+  final ranked = best.keys.toList()
+    ..sort((a, b) {
+      final score = best[b]!.compareTo(best[a]!);
+      return score != 0 ? score : a.compareTo(b);
+    });
+  return ranked.take(limit).toList();
 }
 
 /// 帕累托前沿：不存在成本更低或相等、能力更高的模型。

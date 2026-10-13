@@ -6,8 +6,10 @@ Artificial Analysis 的公开榜单，不需要 API 密钥，不发送记账、�
 数据源：<https://artificialanalysis.ai/leaderboards/models>。
 
 默认图表与用户提供图片使用相同的指标：纵轴为 Artificial Analysis 智能指数，
-横轴为 `intelligenceIndexCostPerTask.cost.total`（美元 / 评测任务），使用对数轴。
+横轴为 `intelligenceIndexCostPerTask`（美元 / 评测任务），使用对数轴。
 模型厂商以颜色区分，点击圆点或列表显示详情，支持模型搜索、厂商筛选和放大缩放。
+图表、图例、厂商菜单和明细仅显示前20家厂商，按各家最高智能指数排名；
+每家厂商的不同模型仍保留，避免漏掉同厂商的低成本模型。
 虚线表示帕累托优势前沿。绿色区域按当前入图模型的成本和能力中位数划分，含义为
 相对低成本、高能力；其边界并非源站的固定阈值。图上的标签会避让重叠。
 
@@ -24,6 +26,5 @@ Artificial Analysis 的公开榜单，不需要 API 密钥，不发送记账、�
 验证：`flutter test test/modules/info_query`。测试包含源站已公开字段结构的解析、
 任务成本与 Token 价格区分、跨数据分块、缓存、错误反馈、图表定位和模块注册。
 
-当前开发云环境未放行 artificialanalysis.ai，真实榜单的在线获取暂未验证。
-网络域名配置已保存为待审阅草稿；保存草稿本身不会应用或发布环境配置。
-手机/Windows 查询使用设备自己的网络，云环境限制不随应用安装包分发。
+已使用真实公开榜单验证查询和模型解析。源站当前的每任务成本为数字字段，
+解析同时兼容旧缓存的嵌套结构。手机/Windows 查询使用设备自己的网络。

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -34,6 +35,29 @@ String html(List<Map<String, dynamic>> rows) =>
         })}')}])</script>';
 
 void main() {
+  test('真实榜单数字型每任务成本可解析并进入关系图，缺失值保持缺失', () {
+    final fixture = File('test/modules/info_query/fixtures/aa_models.json')
+        .readAsStringSync();
+    final models = parseAiLeaderboard(
+        '<script>self.__next_f.push([1,${jsonEncode('1:$fixture')}])</script>');
+    final plotted = models.where((m) => (m.taskCost ?? 0) > 0).toList();
+    expect(models, hasLength(3));
+    expect(plotted, hasLength(2));
+    final rows =
+        (jsonDecode(fixture) as Map<String, dynamic>)['models'] as List;
+    for (final model in plotted) {
+      final original = rows.firstWhere((row) => row['slug'] == model.slug);
+      expect(model.taskCost, original['intelligenceIndexCostPerTask']);
+    }
+    expect(models.firstWhere((m) => m.slug == 'glm-4-5v').taskCost, isNull);
+    final geometry =
+        ChartGeometry(plotted, AiCostMetric.task, const Size(360, 300));
+    for (final model in plotted) {
+      expect(geometry.point(model).dx.isFinite, isTrue);
+      expect(geometry.point(model).dy.isFinite, isTrue);
+    }
+  });
+
   test('解析公开网页的嵌套任务成本，字符串括号不影响解析，分块可重组', () {
     final payload = '1:${jsonEncode({
           'models': [row('模型["A"]{1}')]
@@ -66,6 +90,27 @@ void main() {
     expect(AiModel.fromJson(row('negative', cost: -1))!.taskCost, isNull);
     expect(() => parseAiLeaderboard('<html>challenge</html>'),
         throwsFormatException);
+  });
+
+  test('前20厂商按最高智能指数去重排名，保留各厂商不同模型而非只取20模型', () {
+    final models = [
+      for (var i = 0; i < 25; i++)
+        AiModel(
+            slug: '$i',
+            name: '模型$i',
+            creator: '厂商$i',
+            intelligence: i.toDouble()),
+      const AiModel(
+          slug: 'boost', name: '增强模型', creator: '厂商0', intelligence: 100),
+    ];
+    final ranked = topCreators(models);
+    expect(ranked, hasLength(20));
+    expect(ranked.first, '厂商0');
+    expect(ranked[1], '厂商24');
+    expect(ranked, isNot(contains('厂商1')));
+    final displayed = models.where((m) => ranked.contains(m.creator)).toList();
+    expect(displayed, hasLength(21));
+    expect(topCreators([]), isEmpty);
   });
 
   test('优势前沿排除同价低分、同分高价，成本为零仍可比较', () {
