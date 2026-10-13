@@ -10,6 +10,7 @@ import 'core/settings/settings_service.dart';
 import 'modules/period_tracker/period_module.dart';
 import 'modules/period_book/period_book_module.dart';
 import 'modules/vault/vault_module.dart';
+import 'modules/info_query/info_query_module.dart';
 import 'modules/vault/services/vault_shortcut_service.dart';
 
 void main(List<String> args) async {
@@ -33,6 +34,7 @@ Future<GoRouter> _bootstrap(List<String> args) async {
   debugPrint('[Boot] 3/6 注册模块...');
   ModuleRegistry.instance.reset();
   await ModuleRegistry.instance.registerAll([
+    InfoQueryModule(),
     PeriodTrackerModule(),
     PeriodBookModule(),
     VaultModule(),
