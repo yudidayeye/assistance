@@ -23,6 +23,14 @@ class _AiModelsPageState extends State<AiModelsPage> {
   String? _error;
   String _search = '';
   String? _creator;
+  double _minimumScore = 35;
+  List<AiModel> get _scoreModels =>
+      modelsAboveScore(_snapshot?.models ?? [], _minimumScore);
+  double get _highestScore => (_snapshot?.models ?? []).fold<double>(
+      0,
+      (highest, model) =>
+          model.intelligence > highest ? model.intelligence : highest);
+  double get _sliderMax => _highestScore > 35 ? _highestScore : 35;
   AiCostMetric _metric = AiCostMetric.task;
   AiModel? _selected;
 
@@ -57,8 +65,9 @@ class _AiModelsPageState extends State<AiModelsPage> {
         _snapshot = result;
         _cached = false;
         _selected = null;
+        _minimumScore = _minimumScore.clamp(0, _sliderMax).toDouble();
         if (_creator != null &&
-            !topCreators(result.models).contains(_creator)) {
+            !_scoreModels.any((m) => m.creator == _creator)) {
           _creator = null;
         }
       });
@@ -90,11 +99,9 @@ class _AiModelsPageState extends State<AiModelsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).appTheme;
-    final creators = topCreators(_snapshot?.models ?? []);
-    final allowed = creators.toSet();
-    final models = (_snapshot?.models ?? [])
+    final creators = _scoreModels.map((m) => m.creator).toSet().toList();
+    final models = _scoreModels
         .where((m) =>
-            allowed.contains(m.creator) &&
             (_creator == null || m.creator == _creator) &&
             '${m.name} ${m.creator}'
                 .toLowerCase()
@@ -143,7 +150,28 @@ class _AiModelsPageState extends State<AiModelsPage> {
           Text('${_cached ? "上次查询缓存" : "本次获取"}：$date',
               style: AppTypography.caption.copyWith(color: theme.earthLight)),
           const Text('以上为获取时间；数据更新频率以源站为准。', style: AppTypography.caption),
-          const Text('仅展示前20家厂商，按各厂商最高智能指数排名。', style: AppTypography.caption),
+          Text(
+              '智能指数 ≥ ${_minimumScore.toStringAsFixed(1)} · 目前最高 ${_highestScore.toStringAsFixed(1)}',
+              style: AppTypography.label),
+          Slider(
+              value: _minimumScore,
+              min: 0,
+              max: _sliderMax,
+              label: _minimumScore.toStringAsFixed(1),
+              semanticFormatterCallback: (value) =>
+                  '最低智能指数 ${value.toStringAsFixed(1)} 分',
+              onChanged: (value) => setState(() {
+                    _minimumScore = ((value * 10).round() / 10)
+                        .clamp(0, _sliderMax)
+                        .toDouble();
+                    _selected = null;
+                    if (_creator != null &&
+                        !_scoreModels.any((m) => m.creator == _creator)) {
+                      _creator = null;
+                    }
+                  })),
+          const Text('拖动滑动条调整最低分数，模型按智能指数从高到低排列。',
+              style: AppTypography.caption),
           const SizedBox(height: 16),
           TextField(
               decoration: const InputDecoration(
@@ -181,7 +209,7 @@ class _AiModelsPageState extends State<AiModelsPage> {
               items: [
                 const DropdownMenuItem(
                     value: '',
-                    child: Text('前20家厂商',
+                    child: Text('全部符合条件的厂商',
                         maxLines: 1, overflow: TextOverflow.ellipsis)),
                 ...creators.map((c) => DropdownMenuItem(
                     value: c,

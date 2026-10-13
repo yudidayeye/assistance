@@ -28,8 +28,12 @@ class AiRelationChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final plotted = models.where((m) => (m.cost(metric) ?? 0) > 0).toList();
     if (plotted.isEmpty) {
-      return const SizedBox(
-          height: 180, child: Center(child: Text('暂无可绘制的成本数据，请切换价格口径')));
+      return SizedBox(
+          height: 180,
+          child: Center(
+              child: Text(models.isEmpty
+                  ? '没有符合当前智能指数或搜索条件的模型'
+                  : '当前模型未公布此项成本，请切换价格口径或查看原始榜单')));
     }
     final theme = Theme.of(context).appTheme;
     return LayoutBuilder(builder: (context, constraints) {

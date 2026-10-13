@@ -95,21 +95,13 @@ class AiSnapshot {
       };
 }
 
-/// 以每家厂商最高智能指数排名，同分时按名称排序，保证榜单稳定。
-List<String> topCreators(List<AiModel> models, {int limit = 20}) {
-  final best = <String, double>{};
-  for (final model in models) {
-    final previous = best[model.creator];
-    if (previous == null || model.intelligence > previous) {
-      best[model.creator] = model.intelligence;
-    }
-  }
-  final ranked = best.keys.toList()
+/// 按智能指数下限筛选，包含边界值，并从高到低排列。
+List<AiModel> modelsAboveScore(List<AiModel> models, double minimum) {
+  return models.where((m) => m.intelligence >= minimum).toList()
     ..sort((a, b) {
-      final score = best[b]!.compareTo(best[a]!);
-      return score != 0 ? score : a.compareTo(b);
+      final score = b.intelligence.compareTo(a.intelligence);
+      return score != 0 ? score : a.name.compareTo(b.name);
     });
-  return ranked.take(limit).toList();
 }
 
 /// 帕累托前沿：不存在成本更低或相等、能力更高的模型。

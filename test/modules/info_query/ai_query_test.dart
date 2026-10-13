@@ -92,25 +92,25 @@ void main() {
         throwsFormatException);
   });
 
-  test('前20厂商按最高智能指数去重排名，保留各厂商不同模型而非只取20模型', () {
+  test('智能指数按35分下限包含边界，按模型从高到低排列，不限制厂商数量', () {
     final models = [
       for (var i = 0; i < 25; i++)
         AiModel(
             slug: '$i',
             name: '模型$i',
             creator: '厂商$i',
-            intelligence: i.toDouble()),
+            intelligence: 35 + i.toDouble()),
       const AiModel(
-          slug: 'boost', name: '增强模型', creator: '厂商0', intelligence: 100),
+          slug: 'low', name: '低分', creator: '低分厂商', intelligence: 34.9),
     ];
-    final ranked = topCreators(models);
-    expect(ranked, hasLength(20));
-    expect(ranked.first, '厂商0');
-    expect(ranked[1], '厂商24');
-    expect(ranked, isNot(contains('厂商1')));
-    final displayed = models.where((m) => ranked.contains(m.creator)).toList();
-    expect(displayed, hasLength(21));
-    expect(topCreators([]), isEmpty);
+    final displayed = modelsAboveScore(models, 35);
+    expect(displayed, hasLength(25));
+    expect(displayed.first.intelligence, 59);
+    expect(displayed.last.intelligence, 35);
+    expect(displayed.map((m) => m.creator).toSet(), hasLength(25));
+    expect(modelsAboveScore(models, 55).map((m) => m.intelligence),
+        [59, 58, 57, 56, 55]);
+    expect(modelsAboveScore(models, 60), isEmpty);
   });
 
   test('优势前沿排除同价低分、同分高价，成本为零仍可比较', () {
@@ -283,7 +283,7 @@ void main() {
     expect(find.textContaining('上次查询缓存'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('真实格式的每任务成本有图，长厂商名不溢出，菜单与图表均仅有前20家', (tester) async {
+  testWidgets('真实格式任务成本有图，长厂商名不溢出且不限制厂商数量', (tester) async {
     tester.view.physicalSize = const Size(360, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -293,7 +293,7 @@ void main() {
             slug: '$i',
             name: '模型$i',
             creator: '名称很长的人工智能研究开发厂商 Long AI Research Company $i',
-            intelligence: i.toDouble(),
+            intelligence: 35 + i.toDouble(),
             taskCost: 0.01 * (i + 1))
     ];
     final snapshot =
@@ -306,14 +306,93 @@ void main() {
         home: AiModelsPage(service: service)));
     await tester.pumpAndSettle();
     final chart = tester.widget<AiRelationChart>(find.byType(AiRelationChart));
-    expect(chart.models.map((m) => m.creator).toSet().length, 20);
+    expect(chart.models.map((m) => m.creator).toSet().length, 25);
     expect(chart.models.every((m) => m.taskCost != null), isTrue);
     expect(
         tester
             .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
             .items,
-        hasLength(21));
+        hasLength(26));
     expect(find.text('暂无可绘制的成本数据，请切换价格口径'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('最低分默认35，拖动滑动条后模型、厂商菜单和图表联动更新', (tester) async {
+    tester.view.physicalSize = const Size(360, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final snapshot = AiSnapshot(fetchedAt: DateTime.utc(2026, 10, 13), models: [
+      const AiModel(
+          slug: 'a',
+          name: '模型A',
+          creator: '厂商A',
+          intelligence: 50,
+          taskCost: 0.1),
+      const AiModel(
+          slug: 'b',
+          name: '模型B',
+          creator: '厂商B',
+          intelligence: 35,
+          taskCost: 0.05),
+      const AiModel(
+          slug: 'c',
+          name: '模型C',
+          creator: '厂商C',
+          intelligence: 34.9,
+          taskCost: 0.03),
+    ]);
+    final service = AiLeaderboardService(
+        cacheReader: () async => jsonEncode(snapshot.toJson()),
+        cacheWriter: (_) async {});
+    await tester.pumpWidget(MaterialApp(
+        theme: ThemeProvider.instance.themeData,
+        home: AiModelsPage(service: service)));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Slider>(find.byType(Slider)).value, 35);
+    expect(
+        tester
+            .widget<AiRelationChart>(find.byType(AiRelationChart))
+            .models
+            .map((m) => m.slug),
+        ['a', 'b']);
+    expect(
+        tester
+            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+            .items,
+        hasLength(3));
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('厂商B').last);
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<AiRelationChart>(find.byType(AiRelationChart))
+            .models
+            .single
+            .slug,
+        'b');
+    final slider = tester.getRect(find.byType(Slider));
+    await tester.dragFrom(
+        Offset(slider.left + slider.width * 0.7, slider.center.dy),
+        Offset(slider.width * 0.12, 0));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Slider>(find.byType(Slider)).value, greaterThan(35));
+    expect(
+        tester
+            .widget<AiRelationChart>(find.byType(AiRelationChart))
+            .models
+            .single
+            .slug,
+        'a');
+    expect(
+        tester
+            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+            .value,
+        '');
+    expect(
+        tester
+            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+            .items,
+        hasLength(2));
     expect(tester.takeException(), isNull);
   });
 }
