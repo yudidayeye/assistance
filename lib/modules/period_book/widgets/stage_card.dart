@@ -109,7 +109,8 @@ class _StageCardState extends State<StageCard> {
         widget.stageCalc.additionsTotal -
         widget.stageCalc.shoppingTotal -
         widget.stageCalc.otherTotal;
-    return balance > expected;
+    // 按显示金额的分精度比较，避免小数运算误差让相等余额被误判为偏大。
+    return (balance * 100).round() > (expected * 100).round();
   }
 
   @override
