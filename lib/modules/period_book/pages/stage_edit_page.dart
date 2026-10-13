@@ -194,11 +194,11 @@ class _StageEditPageState extends State<StageEditPage> {
       await Scrollable.ensureVisible(target,
           alignment: 0.35,
           duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOut);
+          curve: Curves.easeInOutCubic);
       if (!mounted) return;
       setState(() => _highlightActive = true);
       // 只提示一次：短暂显现后淡出，避免反复闪烁打断阅读。
-      _highlightTimer = Timer(const Duration(milliseconds: 500), () {
+      _highlightTimer = Timer(const Duration(milliseconds: 300), () {
         if (mounted) setState(() => _highlightActive = false);
       });
     });

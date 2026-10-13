@@ -164,30 +164,43 @@ class ExpenseSectionCard extends StatelessWidget {
       );
     }
 
-    return AnimatedContainer(
+    final highlighted = expense.id == highlightedExpenseId;
+    return Stack(
       key: expense.id == focusExpenseId
           ? focusKey
           : ValueKey('expense_row_${expense.id}'),
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutCubic,
-      decoration: BoxDecoration(
-          color: expense.id == highlightedExpenseId
-              ? appTheme.primaryLight.withValues(alpha: 0.4)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(appTheme.radiusSm)),
-      child: ExpenseCategoryHelper.buildExpenseItem(
-        context: context,
-        appTheme: appTheme,
-        expenseId: expense.id,
-        showCategoryLabel: showCategoryLabel,
-        category: expense.category,
-        description: expense.description,
-        amount: expense.amount,
-        onTap: () => onEdit?.call(expense),
-        onDelete: () => onDelete?.call(expense),
-        leading: effectiveLeading,
-        entryDate: expense.entryDate,
-      ),
+      children: [
+        if (expense.id == focusExpenseId)
+          Positioned.fill(
+            child: IgnorePointer(
+              // 保持主题色不变，只过渡透明度，避免整行底色灰闪。
+              child: AnimatedOpacity(
+                opacity: highlighted ? 1 : 0,
+                duration: Duration(milliseconds: highlighted ? 180 : 320),
+                curve: Curves.easeInOutCubic,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: appTheme.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(appTheme.radiusSm),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ExpenseCategoryHelper.buildExpenseItem(
+          context: context,
+          appTheme: appTheme,
+          expenseId: expense.id,
+          showCategoryLabel: showCategoryLabel,
+          category: expense.category,
+          description: expense.description,
+          amount: expense.amount,
+          onTap: () => onEdit?.call(expense),
+          onDelete: () => onDelete?.call(expense),
+          leading: effectiveLeading,
+          entryDate: expense.entryDate,
+        ),
+      ],
     );
   }
 }
