@@ -153,32 +153,48 @@ class _AiModelsPageState extends State<AiModelsPage> {
                     _selected = null;
                   })),
           const SizedBox(height: 12),
-          Wrap(spacing: 16, runSpacing: 8, children: [
-            DropdownButton<AiCostMetric>(
-                value: _metric,
-                items: AiCostMetric.values
-                    .map(
-                        (m) => DropdownMenuItem(value: m, child: Text(m.label)))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _metric = value;
-                      _selected = null;
-                    });
-                  }
-                }),
-            DropdownButton<String>(
-                value: _creator ?? '',
-                items: [
-                  const DropdownMenuItem(value: '', child: Text('前20家厂商')),
-                  ...creators
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                ],
-                onChanged: (value) => setState(() {
-                      _creator = value == '' ? null : value;
-                      _selected = null;
-                    })),
+          Row(children: [
+            Expanded(
+                child: DropdownButton<AiCostMetric>(
+              isExpanded: true,
+              value: _metric,
+              items: AiCostMetric.values
+                  .map((m) => DropdownMenuItem(
+                      value: m,
+                      child: Text(m.label,
+                          maxLines: 1, overflow: TextOverflow.ellipsis)))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _metric = value;
+                    _selected = null;
+                  });
+                }
+              },
+            )),
+            const SizedBox(width: 16),
+            Expanded(
+                child: DropdownButton<String>(
+              isExpanded: true,
+              value: _creator ?? '',
+              items: [
+                const DropdownMenuItem(
+                    value: '',
+                    child: Text('前20家厂商',
+                        maxLines: 1, overflow: TextOverflow.ellipsis)),
+                ...creators.map((c) => DropdownMenuItem(
+                    value: c,
+                    child: Tooltip(
+                        message: c,
+                        child: Text(c,
+                            maxLines: 1, overflow: TextOverflow.ellipsis)))),
+              ],
+              onChanged: (value) => setState(() {
+                _creator = value == '' ? null : value;
+                _selected = null;
+              }),
+            )),
           ]),
           const SizedBox(height: 8),
           Text('${_metric.label}（${_metric.unit}） · $plotCount 个模型入图'),
@@ -211,11 +227,23 @@ class _AiModelsPageState extends State<AiModelsPage> {
               children: models
                   .map((m) => m.creator)
                   .toSet()
-                  .map((c) => Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.circle, size: 8, color: creatorColor(c)),
-                        const SizedBox(width: 4),
-                        Text(c, style: AppTypography.caption)
-                      ]))
+                  .map((c) => ConstrainedBox(
+                        constraints: BoxConstraints(
+                            maxWidth: MediaQuery.sizeOf(context).width - 32),
+                        child: Tooltip(
+                            message: c,
+                            child:
+                                Row(mainAxisSize: MainAxisSize.min, children: [
+                              Icon(Icons.circle,
+                                  size: 8, color: creatorColor(c)),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                  child: Text(c,
+                                      style: AppTypography.caption,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis)),
+                            ])),
+                      ))
                   .toList()),
           const SizedBox(height: 16),
           Text('模型明细（${models.length}）', style: AppTypography.displayMd),

@@ -283,4 +283,37 @@ void main() {
     expect(find.textContaining('上次查询缓存'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('真实格式的每任务成本有图，长厂商名不溢出，菜单与图表均仅有前20家', (tester) async {
+    tester.view.physicalSize = const Size(360, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final models = [
+      for (var i = 0; i < 25; i++)
+        AiModel(
+            slug: '$i',
+            name: '模型$i',
+            creator: '名称很长的人工智能研究开发厂商 Long AI Research Company $i',
+            intelligence: i.toDouble(),
+            taskCost: 0.01 * (i + 1))
+    ];
+    final snapshot =
+        AiSnapshot(fetchedAt: DateTime.utc(2026, 10, 13), models: models);
+    final service = AiLeaderboardService(
+        cacheReader: () async => jsonEncode(snapshot.toJson()),
+        cacheWriter: (_) async {});
+    await tester.pumpWidget(MaterialApp(
+        theme: ThemeProvider.instance.themeData,
+        home: AiModelsPage(service: service)));
+    await tester.pumpAndSettle();
+    final chart = tester.widget<AiRelationChart>(find.byType(AiRelationChart));
+    expect(chart.models.map((m) => m.creator).toSet().length, 20);
+    expect(chart.models.every((m) => m.taskCost != null), isTrue);
+    expect(
+        tester
+            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+            .items,
+        hasLength(21));
+    expect(find.text('暂无可绘制的成本数据，请切换价格口径'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
