@@ -20,9 +20,13 @@
 
 ## 发布版本规范
 
-- 发布版本必须通过仓库脚本执行：Windows 使用 `powershell -ExecutionPolicy Bypass -File scripts/release.ps1 <版本号> "<发布说明>"`，其他环境使用 `bash scripts/release.sh <版本号> "<发布说明>"`；
-- 用户仅要求“发布版本”但未指定版本号时，默认只递增修订号，例如 `1.2.3` → `1.2.4`；构建号由发布脚本自动递增。
-- 只有用户明确指定目标版本号时，才允许变更主版本号或次版本号，并严格使用用户指定的版本号执行发布脚本。
+- 发布版本必须通过 GitHub Actions 工作流执行，禁止用本地脚本发布：在 `master` 上运行 `gh workflow run release.yml --ref master -f version=1.2.16 -f mode=new -f notes="发布说明"`，等价于在 Actions 页面选择“Android 与 Windows 打包发布”后点击 Run workflow；
+- 工作流并行打包 Android 与 Windows，构建号自动递增，两边全部成功后创建标签、公开发布 Release，并上传 3 个 APK、1 个 `.exe` 及 `update-android.json`、`update-windows.json` 更新清单；提交、推送和打标签本身不会触发打包。
+- 用户仅要求“发布版本”但未指定版本号时，默认只递增修订号，例如 `1.2.3` → `1.2.4`；构建号由工作流自动递增。
+- 只有用户明确指定目标版本号时，才允许变更主版本号或次版本号，并严格使用用户指定的版本号调用工作流。
+- 重建已发布版本的安装包使用 `mode=existing`：保留原版本号、构建号和标签，只替换该 Release 的安装包与更新清单。
+- 发布完成后核对工作流结论与 Release 附件（4 个安装包 + 2 个更新 JSON）；失败时用 `gh run view --log-failed` 查因，再用 `existing` 重新触发。
+- `scripts/release.ps1` / `scripts/release.sh` 仅供本地调试构建，不作为发布手段；整体流程见 `docs/RELEASING.md`。
 
 ## 编码风格与命名约定
 
