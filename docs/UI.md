@@ -179,7 +179,7 @@ Apple 的留白是产品的展台。每个区块在标题上方至少保留 64px
 
 **`button-primary`（主要按钮）**：Apple 标志性的操作按钮。背景使用 `{colors.primary}`（操作蓝 #0066cc）；文字使用 `{colors.on-primary}` 和 `{typography.body}`（SF Pro Text 17px / 400）；圆角使用 `{rounded.pill}`，形成完整胶囊形；内边距为 11px × 22px。完整胶囊形本身就是品牌的主要操作信号。
 
-- 按下状态：`{component.button-primary-active}`，使用 `transform: scale(0.95)`，这是全系统统一的微交互。
+- 按下状态：`{component.button-primary-active}`，仅使用 `transform: scale(0.95)` 作为点击动画。
 - 焦点状态：`{component.button-primary-focus}`，使用 2px 实线 `{colors.primary-focus}` 外轮廓。
 
 **`button-secondary-pill`（次要胶囊按钮）**：当两个蓝色 CTA 并列出现时（如「进一步了解」与「购买」），用作第二按钮。背景透明，文字和 1px 边框均使用 `{colors.primary}`，圆角使用 `{rounded.pill}`，内边距为 11px × 22px，视觉上属于「幽灵胶囊按钮」。
@@ -238,7 +238,7 @@ Apple 的留白是产品的展台。每个区块在标题上方至少保留 64px
 - 交替使用 `{component.product-tile-light}`（或羊皮纸白变体）和 `{component.product-tile-dark}`，构建铺满宽度的章节节奏。颜色变化本身就是分隔线。
 - `{rounded.pill}` 只用于蓝色主要 CTA，以及其他需要明确表达「操作」的元素，例如配置器选项、搜索框和吸底栏 CTA。
 - 唯一的产品投影 `rgba(0, 0, 0, 0.22) 3px 5px 30px` 只应用于放置在表面上的产品渲染图，绝不应用于卡片、按钮或文本。
-- 所有按钮的按下状态统一使用 `transform: scale(0.95)`，作为系统级微交互。
+- 所有按钮的按下状态统一使用 `transform: scale(0.95)`；组件不得叠加其他点击动画。
 - 全局导航始终使用 `{colors.surface-black}`（纯黑）；在大多数页面中，这是唯一使用纯黑的区域。
 
 ### 不应做

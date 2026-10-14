@@ -121,6 +121,10 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      // 点击反馈使用控件自身的按压缩放，统一关闭墨水动画。
+      splashFactory: NoSplash.splashFactory,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
 
       // 色彩
       colorScheme: ColorScheme.light(

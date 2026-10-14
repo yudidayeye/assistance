@@ -121,7 +121,13 @@ class _BootErrorAppState extends State<BootErrorApp> {
       title: '理解 - 启动失败',
       debugShowCheckedModeBanner: false,
       locale: const Locale('zh', 'CN'),
-      theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
+      theme: ThemeData(
+        colorSchemeSeed: Colors.blue,
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+      ),
       home: Scaffold(
         appBar: AppBar(title: const Text('应用启动失败')),
         body: SafeArea(
