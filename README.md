@@ -270,34 +270,30 @@ build/windows/x64/runner/Release/
 
 ## 发布版本
 
-发布必须通过仓库脚本完成，脚本会更新 `pubspec.yaml`、提交版本变更、构建产物、创建 Git Tag、推送远程并创建 GitHub Release。
+发布**只能**通过 GitHub Actions 工作流执行。工作流完成打包、签名、提交版本号、创建 Git Tag、推送远程、创建并公开发布 GitHub Release，并上传 `update-android.json` 与 `update-windows.json` 更新清单。
 
-Windows PowerShell：
+在仓库 Actions 页面选择「Android 与 Windows 打包发布」，点击 **Run workflow**：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/release.ps1 1.2.7 "本次发布说明"
-```
+- 工作流分支：`master`
+- `version`：不带 `v` 的版本号，例如 `1.2.16`
+- `mode`：`new` 发布新版本；`existing` 重建已发布版本的全部安装包
+- `notes`：新版本发布说明（可选）
 
-其他 Shell：
+也可以用 GitHub CLI：
 
 ```bash
-bash scripts/release.sh 1.2.7 "本次发布说明"
+gh workflow run release.yml --ref master -f version=1.2.16 -f mode=new -f notes="本次发布说明"
 ```
 
-发布前需要：
-
-- 安装并登录 GitHub CLI：`gh auth login`
-- 确认当前位于正确分支
-- 确认工作区没有无关改动
-- Windows 安装包构建需要安装 Inno Setup 6
-- 先运行 `flutter analyze` 和相关测试
-
-版本规则：
+版本规则与前置条件：
 
 - 未明确指定版本号时，只递增修订号（patch），例如 `1.2.6` → `1.2.7`
-- 构建号由发布脚本自动递增
+- 构建号由工作流自动递增
 - 只有明确指定目标版本号时，才修改主版本号（major）或次版本号（minor）
-- 不要用手动修改版本号、打 Tag 或创建 Release 的方式替代脚本
+- 提交、推送、打标签都不会触发打包，工作流只支持手动运行
+- 发布前先通过 `flutter analyze` 和相关测试（见提交规范）
+- Android 签名 Secrets 必须已配置，详见 [`docs/RELEASING.md`](docs/RELEASING.md)
+- 不要手动修改版本号、打 Tag 或创建 Release，也不要用本地脚本发布；`scripts/release.sh` / `scripts/release.ps1` 只为维护发布流程保留
 
 ## 相关文档
 

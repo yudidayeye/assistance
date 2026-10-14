@@ -91,14 +91,18 @@ Windows 用户收到更新提示。JSON 包含源码提交、构建号、文件�
 版本信息弹窗展示本机版本和构建号、当前平台最新安装包、更新时间、更新状态和
 说明，可直接重试检查或查看更新。不同平台的构建号可以不同。
 
-## 本地发布与脚本职责
+## 发布脚本职责（仅供工作流与本地调试）
 
-常规本地发布仍使用 `scripts/release.sh`（Linux）或 `scripts/release.ps1`（Windows）。
-Windows 完整本地发布需要 Android 与 Windows 工具链。
+工作流是唯一的发布通道：版本号、标签和 Release 全部由工作流创建。不要手动修改
+`pubspec.yaml` 版本号、不要手动打标签或建 Release，也不要用本地脚本发布。
 
 统一 Actions 通过 Bash 脚本的 `--ci-build` / `--ci-publish` / `--ci-single-publish` 和 PowerShell 脚本的
 `-BuildOnly -BuildNumber` 分离构建与发布；`scripts/ci_release.py` 负责版本规划、
 签名验证、产物清单及统一发布校验。这些模式由工作流传入参数，不需要用户手动调用。
+
+`scripts/release.sh`（Linux）与 `scripts/release.ps1`（Windows）只为维护发布流程本身
+保留，用于本地验证打包逻辑，不作为发布手段；本地完整构建需要 Android 与 Windows
+工具链，Windows 安装包还需要 Inno Setup 6。
 
 发布工具修改的 Python 校验测试：
 `python3 -m unittest discover -s test/scripts -p '*_test.py' -v`。

@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. 默认使用中文回答；标识符、日志与 commit message 用英文，注释与文档用简体中文
 2. 修改前端视觉、调颜色、调间距时 → 必读 [`docs/UI.md`](docs/UI.md)
 3. 提交前必须执行 `flutter analyze` 与**相关**测试；提交规范以 [`.codex/skills/commit/SKILL.md`](.codex/skills/commit/SKILL.md) 为唯一权威来源（Conventional Commits，中文描述）
-4. 发布版本必须走 `scripts/release.ps1` / `release.sh` 脚本，禁止手动改版本号、打 Tag 或建 Release
+4. 发布版本必须走 GitHub Actions 工作流，禁止手动改版本号、打 Tag、建 Release，也不要用本地脚本发布
 
 ## 常用命令
 
@@ -47,16 +47,17 @@ flutter test                                               # 仅共享层改动�
 
 ## 发布版本
 
-发布必须通过仓库脚本完成（更新 `pubspec.yaml` → 提交 → 构建 → 打 Tag → 推送 → 建 GitHub Release）：
+发布**只能**通过 GitHub Actions 工作流执行（`release.yml`，工作流分支 `master`），禁止手动改版本号、打 Tag、建 Release，也不要用本地脚本发布：
 
 ```bash
-powershell -ExecutionPolicy Bypass -File scripts/release.ps1 1.2.7 "本次发布说明"   # Windows
-bash scripts/release.sh 1.2.7 "本次发布说明"                                        # 其他环境
+gh workflow run release.yml --ref master -f version=1.2.16 -f mode=new -f notes="本次发布说明"
 ```
 
-- 用户仅要求「发布版本」而**未指定版本号时，只递增修订号**（`1.2.6` → `1.2.7`）；构建号由脚本自动递增
+- 工作流并行打包 Android 与 Windows，成功后建 Tag、公开发布 Release，并上传 3 个 APK、1 个 `.exe` 与 `update-android.json` / `update-windows.json` 更新清单
+- `mode=new` 发布新版本；`mode=existing` 重建已发布版本的安装包（保留原版本号、构建号与标签）
+- 用户仅要求「发布版本」而**未指定版本号时，只递增修订号**（`1.2.6` → `1.2.7`）；构建号由工作流自动递增
 - **只有用户明确指定目标版本号时**，才允许变更主版本号或次版本号
-- 前置条件：`gh auth login`、工作区无无关改动、Windows 安装包需 Inno Setup 6
+- `scripts/release.sh` / `scripts/release.ps1` 只为维护发布流程保留，不作为发布手段；详见 [`docs/RELEASING.md`](docs/RELEASING.md)
 
 ## UI 规范与字体
 
