@@ -668,7 +668,7 @@ class _SettingsPageState extends State<SettingsPage> {
           '、$bookPeriodsCount 个周期、$bookStagesCount 个阶段'
           '、$bookAdditionsCount 条追加、$bookExpensesCount 条支出'
           '、$bookLargeAdditionsCount 条大额追加、$bookLargeExpensesCount 条大额支出。\n'
-          '已存在的设置和记录将被覆盖。',
+          '新增内容将合并保留，已有设置和重复记录保持不变。',
           style: AppTypography.bodyMd
               .copyWith(color: appTheme.earthMedium, height: 1.5),
           textAlign: TextAlign.center,

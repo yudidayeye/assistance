@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
 import '../storage/database_service.dart';
 import '../theme/theme_provider.dart';
 import 'settings_service.dart';
@@ -216,7 +217,7 @@ class ImportExportService {
         final settings = data['app_settings'] as Map<String, dynamic>? ?? {};
         for (final entry in settings.entries) {
           await txn.rawInsert(
-            'INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)',
+            'INSERT OR IGNORE INTO app_settings (key, value) VALUES (?, ?)',
             [entry.key, entry.value.toString()],
           );
         }
@@ -228,7 +229,7 @@ class ImportExportService {
         for (final record in periodRecords) {
           final map = Map<String, dynamic>.from(record as Map);
           await txn.rawInsert(
-            '''INSERT OR REPLACE INTO mod_period_tracker_records
+            '''INSERT OR IGNORE INTO mod_period_tracker_records
                (id, start_date, end_date, cycle_length, note, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, ?)''',
             [
@@ -338,12 +339,21 @@ class ImportExportService {
       'CREATE INDEX IF NOT EXISTS idx_pb_large_expenses_period ON mod_period_book_large_expenses(period_id)',
     );
 
+    await _prepareMerge(txn, data, {
+      'period_book_periods': null,
+      'period_book_stages': 'period_book_periods',
+      'period_book_additions': 'period_book_stages',
+      'period_book_expenses': 'period_book_stages',
+      'period_book_large_additions': 'period_book_periods',
+      'period_book_large_expenses': 'period_book_periods',
+    });
+
     // 导入周期
     final periods = (data['period_book_periods'] as List<dynamic>?) ?? [];
     for (final period in periods) {
       final map = Map<String, dynamic>.from(period as Map);
       await txn.rawInsert(
-        '''INSERT OR REPLACE INTO mod_period_book_periods
+        '''INSERT INTO mod_period_book_periods
            (id, start_date, end_date, base_amount, is_closed, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?)''',
         [
@@ -364,7 +374,7 @@ class ImportExportService {
     for (final stage in stages) {
       final map = Map<String, dynamic>.from(stage as Map);
       await txn.rawInsert(
-        '''INSERT OR REPLACE INTO mod_period_book_stages
+        '''INSERT INTO mod_period_book_stages
            (id, period_id, start_date, end_date, balance, sort_order, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
         [
@@ -386,7 +396,7 @@ class ImportExportService {
     for (final addition in additions) {
       final map = Map<String, dynamic>.from(addition as Map);
       await txn.rawInsert(
-        '''INSERT OR REPLACE INTO mod_period_book_additions
+        '''INSERT INTO mod_period_book_additions
            (id, stage_id, amount, reason, sort_order, created_at, entry_date)
            VALUES (?, ?, ?, ?, ?, ?, ?)''',
         [
@@ -409,7 +419,7 @@ class ImportExportService {
     for (final expense in expenses) {
       final map = Map<String, dynamic>.from(expense as Map);
       await txn.rawInsert(
-        '''INSERT OR REPLACE INTO mod_period_book_expenses
+        '''INSERT INTO mod_period_book_expenses
            (id, stage_id, category, amount, description, sort_order, created_at, entry_date)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
         [
@@ -432,7 +442,7 @@ class ImportExportService {
     for (final addition in largeAdditions) {
       final map = Map<String, dynamic>.from(addition as Map);
       await txn.rawInsert(
-        '''INSERT OR REPLACE INTO mod_period_book_large_additions
+        '''INSERT INTO mod_period_book_large_additions
            (id, period_id, amount, reason, sort_order, created_at, entry_date)
            VALUES (?, ?, ?, ?, ?, ?, ?)''',
         [
@@ -454,7 +464,7 @@ class ImportExportService {
     for (final expense in largeExpenses) {
       final map = Map<String, dynamic>.from(expense as Map);
       await txn.rawInsert(
-        '''INSERT OR REPLACE INTO mod_period_book_large_expenses
+        '''INSERT INTO mod_period_book_large_expenses
            (id, period_id, category, amount, description, sort_order, created_at, entry_date)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
         [
@@ -565,12 +575,17 @@ class ImportExportService {
       );
     }
 
+    await _prepareMerge(txn, data, {
+      'vault_categories': null,
+      'vault_entries': 'vault_categories',
+    });
+
     // 导入分类
     final categories = (data['vault_categories'] as List<dynamic>?) ?? [];
     for (final cat in categories) {
       final map = Map<String, dynamic>.from(cat as Map);
       await txn.rawInsert(
-        '''INSERT OR REPLACE INTO mod_vault_categories
+        '''INSERT INTO mod_vault_categories
            (id, name, icon, sort_order, is_encrypted, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?)''',
         [
@@ -587,10 +602,10 @@ class ImportExportService {
     }
 
     // 导入条目
-    for (final entry in entries) {
+    for (final entry in data['vault_entries'] as List) {
       final map = Map<String, dynamic>.from(entry as Map);
       await txn.rawInsert(
-        '''INSERT OR REPLACE INTO mod_vault_entries
+        '''INSERT INTO mod_vault_entries
            (id, category_id, title, username, encrypted_password, password_iv, salt, note, sort_order, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
         [
@@ -710,6 +725,74 @@ class ImportExportService {
   // ═══════════════════════════════════════════════════════════════
   // 工具
   // ═══════════════════════════════════════════════════════════════
+
+  Future<void> _prepareMerge(
+    Transaction txn,
+    Map<String, dynamic> data,
+    Map<String, String?> tables,
+  ) async {
+    final idMaps = <String, Map<int, int>>{};
+    for (final table in tables.entries) {
+      final incoming = (data[table.key] as List? ?? [])
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
+      final local = await txn.query('mod_${table.key}');
+      final ids = <int, int>{};
+      idMaps[table.key] = ids;
+      final additions = <Map<String, dynamic>>[];
+      final matchedIds = <int>{};
+      var nextId = 0;
+      for (final row in [...local, ...incoming]) {
+        final id = row['id'] as int;
+        if (id > nextId) nextId = id;
+      }
+      final parent = table.value;
+      final parentColumn = parent == null
+          ? null
+          : parent == 'vault_categories'
+              ? 'category_id'
+              : parent == 'period_book_stages'
+                  ? 'stage_id'
+                  : 'period_id';
+      for (final row in incoming) {
+        final sourceId = row['id'] as int;
+        if (parentColumn != null) {
+          final sourceParent = row[parentColumn] as int;
+          row[parentColumn] = idMaps[parent]![sourceParent] ?? sourceParent;
+        }
+        final matches = local.where((existing) =>
+            !matchedIds.contains(existing['id']) &&
+            existing['created_at'] == row['created_at'] &&
+            (parentColumn == null ||
+                existing[parentColumn] == row[parentColumn]));
+        final sameId = matches.where((existing) => existing['id'] == sourceId);
+        final sameContent = matches.where((existing) => row.entries.every(
+              (field) =>
+                  const {'id', 'updated_at', 'sort_order'}
+                      .contains(field.key) ||
+                  existing[field.key] == field.value,
+            ));
+        final existing = sameId.isNotEmpty
+            ? sameId.first
+            : sameContent.length == 1
+                ? sameContent.first
+                : null;
+        if (existing != null) {
+          final targetId = existing['id'] as int;
+          ids[sourceId] = targetId;
+          matchedIds.add(targetId);
+          continue;
+        }
+        final targetId = local.any((existing) => existing['id'] == sourceId)
+            ? ++nextId
+            : sourceId;
+        ids[sourceId] = targetId;
+        row['id'] = targetId;
+        additions.add(row);
+      }
+      data[table.key] = additions;
+    }
+  }
 
   static String _dateStamp() {
     final now = DateTime.now();

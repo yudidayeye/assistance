@@ -179,7 +179,7 @@ class _SyncPageState extends State<SyncPage> with TickerProviderStateMixin {
           '${preview.periodRecordsCount} 条生理期记录、'
           '${preview.bookPeriodsCount} 个周期、'
           '${preview.bookStagesCount} 个阶段。\n'
-          '已存在的设置和记录将被覆盖。',
+          '新增内容将合并保留，已有设置和重复记录保持不变。',
           style: TextStyle(
               fontSize: 14, color: appTheme.earthMedium, height: 1.5),
           textAlign: TextAlign.center,
