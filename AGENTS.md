@@ -26,7 +26,7 @@
 - 只有用户明确指定目标版本号时，才允许变更主版本号或次版本号，并严格使用用户指定的版本号调用工作流。
 - 重建已发布版本的安装包使用 `mode=existing`：保留原版本号、构建号和标签，只替换该 Release 的安装包与更新清单。
 - 发布完成后核对工作流结论与 Release 附件（4 个安装包 + 2 个更新 JSON）；失败时用 `gh run view --log-failed` 查因，再用 `existing` 重新触发。
-- `scripts/release.ps1` / `scripts/release.sh` 仅供本地调试构建，不作为发布手段；整体流程见 `docs/RELEASING.md`。
+- `scripts/release.ps1` / `scripts/release.sh` 仅供本地调试构建，不作为发布手段；签名、补发与更新检查的排障见 `docs/RELEASING.md`。
 
 ## 编码风格与命名约定
 

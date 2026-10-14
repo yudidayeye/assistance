@@ -292,7 +292,7 @@ gh workflow run release.yml --ref master -f version=1.2.16 -f mode=new -f notes=
 - 只有明确指定目标版本号时，才修改主版本号（major）或次版本号（minor）
 - 提交、推送、打标签都不会触发打包，工作流只支持手动运行
 - 发布前先通过 `flutter analyze` 和相关测试（见提交规范）
-- Android 签名 Secrets 必须已配置，详见 [`docs/RELEASING.md`](docs/RELEASING.md)
+- Android 签名 Secrets 必须已配置，配置与排障见 [`docs/RELEASING.md`](docs/RELEASING.md)
 - 不要手动修改版本号、打 Tag 或创建 Release，也不要用本地脚本发布；`scripts/release.sh` / `scripts/release.ps1` 只为维护发布流程保留
 
 ## 相关文档
@@ -301,6 +301,7 @@ gh workflow run release.yml --ref master -f version=1.2.16 -f mode=new -f notes=
 - [`docs/PRD.md`](docs/PRD.md)：产品需求文档
 - [`docs/SPEC.md`](docs/SPEC.md)：功能与技术规格
 - [`docs/UI.md`](docs/UI.md)：界面设计规范，调整视觉样式前必读
+- [`docs/RELEASING.md`](docs/RELEASING.md)：发布与签名排障手册
 
 ## 注意事项
 

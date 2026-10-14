@@ -57,7 +57,7 @@ gh workflow run release.yml --ref master -f version=1.2.16 -f mode=new -f notes=
 - `mode=new` 发布新版本；`mode=existing` 重建已发布版本的安装包（保留原版本号、构建号与标签）
 - 用户仅要求「发布版本」而**未指定版本号时，只递增修订号**（`1.2.6` → `1.2.7`）；构建号由工作流自动递增
 - **只有用户明确指定目标版本号时**，才允许变更主版本号或次版本号
-- `scripts/release.sh` / `scripts/release.ps1` 只为维护发布流程保留，不作为发布手段；详见 [`docs/RELEASING.md`](docs/RELEASING.md)
+- `scripts/release.sh` / `scripts/release.ps1` 只为维护发布流程保留，不作为发布手段；签名、补发与更新检查的排障见 [`docs/RELEASING.md`](docs/RELEASING.md)
 
 ## UI 规范与字体
 
