@@ -339,7 +339,7 @@ class ImportExportService {
       'CREATE INDEX IF NOT EXISTS idx_pb_large_expenses_period ON mod_period_book_large_expenses(period_id)',
     );
 
-    await _prepareMerge(txn, data, {
+    final updates = await _prepareMerge(txn, data, {
       'period_book_periods': null,
       'period_book_stages': 'period_book_periods',
       'period_book_additions': 'period_book_stages',
@@ -375,13 +375,14 @@ class ImportExportService {
       final map = Map<String, dynamic>.from(stage as Map);
       await txn.rawInsert(
         '''INSERT INTO mod_period_book_stages
-           (id, period_id, start_date, end_date, balance, sort_order, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+           (id, period_id, start_date, end_date, current_date, balance, sort_order, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
         [
           map['id'],
           map['period_id'],
           map['start_date'],
           map['end_date'],
+          map['current_date'],
           map['balance'],
           map['sort_order'],
           map['created_at'],
@@ -481,6 +482,47 @@ class ImportExportService {
       largeExpensesCount++;
     }
 
+    // 应用「同 id 内容变化」的更新：源端更新时间更新者覆盖本地。
+    // 用 rawUpdate 而非 INSERT OR REPLACE——stages 被 additions/expenses
+    // 以 ON DELETE CASCADE 引用，REPLACE 会级联删除子表。
+    final periodUpdates =
+        updates['period_book_periods'] ?? const <Map<String, dynamic>>[];
+    for (final period in periodUpdates) {
+      await txn.rawUpdate(
+        '''UPDATE mod_period_book_periods
+           SET start_date = ?, end_date = ?, base_amount = ?, is_closed = ?, updated_at = ?
+           WHERE id = ?''',
+        [
+          period['start_date'],
+          period['end_date'],
+          period['base_amount'],
+          period['is_closed'],
+          period['updated_at'],
+          period['id'],
+        ],
+      );
+    }
+    final stageUpdates =
+        updates['period_book_stages'] ?? const <Map<String, dynamic>>[];
+    for (final stage in stageUpdates) {
+      await txn.rawUpdate(
+        '''UPDATE mod_period_book_stages
+           SET period_id = ?, start_date = ?, end_date = ?, current_date = ?,
+               balance = ?, sort_order = ?, updated_at = ?
+           WHERE id = ?''',
+        [
+          stage['period_id'],
+          stage['start_date'],
+          stage['end_date'],
+          stage['current_date'],
+          stage['balance'],
+          stage['sort_order'],
+          stage['updated_at'],
+          stage['id'],
+        ],
+      );
+    }
+
     return {
       'periods': periodsCount,
       'stages': stagesCount,
@@ -575,6 +617,8 @@ class ImportExportService {
       );
     }
 
+    // 保险箱暂不应用「同 id 更新」：条目更新涉及 encrypted_password/salt 与
+    // 密钥一致性防护，风险更高。此处有意丢弃 _prepareMerge 返回的 updates。
     await _prepareMerge(txn, data, {
       'vault_categories': null,
       'vault_entries': 'vault_categories',
@@ -726,11 +770,12 @@ class ImportExportService {
   // 工具
   // ═══════════════════════════════════════════════════════════════
 
-  Future<void> _prepareMerge(
+  Future<Map<String, List<Map<String, dynamic>>>> _prepareMerge(
     Transaction txn,
     Map<String, dynamic> data,
     Map<String, String?> tables,
   ) async {
+    final updates = <String, List<Map<String, dynamic>>>{};
     final idMaps = <String, Map<int, int>>{};
     for (final table in tables.entries) {
       final incoming = (data[table.key] as List? ?? [])
@@ -772,15 +817,26 @@ class ImportExportService {
                       .contains(field.key) ||
                   existing[field.key] == field.value,
             ));
-        final existing = sameId.isNotEmpty
-            ? sameId.first
-            : sameContent.length == 1
-                ? sameContent.first
-                : null;
+        final sameIdRow = sameId.isEmpty ? null : sameId.first;
+        final sameContentRow =
+            sameContent.length == 1 ? sameContent.first : null;
+        final existing = sameIdRow ?? sameContentRow;
         if (existing != null) {
           final targetId = existing['id'] as int;
           ids[sourceId] = targetId;
           matchedIds.add(targetId);
+          // 同 id 但内容不同，且源端更新时间更新 → 需要覆盖本地。
+          // 注意：这里必须用上面缓存的 sameIdRow/sameContentRow 判断，不能用
+          // lazy 的 sameId/sameContent——matchedIds.add 之后它们重新求值会因
+          // `!matchedIds.contains(...)` 过滤而变空，导致判定失效。
+          if (sameIdRow != null && sameContentRow == null) {
+            final localUpdated = (existing['updated_at'] as String?) ?? '';
+            final incomingUpdated = (row['updated_at'] as String?) ?? '';
+            if (incomingUpdated.compareTo(localUpdated) > 0) {
+              row['id'] = targetId;
+              (updates[table.key] ??= []).add(row);
+            }
+          }
           continue;
         }
         final targetId = local.any((existing) => existing['id'] == sourceId)
@@ -792,6 +848,7 @@ class ImportExportService {
       }
       data[table.key] = additions;
     }
+    return updates;
   }
 
   static String _dateStamp() {
