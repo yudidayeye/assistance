@@ -10,6 +10,7 @@ import '../models/stage_record.dart';
 import '../models/addition_record.dart';
 import '../models/expense_record.dart';
 import '../widgets/stage_card.dart';
+import '../widgets/category_filter_label.dart';
 import '../services/period_book_service.dart';
 import '../widgets/expense_category_helper.dart';
 import '../widgets/expense_section_card.dart';
@@ -432,10 +433,10 @@ class _StageEditPageState extends State<StageEditPage> {
                   ),
                 AppSpacing.h8,
                 if (_expenseFilter != null)
-                  InputChip(
-                    label: Text('分类：$_expenseFilter'),
-                    onDeleted: () => _onBreakdownCategoryChanged(null),
-                    deleteButtonTooltipMessage: '清除分类筛选',
+                  CategoryFilterLabel(
+                    category: _expenseFilter!,
+                    onClose: () => _onBreakdownCategoryChanged(null),
+                    padding: EdgeInsets.zero,
                   ),
                 RecordsTabCard(
                   key: _recordsTabKey,

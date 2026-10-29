@@ -5,7 +5,7 @@ import '../../../shared/foundation/app_spacing.dart';
 import '../models/stage_record.dart';
 import '../models/addition_record.dart';
 import '../services/period_book_service.dart';
-import 'expense_category_helper.dart';
+import 'expense_category_breakdown.dart';
 
 /// 阶段卡片组件 — 纯汇总展示，当前阶段（今日所在区间）边框强调
 class StageCard extends StatefulWidget {
@@ -539,158 +539,22 @@ class _StageCardState extends State<StageCard> {
   }
 
   Widget _buildDetailedExpenseBreakdown(AppThemeExtension appTheme) {
-    final personal = (widget.personalExpenseBreakdown ?? {})
-        .entries
-        .where((entry) =>
-            entry.key != '其他' && entry.key != '杂项' && entry.value > 0)
-        .toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
     final breakdown = {
-      for (final entry in personal) entry.key: entry.value,
-      if (widget.stageCalc.otherTotal > 0) '其他': widget.stageCalc.otherTotal,
-      if ((widget.stageCalc.livingTotal ?? 0) > 0)
-        '杂项': widget.stageCalc.livingTotal!,
+      for (final entry
+          in (widget.personalExpenseBreakdown ?? <String, double>{}).entries)
+        if (entry.key != '其他' && entry.key != '杂项') entry.key: entry.value,
+      '其他': widget.stageCalc.otherTotal,
+      '杂项': widget.stageCalc.livingTotal ?? 0,
     };
-    final total = breakdown.values.fold(0.0, (sum, value) => sum + value);
-    final legend = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final entry in personal)
-          _buildDetailedCategoryRow(appTheme, entry.key, entry.value, total),
-        _buildDetailedCategoryRow(
-            appTheme, '其他', widget.stageCalc.otherTotal, total),
-        _buildSelectableLegendRow(
-          appTheme: appTheme,
-          category: '杂项',
-          child: _buildDetailedResidualRow(appTheme),
-        ),
-      ],
-    );
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(2, 4, 4, 8),
-      child: LayoutBuilder(builder: (context, constraints) {
-        if (breakdown.isEmpty) return legend;
-        final pie = SizedBox(
-          width: 116,
-          height: 116,
-          child: _buildMiniPieChart(appTheme, breakdown),
-        );
-        // 窄屏或大字模式将图例放到下方，避免分类名和金额相互挤压。
-        if (constraints.maxWidth < 300 ||
-            MediaQuery.textScalerOf(context).scale(12) > 15) {
-          return Column(children: [pie, AppSpacing.h12, legend]);
-        }
-        return Row(
-          children: [pie, AppSpacing.w12, Expanded(child: legend)],
-        );
-      }),
-    );
-  }
-
-  Widget _buildSelectableLegendRow({
-    required AppThemeExtension appTheme,
-    required String category,
-    required Widget child,
-  }) {
-    final selected = _selectedCategory == category;
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: GestureDetector(
-        key: ValueKey('stage-category-$category'),
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _handleBreakdownCategoryTap(category),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 32),
-          decoration: BoxDecoration(
-            color: selected
-                ? appTheme.primaryLight.withValues(alpha: 0.3)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(appTheme.radiusSm),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailedResidualRow(AppThemeExtension appTheme) {
-    final amount = widget.stageCalc.livingTotal ?? 0;
-    final daily = widget.stageCalc.livingDailyAvg;
-    final color = ExpenseCategoryHelper.categoryColor(appTheme, '杂项');
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Row(children: [
-            Icon(Icons.wb_sunny_outlined, size: 14, color: color),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text('漏记杂项',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: appTheme.earth)),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              flex: 2,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  if (_isBalanceOverridden) ...[
-                    Icon(Icons.error_outline_rounded, size: 14, color: color),
-                    const SizedBox(width: 3),
-                  ],
-                  Text(
-                      '${_isBalanceOverridden ? '+' : '-'}¥${amount.abs().toStringAsFixed(2)}',
-                      style:
-                          _amountStyle(appTheme, color: color, fontSize: 12)),
-                ]),
-              ),
-            ),
-          ]),
-          if (daily != null)
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                  '¥${daily.abs().toStringAsFixed(2)}/天 × ${widget.stage.livingDays}天',
-                  style: TextStyle(fontSize: 10, color: appTheme.earthMedium)),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailedCategoryRow(AppThemeExtension appTheme, String category,
-      double amount, double total) {
-    final color = category == '其他'
-        ? const Color(0xFF4DB6AC).withValues(alpha: 0.72)
-        : ExpenseCategoryHelper.categoryColor(appTheme, category);
-    return _buildSelectableLegendRow(
-      appTheme: appTheme,
-      category: category,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: Row(
-          children: [
-            Icon(ExpenseCategoryHelper.categoryIcon(category),
-                size: 14, color: color),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(category == '其他' ? '其他消费' : category,
-                  style: TextStyle(fontSize: 12, color: appTheme.earth)),
-            ),
-            Text(
-                '${(total > 0 ? amount / total * 100 : 0).toStringAsFixed(0)}%',
-                style: TextStyle(fontSize: 10, color: appTheme.earthLight)),
-            const SizedBox(width: 6),
-            Text('-¥${amount.toStringAsFixed(2)}',
-                style: _amountStyle(appTheme, color: color, fontSize: 12)),
-          ],
-        ),
+      // 与历史报表一样，为图下方的选中提示保留空间。
+      padding: const EdgeInsets.only(bottom: 16),
+      child: ExpenseCategoryBreakdown(
+        data: breakdown,
+        selectedCategory: widget.selectedBreakdownCategory,
+        onCategorySelected: widget.onBreakdownCategorySelected,
+        // 外层已有 12px 内边距，补齐历史记录图表的 16px。
+        padding: const EdgeInsets.symmetric(horizontal: 4),
       ),
     );
   }

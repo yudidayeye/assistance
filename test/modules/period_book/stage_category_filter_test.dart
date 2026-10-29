@@ -8,6 +8,9 @@ import 'package:my_assistant/modules/period_book/models/stage_record.dart';
 import 'package:my_assistant/modules/period_book/pages/stage_edit_page.dart';
 import 'package:my_assistant/modules/period_book/services/period_book_service.dart';
 import 'package:my_assistant/modules/period_book/widgets/expense_section_card.dart';
+import 'package:my_assistant/modules/period_book/widgets/category_filter_label.dart';
+import 'package:my_assistant/modules/period_book/widgets/expense_category_breakdown.dart';
+import 'package:my_assistant/modules/period_book/widgets/report_card.dart';
 import 'package:my_assistant/modules/period_book/widgets/records_tab_card.dart';
 import 'package:my_assistant/modules/period_book/widgets/stage_card.dart';
 import 'package:my_assistant/shared/widgets/app_segmented_tab.dart';
@@ -61,7 +64,78 @@ void main() {
     expect(find.text('个人消费'), findsOneWidget);
     expect(find.text('其他消费'), findsOneWidget);
     expect(find.text('漏记杂项'), findsOneWidget);
-    expect(find.byKey(const ValueKey('stage-category-生活')), findsNothing);
+    expect(find.byKey(const ValueKey('expense-category-生活')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('阶段详情与历史记录复用图表，分类排序、金额和选中样式完全一致', (tester) async {
+    tester.view.physicalSize = const Size(392, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    List<(double, Color, double)>? historySections;
+    for (final history in [true, false]) {
+      await tester.pumpWidget(MaterialApp(
+        key: ValueKey(history),
+        theme: ThemeProvider.instance.themeData,
+        home: Scaffold(
+            body: history
+                ? const ReportCard(
+                    monthlyData: [],
+                    stageData: [],
+                    expenseTypeData: {...personal, '其他': 65, '杂项': 35},
+                    selectedCategory: '购物')
+                : card(detailed: true, selected: '购物')),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byType(ExpenseCategoryBreakdown), findsOneWidget);
+      final order = ['其他', '生活', '购物', '杂项', '工作', '娱乐', '大餐'];
+      final positions = [
+        for (final category in order)
+          tester
+              .getTopLeft(find.byKey(ValueKey('expense-category-$category')))
+              .dy
+      ];
+      expect(positions, orderedEquals([...positions]..sort()));
+      final shopping = find.byKey(const ValueKey('expense-category-购物'));
+      expect(find.descendant(of: shopping, matching: find.text('购物')),
+          findsOneWidget);
+      expect(find.descendant(of: shopping, matching: find.text('16%')),
+          findsOneWidget);
+      expect(find.descendant(of: shopping, matching: find.text('¥40')),
+          findsOneWidget);
+      expect(find.text('其他消费'), findsNothing);
+      expect(find.text('漏记杂项'), findsNothing);
+      expect(find.textContaining('/天 ×'), findsNothing);
+      final sections = tester
+          .widget<PieChart>(find.byType(PieChart))
+          .data
+          .sections
+          .map((section) => (section.value, section.color, section.radius))
+          .toList();
+      if (history) {
+        historySections = sections;
+      } else {
+        expect(sections, historySections);
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('与历史记录一致，不展示零金额图例，也不允许选中零金额分类', (tester) async {
+    String? selected;
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: ExpenseCategoryBreakdown(
+      data: const {'购物': 67.15, '生活': 64.43, '其他': 0, '杂项': 0},
+      onCategorySelected: (value) => selected = value,
+    ))));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('expense-category-其他')), findsNothing);
+    expect(find.byKey(const ValueKey('expense-category-杂项')), findsNothing);
+    expect(tester.widget<PieChart>(find.byType(PieChart)).data.sections,
+        hasLength(2));
+    await tester.tap(find.byKey(const ValueKey('expense-category-购物')));
+    expect(selected, '购物');
     expect(tester.takeException(), isNull);
   });
 
@@ -91,13 +165,13 @@ void main() {
       expect(pie.data.sections, hasLength(7));
       expect(pie.data.sections.fold(0.0, (sum, section) => sum + section.value),
           250);
-      await tester.tap(find.byKey(const ValueKey('stage-category-生活')));
+      await tester.tap(find.byKey(const ValueKey('expense-category-生活')));
       await tester.pumpAndSettle();
       expect(selected, '生活');
-      await tester.tap(find.byKey(const ValueKey('stage-category-购物')));
+      await tester.tap(find.byKey(const ValueKey('expense-category-购物')));
       await tester.pumpAndSettle();
       expect(selected, '购物');
-      await tester.tap(find.byKey(const ValueKey('stage-category-购物')));
+      await tester.tap(find.byKey(const ValueKey('expense-category-购物')));
       await tester.pumpAndSettle();
       expect(selected, isNull);
       // 第一个扇区是金额最高的「其他」：按角度点击真实图表。
@@ -156,7 +230,7 @@ void main() {
         .widget<RecordsTabCard>(find.byType(RecordsTabCard))
         .selectedIndex;
     Future<void> select(String category) async {
-      final target = find.byKey(ValueKey('stage-category-$category'));
+      final target = find.byKey(ValueKey('expense-category-$category'));
       await tester.ensureVisible(target);
       await tester.pumpAndSettle();
       await tester.tap(target);
@@ -192,6 +266,9 @@ void main() {
     expect(tab(), 1);
     await select('杂项');
     expect(tab(), 0);
+    expect(find.byType(CategoryFilterLabel), findsOneWidget);
+    expect(find.text('筛选：杂项'), findsOneWidget);
+    expect(find.byType(InputChip), findsNothing);
     expect(section().expenses, isEmpty);
     expect(find.text('漏记杂项由阶段余额倒推，没有对应支出条目'), findsOneWidget);
     await tester.tap(find.byTooltip('清除分类筛选'));

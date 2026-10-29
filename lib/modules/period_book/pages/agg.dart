@@ -15,6 +15,7 @@ import '../services/period_book_service.dart';
 import '../widgets/category_filter_helper.dart';
 import '../widgets/history_filter_bar.dart';
 import '../widgets/report_card.dart';
+import '../widgets/category_filter_label.dart';
 
 /// 聚合历史记录页面 - 日常/大额/合计视图切换
 class AggPage extends StatefulWidget {
@@ -1803,57 +1804,7 @@ class _FilterLabelHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(
-      height: _barHeight,
-      // 底色 MUST 不透明，否则下方的卡片会透上来造成误读（契约 C3-5）
-      color: appTheme.cream,
-      padding: EdgeInsets.only(
-        left: AppSpacing.pageH.left,
-        right: AppSpacing.pageH.right,
-      ),
-      alignment: Alignment.centerLeft,
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: 5,
-            ),
-            decoration: BoxDecoration(
-              color: appTheme.primaryLight.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(appTheme.radiusPill),
-              border: Border.all(
-                color: appTheme.primary.withValues(alpha: 0.4),
-                width: 0.5,
-              ),
-            ),
-            child: Text(
-              '筛选：$category',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: appTheme.primary,
-              ),
-            ),
-          ),
-          // 关闭控件 —— 与再次点击同一分类完全等价（FR-020 / 契约 C3-3）。
-          // 点击区域取满标签条高度，保证列表滚到任意位置都能一次点中（SC-002）
-          GestureDetector(
-            onTap: onClose,
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 44,
-              height: _barHeight,
-              child: Icon(
-                Icons.close_rounded,
-                size: 16,
-                color: appTheme.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return CategoryFilterLabel(category: category, onClose: onClose);
   }
 
   @override
