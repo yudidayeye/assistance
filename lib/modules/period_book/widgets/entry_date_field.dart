@@ -54,60 +54,131 @@ class EntryDateField extends StatelessWidget {
     final appTheme = Theme.of(context).appTheme;
     final selected = selectedDate;
     final accent = selected != null ? appTheme.primary : appTheme.earthMedium;
+    final radius = BorderRadius.circular(appTheme.radiusSm);
     // 走一遍「格式化 → 展示」往返：这里显示的与最终入库的是同一个值
     final displayText = selected == null
         ? '不填'
         : formatEntryDateForDisplay(formatEntryDate(selected)) ?? '不填';
 
+    final buttonStyle = TextButton.styleFrom(
+      minimumSize: const Size(0, 44),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: EdgeInsets.zero,
+      foregroundColor: appTheme.primary,
+      textStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+          ),
+      shape: RoundedRectangleBorder(borderRadius: radius),
+    );
+
     return Row(
       children: [
-        Expanded(
-          child: Text(label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: appTheme.earthMedium)),
-        ),
-        TextButton(
-          onPressed: onDateChanged == null
-              ? null
-              : () {
-                  final now = DateTime.now();
-                  onDateChanged?.call(DateTime(now.year, now.month, now.day));
-                },
-          child: const Text('今天'),
-        ),
-        Container(
-          key: const ValueKey('entry-date-box'),
-          decoration: BoxDecoration(
-            color: selected != null
-                ? appTheme.primary.withValues(alpha: 0.08)
-                : appTheme.creamDark,
-            borderRadius: BorderRadius.circular(appTheme.radiusSm),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            TextButton.icon(
-              onPressed:
-                  onDateChanged == null ? null : () => _pickDate(context),
-              style: TextButton.styleFrom(foregroundColor: accent),
-              icon: const Icon(Icons.calendar_today_outlined, size: 16),
-              label: Text(selected == null ? '选择日期' : displayText),
-            ),
-            // 清除按钮始终占位（未选中时透明不可点），避免选中后宽度突变产生抖动
-            Visibility(
-              visible: selected != null,
-              maintainState: true,
-              maintainAnimation: true,
-              maintainSize: true,
-              child: IconButton(
-                tooltip: '清除日期',
-                onPressed: onDateChanged == null
-                    ? null
-                    : () => onDateChanged?.call(null),
-                color: accent,
-                icon: const Icon(Icons.close_rounded, size: 18),
+        Text(label,
+            maxLines: 1,
+            style: TextStyle(fontSize: 12, color: appTheme.earthLight)),
+        const Spacer(),
+        SizedBox(
+          height: 44,
+          child: Stack(
+            children: [
+              // 背景做薄，完整的 44px 点击区域仍然保留。
+              Positioned.fill(
+                top: 6,
+                bottom: 6,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: selected == null
+                        ? appTheme.earthMedium.withValues(alpha: 0.08)
+                        : appTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: radius,
+                  ),
+                ),
               ),
-            ),
-          ]),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 44,
+                    child: TextButton(
+                      style: buttonStyle,
+                      onPressed: onDateChanged == null
+                          ? null
+                          : () {
+                              final now = DateTime.now();
+                              onDateChanged?.call(
+                                  DateTime(now.year, now.month, now.day));
+                            },
+                      child: const Text('今天'),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 14,
+                    color: appTheme.earthMedium.withValues(alpha: 0.2),
+                  ),
+                  SizedBox(
+                    key: const ValueKey('entry-date-box'),
+                    width: 140,
+                    height: 44,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            style: buttonStyle.copyWith(
+                                foregroundColor:
+                                    WidgetStatePropertyAll(accent)),
+                            onPressed: onDateChanged == null
+                                ? null
+                                : () => _pickDate(context),
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.calendar_today_outlined,
+                                      size: 14),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(selected == null
+                                          ? '选择日期'
+                                          : displayText),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // 固定尾部位置，用下拉箭头和清除按钮表达当前可用操作。
+                        IconButton(
+                          constraints: const BoxConstraints.tightFor(
+                              width: 44, height: 44),
+                          padding: EdgeInsets.zero,
+                          style: IconButton.styleFrom(
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                          tooltip: selected == null ? '选择日期' : '清除日期',
+                          onPressed: onDateChanged == null
+                              ? null
+                              : selected == null
+                                  ? () => _pickDate(context)
+                                  : () => onDateChanged?.call(null),
+                          color: accent,
+                          icon: Icon(
+                              selected == null
+                                  ? Icons.keyboard_arrow_down_rounded
+                                  : Icons.close_rounded,
+                              size: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
