@@ -112,12 +112,12 @@ class _StageEditPageState extends State<StageEditPage> {
     super.dispose();
   }
 
-  /// 顶部饼图分类选中/取消联动：选中切到「个人支出」Tab 并按分类筛选；
+  /// 顶部饼图和图例分类选中/取消联动：选中切到对应支出 Tab 并筛选；
   /// 取消（null）则清空筛选。
   void _onBreakdownCategoryChanged(String? category) {
     setState(() {
       _expenseFilter = category;
-      if (category != null) _recordsTabIndex = 0;
+      if (category != null) _recordsTabIndex = category == '其他' ? 1 : 0;
     });
     if (category != null) {
       // 数据更新后把记录 Tab 区滚动到可视范围，展示筛选结果
@@ -424,17 +424,27 @@ class _StageEditPageState extends State<StageEditPage> {
                     showHeader: false,
                     expandExpenseByDefault: true,
                     personalExpenseBreakdown: _computePersonalBreakdown(),
+                    showPersonalCategories: true,
+                    selectedBreakdownCategory: _expenseFilter,
                     onBreakdownCategorySelected: _onBreakdownCategoryChanged,
                     onEdit: () => context.pop(),
                     onEditBalance: _showEditBalanceSheet,
                   ),
                 AppSpacing.h8,
+                if (_expenseFilter != null)
+                  InputChip(
+                    label: Text('分类：$_expenseFilter'),
+                    onDeleted: () => _onBreakdownCategoryChanged(null),
+                    deleteButtonTooltipMessage: '清除分类筛选',
+                  ),
                 RecordsTabCard(
                   key: _recordsTabKey,
                   additionLabel: '追加记录',
                   selectedIndex: _recordsTabIndex,
-                  onSelectedIndexChanged: (index) =>
-                      setState(() => _recordsTabIndex = index),
+                  onSelectedIndexChanged: (index) => setState(() {
+                    _recordsTabIndex = index;
+                    _expenseFilter = null;
+                  }),
                   personalSection: _buildShoppingSection(appTheme),
                   otherSection: _buildOtherSection(appTheme),
                   additionSection: _buildAdditionsSection(appTheme),
@@ -886,7 +896,11 @@ class _StageEditPageState extends State<StageEditPage> {
       focusKey: _focusExpenseKey,
       showCategoryLabel: false,
       title: '个人支出',
-      emptyText: emptyByFilter ? '「$filter」分类暂无支出条目' : '暂无个人支出',
+      emptyText: filter == '杂项'
+          ? '漏记杂项由阶段余额倒推，没有对应支出条目'
+          : emptyByFilter
+              ? '「$filter」分类暂无支出条目'
+              : '暂无个人支出',
       expenses: shoppingExpenses
           .map((e) => ExpenseItemData(
                 id: '${e.id}',
