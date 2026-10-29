@@ -28,6 +28,7 @@ class LargeItemsEditPage extends StatefulWidget {
 
 class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
   final _service = PeriodBookService.instance;
+  int _selectedTabIndex = 0;
 
   PeriodRecord? _period;
   List<LargeAdditionRecord> _additions = [];
@@ -164,6 +165,9 @@ class _LargeItemsEditPageState extends State<LargeItemsEditPage> {
               children: [
                 RecordsTabCard(
                   additionLabel: '大额追加',
+                  selectedIndex: _selectedTabIndex,
+                  onSelectedIndexChanged: (index) =>
+                      setState(() => _selectedTabIndex = index),
                   personalSection: _buildShoppingSection(appTheme),
                   otherSection: _buildOtherSection(appTheme),
                   additionSection: _buildAdditionsSection(appTheme),
