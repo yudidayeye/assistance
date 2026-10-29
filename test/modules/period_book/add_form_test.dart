@@ -35,6 +35,8 @@ void main() {
     ))));
     expect(selectedDate, isNull);
     expect(find.text('选择日期'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(find.byTooltip('清除日期').hitTestable(), findsNothing);
     expect(find.text('工作'), findsNothing);
     final chips = find.byType(ChoiceChip);
     expect(chips, findsNWidgets(5));
@@ -49,12 +51,14 @@ void main() {
     await tester.pump();
     final now = DateTime.now();
     expect(selectedDate, DateTime(now.year, now.month, now.day));
+    expect(find.byTooltip('清除日期').hitTestable(), findsOneWidget);
     await tester.tap(find.text('确认添加'));
     expect(submittedDate, selectedDate);
     await tester.tap(find.byTooltip('清除日期'));
     await tester.pump();
     expect(selectedDate, isNull);
     expect(find.text('选择日期'), findsOneWidget);
+    expect(find.byTooltip('清除日期').hitTestable(), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

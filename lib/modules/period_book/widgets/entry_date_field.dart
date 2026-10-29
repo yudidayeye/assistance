@@ -92,8 +92,13 @@ class EntryDateField extends StatelessWidget {
               icon: const Icon(Icons.calendar_today_outlined, size: 16),
               label: Text(selected == null ? '选择日期' : displayText),
             ),
-            if (selected != null)
-              IconButton(
+            // 清除按钮始终占位（未选中时透明不可点），避免选中后宽度突变产生抖动
+            Visibility(
+              visible: selected != null,
+              maintainState: true,
+              maintainAnimation: true,
+              maintainSize: true,
+              child: IconButton(
                 tooltip: '清除日期',
                 onPressed: onDateChanged == null
                     ? null
@@ -101,6 +106,7 @@ class EntryDateField extends StatelessWidget {
                 color: accent,
                 icon: const Icon(Icons.close_rounded, size: 18),
               ),
+            ),
           ]),
         ),
       ],
