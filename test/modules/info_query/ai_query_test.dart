@@ -589,7 +589,7 @@ void main() {
     await tester.ensureVisible(chart);
     final size = tester.getSize(chart);
     final point = ChartGeometry(snapshot.models, AiCostMetric.task, size,
-            minimumScore: 35)
+            minimumScore: 25)
         .point(snapshot.models.single);
     await tester.tapAt(tester.getTopLeft(chart) + point);
     await tester.pumpAndSettle();
@@ -604,7 +604,7 @@ void main() {
         tester
             .widget<AiRelationChart>(find.byType(AiRelationChart).last)
             .minimumScore,
-        35);
+        25);
     expect(
         find.descendant(
             of: find.byType(Dialog), matching: find.text('能力与成本关系图')),
@@ -672,7 +672,7 @@ void main() {
     expect(find.text('暂无可绘制的成本数据，请切换价格口径'), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('最低分默认35，拖动滑动条后模型、厂商菜单和图表联动更新', (tester) async {
+  testWidgets('最低分默认25，拖动滑动条后模型、厂商菜单和图表联动更新', (tester) async {
     tester.view.physicalSize = const Size(360, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -687,13 +687,13 @@ void main() {
           slug: 'b',
           name: '模型B',
           creator: '厂商B',
-          intelligence: 35,
+          intelligence: 25,
           taskCost: 0.05),
       const AiModel(
           slug: 'c',
           name: '模型C',
           creator: '厂商C',
-          intelligence: 34.9,
+          intelligence: 24.9,
           taskCost: 0.03),
     ]);
     final service = AiLeaderboardService(
@@ -703,7 +703,7 @@ void main() {
         theme: ThemeProvider.instance.themeData,
         home: AiModelsPage(service: service)));
     await tester.pumpAndSettle();
-    expect(find.text('≥ 35.0'), findsOneWidget);
+    expect(find.text('≥ 25.0'), findsOneWidget);
     expect(
         tester
             .widget<AiRelationChart>(find.byType(AiRelationChart))
@@ -752,6 +752,14 @@ void main() {
     expect(find.byKey(const ValueKey('creator-option-厂商B')), findsNothing);
     await tester.tap(find.text('取消'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byTooltip('重置'));
+    await tester.tap(find.byTooltip('重置'));
+    await tester.pumpAndSettle();
+    expect(find.text('≥ 25.0'), findsOneWidget);
+    final resetChart =
+        tester.widget<AiRelationChart>(find.byType(AiRelationChart));
+    expect(resetChart.minimumScore, 25);
+    expect(resetChart.models.map((model) => model.slug), ['a', 'b']);
     expect(tester.takeException(), isNull);
   });
   testWidgets('厂商可同时多选，分数变化保留有效选择，清空及取消行为正确', (tester) async {

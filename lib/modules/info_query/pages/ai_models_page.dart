@@ -19,6 +19,7 @@ class AiModelsPage extends StatefulWidget {
 }
 
 class _AiModelsPageState extends State<AiModelsPage> {
+  static const double _defaultMinimumScore = 25;
   AiLeaderboardService get _service =>
       widget.service ?? AiLeaderboardService.instance;
   AiSnapshot? _snapshot;
@@ -32,7 +33,7 @@ class _AiModelsPageState extends State<AiModelsPage> {
   final _openFilter = ValueNotifier<String?>(null);
   final Set<String> _selectedCreators = {};
   final Set<String> _hiddenCreators = {};
-  double _minimumScore = 35;
+  double _minimumScore = _defaultMinimumScore;
   int _legendPage = 0;
   List<AiModel> get _scoreModels =>
       modelsAboveScore(_snapshot?.models ?? [], _minimumScore);
@@ -40,7 +41,9 @@ class _AiModelsPageState extends State<AiModelsPage> {
       0,
       (highest, model) =>
           model.intelligence > highest ? model.intelligence : highest);
-  double get _sliderMax => _highestScore > 35 ? _highestScore : 35;
+  double get _sliderMax => _highestScore > _defaultMinimumScore
+      ? _highestScore
+      : _defaultMinimumScore;
   AiCostMetric _metric = AiCostMetric.task;
   AiModel? _selected;
 
@@ -115,7 +118,7 @@ class _AiModelsPageState extends State<AiModelsPage> {
     _searchController.clear();
     setState(() {
       _search = '';
-      _minimumScore = 35;
+      _minimumScore = _defaultMinimumScore;
       _maximumCost = 0;
       _sortByCost = false;
       _selectedCreators.clear();
@@ -476,7 +479,7 @@ class _AiModelsPageState extends State<AiModelsPage> {
                       key: const ValueKey('minimum-score'),
                       label: '能力指标',
                       value: '≥ ${_minimumScore.toStringAsFixed(1)}',
-                      active: _minimumScore != 35,
+                      active: _minimumScore != _defaultMinimumScore,
                       singleLine: true,
                       expanded: _openFilter.value == 'score',
                       onTap: () => _showFilterPanel('score', _chooseScore))),
