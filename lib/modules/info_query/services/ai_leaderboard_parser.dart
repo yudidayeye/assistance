@@ -23,7 +23,8 @@ List<AiModel> parseAiLeaderboard(String html) {
   // 分块可能切开同一条记录，按源站顺序合并后提取。
   final raw = chunks.isEmpty ? html : chunks.join();
   final bySlug = <String, AiModel>{};
-  final arrays = RegExp(r'"models"\s*:\s*\[').allMatches(raw);
+  // 当前榜单使用 initialModels；models 仍用于旧页面及部分导航数据。
+  final arrays = RegExp(r'"(?:initialModels|models)"\s*:\s*\[').allMatches(raw);
   for (final match in arrays) {
     final start = match.end - 1;
     var depth = 0;
@@ -64,7 +65,8 @@ List<AiModel> parseAiLeaderboard(String html) {
     return bySlug.values.toList()
       ..sort((a, b) => b.intelligence.compareTo(a.intelligence));
   }
-  final starts = RegExp(r'\{[^{}]{0,512}"id"\s*:').allMatches(raw);
+  // 新记录不再带 id，改用实际模型标识 slug，同时兼容旧记录。
+  final starts = RegExp(r'\{[^{}]{0,512}"(?:slug|id)"\s*:').allMatches(raw);
   for (final match in starts) {
     final start = match.start;
     var depth = 0;
