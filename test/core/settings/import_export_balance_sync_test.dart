@@ -129,4 +129,127 @@ void main() {
     expect(stages, hasLength(1));
     expect((stages.single['balance'] as num).toDouble(), closeTo(200, 0.001));
   });
+
+  test('周期和阶段重新编号后仍更新余额且支出归属不变，重复同步不产生副本', () async {
+    await db.insert('mod_period_book_periods', {...period(), 'id': 7});
+    await db.insert('mod_period_book_stages', {
+      ...stage(balance: 0),
+      'id': 8,
+      'period_id': 7,
+    });
+    await db.insert('mod_period_book_expenses', {
+      'id': 1,
+      'stage_id': 8,
+      'category': 'shopping',
+      'amount': 67.93,
+      'description': '本地支出',
+      'created_at': 'local-expense',
+    });
+    final file = await backup();
+    final payload =
+        jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    payload['data']['period_book_periods'] = [
+      {...period(updatedAt: '2026-02-01T00:00:00'), 'base_amount': 2000},
+    ];
+    payload['data']['period_book_stages'] = [
+      stage(
+        balance: 479.20,
+        currentDate: '2026-10-15',
+        updatedAt: '2026-02-01T00:00:00',
+      ),
+    ];
+    payload['data']['period_book_expenses'] = [
+      {
+        'id': 2,
+        'stage_id': 1,
+        'category': 'shopping',
+        'amount': 10,
+        'description': '远端支出',
+        'created_at': 'remote-expense',
+      },
+    ];
+    await file.writeAsString(jsonEncode(payload));
+
+    for (var attempt = 0; attempt < 2; attempt++) {
+      final result = await service.executeImport(file.path);
+      expect(result.isSuccess, isTrue, reason: result.error);
+      final periods = await db.query('mod_period_book_periods');
+      expect(periods, hasLength(1));
+      expect(periods.single['id'], 7);
+      expect(periods.single['base_amount'], 2000);
+      final stages = await db.query('mod_period_book_stages');
+      expect(stages, hasLength(1));
+      expect(stages.single['id'], 8);
+      expect(stages.single['balance'], closeTo(479.20, 0.001));
+      expect(stages.single['current_date'], '2026-10-15');
+      final expenses = await db.query('mod_period_book_expenses');
+      expect(expenses, hasLength(2));
+      expect(expenses.every((expense) => expense['stage_id'] == 8), isTrue);
+      expect(await db.rawQuery('PRAGMA foreign_key_check'), isEmpty);
+    }
+  });
+
+  test('同批创建的阶段重新编号后按阶段顺序匹配且保留较新的本地余额', () async {
+    await db.insert('mod_period_book_periods', period());
+    await db.insert('mod_period_book_stages', {
+      ...stage(balance: 100, updatedAt: '2026-03-01T00:00:00'),
+      'id': 8,
+    });
+    await db.insert('mod_period_book_stages', {
+      ...stage(balance: 200),
+      'id': 9,
+      'sort_order': 1,
+      'start_date': '2026-11-01',
+      'end_date': '2026-11-07',
+    });
+    final file = await backupWithStages([
+      stage(balance: 500, updatedAt: '2026-02-01T00:00:00'),
+      {
+        ...stage(balance: 0, updatedAt: '2026-02-01T00:00:00'),
+        'id': 2,
+        'sort_order': 1,
+        'start_date': '2026-11-01',
+        'end_date': '2026-11-07',
+      },
+    ]);
+
+    final result = await service.executeImport(file.path);
+    expect(result.isSuccess, isTrue, reason: result.error);
+    final stages = await db.query('mod_period_book_stages', orderBy: 'id');
+    expect(stages, hasLength(2));
+    expect(stages.first['balance'], 100);
+    expect(stages.last['balance'], 0);
+  });
+
+  test('阶段编号与另一阶段交叉时不串改余额', () async {
+    await db.insert('mod_period_book_periods', period());
+    await db
+        .insert('mod_period_book_stages', {...stage(balance: 100), 'id': 2});
+    await db.insert('mod_period_book_stages', {
+      ...stage(balance: 200),
+      'sort_order': 1,
+      'start_date': '2026-11-01',
+      'end_date': '2026-11-07',
+    });
+    final file = await backupWithStages([
+      stage(balance: 500, updatedAt: '2026-02-01T00:00:00'),
+      {
+        ...stage(balance: null, updatedAt: '2026-02-01T00:00:00'),
+        'id': 2,
+        'sort_order': 1,
+        'start_date': '2026-11-01',
+        'end_date': '2026-11-07',
+      },
+    ]);
+
+    final result = await service.executeImport(file.path);
+    expect(result.isSuccess, isTrue, reason: result.error);
+    final stages =
+        await db.query('mod_period_book_stages', orderBy: 'sort_order');
+    expect(stages, hasLength(2));
+    expect(stages.first['id'], 2);
+    expect(stages.first['balance'], 500);
+    expect(stages.last['id'], 1);
+    expect(stages.last['balance'], isNull);
+  });
 }

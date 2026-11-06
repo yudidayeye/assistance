@@ -820,16 +820,22 @@ class ImportExportService {
         final sameIdRow = sameId.isEmpty ? null : sameId.first;
         final sameContentRow =
             sameContent.length == 1 ? sameContent.first : null;
-        final existing = sameIdRow ?? sameContentRow;
+        final sameIdentity = matches.where((existing) =>
+            table.key == 'period_book_periods' ||
+            (table.key == 'period_book_stages' &&
+                existing['sort_order'] == row['sort_order']));
+        final sameIdentityRow =
+            sameIdentity.length == 1 ? sameIdentity.first : null;
+        final existing = sameIdentityRow ?? sameIdRow ?? sameContentRow;
         if (existing != null) {
           final targetId = existing['id'] as int;
           ids[sourceId] = targetId;
           matchedIds.add(targetId);
-          // 同 id 但内容不同，且源端更新时间更新 → 需要覆盖本地。
+          // 同一记录内容不同，且源端更新时间更新 → 需要覆盖本地，兼容合并后重新编号。
           // 注意：这里必须用上面缓存的 sameIdRow/sameContentRow 判断，不能用
           // lazy 的 sameId/sameContent——matchedIds.add 之后它们重新求值会因
           // `!matchedIds.contains(...)` 过滤而变空，导致判定失效。
-          if (sameIdRow != null && sameContentRow == null) {
+          if (!identical(existing, sameContentRow)) {
             final localUpdated = (existing['updated_at'] as String?) ?? '';
             final incomingUpdated = (row['updated_at'] as String?) ?? '';
             if (incomingUpdated.compareTo(localUpdated) > 0) {
