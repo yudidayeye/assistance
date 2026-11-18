@@ -10,6 +10,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pointycastle/digests/sha256.dart';
 import 'package:my_assistant/core/settings/update_service.dart';
 import 'package:my_assistant/core/settings/update_proxy_settings.dart';
+import 'package:path/path.dart' as p;
 
 String hash(List<int> bytes) => SHA256Digest()
     .process(Uint8List.fromList(bytes))
@@ -171,8 +172,8 @@ void main() {
 
     test('同版本同大小旧包不复用，新包通过哈希后才复用', () async {
       final package = asset();
-      final file = File(
-          '${dir.path}/${UpdateService.downloadFileName(package, '1.2.13')}');
+      final file = File(p.join(
+          dir.path, UpdateService.downloadFileName(package, '1.2.13')));
       await file.writeAsBytes([4, 5, 6]);
       expect(await download(package), file.path);
       expect(requests, 1);
