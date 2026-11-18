@@ -5,7 +5,9 @@ import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
@@ -13,6 +15,8 @@ import 'package:pointycastle/digests/sha256.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'update_proxy_settings.dart';
 
 /// 更新检查服务
 ///
@@ -26,6 +30,7 @@ class UpdateService {
     String? platform,
     Future<List<String>> Function()? supportedAbisLoader,
     Future<Directory> Function()? downloadDirectoryLoader,
+    Future<UpdateProxySettings> Function()? proxySettingsLoader,
   })  : _client = client,
         _packageInfoLoader = packageInfoLoader ?? PackageInfo.fromPlatform,
         _checkTimeout = checkTimeout,
@@ -36,7 +41,8 @@ class UpdateService {
                     ? 'windows'
                     : 'other'),
         _supportedAbisLoader = supportedAbisLoader,
-        _downloadDirectoryLoader = downloadDirectoryLoader;
+        _downloadDirectoryLoader = downloadDirectoryLoader,
+        _proxySettingsLoader = proxySettingsLoader ?? UpdateProxySettings.load;
 
   static final instance = UpdateService();
   final http.Client? _client;
@@ -45,6 +51,7 @@ class UpdateService {
   final String _platform;
   final Future<List<String>> Function()? _supportedAbisLoader;
   final Future<Directory> Function()? _downloadDirectoryLoader;
+  final Future<UpdateProxySettings> Function() _proxySettingsLoader;
 
   /// GitHub 仓库信息
   static const _owner = 'yudidayeye';
@@ -52,12 +59,15 @@ class UpdateService {
 
   /// 下载用 Dio 实例（放宽超时：GitHub 下载波动大，
   /// receiveTimeout 限制的是数据块之间的最大间隔）
-  static final Dio _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(minutes: 10),
-    ),
-  );
+  Dio _createDownloadClient(UpdateProxySettings settings) => Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(minutes: 10),
+        ),
+      )..httpClientAdapter = IOHttpClientAdapter(
+          createHttpClient: () =>
+              settings.createHttpClient(const Duration(seconds: 30)),
+        );
 
   /// 已知的 ABI 标识（长令牌在前，用于排除前缀误配）
   static const List<String> _knownAbiTokens = [
@@ -95,14 +105,18 @@ class UpdateService {
           currentBuildNumber: currentBuild,
           error: message,
         );
+    http.Client? requestClient;
     try {
+      requestClient = _client ??
+          IOClient(
+              (await _proxySettingsLoader()).createHttpClient(_checkTimeout));
       final url = Uri.parse(
         'https://api.github.com/repos/$_owner/$_repo/releases/latest',
       ).replace(queryParameters: {
         'check': '${DateTime.now().millisecondsSinceEpoch}'
       });
-      final response =
-          await (_client?.get(url) ?? http.get(url)).timeout(_checkTimeout);
+      final release = await _fetchRelease(requestClient, url);
+      final response = release.response;
       if (response.statusCode != 200) {
         final code = response.statusCode;
         if (code == 429 ||
@@ -142,9 +156,8 @@ class UpdateService {
           'revision':
               '${metadataAsset.id ?? metadataAsset.updatedAt?.millisecondsSinceEpoch ?? metadataAsset.size}',
         });
-        final metadataResponse =
-            await (_client?.get(requestUrl) ?? http.get(requestUrl))
-                .timeout(_checkTimeout);
+        final metadataResponse = release.metadataResponse ??
+            await requestClient.get(requestUrl).timeout(_checkTimeout);
         if (metadataResponse.statusCode != 200) {
           throw UpdateException(
               '安装包更新信息读取失败（HTTP ${metadataResponse.statusCode}），请稍后重试');
@@ -227,7 +240,82 @@ class UpdateService {
       return failure('GitHub 返回的版本信息格式异常，请稍后重试');
     } catch (_) {
       return failure('检查更新失败，请稍后重试');
+    } finally {
+      if (_client == null) requestClient?.close();
     }
+  }
+
+  Future<({http.Response response, http.Response? metadataResponse})>
+      _fetchRelease(http.Client client, Uri url) async {
+    http.Response? response;
+    Object? networkError;
+    try {
+      response = await client.get(url).timeout(_checkTimeout);
+      final limited = response.statusCode == 429 ||
+          (response.statusCode == 403 &&
+              response.headers['x-ratelimit-remaining'] == '0');
+      if (!limited && response.statusCode < 500) {
+        return (response: response, metadataResponse: null);
+      }
+    } on TimeoutException catch (error) {
+      networkError = error;
+    } on SocketException catch (error) {
+      networkError = error;
+    } on http.ClientException catch (error) {
+      networkError = error;
+    }
+    if (_platform == 'windows' || _platform == 'android') {
+      try {
+        final metadataUrl = Uri.https('github.com',
+            '/$_owner/$_repo/releases/latest/download/update-$_platform.json', {
+          'check': '${DateTime.now().millisecondsSinceEpoch}',
+        });
+        final metadataResponse =
+            await client.get(metadataUrl).timeout(_checkTimeout);
+        if (metadataResponse.statusCode == 200) {
+          final metadata = jsonDecode(utf8.decode(metadataResponse.bodyBytes))
+              as Map<String, dynamic>;
+          final version = metadata['version'] as String;
+          if (!RegExp(r'^\d+\.\d+\.\d+$').hasMatch(version)) {
+            throw const FormatException('Invalid release version');
+          }
+          final files = metadata['files'] as List;
+          return (
+            response: http.Response(
+                jsonEncode({
+                  'tag_name': 'v$version',
+                  'html_url':
+                      'https://github.com/$_owner/$_repo/releases/tag/v$version',
+                  'assets': [
+                    for (final file in files)
+                      {
+                        'name': file['name'],
+                        'size': file['size'],
+                        'digest': 'sha256:${file['sha256']}',
+                        'browser_download_url': Uri.https('github.com',
+                                '/$_owner/$_repo/releases/download/v$version/${file['name']}')
+                            .toString(),
+                      },
+                    {
+                      'name': 'update-$_platform.json',
+                      'browser_download_url': metadataUrl.toString(),
+                    },
+                  ],
+                }),
+                200),
+            metadataResponse: metadataResponse,
+          );
+        }
+      } on TimeoutException catch (error) {
+        networkError ??= error;
+      } on SocketException catch (error) {
+        networkError ??= error;
+      } on http.ClientException catch (error) {
+        networkError ??= error;
+      }
+    }
+    if (response != null) return (response: response, metadataResponse: null);
+    throw networkError!;
   }
 
   /// 解析 Release 产物列表
@@ -398,43 +486,48 @@ class UpdateService {
     // 清理历史残留更新包（含上次未完成的部分文件）
     _cleanupUpdateFiles(dir);
 
-    const maxAttempts = 2; // 首次 + 1 次重试
-    Object? lastError;
-    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        await _dio.download(
-          asset.downloadUrl,
-          savePath,
-          cancelToken: cancelToken,
-          onReceiveProgress: (received, total) {
-            onProgress?.call(received, total > 0 ? total : asset.size);
-          },
-        );
+    final dio = _createDownloadClient(await _proxySettingsLoader());
+    try {
+      const maxAttempts = 2; // 首次 + 1 次重试
+      Object? lastError;
+      for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          await dio.download(
+            asset.downloadUrl,
+            savePath,
+            cancelToken: cancelToken,
+            onReceiveProgress: (received, total) {
+              onProgress?.call(received, total > 0 ? total : asset.size);
+            },
+          );
 
-        // 下载完成后校验大小和可用的 SHA-256，避免同版本旧包被复用
-        if (!await _isComplete(target, asset, allowUnknownSize: true)) {
-          await _deleteQuietly(target);
-          throw const UpdateException('安装包校验失败，请重新下载');
+          // 下载完成后校验大小和可用的 SHA-256，避免同版本旧包被复用
+          if (!await _isComplete(target, asset, allowUnknownSize: true)) {
+            await _deleteQuietly(target);
+            throw const UpdateException('安装包校验失败，请重新下载');
+          }
+          return savePath;
+        } on DioException catch (e) {
+          if (CancelToken.isCancel(e)) {
+            await _deleteQuietly(target);
+            return null; // 用户主动取消，不视为失败
+          }
+          lastError = e;
+          // 404/403 等响应错误没有重试价值
+          if (e.type == DioExceptionType.badResponse) break;
+        } on UpdateException {
+          rethrow;
+        } on FileSystemException catch (e) {
+          throw UpdateException(
+            '文件写入失败，存储空间可能不足'
+            '${e.osError?.message != null ? '（${e.osError!.message}）' : ''}',
+          );
         }
-        return savePath;
-      } on DioException catch (e) {
-        if (CancelToken.isCancel(e)) {
-          await _deleteQuietly(target);
-          return null; // 用户主动取消，不视为失败
-        }
-        lastError = e;
-        // 404/403 等响应错误没有重试价值
-        if (e.type == DioExceptionType.badResponse) break;
-      } on UpdateException {
-        rethrow;
-      } on FileSystemException catch (e) {
-        throw UpdateException(
-          '文件写入失败，存储空间可能不足'
-          '${e.osError?.message != null ? '（${e.osError!.message}）' : ''}',
-        );
       }
+      throw _mapDownloadError(lastError);
+    } finally {
+      dio.close(force: true);
     }
-    throw _mapDownloadError(lastError);
   }
 
   /// 获取本次更新下载的存储目录（按平台选择）

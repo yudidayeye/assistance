@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -8,6 +9,7 @@ import 'package:http/testing.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pointycastle/digests/sha256.dart';
 import 'package:my_assistant/core/settings/update_service.dart';
+import 'package:my_assistant/core/settings/update_proxy_settings.dart';
 
 String hash(List<int> bytes) => SHA256Digest()
     .process(Uint8List.fromList(bytes))
@@ -193,5 +195,81 @@ void main() {
     test('未知大小仍可下载，使用哈希验证', () async {
       expect(await download(asset(size: 0)), isNotNull);
     });
+
+    test('安装包下载使用与更新检查相同的代理配置', () async {
+      final package = ReleaseAsset(
+        name: 'app.apk',
+        size: 3,
+        sha256: hash([1, 2, 3]),
+        downloadUrl: 'http://unreachable.invalid/app.apk',
+      );
+      final path = await UpdateService(
+        downloadDirectoryLoader: () async => dir,
+        proxySettingsLoader: () async => UpdateProxySettings(
+          server: '127.0.0.1:${server.port}',
+          environment: {},
+        ),
+      ).downloadUpdate(asset: package, version: '1.2.13');
+      expect(requests, 1);
+      expect(await File(path!).readAsBytes(), [1, 2, 3]);
+    });
+  });
+
+  group('GitHub API 不可用时读取官方更新清单', () {
+    for (final failure in ['timeout', 'offline', '403', '429', '502']) {
+      test('$failure 回退后仍识别同版本补发且保留哈希校验', () async {
+        final requested = <Uri>[];
+        final digest = hash([1, 2, 3]);
+        final info = await UpdateService(
+          platform: 'windows',
+          checkTimeout: const Duration(milliseconds: 20),
+          packageInfoLoader: () async => PackageInfo(
+            appName: '理解',
+            packageName: 'example.app',
+            version: '1.2.16',
+            buildNumber: '48',
+          ),
+          client: MockClient((request) async {
+            requested.add(request.url);
+            if (request.url.host == 'api.github.com') {
+              if (failure == 'timeout') {
+                return Completer<http.Response>().future;
+              }
+              if (failure == 'offline') throw http.ClientException('offline');
+              return http.Response('', int.parse(failure),
+                  headers: {'x-ratelimit-remaining': '0'});
+            }
+            return http.Response(
+                jsonEncode({
+                  'schema': 1,
+                  'platform': 'windows',
+                  'version': '1.2.16',
+                  'build': 49,
+                  'notes': '修复更新检查',
+                  'files': [
+                    {
+                      'name': 'my_assistant_setup_1.2.16.exe',
+                      'size': 3,
+                      'sha256': digest,
+                    },
+                  ],
+                }),
+                200,
+                headers: {'content-type': 'application/json; charset=utf-8'});
+          }),
+        ).checkForUpdate();
+        expect(info.error, isNull);
+        expect(info.hasUpdate, isTrue);
+        expect(info.latestBuildNumber, 49);
+        expect(info.releaseNotes, '修复更新检查');
+        expect(info.assets.first.sha256, digest);
+        expect(info.assets.first.downloadUrl,
+            'https://github.com/yudidayeye/assistance/releases/download/v1.2.16/my_assistant_setup_1.2.16.exe');
+        expect(requested, hasLength(2));
+        expect(requested.last.host, 'github.com');
+        expect(requested.last.path,
+            '/yudidayeye/assistance/releases/latest/download/update-windows.json');
+      });
+    }
   });
 }
