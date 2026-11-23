@@ -8,6 +8,30 @@ import 'package:my_assistant/modules/info_query/services/ai_leaderboard_parser.d
 import 'package:my_assistant/modules/info_query/services/ai_leaderboard_service.dart';
 
 void main() {
+  test('内嵌数据不可读时使用公开榜单表格，并保留不同推理档位', () {
+    final models = parseAiLeaderboard('''
+      <script>self.__next_f.push([1,"0:[]"])</script>
+      <table><thead>
+        <tr><th colspan="4">Intelligence and Price</th></tr>
+        <tr><th>Model</th><th>Artificial Analysis Intelligence Index</th>
+          <th>Cost per Task <span>USD</span></th><th>Further Analysis</th></tr>
+      </thead><tbody>
+        <tr><td>Example High</td><td>40</td><td>--</td>
+          <td><a href="/models/example">Model</a></td></tr>
+        <tr><td><img alt="A &amp; B">Example Max</td><td>50</td><td>\$ 1.25</td>
+          <td><a href="/models/example">Model</a></td></tr>
+        <tr><td>Unranked</td><td>--</td><td>\$0.50</td>
+          <td><a href="/models/unranked">Model</a></td></tr>
+      </tbody></table>
+    ''');
+    expect(models.map((model) => model.name), ['Example Max', 'Example High']);
+    expect(models.map((model) => model.slug).toSet(), hasLength(2));
+    expect(models.first.creator, 'A & B');
+    expect(models.first.taskCost, 1.25);
+    expect(models.first.inputPrice, isNull);
+    expect(models.last.taskCost, isNull);
+  });
+
   test('当前榜单从initialModels读取无id的模型，忽略导航数据及缺失分数', () {
     // 2026-10-29 公开页面中的四条原始记录，保留当前的 RSC 数据封装。
     final html =
